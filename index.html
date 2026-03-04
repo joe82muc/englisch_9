@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f2a4a">
+<title>Englisch 9. Klasse – MS Sportpark Unterhaching</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family:'DM Sans',sans-serif;
+  background:#0f2a4a;
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:2rem 1.5rem;
+}
+
+.school {
+  font-size:.68rem; font-weight:600; letter-spacing:2px;
+  text-transform:uppercase; color:rgba(255,255,255,.4);
+  text-align:center; margin-bottom:1.8rem;
+}
+
+h1 {
+  font-family:'Fraunces',serif;
+  font-size:clamp(2rem,8vw,3.2rem);
+  font-weight:900; color:#fff; text-align:center;
+  line-height:1.05; margin-bottom:2.5rem;
+}
+h1 em { font-style:italic; color:#f59e0b; }
+
+.nav {
+  display:flex; flex-direction:column; gap:.6rem;
+  width:100%; max-width:340px;
+}
+
+/* ── Unit header button ── */
+.unit-btn {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(255,255,255,.07);
+  border:1.5px solid rgba(255,255,255,.12);
+  border-radius:14px; padding:1rem 1.2rem;
+  color:#fff; font-family:'DM Sans',sans-serif;
+  font-size:1rem; font-weight:700; cursor:pointer;
+  transition:all .18s; width:100%; text-align:left;
+  -webkit-appearance:none;
+}
+.unit-btn:hover {
+  background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.22);
+}
+.unit-btn .chevron {
+  font-size:.85rem; opacity:.5;
+  transition:transform .25s;
+}
+.unit-btn.open .chevron { transform:rotate(90deg); opacity:1; }
+.unit-btn.open {
+  border-radius:14px 14px 0 0;
+  border-bottom-color:transparent;
+  background:rgba(255,255,255,.11);
+}
+
+/* ── Sub-menu ── */
+.sub-menu {
+  display:none; flex-direction:column;
+  background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.12);
+  border-top:none;
+  border-radius:0 0 14px 14px;
+  overflow:hidden;
+  margin-top:-1px;
+}
+.sub-menu.open { display:flex; }
+
+.sub-link {
+  display:flex; align-items:center; gap:.75rem;
+  padding:.75rem 1.4rem;
+  color:rgba(255,255,255,.75); text-decoration:none;
+  font-size:.88rem; font-weight:600;
+  border-top:1px solid rgba(255,255,255,.07);
+  transition:all .15s;
+}
+.sub-link:first-child { border-top:none; }
+.sub-link:hover {
+  background:rgba(255,255,255,.08);
+  color:#fff;
+}
+.sub-link .icon { font-size:1rem; opacity:.8; }
+.sub-link .arrow { margin-left:auto; opacity:.35; font-size:.8rem; }
+.sub-link:hover .arrow { opacity:.8; }
+
+/* coming soon */
+.sub-link.soon {
+  color:rgba(255,255,255,.3);
+  cursor:default; pointer-events:none;
+}
+.sub-link.soon .badge {
+  margin-left:auto;
+  font-size:.6rem; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase;
+  background:rgba(255,255,255,.08);
+  border-radius:20px; padding:.15rem .55rem;
+  color:rgba(255,255,255,.3);
+}
+</style>
+</head>
+<body>
+
+<p class="school">🏫 Mittelschule am Sportpark Unterhaching</p>
+<h1>Englisch<br><em>9. Klasse</em></h1>
+
+<nav class="nav">
+
+  <!-- UNIT 1 -->
+  <button class="unit-btn" onclick="toggle('u1')">
+    <span>Unit 1</span>
+    <span class="chevron" id="u1-ch">›</span>
+  </button>
+  <div class="sub-menu" id="u1">
+    <a href="unit1_vokabeln.html" class="sub-link soon">
+      <span class="icon">📖</span> Vokabeltrainer
+      <span class="badge">Demnächst</span>
+    </a>
+    <a href="unit1_grammatik.html" class="sub-link soon">
+      <span class="icon">📝</span> Grammatik
+      <span class="badge">Demnächst</span>
+    </a>
+  </div>
+
+  <!-- UNIT 2 -->
+  <button class="unit-btn" onclick="toggle('u2')">
+    <span>Unit 2</span>
+    <span class="chevron" id="u2-ch">›</span>
+  </button>
+  <div class="sub-menu" id="u2">
+    <a href="unit2_vokabeln.html" class="sub-link soon">
+      <span class="icon">📖</span> Vokabeltrainer
+      <span class="badge">Demnächst</span>
+    </a>
+    <a href="unit2_grammatik.html" class="sub-link soon">
+      <span class="icon">📝</span> Grammatik
+      <span class="badge">Demnächst</span>
+    </a>
+  </div>
+
+  <!-- UNIT 3 -->
+  <button class="unit-btn" onclick="toggle('u3')">
+    <span>Unit 3</span>
+    <span class="chevron" id="u3-ch">›</span>
+  </button>
+  <div class="sub-menu" id="u3">
+    <a href="unit3/vokabeltrainer3" class="sub-link">
+      <span class="icon">📖</span> Vokabeltrainer
+      <span class="arrow">→</span>
+    </a>
+    <a href="unit3/past_progressive.html" class="sub-link">
+      <span class="icon">📝</span> Grammatik – Past Progressive
+      <span class="arrow">→</span>
+    </a>
+  </div>
+
+  <!-- UNIT 4 -->
+  <button class="unit-btn" onclick="toggle('u4')">
+    <span>Unit 4</span>
+    <span class="chevron" id="u4-ch">›</span>
+  </button>
+  <div class="sub-menu" id="u4">
+    <a href="unit4_vokabeln.html" class="sub-link soon">
+      <span class="icon">📖</span> Vokabeltrainer
+      <span class="badge">Demnächst</span>
+    </a>
+    <a href="unit4_grammatik.html" class="sub-link soon">
+      <span class="icon">📝</span> Grammatik
+      <span class="badge">Demnächst</span>
+    </a>
+  </div>
+
+</nav>
+
+<script>
+function toggle(id) {
+  const menu = document.getElementById(id);
+  const btn  = menu.previousElementSibling;
+  const ch   = document.getElementById(id+'-ch');
+  const isOpen = menu.classList.contains('open');
+
+  // close all
+  document.querySelectorAll('.sub-menu').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('open'));
+
+  if (!isOpen) {
+    menu.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+</script>
+</body>
+</html>
