@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Klett Vokabeltrainer</title>
+
+<!-- PWA: iPhone/iPad Unterstützung -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vokabeln">
+<meta name="theme-color" content="#1a4a8a">
+<meta name="description" content="Klett Bridge Unit 3 – Vokabeltrainer offline">
+
+<!-- App-Icon für iPhone Homescreen (inline SVG) -->
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF8WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4yLWMwMDAgNzkuMWI2NWE3OWI0LCAyMDIyLzA2LzEzLTIyOjAxOjAxICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyI+IDx4bXA6Q3JlYXRvclRvb2w+QWRvYmUgUGhvdG9zaG9wIDI0LjAgKE1hY2ludG9zaCk8L3htcDpDcmVhdG9yVG9vbD4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz4B//79AAAAA+lJREFUeJzt0jENACAQwED2X9oFiBsJgZJelQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMAAP//AwBQSwECLQAUAAYACAAAACEAWvQPqt4AAAAUAQAAEwAAAAAAAAAAAAAAAAAAAAAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLBQYAAAAAAQABAEEAAAD/AAAAAAA=">
+
+<!-- Manifest inline via JS -->
+<script>
+const manifestData = {
+  name: "Klett Vokabeltrainer – Unit 3",
+  short_name: "Vokabeln",
+  description: "Klett Bridge Unit 3 – Vokabeltrainer mit Aussprache, offline nutzbar",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#f7f3ee",
+  theme_color: "#1a4a8a",
+  orientation: "portrait",
+  icons: [{
+    src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%231a4a8a'/><text x='256' y='360' font-size='300' text-anchor='middle'>📚</text></svg>`),
+    sizes: "512x512", type: "image/svg+xml", purpose: "any maskable"
+  }]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
+const manifestUrl = URL.createObjectURL(blob);
+document.write('<link rel="manifest" href="' + manifestUrl + '">');
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f3ee;
+    --card: #fff;
+    --klett-blue: #1a4a8a;
+    --klett-red: #c0392b;
+    --mint: #27ae60;
+    --text: #1a1a2e;
+    --muted: #7f8c8d;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(26,74,138,0.10);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    padding: calc(var(--safe-top) + 1.5rem) 1rem calc(var(--safe-bottom) + 3rem);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Install Banner */
+  #install-banner {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--klett-blue); color: #fff;
+    padding: calc(var(--safe-top) + 0.8rem) 1rem 0.8rem;
+    font-size: 0.82rem; font-weight: 600;
+    flex-direction: column; gap: 0.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  }
+  #install-banner.show { display: flex; }
+  .banner-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .banner-steps { font-size: 0.75rem; opacity: 0.85; line-height: 1.5; }
+  .banner-steps span { display: block; }
+  #close-banner {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    border-radius: 50%; width: 28px; height: 28px; font-size: 1rem;
+    cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 1.4rem; }
+  .klett-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: var(--klett-blue); color: #fff;
+    padding: 0.3rem 0.9rem; border-radius: 50px;
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 1px;
+    margin-bottom: 0.6rem; text-transform: uppercase;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    font-weight: 900; color: var(--klett-blue); line-height: 1.1;
+  }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+  /* Offline badge */
+  #offline-badge {
+    display: none; text-align: center; margin-bottom: 0.5rem;
+    font-size: 0.75rem; color: var(--klett-red); font-weight: 700;
+  }
+
+  /* Controls */
+  .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.2rem; }
+  .pill-group { display: flex; background: #e8e0d8; border-radius: 50px; padding: 3px; }
+  .pill {
+    padding: 0.4rem 0.9rem; border: none; border-radius: 50px; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 600;
+    background: transparent; color: var(--muted); transition: all 0.2s; white-space: nowrap;
+  }
+  .pill.active { background: var(--klett-blue); color: #fff; }
+
+  /* Score */
+  .scorebar { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1rem; font-size: 0.82rem; color: var(--muted); }
+  .scorebar span { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .scorebar strong { font-size: 1.4rem; color: var(--text); font-family: 'Playfair Display', serif; }
+
+  /* Progress */
+  .progress-wrap { max-width: 500px; margin: 0 auto 1.2rem; background: #ddd5c8; height: 6px; border-radius: 3px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--klett-blue); border-radius: 3px; transition: width 0.4s; }
+
+  /* Filter */
+  .filter-row { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: center; margin-bottom: 0.7rem; }
+  .filter-btn {
+    padding: 0.28rem 0.7rem; border: 2px solid #ddd; border-radius: 50px;
+    background: transparent; font-family: 'Nunito', sans-serif; font-size: 0.75rem;
+    font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.2s;
+  }
+  .filter-btn.active { border-color: var(--klett-blue); color: var(--klett-blue); background: #e8f0fc; }
+
+  /* Card */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 1.8rem 1.4rem 1.5rem; max-width: 500px; margin: 0 auto;
+    box-shadow: var(--shadow); border-top: 5px solid var(--klett-blue); position: relative;
+  }
+  .unit-tag {
+    position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+    background: var(--klett-red); color: #fff;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 10px; border-radius: 0 0 8px 8px; text-transform: uppercase;
+  }
+  .direction-label { text-align: center; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 1.1rem; }
+  .question-word {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 5.5vw, 2.6rem);
+    font-weight: 700; text-align: center; color: var(--klett-blue); line-height: 1.2; margin-bottom: 0.3rem;
+  }
+  .phonetic { text-align: center; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.4rem; font-style: italic; }
+  .speak-btn {
+    display: block; margin: 0 auto 1.3rem;
+    background: none; border: 1.5px solid #ddd; border-radius: 50px;
+    padding: 0.32rem 1rem; cursor: pointer; font-size: 0.78rem; color: var(--muted);
+    font-family: 'Nunito', sans-serif; transition: all 0.2s;
+    -webkit-appearance: none;
+  }
+  .speak-btn.speak-highlight {
+    border-color: var(--mint); color: var(--mint);
+    background: #eafaf1; font-size: 0.9rem; padding: 0.5rem 1.3rem;
+    animation: speakpop 0.3s ease;
+  }
+  @keyframes speakpop {
+    from { transform: scale(0.9); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* Choices */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .choice {
+    padding: 0.8rem 0.5rem; background: #f0ebe4; border: 2px solid transparent;
+    border-radius: 12px; color: var(--text); font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer; text-align: center;
+    transition: all 0.15s; line-height: 1.3; -webkit-appearance: none;
+  }
+  .choice:active:not(:disabled) { transform: scale(0.97); }
+  .choice.correct { border-color: var(--mint); background: #eafaf1; color: var(--mint); }
+  .choice.wrong   { border-color: var(--klett-red); background: #fdf0ef; color: var(--klett-red); }
+  .choice:disabled { cursor: default; }
+
+  /* Typing */
+  .type-area { display: flex; flex-direction: column; gap: 0.6rem; }
+  .type-area input {
+    width: 100%; padding: 0.85rem 1rem; border: 2px solid #ddd; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 600;
+    color: var(--text); background: #f9f6f2; outline: none; transition: border 0.2s;
+    -webkit-appearance: none;
+  }
+  .type-area input:focus { border-color: var(--klett-blue); }
+  .type-area input.correct { border-color: var(--mint); background: #eafaf1; }
+  .type-area input.wrong   { border-color: var(--klett-red); background: #fdf0ef; }
+
+  /* Feedback */
+  .feedback { text-align: center; min-height: 1.4rem; font-size: 0.9rem; font-weight: 700; margin-top: 0.9rem; }
+  .feedback.good { color: var(--mint); }
+  .feedback.bad  { color: var(--klett-red); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 0.6rem; margin-top: 1rem; justify-content: center; }
+  .btn-primary {
+    padding: 0.7rem 1.8rem; background: var(--klett-blue); color: #fff;
+    border: none; border-radius: 50px; font-family: 'Nunito', sans-serif;
+    font-size: 0.92rem; font-weight: 700; cursor: pointer; -webkit-appearance: none;
+    transition: all 0.2s;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary {
+    padding: 0.7rem 1.3rem; background: transparent; color: var(--muted);
+    border: 2px solid #ddd; border-radius: 50px; font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem; cursor: pointer; -webkit-appearance: none;
+  }
+
+  /* Result */
+  #result { display: none; text-align: center; max-width: 500px; margin: 0 auto; padding: 2rem 1rem; }
+  #result h2 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 0.4rem; color: var(--klett-blue); }
+  .big-pct { font-family: 'Playfair Display', serif; font-size: 4.5rem; font-weight: 900; color: var(--klett-red); }
+
+  @keyframes pop { from{transform:scale(0.93);opacity:0} to{transform:scale(1);opacity:1} }
+  .card { animation: pop 0.25s ease; }
+</style>
+</head>
+<body>
+
+<!-- iPhone Install Banner -->
+<div id="install-banner">
+  <div class="banner-row">
+    <span>📲 <strong>Als App installieren!</strong></span>
+    <button id="close-banner" onclick="closeBanner()">✕</button>
+  </div>
+  <div class="banner-steps">
+    <span>1. Tippe unten auf das <strong>Teilen-Symbol</strong> □↑</span>
+    <span>2. Wähle <strong>„Zum Home-Bildschirm"</strong></span>
+    <span>3. Tippe <strong>„Hinzufügen"</strong> – fertig! ✅</span>
+  </div>
+</div>
+
+<div id="offline-badge">📵 Offline-Modus</div>
+
+<div class="header">
+  <div class="klett-badge">📚 Klett Bridge</div>
+  <h1>Vokabeltrainer<br>Unit 3</h1>
+  <p class="subtitle">Südafrika · 87 Vokabeln · Seiten 171–175</p>
+</div>
+
+<div class="filter-row" id="filter-row">
+  <button class="filter-btn active" onclick="setFilter('all',this)">Alle</button>
+  <button class="filter-btn" onclick="setFilter('intro',this)">Intro</button>
+  <button class="filter-btn" onclick="setFilter('topic1',this)">Topic 1</button>
+  <button class="filter-btn" onclick="setFilter('topic2',this)">Topic 2</button>
+  <button class="filter-btn" onclick="setFilter('text',this)">Text</button>
+  <button class="filter-btn" onclick="setFilter('mediation',this)">Mediation</button>
+  <button class="filter-btn" onclick="setFilter('more',this)">More About</button>
+</div>
+
+<div class="controls">
+  <div class="pill-group">
+    <button class="pill active" onclick="setMode('mc',this)">Multiple Choice</button>
+    <button class="pill" onclick="setMode('type',this)">Tippen</button>
+  </div>
+  <div class="pill-group">
+    <button class="pill active" onclick="setDir('random',this)">🔀 Zufällig</button>
+    <button class="pill" onclick="setDir('en-de',this)">🇬🇧→🇩🇪</button>
+    <button class="pill" onclick="setDir('de-en',this)">🇩🇪→🇬🇧</button>
+  </div>
+</div>
+
+<div class="scorebar">
+  <span><strong id="sc-right">0</strong>✅ Richtig</span>
+  <span><strong id="sc-wrong">0</strong>❌ Falsch</span>
+  <span><strong id="sc-total">0</strong>Gesamt</span>
+</div>
+
+<div class="progress-wrap"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+
+<div class="card" id="quiz-card">
+  <div class="unit-tag" id="unit-tag">Unit 3</div>
+  <div class="direction-label" id="dir-label">Englisch → Deutsch</div>
+  <div class="question-word" id="qword">–</div>
+  <div class="phonetic" id="phonetic"></div>
+  <button class="speak-btn" id="speak-btn" onclick="speak()">🔊 Anhören</button>
+
+  <div id="mc-area">
+    <div class="choices" id="choices"></div>
+  </div>
+  <div id="type-area" style="display:none">
+    <div class="type-area">
+      <input type="text" id="type-input" placeholder="Deine Antwort …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkType()">
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn-secondary" id="hint-btn" onclick="showHint()">💡 Tipp</button>
+        <button class="btn-primary" onclick="checkType()">Prüfen ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+  <div class="btn-row">
+    <button class="btn-secondary" onclick="skip()">Überspringen →</button>
+  </div>
+</div>
+
+<div id="result">
+  <h2>🎉 Runde beendet!</h2>
+  <div class="big-pct" id="pct-display">0%</div>
+  <p style="color:var(--muted);margin:0.8rem 0 1.5rem">Weiter üben macht perfekt!</p>
+  <button class="btn-primary" onclick="restart()">Nochmal 🔄</button>
+</div>
+
+<script>
+// ── VOCABULARY ──────────────────────────────────────────────────────────────
+const vocab = [
+  {en:"parliament",de:"Parlament",pron:"ˈpɑːləmənt",topic:"intro"},
+  {en:"African",de:"afrikanisch; Afrikaner",pron:"ˈæfrɪkən",topic:"intro"},
+  {en:"apartheid",de:"Apartheid",pron:"əˈpɑːtaɪt",topic:"intro"},
+  {en:"system",de:"System",pron:"ˈsɪstəm",topic:"intro"},
+  {en:"to separate",de:"trennen",pron:"ˈsepəreɪt",topic:"intro"},
+  {en:"South African",de:"Südafrikaner; südafrikanisch",pron:"saʊθ ˈæfrɪkən",topic:"intro"},
+  {en:"township",de:"Township; Armutsviertel",pron:"ˈtaʊnʃɪp",topic:"intro"},
+  {en:"to end",de:"enden; beenden",pron:"end",topic:"intro"},
+  {en:"because of",de:"wegen",pron:"bɪˈkɒz əv",topic:"intro"},
+  {en:"gap",de:"Kluft; Lücke",pron:"ɡæp",topic:"intro"},
+  {en:"wide",de:"breit; weit",pron:"waɪd",topic:"intro"},
+  {en:"electricity",de:"Strom; Elektrizität",pron:"ɪˌlekˈtrɪsɪti",topic:"intro"},
+  {en:"to aim",de:"zum Ziel haben; beabsichtigen",pron:"eɪm",topic:"intro"},
+  {en:"safari",de:"Safari",pron:"səˈfɑːri",topic:"intro"},
+  {en:"elephant",de:"Elefant",pron:"ˈelɪfənt",topic:"intro"},
+  {en:"buffalo",de:"Büffel",pron:"ˈbʌfələʊ",topic:"intro"},
+  {en:"common",de:"verbreitet; häufig",pron:"ˈkɒmən",topic:"intro"},
+  {en:"higher education",de:"Hochschulbildung",pron:"haɪər edʒuˈkeɪʃən",topic:"intro"},
+  {en:"media",de:"Medien",pron:"ˈmiːdiə",topic:"intro"},
+  {en:"goddess",de:"Göttin",pron:"ˈɡɒdes",topic:"intro"},
+  {en:"to hit",de:"anfahren; rammen",pron:"hɪt",topic:"topic1"},
+  {en:"injured",de:"verletzt",pron:"ˈɪndʒəd",topic:"topic1"},
+  {en:"sergeant",de:"Polizeimeister",pron:"ˈsɑːdʒənt",topic:"topic1"},
+  {en:"driving licence",de:"Führerschein",pron:"ˈdraɪvɪŋ laɪsns",topic:"topic1"},
+  {en:"to brake",de:"bremsen",pron:"breɪk",topic:"topic1"},
+  {en:"to skid",de:"schleudern; schlittern",pron:"skɪd",topic:"topic1"},
+  {en:"control",de:"Kontrolle; Steuerung",pron:"kənˈtrəʊl",topic:"topic1"},
+  {en:"to crash",de:"krachen",pron:"kræʃ",topic:"topic1"},
+  {en:"relevant",de:"relevant; von Bedeutung",pron:"ˈreləvənt",topic:"topic1"},
+  {en:"wallet",de:"Geldbörse; Geldbeutel",pron:"ˈwɒlɪt",topic:"topic1"},
+  {en:"bang",de:"Knall",pron:"bæŋ",topic:"topic1"},
+  {en:"glass",de:"Glas",pron:"ɡlɑːs",topic:"topic1"},
+  {en:"police station",de:"Polizeirevier",pron:"pəˈliːs ˈsteɪʃən",topic:"topic1"},
+  {en:"detail",de:"Detail; Einzelheit",pron:"ˈdiːteɪl",topic:"topic1"},
+  {en:"witness",de:"Zeuge; Zeugin",pron:"ˈwɪtnəs",topic:"topic1"},
+  {en:"damage",de:"Schaden; Beschädigung",pron:"ˈdæmɪdʒ",topic:"topic1"},
+  {en:"report",de:"Bericht",pron:"rɪˈpɔːt",topic:"topic1"},
+  {en:"news",de:"Nachricht(en)",pron:"njuːz",topic:"topic1"},
+  {en:"newspaper",de:"Zeitung",pron:"ˈnjuːspeɪpə",topic:"topic1"},
+  {en:"role model",de:"Vorbild",pron:"rəʊl mɒdl",topic:"topic2"},
+  {en:"podcast",de:"Podcast",pron:"ˈpɒdkɑːst",topic:"topic2"},
+  {en:"inspiring",de:"inspirierend; anregend",pron:"ɪnˈspaɪərɪŋ",topic:"topic2"},
+  {en:"songwriter",de:"Songschreiber; Liedermacher",pron:"ˈsɒŋraɪtə",topic:"topic2"},
+  {en:"isolated",de:"isoliert",pron:"ˈaɪsəleɪtɪd",topic:"topic2"},
+  {en:"opposition",de:"Widerstand; Opposition",pron:"ˌɒpəˈzɪʃən",topic:"topic2"},
+  {en:"to overcome",de:"überwinden",pron:"ˌəʊvəˈkʌm",topic:"topic2"},
+  {en:"inspiration",de:"Inspiration; Eingebung",pron:"ˌɪnspəˈreɪʃən",topic:"topic2"},
+  {en:"to admire",de:"bewundern",pron:"ədˈmaɪə",topic:"topic2"},
+  {en:"to direct",de:"Regie führen; leiten",pron:"dɪˈrekt",topic:"topic2"},
+  {en:"politically active",de:"politisch engagiert",pron:"pəˈlɪtɪkli ˈæktɪv",topic:"topic2"},
+  {en:"active",de:"aktiv",pron:"ˈæktɪv",topic:"topic2"},
+  {en:"gay",de:"homosexuell; schwul",pron:"ɡeɪ",topic:"topic2"},
+  {en:"lesbian",de:"homosexuell; lesbisch",pron:"ˈlezbiən",topic:"topic2"},
+  {en:"medication",de:"Medikament; Arzneimittel",pron:"ˌmedɪˈkeɪʃən",topic:"topic2"},
+  {en:"Zulu",de:"Zulu (Sprache in Südafrika)",pron:"zuːluː",topic:"text"},
+  {en:"unemployed",de:"arbeitslos",pron:"ˌʌnɪmˈplɔɪd",topic:"text"},
+  {en:"organization",de:"Organisation",pron:"ˌɔːɡənaɪˈzeɪʃən",topic:"text"},
+  {en:"original",de:"ursprünglich; original",pron:"əˈrɪdʒɪnl",topic:"text"},
+  {en:"furniture",de:"Möbel",pron:"ˈfɜːnɪtʃə",topic:"text"},
+  {en:"guitar",de:"Gitarre",pron:"ɡɪˈtɑː",topic:"text"},
+  {en:"Afrikaans",de:"Afrikaans (Sprache in Südafrika)",pron:"ˌæfrɪˈkɑːns",topic:"text"},
+  {en:"degree",de:"Hochschulabschluss",pron:"dɪˈɡriː",topic:"text"},
+  {en:"nursing",de:"Pflege; Krankenpflege",pron:"ˈnɜːsɪŋ",topic:"text"},
+  {en:"fortunately",de:"zum Glück",pron:"ˈfɔːtʃənətli",topic:"text"},
+  {en:"to support",de:"unterstützen",pron:"səˈpɔːt",topic:"text"},
+  {en:"midwife",de:"Hebamme",pron:"ˈmɪdwaɪf",topic:"text"},
+  {en:"Sotho",de:"Sotho (Sprache in Südafrika)",pron:"ˈsəʊθəʊ",topic:"text"},
+  {en:"kindergarten",de:"Kindergarten",pron:"ˈkɪndəɡɑːtn",topic:"text"},
+  {en:"preschool",de:"Vorschule",pron:"ˈpriːskuːl",topic:"text"},
+  {en:"community",de:"Gemeinde; Gemeinschaft",pron:"kəˈmjuːnəti",topic:"text"},
+  {en:"study",de:"Studium; Untersuchung",pron:"ˈstʌdi",topic:"text"},
+  {en:"distance",de:"Entfernung; Distanz",pron:"ˈdɪstəns",topic:"mediation"},
+  {en:"gate",de:"Tor",pron:"ɡeɪt",topic:"mediation"},
+  {en:"emergency",de:"Notfall",pron:"ɪˈmɜːdʒənsi",topic:"mediation"},
+  {en:"to disturb",de:"stören; belästigen",pron:"dɪˈstɜːb",topic:"mediation"},
+  {en:"to follow",de:"folgen",pron:"ˈfɒləʊ",topic:"mediation"},
+  {en:"to make sure",de:"dafür sorgen; sich versichern",pron:"meɪk ʃɔː",topic:"mediation"},
+  {en:"monkey",de:"Affe",pron:"ˈmʌŋki",topic:"mediation"},
+  {en:"state",de:"Landes-; staatlich",pron:"steɪt",topic:"more"},
+  {en:"function",de:"Funktion",pron:"ˈfʌŋkʃən",topic:"more"},
+  {en:"to sink",de:"untergehen; sinken",pron:"sɪŋk",topic:"more"},
+  {en:"lighthouse",de:"Leuchtturm",pron:"ˈlaɪthaʊs",topic:"more"},
+  {en:"arch",de:"Bogen",pron:"ɑːtʃ",topic:"more"},
+  {en:"viewing platform",de:"Aussichtsplattform",pron:"ˈvjuːɪŋ ˌplætfɔːm",topic:"more"},
+  {en:"speech",de:"Rede; Vortrag; Sprache",pron:"spiːtʃ",topic:"more"},
+  {en:"region",de:"Region; Gegend",pron:"ˈriːdʒən",topic:"more"},
+  {en:"game reserve",de:"Wildreservat; Wildschutzgebiet",pron:"ɡeɪm rɪˈzɜːv",topic:"more"},
+  {en:"lion",de:"Löwe",pron:"ˈlaɪən",topic:"more"},
+  {en:"leopard",de:"Leopard",pron:"ˈlepəd",topic:"more"},
+  {en:"rhino",de:"Rhinozeros; Nashorn",pron:"ˈraɪnəʊ",topic:"more"},
+  {en:"extinction",de:"Aussterben",pron:"ɪkˈstɪŋkʃən",topic:"more"},
+  {en:"bushman",de:"Buschmann",pron:"ˈbʊʃmən",topic:"more"},
+  {en:"redbush",de:"Roibusch",pron:"ˈredbʊʃ",topic:"more"},
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let mode='mc', dirSetting='random', filterTopic='all';
+let queue=[], current=null, right=0, wrong=0;
+let direction='en-de', answered=false;
+let speakWord='', speakLang='en-GB';
+
+const shuffle = a => [...a].sort(()=>Math.random()-0.5);
+const filteredVocab = () => filterTopic==='all' ? vocab : vocab.filter(v=>v.topic===filterTopic);
+
+// ── INSTALL BANNER (iPhone) ────────────────────────────────────────────────
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isStandalone() {
+  return window.navigator.standalone === true;
+}
+function closeBanner() {
+  document.getElementById('install-banner').classList.remove('show');
+  localStorage.setItem('install-dismissed','1');
+}
+window.addEventListener('load', () => {
+  if (isIOS() && !isStandalone() && !localStorage.getItem('install-dismissed')) {
+    setTimeout(() => document.getElementById('install-banner').classList.add('show'), 1500);
+  }
+});
+
+// ── OFFLINE DETECTION ──────────────────────────────────────────────────────
+window.addEventListener('online',  () => document.getElementById('offline-badge').style.display='none');
+window.addEventListener('offline', () => document.getElementById('offline-badge').style.display='block');
+
+// ── SERVICE WORKER (Offline-Cache) ────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'vokabel-v1';
+    const ASSETS = [self.location.href];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys =>
+        Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+      ));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(e.request)))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────
+function setMode(m, btn) {
+  mode = m;
+  document.querySelectorAll('.pill').forEach(b => {
+    if (b.textContent.includes('Choice')||b.textContent.includes('Tippen')) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  document.getElementById('mc-area').style.display   = m==='mc'   ? 'block' : 'none';
+  document.getElementById('type-area').style.display = m==='type' ? 'block' : 'none';
+  restart();
+}
+function setDir(d, btn) {
+  dirSetting = d;
+  document.querySelectorAll('.pill').forEach(b => {
+    if (b.textContent.includes('→')||b.textContent.includes('Zufällig')) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  restart();
+}
+function setFilter(f, btn) {
+  filterTopic = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  restart();
+}
+
+// ── CORE ──────────────────────────────────────────────────────────────────
+function restart() {
+  right=0; wrong=0; updateScore();
+  queue = shuffle(filteredVocab());
+  document.getElementById('result').style.display    = 'none';
+  document.getElementById('quiz-card').style.display = 'block';
+  document.querySelector('.progress-wrap').style.display = 'block';
+  nextCard();
+}
+
+function nextCard() {
+  if (queue.length===0) { showResult(); return; }
+  current = queue.pop();
+  answered = false;
+
+  direction = dirSetting==='random' ? (Math.random()>0.5 ? 'en-de' : 'de-en') : dirSetting;
+  const isEnDe = direction==='en-de';
+  const qWord = isEnDe ? current.en : current.de;
+  const aWord = isEnDe ? current.de : current.en;
+
+  document.getElementById('dir-label').textContent = isEnDe ? '🇬🇧 Englisch → 🇩🇪 Deutsch' : '🇩🇪 Deutsch → 🇬🇧 Englisch';
+  document.getElementById('qword').textContent     = qWord;
+  document.getElementById('phonetic').textContent  = isEnDe ? '['+current.pron+']' : '';
+  document.getElementById('feedback').textContent  = '';
+  document.getElementById('feedback').className    = 'feedback';
+
+  // Speak button always shows the English word
+  speakWord = current.en;
+  speakLang = 'en-GB';
+  const sBtn = document.getElementById('speak-btn');
+  sBtn.textContent = '🔊 anhören';
+  sBtn.className = 'speak-btn';  // reset highlight
+
+  const tags = {intro:'Intro',topic1:'Topic 1',topic2:'Topic 2',text:'Text',mediation:'Mediation',more:'More About'};
+  document.getElementById('unit-tag').textContent = tags[current.topic]||'Unit 3';
+
+  updateProgress();
+  if (mode==='mc') buildChoices(aWord, isEnDe);
+  else {
+    const inp = document.getElementById('type-input');
+    inp.value=''; inp.className=''; inp.disabled=false;
+    const hBtn = document.getElementById('hint-btn');
+    if (hBtn) hBtn.disabled = false;
+    setTimeout(()=>inp.focus(), 100);
+  }
+}
+
+function buildChoices(correct, isEnDe) {
+  const pool = shuffle(filteredVocab().filter(v=>v!==current)).slice(0,3);
+  const opts = shuffle([correct, ...pool.map(v=>isEnDe?v.de:v.en)]);
+  const cont = document.getElementById('choices');
+  cont.innerHTML='';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className='choice'; btn.textContent=opt;
+    btn.onclick = ()=>checkChoice(btn,opt,correct);
+    cont.appendChild(btn);
+  });
+}
+
+function checkChoice(btn, chosen, correct) {
+  if (answered) return;
+  answered=true;
+  document.querySelectorAll('.choice').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===correct) b.classList.add('correct');
+  });
+  if (chosen===correct) {
+    btn.classList.add('correct');
+    showFeedback(true);
+    right++;
+    // Auto-play English word and highlight speak button
+    speak();
+    const sBtn = document.getElementById('speak-btn');
+    sBtn.textContent = '🔊 ' + current.en + ' anhören';
+    sBtn.className = 'speak-btn speak-highlight';
+  } else {
+    btn.classList.add('wrong');
+    showFeedback(false, correct);
+    wrong++;
+    // Still highlight speak button so user can listen
+    const sBtn = document.getElementById('speak-btn');
+    sBtn.textContent = '🔊 ' + current.en + ' anhören';
+    sBtn.className = 'speak-btn speak-highlight';
+  }
+  updateScore();
+  setTimeout(nextCard, 1900);
+}
+
+function showHint() {
+  if (answered) return;
+  const correct = direction==='en-de' ? current.de : current.en;
+  const first = correct.split(';')[0].trim();
+  const inp = document.getElementById('type-input');
+  // Show one more letter each time hint is pressed
+  const currentVal = inp.value;
+  const nextLen = currentVal.length + 1;
+  inp.value = first.substring(0, nextLen);
+  inp.focus();
+  // Disable hint when full word revealed
+  if (nextLen >= first.length) {
+    document.getElementById('hint-btn').disabled = true;
+  }
+}
+
+function checkType() {
+  if (answered) return;
+  const inp = document.getElementById('type-input');
+  const val = inp.value.trim().toLowerCase();
+  const correct = direction==='en-de' ? current.de : current.en;
+  // Accept any one of the meanings (split by ; or ,)
+  // Also accept with or without leading "to " for verbs
+  const normalize = s => s.trim().toLowerCase().replace(/^to\s+/, '');
+  const variants = correct.split(/[;,]/).map(normalize).filter(Boolean);
+  const ok = variants.some(v => normalize(val) === v);
+  answered=true; inp.disabled=true;
+  document.getElementById('hint-btn').disabled = true;
+  const sBtn = document.getElementById('speak-btn');
+  sBtn.textContent = '🔊 ' + current.en + ' anhören';
+  sBtn.className = 'speak-btn speak-highlight';
+  if (ok) {
+    inp.classList.add('correct'); showFeedback(true); right++;
+    speak();
+  } else {
+    inp.classList.add('wrong'); showFeedback(false, correct); wrong++;
+  }
+  updateScore();
+  setTimeout(nextCard, 1900);
+}
+
+function skip() { if(answered)return; wrong++; updateScore(); nextCard(); }
+
+function showFeedback(ok, correct) {
+  const el = document.getElementById('feedback');
+  el.className = 'feedback '+(ok?'good':'bad');
+  el.textContent = ok ? '✅ Richtig! Super!' : '❌ Falsch! Richtig: '+correct;
+}
+
+function speak() {
+  if (!current) return;
+  const u = new SpeechSynthesisUtterance(current.en);
+  u.lang='en-GB'; u.rate=0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function updateScore() {
+  document.getElementById('sc-right').textContent = right;
+  document.getElementById('sc-wrong').textContent = wrong;
+  document.getElementById('sc-total').textContent = right+wrong;
+}
+function updateProgress() {
+  const total = filteredVocab().length;
+  document.getElementById('pbar').style.width = ((total-queue.length)/total*100)+'%';
+}
+function showResult() {
+  document.getElementById('quiz-card').style.display='none';
+  document.querySelector('.progress-wrap').style.display='none';
+  const pct = Math.round(right/(right+wrong)*100)||0;
+  document.getElementById('pct-display').textContent=pct+'%';
+  document.getElementById('result').style.display='block';
+}
+
+restart();
+</script>
+</body>
+</html>
