@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#166534">
+<title>Past Progressive – Unit 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:  #166534;
+  --green2: #15803d;
+  --lime:   #4ade80;
+  --bg:     #f0fdf4;
+  --card:   #ffffff;
+  --text:   #0f172a;
+  --muted:  #64748b;
+  --border: #d1fae5;
+  --yellow: #fef9c3;
+  --yellowb:#ca8a04;
+  --red:    #dc2626;
+  --redbg:  #fef2f2;
+  --greenbg:#f0fdf4;
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:3rem;
+}
+
+/* ── HEADER ── */
+.header {
+  background:var(--green);
+  padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 1.4rem;
+  position:relative; overflow:hidden;
+}
+.header::after {
+  content:'';
+  position:absolute; bottom:-1px; left:0; right:0; height:24px;
+  background:var(--bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.back-btn {
+  display:inline-flex; align-items:center; gap:.4rem;
+  color:rgba(255,255,255,.7); font-size:.78rem; font-weight:600;
+  background:none; border:none; cursor:pointer; margin-bottom:.8rem;
+  text-decoration:none;
+}
+.back-btn:hover { color:#fff; }
+.unit-tag {
+  font-size:.62rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--lime);
+  margin-bottom:.3rem;
+}
+h1 {
+  font-family:'Fraunces',serif;
+  font-size:clamp(1.6rem,5vw,2.4rem);
+  font-weight:900; color:#fff; line-height:1.1;
+}
+h1 em { font-style:italic; opacity:.8; }
+.header-sub { font-size:.82rem; color:rgba(255,255,255,.6); margin-top:.3rem; }
+
+/* ── INFO BOX ── */
+.info-wrap { padding:1.5rem 1.2rem 0; max-width:720px; margin:0 auto; }
+
+.info-box {
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(22,101,52,.08);
+  margin-bottom:1.5rem;
+}
+.info-header {
+  background:linear-gradient(135deg,var(--green),var(--green2));
+  padding:.9rem 1.2rem;
+  display:flex; align-items:center; gap:.6rem; cursor:pointer;
+  user-select:none;
+}
+.info-header h2 {
+  font-family:'Fraunces',serif;
+  font-size:1.05rem; font-weight:700; color:#fff; flex:1;
+}
+.info-header .toggle {
+  color:rgba(255,255,255,.8); font-size:1.1rem;
+  transition:transform .3s;
+}
+.info-header.open .toggle { transform:rotate(180deg); }
+.info-body { padding:1.2rem; display:none; }
+.info-body.open { display:block; }
+
+/* Formula */
+.formula {
+  background:var(--greenbg);
+  border-left:4px solid var(--green2);
+  border-radius:0 12px 12px 0;
+  padding:.85rem 1rem; margin-bottom:1rem;
+  font-size:.95rem; font-weight:600; color:var(--green);
+  font-family:'Fraunces',serif;
+}
+.formula span { color:var(--text); font-weight:400; font-family:'DM Sans',sans-serif; font-size:.82rem; }
+
+/* Table */
+.gram-table { width:100%; border-collapse:collapse; font-size:.82rem; margin-bottom:1rem; }
+.gram-table th {
+  background:#f0fdf4; color:var(--green);
+  padding:.5rem .75rem; text-align:left; font-weight:700;
+  border-bottom:2px solid var(--border);
+}
+.gram-table td { padding:.5rem .75rem; border-bottom:1px solid #f0f9f0; vertical-align:top; }
+.gram-table tr:last-child td { border-bottom:none; }
+.gram-table .ex { color:var(--muted); font-style:italic; }
+.gram-table b { color:var(--green2); }
+
+/* Keywords */
+.kw-row { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; }
+.kw {
+  background:var(--yellow); border:1px solid #fde047;
+  border-radius:20px; padding:.22rem .75rem;
+  font-size:.75rem; font-weight:700; color:var(--yellowb);
+}
+
+/* ── LEVEL TABS ── */
+.tabs-wrap { padding:0 1.2rem; max-width:720px; margin:0 auto 1.2rem; }
+.level-tabs {
+  display:flex; background:#dcfce7;
+  border-radius:12px; padding:3px; gap:0;
+}
+.ltab {
+  flex:1; padding:.5rem .5rem; border:none;
+  border-radius:10px; font-family:'DM Sans',sans-serif;
+  font-size:.8rem; font-weight:700; cursor:pointer;
+  background:transparent; color:var(--green2);
+  transition:all .2s; text-align:center; line-height:1.2;
+}
+.ltab.active { background:var(--green); color:#fff; box-shadow:0 2px 8px rgba(22,101,52,.25); }
+
+/* ── EXERCISES ── */
+.ex-wrap { padding:0 1.2rem; max-width:720px; margin:0 auto; }
+.level-section { display:none; }
+.level-section.show { display:block; }
+
+.level-intro {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:1rem 1.1rem; margin-bottom:1.1rem;
+  font-size:.82rem; line-height:1.6; color:var(--muted);
+}
+.level-intro strong { color:var(--green); }
+
+.ex-card {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:1.1rem;
+  margin-bottom:.85rem;
+  box-shadow:0 2px 8px rgba(22,101,52,.05);
+}
+.ex-num {
+  font-size:.62rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--green2); margin-bottom:.5rem;
+}
+.ex-sentence {
+  font-size:.96rem; line-height:1.7; color:var(--text);
+  margin-bottom:.7rem;
+}
+
+/* Gap input */
+.gap {
+  display:inline-block;
+  border:none; border-bottom:2px solid var(--green2);
+  background:transparent;
+  font-family:'DM Sans',sans-serif; font-size:.92rem; font-weight:600;
+  color:var(--green); min-width:80px; text-align:center;
+  padding:.1rem .3rem; outline:none;
+  -webkit-appearance:none;
+  transition:border-color .2s;
+}
+.gap:focus { border-color:var(--green); }
+.gap.correct { border-color:#16a34a; background:#dcfce7; border-radius:6px; color:#15803d; }
+.gap.wrong   { border-color:var(--red); background:var(--redbg); border-radius:6px; color:var(--red); }
+
+/* MC choices */
+.mc-choices { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem; }
+.mc-btn {
+  padding:.45rem 1rem; border:1.5px solid var(--border);
+  border-radius:50px; font-family:'DM Sans',sans-serif;
+  font-size:.82rem; font-weight:600; cursor:pointer;
+  background:#f8fffe; color:var(--text);
+  transition:all .15s; -webkit-appearance:none;
+}
+.mc-btn:hover { border-color:var(--green2); color:var(--green2); }
+.mc-btn.correct { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+.mc-btn.wrong   { background:var(--redbg); border-color:var(--red); color:var(--red); }
+.mc-btn:disabled { cursor:default; }
+
+/* Transform / free write */
+.transform-input {
+  width:100%; padding:.6rem .85rem;
+  border:1.5px solid var(--border); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:.9rem;
+  background:#fafffe; color:var(--text); outline:none;
+  transition:border .2s; margin-bottom:.6rem;
+  -webkit-appearance:none;
+}
+.transform-input:focus { border-color:var(--green2); }
+.transform-input.correct { border-color:#16a34a; background:#dcfce7; }
+.transform-input.wrong   { border-color:var(--red); background:var(--redbg); }
+
+/* Feedback row */
+.fb-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.fb-msg { font-size:.8rem; font-weight:700; min-height:1.1rem; }
+.fb-msg.good { color:#15803d; }
+.fb-msg.bad  { color:var(--red); }
+.check-btn {
+  padding:.38rem .9rem; background:var(--green); color:#fff;
+  border:none; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
+  cursor:pointer; -webkit-appearance:none; transition:all .18s;
+}
+.check-btn:active { transform:scale(.96); }
+.check-btn:disabled { background:#94a3b8; cursor:default; }
+.show-btn {
+  padding:.38rem .9rem; background:transparent; color:var(--muted);
+  border:1.5px solid #e2e8f0; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:600;
+  cursor:pointer; -webkit-appearance:none;
+}
+
+/* Score bar */
+.score-bar {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:.9rem 1.1rem;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:1rem; gap:1rem; flex-wrap:wrap;
+}
+.score-nums { display:flex; gap:1.2rem; }
+.sn { text-align:center; }
+.sn strong { display:block; font-family:'Fraunces',serif; font-size:1.5rem; font-weight:900; color:var(--green); }
+.sn span { font-size:.68rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.reset-btn {
+  padding:.42rem 1rem; background:#f1f5f9; color:var(--muted);
+  border:none; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
+  cursor:pointer;
+}
+
+.section-heading {
+  font-family:'Fraunces',serif;
+  font-size:1rem; font-weight:700; color:var(--green);
+  margin:.6rem 0 .7rem; display:flex; align-items:center; gap:.5rem;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <a href="unit3.html" class="back-btn">← Back to Unit 3</a>
+  <div class="unit-tag">Unit 3 · Grammar G7</div>
+  <h1>The Past<br><em>Progressive</em></h1>
+  <p class="header-sub">Die Verlaufsform der Vergangenheit · A2+</p>
+</div>
+
+<!-- INFO BOX -->
+<div class="info-wrap">
+  <div class="info-box">
+    <div class="info-header open" id="info-toggle" onclick="toggleInfo()">
+      <h2>📘 How to form the Past Progressive</h2>
+      <span class="toggle" id="info-arrow">▼</span>
+    </div>
+    <div class="info-body open" id="info-body">
+
+      <div class="formula">
+        was / were + verb<span style="color:var(--green)">-ing</span>
+        <span>&nbsp;→ &nbsp;I/he/she/it = <b>was</b> &nbsp;·&nbsp; you/we/they = <b>were</b></span>
+      </div>
+
+      <table class="gram-table">
+        <tr>
+          <th>Type</th>
+          <th>Example</th>
+          <th>Deutsch</th>
+        </tr>
+        <tr>
+          <td>✅ Positive</td>
+          <td>She <b>was walking</b> in the park.</td>
+          <td class="ex">Sie war gerade am Gehen.</td>
+        </tr>
+        <tr>
+          <td>❌ Negative</td>
+          <td>They <b>weren't sleeping</b>.</td>
+          <td class="ex">Sie schliefen nicht gerade.</td>
+        </tr>
+        <tr>
+          <td>❓ Question</td>
+          <td><b>Was</b> he <b>studying</b>?</td>
+          <td class="ex">Lernte er gerade?</td>
+        </tr>
+        <tr>
+          <td>⚡ while / when</td>
+          <td>While I <b>was cooking</b>, the phone rang.</td>
+          <td class="ex">Währ. ich kochte, klingelte das Telefon.</td>
+        </tr>
+      </table>
+
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
+        💡 <b>Use it when:</b> something was <u>in progress</u> in the past, and was interrupted by another event (Simple Past).
+      </p>
+
+      <div class="kw-row">
+        <span class="kw">while</span>
+        <span class="kw">when</span>
+        <span class="kw">at that moment</span>
+        <span class="kw">all day</span>
+        <span class="kw">at 8 o'clock</span>
+        <span class="kw">yesterday at noon</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL TABS -->
+  <div class="tabs-wrap" style="padding:0">
+    <div class="level-tabs">
+      <button class="ltab active" onclick="setLevel('a',this)">⭐ Level A<br><small>Fill in</small></button>
+      <button class="ltab" onclick="setLevel('b',this)">⭐⭐ Level B<br><small>Choose</small></button>
+      <button class="ltab" onclick="setLevel('c',this)">⭐⭐⭐ Level C<br><small>Transform</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISES -->
+<div class="ex-wrap">
+
+  <!-- ══════════ LEVEL A – Fill in the gaps ══════════ -->
+  <div class="level-section show" id="level-a">
+    <div class="score-bar">
+      <div class="score-nums">
+        <div class="sn"><strong id="a-right">0</strong><span>Correct</span></div>
+        <div class="sn"><strong id="a-wrong">0</strong><span>Wrong</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetLevel('a')">🔄 Reset</button>
+    </div>
+
+    <div class="level-intro">
+      <strong>Level A – Fill in the gaps.</strong> Write the correct form of the Past Progressive. Use <em>was/were + verb‑ing</em>.
+    </div>
+
+    <!-- Ex A1 -->
+    <div class="ex-card" id="a1">
+      <div class="ex-num">Exercise 1</div>
+      <div class="ex-sentence">
+        Yesterday at 6 p.m., I <input class="gap" id="a1-g" placeholder="watch" size="10"> TV.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a1','was watching')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a1','was watching')">Show answer</button>
+        <span class="fb-msg" id="a1-fb"></span>
+      </div>
+    </div>
+
+    <!-- Ex A2 -->
+    <div class="ex-card" id="a2">
+      <div class="ex-num">Exercise 2</div>
+      <div class="ex-sentence">
+        While we <input class="gap" id="a2-g" placeholder="visit" size="12"> the park, it started to rain.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a2','were visiting')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a2','were visiting')">Show answer</button>
+        <span class="fb-msg" id="a2-fb"></span>
+      </div>
+    </div>
+
+    <!-- Ex A3 -->
+    <div class="ex-card" id="a3">
+      <div class="ex-num">Exercise 3</div>
+      <div class="ex-sentence">
+        She <input class="gap" id="a3-g" placeholder="work" size="10"> at her desk when the accident happened.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a3','was working')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a3','was working')">Show answer</button>
+        <span class="fb-msg" id="a3-fb"></span>
+      </div>
+    </div>
+
+    <!-- Ex A4 -->
+    <div class="ex-card" id="a4">
+      <div class="ex-num">Exercise 4</div>
+      <div class="ex-sentence">
+        They <input class="gap" id="a4-g" placeholder="play" size="10"> football all afternoon.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a4','were playing')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a4','were playing')">Show answer</button>
+        <span class="fb-msg" id="a4-fb"></span>
+      </div>
+    </div>
+
+    <!-- Ex A5 -->
+    <div class="ex-card" id="a5">
+      <div class="ex-num">Exercise 5</div>
+      <div class="ex-sentence">
+        Nick <input class="gap" id="a5-g" placeholder="prepare" size="12"> some food while I was working in the garden.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a5','was preparing')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a5','was preparing')">Show answer</button>
+        <span class="fb-msg" id="a5-fb"></span>
+      </div>
+    </div>
+
+    <!-- Ex A6 -->
+    <div class="ex-card" id="a6">
+      <div class="ex-num">Exercise 6</div>
+      <div class="ex-sentence">
+        At 10 a.m. yesterday, the elephants <input class="gap" id="a6-g" placeholder="drink" size="10"> at the lake.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a6','were drinking')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a6','were drinking')">Show answer</button>
+        <span class="fb-msg" id="a6-fb"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ LEVEL B – Multiple Choice ══════════ -->
+  <div class="level-section" id="level-b">
+    <div class="score-bar">
+      <div class="score-nums">
+        <div class="sn"><strong id="b-right">0</strong><span>Correct</span></div>
+        <div class="sn"><strong id="b-wrong">0</strong><span>Wrong</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetLevel('b')">🔄 Reset</button>
+    </div>
+
+    <div class="level-intro">
+      <strong>Level B – Choose the correct answer.</strong> Select Past Progressive <em>or</em> Simple Past – which one fits?
+    </div>
+
+    <!-- B1 -->
+    <div class="ex-card" id="b1">
+      <div class="ex-num">Exercise 1</div>
+      <div class="ex-sentence">I ________ for the train when I got Dad's message.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b1',this,'was waiting')">was waiting</button>
+        <button class="mc-btn" onclick="checkMC('b1',this,'waited')">waited</button>
+        <button class="mc-btn" onclick="checkMC('b1',this,'were waiting')">were waiting</button>
+      </div>
+      <div class="fb-row"><span class="fb-msg" id="b1-fb"></span></div>
+    </div>
+
+    <!-- B2 -->
+    <div class="ex-card" id="b2">
+      <div class="ex-num">Exercise 2</div>
+      <div class="ex-sentence">What ________ you ________ between 8 a.m. and 10 a.m. yesterday?</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b2',this,'were … doing')">were … doing</button>
+        <button class="mc-btn" onclick="checkMC('b2',this,'did … do')">did … do</button>
+        <button class="mc-btn" onclick="checkMC('b2',this,'was … doing')">was … doing</button>
+      </div>
+      <div class="fb-row"><span class="fb-msg" id="b2-fb"></span></div>
+    </div>
+
+    <!-- B3 -->
+    <div class="ex-card" id="b3">
+      <div class="ex-num">Exercise 3</div>
+      <div class="ex-sentence">While we ________ our garden party, it started to rain heavily.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b3',this,'were having')">were having</button>
+        <button class="mc-btn" onclick="checkMC('b3',this,'had')">had</button>
+        <button class="mc-btn" onclick="checkMC('b3',this,'have had')">have had</button>
+      </div>
+      <div class="fb-row"><span class="fb-msg" id="b3-fb"></span></div>
+    </div>
+
+    <!-- B4 -->
+    <div class="ex-card" id="b4">
+      <div class="ex-num">Exercise 4</div>
+      <div class="ex-sentence">Joe ________ in the park when he suddenly saw a rainbow.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b4',this,'was running')">was running</button>
+        <button class="mc-btn" onclick="checkMC('b4',this,'ran')">ran</button>
+        <button class="mc-btn" onclick="checkMC('b4',this,'is running')">is running</button>
+      </div>
+      <div class="fb-row"><span class="fb-msg" id="b4-fb"></span></div>
+    </div>
+
+    <!-- B5 -->
+    <div class="ex-card" id="b5">
+      <div class="ex-num">Exercise 5</div>
+      <div class="ex-sentence">My wallet ________ out of my pocket while I was walking.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b5',this,'fell')">fell</button>
+        <button class="mc-btn" onclick="checkMC('b5',this,'was falling')">was falling</button>
+        <button class="mc-btn" onclick="checkMC('b5',this,'falls')">falls</button>
+      </div>
+      <div class="fb-row"><span class="fb-msg" id="b5-fb"></span></div>
+    </div>
+
+    <!-- B6 -->
+    <div class="ex-card" id="b6">
+      <div class="ex-num">Exercise 6</div>
+      <div class="ex-sentence">She ________ at her desk at 9 o'clock this morning.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b6',this,'was working')">was working</button>
+        <button class="mc-btn" onclick="checkMC('b6',this,'worked')">worked</button>
+        <button class="mc-btn" onclick="checkMC('b6',this,'works')">works</button>
+      </div>
+      <div class="fb-row"><span class="fb-msg" id="b6-fb"></span></div>
+    </div>
+  </div>
+
+  <!-- ══════════ LEVEL C – Transform ══════════ -->
+  <div class="level-section" id="level-c">
+    <div class="score-bar">
+      <div class="score-nums">
+        <div class="sn"><strong id="c-right">0</strong><span>Correct</span></div>
+        <div class="sn"><strong id="c-wrong">0</strong><span>Wrong</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetLevel('c')">🔄 Reset</button>
+    </div>
+
+    <div class="level-intro">
+      <strong>Level C – Write a full sentence.</strong> Use the words in brackets. Form the Past Progressive or combine it with the Simple Past.
+    </div>
+
+    <!-- C1 -->
+    <div class="ex-card" id="c1">
+      <div class="ex-num">Exercise 1</div>
+      <div class="ex-sentence">Make a negative sentence:<br>
+        <em>He / study / when the film started.</em> → He was <u>not</u> studying when the film started.
+      </div>
+      <input class="transform-input" id="c1-i" type="text" placeholder="He ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c1',['he was not studying when the film started','he wasn\'t studying when the film started'])">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c1','He wasn\'t studying when the film started.')">Show</button>
+        <span class="fb-msg" id="c1-fb"></span>
+      </div>
+    </div>
+
+    <!-- C2 -->
+    <div class="ex-card" id="c2">
+      <div class="ex-num">Exercise 2</div>
+      <div class="ex-sentence">Write a question:<br>
+        <em>What / she / do / at midnight?</em>
+      </div>
+      <input class="transform-input" id="c2-i" type="text" placeholder="What ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c2',['what was she doing at midnight'])">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c2','What was she doing at midnight?')">Show</button>
+        <span class="fb-msg" id="c2-fb"></span>
+      </div>
+    </div>
+
+    <!-- C3 -->
+    <div class="ex-card" id="c3">
+      <div class="ex-num">Exercise 3</div>
+      <div class="ex-sentence">Combine with <em>while</em>:<br>
+        <em>I / listen to music. My sister / cook dinner.</em>
+      </div>
+      <input class="transform-input" id="c3-i" type="text" placeholder="While I ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c3',['while i was listening to music my sister was cooking dinner','while my sister was cooking dinner i was listening to music'])">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c3','While I was listening to music, my sister was cooking dinner.')">Show</button>
+        <span class="fb-msg" id="c3-fb"></span>
+      </div>
+    </div>
+
+    <!-- C4 -->
+    <div class="ex-card" id="c4">
+      <div class="ex-num">Exercise 4</div>
+      <div class="ex-sentence">Use <em>when</em> + Simple Past:<br>
+        <em>We / drive through the park. We / see two lions.</em>
+      </div>
+      <input class="transform-input" id="c4-i" type="text" placeholder="When we ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c4',['when we were driving through the park we saw two lions','we saw two lions when we were driving through the park'])">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c4','When we were driving through the park, we saw two lions.')">Show</button>
+        <span class="fb-msg" id="c4-fb"></span>
+      </div>
+    </div>
+
+    <!-- C5 -->
+    <div class="ex-card" id="c5">
+      <div class="ex-num">Exercise 5 – Your own sentence!</div>
+      <div class="ex-sentence">Write your own sentence using the Past Progressive and <em>while</em> or <em>when</em>. Use a word from Unit 3 (e.g. safari, township, injured, inspired …).</div>
+      <input class="transform-input" id="c5-i" type="text" placeholder="While / When ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkFree('c5')">Check ✓</button>
+        <span class="fb-msg" id="c5-fb"></span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ex-wrap -->
+
+<script>
+// ── SCORES ──────────────────────────────────────────────────────────────
+const scores = {a:{r:0,w:0}, b:{r:0,w:0}, c:{r:0,w:0}};
+const answered = {};
+
+function updScore(lvl) {
+  document.getElementById(lvl+'-right').textContent = scores[lvl].r;
+  document.getElementById(lvl+'-wrong').textContent = scores[lvl].w;
+}
+
+// ── INFO TOGGLE ──────────────────────────────────────────────────────────
+function toggleInfo() {
+  const body   = document.getElementById('info-body');
+  const toggle = document.getElementById('info-toggle');
+  const arrow  = document.getElementById('info-arrow');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// ── LEVEL SWITCH ─────────────────────────────────────────────────────────
+function setLevel(l, btn) {
+  document.querySelectorAll('.ltab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.level-section').forEach(s => s.classList.remove('show'));
+  document.getElementById('level-'+l).classList.add('show');
+  window.scrollTo({top: document.querySelector('.tabs-wrap') ? 0 : 0, behavior:'smooth'});
+}
+
+// ── LEVEL A – GAP FILL ───────────────────────────────────────────────────
+function checkGap(id, correct) {
+  if (answered[id]) return;
+  const inp = document.getElementById(id+'-g');
+  const val = inp.value.trim().toLowerCase();
+  const ok  = val === correct.toLowerCase();
+  inp.classList.add(ok ? 'correct' : 'wrong');
+  inp.disabled = true;
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  fb.textContent = ok ? '✅ Correct!' : '❌ Answer: ' + correct;
+  answered[id] = true;
+  if (ok) scores.a.r++; else scores.a.w++;
+  updScore('a');
+  disableCard(id);
+}
+
+function showAns(id, correct) {
+  if (answered[id]) return;
+  const inp = document.getElementById(id+'-g');
+  inp.value = correct;
+  inp.classList.add('correct'); inp.disabled = true;
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg good'; fb.textContent = '→ ' + correct;
+  answered[id] = true;
+  scores.a.w++; updScore('a');
+  disableCard(id);
+}
+
+// ── LEVEL B – MULTIPLE CHOICE ────────────────────────────────────────────
+function checkMC(id, btn, correct) {
+  if (answered[id]) return;
+  answered[id] = true;
+  const allBtns = btn.closest('.mc-choices').querySelectorAll('.mc-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    if (b.textContent.trim() === correct) b.classList.add('correct');
+  });
+  const chosen = btn.textContent.trim();
+  const ok = chosen === correct;
+  if (!ok) btn.classList.add('wrong');
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  fb.textContent = ok ? '✅ Correct!' : '❌ Answer: ' + correct;
+  if (ok) scores.b.r++; else scores.b.w++;
+  updScore('b');
+}
+
+// ── LEVEL C – TRANSFORM ──────────────────────────────────────────────────
+function norm(s) {
+  return s.toLowerCase().replace(/[?.!,]/g,'').replace(/\s+/g,' ').trim();
+}
+
+function checkTransform(id, accepted) {
+  if (answered[id]) return;
+  const inp = document.getElementById(id+'-i');
+  const val = norm(inp.value);
+  const ok  = accepted.some(a => norm(a) === val);
+  inp.classList.add(ok ? 'correct' : 'wrong');
+  inp.disabled = true;
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  fb.textContent = ok ? '✅ Correct!' : '❌ Check the model answer.';
+  answered[id] = true;
+  if (ok) scores.c.r++; else scores.c.w++;
+  updScore('c');
+}
+
+function showTransform(id, answer) {
+  if (answered[id]) return;
+  const inp = document.getElementById(id+'-i');
+  inp.value = answer; inp.classList.add('correct'); inp.disabled = true;
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg good'; fb.textContent = '→ Model answer shown';
+  answered[id] = true;
+  scores.c.w++; updScore('c');
+}
+
+function checkFree(id) {
+  if (answered[id]) return;
+  const inp = document.getElementById(id+'-i');
+  const val = inp.value.trim().toLowerCase();
+  const hasWasWere = val.includes('was ') || val.includes('were ');
+  const hasIng = val.includes('ing');
+  const hasCon = val.includes('while') || val.includes('when');
+  const ok = hasWasWere && hasIng && hasCon && val.length > 15;
+  inp.classList.add(ok ? 'correct' : 'wrong');
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  if (ok) { fb.textContent = '✅ Looks great! Good job!'; scores.c.r++; }
+  else { fb.textContent = '💡 Use was/were + verb-ing and while/when.'; scores.c.w++; }
+  answered[id] = true;
+  updScore('c');
+}
+
+function disableCard(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.querySelectorAll('.check-btn, .show-btn').forEach(b => b.disabled = true);
+}
+
+// ── RESET ────────────────────────────────────────────────────────────────
+function resetLevel(lvl) {
+  scores[lvl] = {r:0, w:0};
+  updScore(lvl);
+  const section = document.getElementById('level-'+lvl);
+
+  // Reset gaps
+  section.querySelectorAll('.gap').forEach(inp => {
+    inp.value=''; inp.className='gap'; inp.disabled=false;
+  });
+  // Reset MC buttons
+  section.querySelectorAll('.mc-btn').forEach(b => {
+    b.className='mc-btn'; b.disabled=false;
+  });
+  // Reset transform inputs
+  section.querySelectorAll('.transform-input').forEach(inp => {
+    inp.value=''; inp.className='transform-input'; inp.disabled=false;
+  });
+  // Reset feedback
+  section.querySelectorAll('.fb-msg').forEach(fb => {
+    fb.textContent=''; fb.className='fb-msg';
+  });
+  // Reset check/show btns
+  section.querySelectorAll('.check-btn, .show-btn').forEach(b => b.disabled=false);
+
+  // Clear answered state for this level's exercises
+  const prefix = lvl;
+  Object.keys(answered).forEach(k => { if (k.startsWith(prefix)) delete answered[k]; });
+}
+</script>
+</body>
+</html>
