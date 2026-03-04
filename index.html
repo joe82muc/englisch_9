@@ -4,580 +4,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Englisch 9. Klasse">
 <meta name="theme-color" content="#0f2a4a">
 <title>Englisch 9. Klasse – MS Sportpark Unterhaching</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --navy:   #0f2a4a;
-  --blue:   #1a4a8a;
-  --sky:    #3b82f6;
-  --gold:   #f59e0b;
-  --green:  #10b981;
-  --red:    #ef4444;
-  --purple: #8b5cf6;
-  --teal:   #14b8a6;
-  --paper:  #faf8f4;
-  --bg:     #f0f4f8;
-  --muted:  #64748b;
-  --text:   #0f172a;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+  font-family:'DM Sans',sans-serif;
+  background:#0f2a4a;
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:2rem 1.5rem;
 }
 
-/* ── HERO ── */
-.hero {
-  background: var(--navy);
-  position: relative;
-  overflow: hidden;
-  padding: calc(env(safe-area-inset-top) + 2.5rem) 1.5rem 3rem;
-  text-align: center;
+.school {
+  font-size:.68rem; font-weight:600; letter-spacing:2px;
+  text-transform:uppercase; color:rgba(255,255,255,.4);
+  text-align:center; margin-bottom:1.8rem;
 }
-
-/* Animated background dots */
-.hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(59,130,246,0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(245,158,11,0.12) 0%, transparent 40%),
-    radial-gradient(circle at 60% 80%, rgba(16,185,129,0.10) 0%, transparent 40%);
-  pointer-events: none;
-}
-
-/* Floating letters decoration */
-.floaters {
-  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
-}
-.floater {
-  position: absolute;
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  color: rgba(255,255,255,0.04);
-  font-size: clamp(4rem, 10vw, 8rem);
-  font-weight: 900;
-  user-select: none;
-  animation: drift 20s ease-in-out infinite;
-}
-.floater:nth-child(1) { top: -1rem; left: 2%;  animation-delay: 0s;   font-size: 7rem; }
-.floater:nth-child(2) { top: 20%;  right: 3%;  animation-delay: -5s;  font-size: 5rem; }
-.floater:nth-child(3) { bottom: 5%; left: 15%; animation-delay: -10s; font-size: 6rem; }
-.floater:nth-child(4) { top: 40%;  left: 40%;  animation-delay: -15s; font-size: 4rem; }
-@keyframes drift {
-  0%,100% { transform: translateY(0) rotate(-3deg); }
-  50%      { transform: translateY(-20px) rotate(3deg); }
-}
-
-.school-badge {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 50px; padding: 0.35rem 1rem;
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px;
-  text-transform: uppercase; color: rgba(255,255,255,0.75);
-  margin-bottom: 1.2rem;
-  backdrop-filter: blur(8px);
-  animation: fadeUp 0.6s ease both;
-}
-.school-badge span { font-size: 1rem; }
 
 h1 {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(2rem, 7vw, 3.8rem);
-  font-weight: 900;
-  color: #fff;
-  line-height: 1.05;
-  margin-bottom: 0.6rem;
-  animation: fadeUp 0.6s 0.1s ease both;
+  font-family:'Fraunces',serif;
+  font-size:clamp(2rem,8vw,3.2rem);
+  font-weight:900; color:#fff; text-align:center;
+  line-height:1.05; margin-bottom:2.5rem;
 }
-h1 em {
-  font-style: italic;
-  color: var(--gold);
+h1 em { font-style:italic; color:#f59e0b; }
+
+.nav {
+  display:flex; flex-direction:column; gap:.75rem;
+  width:100%; max-width:340px;
 }
 
-.hero-sub {
-  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-  color: rgba(255,255,255,0.65);
-  max-width: 500px; margin: 0 auto 2rem;
-  line-height: 1.6;
-  animation: fadeUp 0.6s 0.2s ease both;
+.nav a {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(255,255,255,.07);
+  border:1.5px solid rgba(255,255,255,.12);
+  border-radius:14px; padding:1.1rem 1.4rem;
+  text-decoration:none; color:#fff;
+  font-size:1rem; font-weight:600;
+  transition:all .18s;
 }
+.nav a:hover {
+  background:rgba(255,255,255,.13);
+  border-color:rgba(255,255,255,.25);
+  transform:translateX(4px);
+}
+.nav a:active { transform:scale(.98); }
 
-/* Quali badge */
-.quali-badge {
-  display: inline-flex; align-items: center; gap: 0.6rem;
-  background: linear-gradient(135deg, var(--gold), #d97706);
-  color: #fff; border-radius: 12px;
-  padding: 0.7rem 1.4rem;
-  font-weight: 700; font-size: 0.88rem;
-  box-shadow: 0 4px 20px rgba(245,158,11,0.4);
-  animation: fadeUp 0.6s 0.3s ease both;
-}
-.quali-badge .icon { font-size: 1.2rem; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── UNIT TABS ── */
-.unit-nav {
-  background: var(--navy);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 0 1rem;
-  display: flex; gap: 0; overflow-x: auto;
-  scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  position: sticky; top: 0; z-index: 50;
-}
-.unit-nav::-webkit-scrollbar { display: none; }
-.unit-btn {
-  padding: 0.85rem 1.3rem;
-  border: none; background: transparent;
-  color: rgba(255,255,255,0.5); font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem; font-weight: 600; cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
-}
-.unit-btn:hover  { color: rgba(255,255,255,0.85); }
-.unit-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-/* ── MAIN CONTENT ── */
-main { padding: 2rem 1.2rem 4rem; max-width: 900px; margin: 0 auto; }
-
-.section-title {
-  font-family: 'Fraunces', serif;
-  font-size: 1.5rem; font-weight: 700;
-  color: var(--navy); margin-bottom: 0.3rem;
-}
-.section-sub { font-size: 0.83rem; color: var(--muted); margin-bottom: 1.4rem; }
-
-/* ── CARDS GRID ── */
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
-
-.card {
-  background: var(--paper);
-  border-radius: 16px;
-  padding: 1.4rem;
-  text-decoration: none; color: inherit;
-  border: 1.5px solid #e2e8f0;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  display: flex; flex-direction: column; gap: 0.6rem;
-  position: relative; overflow: hidden;
-  animation: fadeUp 0.5s ease both;
-}
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(15,42,74,0.12);
-  border-color: transparent;
-}
-.card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 4px;
-  border-radius: 16px 16px 0 0;
-}
-
-/* Color accents per type */
-.card.vocab  { --c: var(--blue);   } .card.vocab::before  { background: var(--blue); }
-.card.grammar{ --c: var(--purple); } .card.grammar::before{ background: var(--purple); }
-.card.tenses { --c: var(--teal);   } .card.tenses::before { background: var(--teal); }
-.card.map    { --c: var(--green);  } .card.map::before    { background: var(--green); }
-.card.coming { --c: #cbd5e1;       } .card.coming::before { background: #cbd5e1; }
-.card:hover { border-color: var(--c); }
-
-.card-icon {
-  font-size: 2rem; line-height: 1;
-}
-.card-label {
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--c);
-}
-.card-title {
-  font-family: 'Fraunces', serif;
-  font-size: 1.1rem; font-weight: 700;
-  color: var(--navy); line-height: 1.25;
-}
-.card-desc {
-  font-size: 0.78rem; color: var(--muted); line-height: 1.5;
-  flex: 1;
-}
-.card-arrow {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  font-size: 0.78rem; font-weight: 700; color: var(--c);
-  margin-top: 0.4rem;
-}
-.card.coming .card-arrow { color: #94a3b8; }
-.badge-soon {
-  display: inline-block; background: #f1f5f9; color: #94a3b8;
-  font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 20px;
-  margin-top: 0.2rem;
-}
-
-/* ── GRAMMAR QUICK REFERENCE ── */
-.grammar-box {
-  background: var(--paper); border: 1.5px solid #e2e8f0;
-  border-radius: 16px; padding: 1.4rem; margin-bottom: 2rem;
-}
-.grammar-box h3 {
-  font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 700;
-  color: var(--navy); margin-bottom: 1rem;
-  display: flex; align-items: center; gap: 0.5rem;
-}
-.tense-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
-.ttab {
-  padding: 0.35rem 0.85rem; border: 1.5px solid #e2e8f0;
-  border-radius: 50px; font-family: 'DM Sans', sans-serif;
-  font-size: 0.78rem; font-weight: 600; cursor: pointer;
-  background: transparent; color: var(--muted); transition: all 0.2s;
-}
-.ttab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
-.tense-content { display: none; }
-.tense-content.show { display: block; }
-.tense-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.tense-table th {
-  text-align: left; padding: 0.4rem 0.6rem;
-  background: #f1f5f9; font-weight: 600; color: var(--navy);
-  border-radius: 6px 6px 0 0;
-}
-.tense-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #f1f5f9; }
-.tense-table tr:last-child td { border-bottom: none; }
-.tense-table .ex { color: var(--muted); font-style: italic; }
-.formula {
-  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
-  border-left: 4px solid var(--teal);
-  border-radius: 0 10px 10px 0;
-  padding: 0.8rem 1rem; margin-bottom: 0.8rem;
-  font-family: 'Fraunces', serif; font-size: 0.95rem; font-weight: 700;
-  color: var(--navy);
-}
-.formula span { color: var(--teal); }
-
-/* ── PROGRESS / MOTIVATION ── */
-.motivation {
-  background: linear-gradient(135deg, var(--navy), #1a3a6a);
-  border-radius: 16px; padding: 1.6rem;
-  color: #fff; text-align: center; margin-bottom: 2rem;
-}
-.motivation h3 { font-family: 'Fraunces', serif; font-size: 1.3rem; margin-bottom: 0.4rem; }
-.motivation p  { font-size: 0.85rem; color: rgba(255,255,255,0.65); margin-bottom: 1.2rem; }
-.tip-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; text-align: left; }
-.tip-list li { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.82rem; color: rgba(255,255,255,0.8); }
-.tip-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
-
-/* ── UNIT SECTIONS ── */
-.unit-section { display: none; }
-.unit-section.show { display: block; }
-
-/* Animation delays */
-.cards .card:nth-child(1) { animation-delay: 0.05s; }
-.cards .card:nth-child(2) { animation-delay: 0.10s; }
-.cards .card:nth-child(3) { animation-delay: 0.15s; }
-.cards .card:nth-child(4) { animation-delay: 0.20s; }
-.cards .card:nth-child(5) { animation-delay: 0.25s; }
-.cards .card:nth-child(6) { animation-delay: 0.30s; }
-
-/* Footer */
-footer {
-  text-align: center; padding: 1.5rem;
-  font-size: 0.75rem; color: var(--muted);
-  border-top: 1px solid #e2e8f0;
-}
+.nav a .arrow { opacity:.4; font-size:1.1rem; }
+.nav a:hover .arrow { opacity:1; }
 </style>
 </head>
 <body>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="floaters">
-    <div class="floater">A</div>
-    <div class="floater">B</div>
-    <div class="floater">C</div>
-    <div class="floater">?</div>
-  </div>
+<p class="school">🏫 Mittelschule am Sportpark Unterhaching</p>
 
-  <div class="school-badge"><span>🏫</span> Mittelschule am Sportpark Unterhaching</div>
-  <h1>Englisch<br><em>9. Klasse</em></h1>
-  <p class="hero-sub">Hier kannst du Vokabeln üben, Grammatik wiederholen und dich optimal auf den Quali vorbereiten.</p>
-  <div class="quali-badge">
-    <span class="icon">🎯</span>
-    Ideal zur Vorbereitung auf den Quali Bayern
-  </div>
-</div>
+<h1>Englisch<br><em>9. Klasse</em></h1>
 
-<!-- UNIT NAVIGATION -->
-<nav class="unit-nav">
-  <button class="unit-btn active" onclick="showUnit('all',this)">📚 Alle</button>
-  <button class="unit-btn" onclick="showUnit('u1',this)">Unit 1</button>
-  <button class="unit-btn" onclick="showUnit('u2',this)">Unit 2</button>
-  <button class="unit-btn" onclick="showUnit('u3',this)">Unit 3</button>
-  <button class="unit-btn" onclick="showUnit('u4',this)">Unit 4</button>
-  <button class="unit-btn" onclick="showUnit('grammar',this)">📝 Grammatik</button>
+<nav class="nav">
+  <a href="unit1.html"><span>Unit 1</span><span class="arrow">→</span></a>
+  <a href="unit2.html"><span>Unit 2</span><span class="arrow">→</span></a>
+  <a href="unit3.html"><span>Unit 3</span><span class="arrow">→</span></a>
+  <a href="unit4.html"><span>Unit 4</span><span class="arrow">→</span></a>
 </nav>
 
-<main>
-
-  <!-- ══════════════════ UNIT 1 ══════════════════ -->
-  <div class="unit-section show" id="sec-u1">
-    <div class="section-title">Unit 1</div>
-    <div class="section-sub">Vokabeln und Übungen zu Unit 1</div>
-    <div class="cards">
-      <a href="klett_vokabeltrainer_pwa.html" class="card vocab">
-        <div class="card-icon">📖</div>
-        <div class="card-label">Vokabeln</div>
-        <div class="card-title">Vokabeltrainer Unit 1–3</div>
-        <div class="card-desc">87 Vokabeln aus dem Klett Bridge Buch. Multiple Choice oder Tippen. Mit Aussprache.</div>
-        <div class="card-arrow">Jetzt üben →</div>
-      </a>
-      <div class="card tenses coming">
-        <div class="card-icon">✏️</div>
-        <div class="card-label">Grammatik</div>
-        <div class="card-title">Simple Past – Übungen</div>
-        <div class="card-desc">Regelmäßige und unregelmäßige Verben. Sätze bilden und umformen.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-      <div class="card coming">
-        <div class="card-icon">🎧</div>
-        <div class="card-label">Listening</div>
-        <div class="card-title">Hörverständnis Unit 1</div>
-        <div class="card-desc">Quali-typische Hörverstehensübungen mit Fragen.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════ UNIT 2 ══════════════════ -->
-  <div class="unit-section show" id="sec-u2">
-    <div class="section-title">Unit 2</div>
-    <div class="section-sub">Vokabeln und Übungen zu Unit 2</div>
-    <div class="cards">
-      <a href="klett_vokabeltrainer_pwa.html" class="card vocab">
-        <div class="card-icon">📖</div>
-        <div class="card-label">Vokabeln</div>
-        <div class="card-title">Vokabeltrainer Unit 2</div>
-        <div class="card-desc">Alle Vokabeln aus Unit 2. In beide Richtungen üben mit Aussprache.</div>
-        <div class="card-arrow">Jetzt üben →</div>
-      </a>
-      <div class="card tenses coming">
-        <div class="card-icon">⏰</div>
-        <div class="card-label">Zeiten</div>
-        <div class="card-title">Present Perfect</div>
-        <div class="card-desc">have/has + past participle. Unterschied zu Simple Past. Signalwörter.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-      <div class="card coming">
-        <div class="card-icon">📝</div>
-        <div class="card-label">Schreiben</div>
-        <div class="card-title">Email & Brief schreiben</div>
-        <div class="card-desc">Typische Quali-Aufgaben: formelle und informelle Texte.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════ UNIT 3 ══════════════════ -->
-  <div class="unit-section show" id="sec-u3">
-    <div class="section-title">Unit 3 – Discover South Africa</div>
-    <div class="section-sub">Südafrika · 87 Vokabeln · Seiten 171–175</div>
-    <div class="cards">
-      <a href="klett_vokabeltrainer_pwa.html" class="card vocab">
-        <div class="card-icon">📖</div>
-        <div class="card-label">Vokabeln · 87 Wörter</div>
-        <div class="card-title">Vokabeltrainer Unit 3</div>
-        <div class="card-desc">Alle Vokabeln aus Unit 3: Intro, Topic 1+2, Text, Mediation, More About. Mit Aussprache 🔊</div>
-        <div class="card-arrow">Jetzt üben →</div>
-      </a>
-      <div class="card grammar">
-        <div class="card-icon">📐</div>
-        <div class="card-label">Grammatik</div>
-        <div class="card-title">for – since</div>
-        <div class="card-desc">Unterschied zwischen for und since mit dem Present Perfect. Direkt in der App erklärt.</div>
-        <div class="card-arrow" style="color:var(--muted)">Siehe Grammatik ↓</div>
-      </div>
-      <a href="deutschland_karte.html" class="card map">
-        <div class="card-icon">🗺️</div>
-        <div class="card-label">Erdkunde</div>
-        <div class="card-title">Stumme Karte Deutschland</div>
-        <div class="card-desc">16 Bundesländer und Hauptstädte lernen und abfragen. Interaktives Quiz.</div>
-        <div class="card-arrow">Zur Karte →</div>
-      </a>
-    </div>
-  </div>
-
-  <!-- ══════════════════ UNIT 4 ══════════════════ -->
-  <div class="unit-section show" id="sec-u4">
-    <div class="section-title">Unit 4</div>
-    <div class="section-sub">Vokabeln und Übungen zu Unit 4</div>
-    <div class="cards">
-      <div class="card vocab coming">
-        <div class="card-icon">📖</div>
-        <div class="card-label">Vokabeln</div>
-        <div class="card-title">Vokabeltrainer Unit 4</div>
-        <div class="card-desc">Alle Vokabeln aus Unit 4. Multiple Choice oder Tippen. Mit Aussprache.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-      <div class="card tenses coming">
-        <div class="card-icon">🔮</div>
-        <div class="card-label">Zeiten</div>
-        <div class="card-title">Will-Future & Going-to</div>
-        <div class="card-desc">Zukunft ausdrücken – Unterschied und Anwendung. Typisch für den Quali.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-      <div class="card coming">
-        <div class="card-icon">🧪</div>
-        <div class="card-label">Test</div>
-        <div class="card-title">Quali-Simulation Unit 4</div>
-        <div class="card-desc">Kompletter Übungstest im Quali-Format mit Auswertung.</div>
-        <span class="badge-soon">Demnächst</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════ GRAMMAR REFERENCE ══════════════════ -->
-  <div class="unit-section show" id="sec-grammar">
-    <div class="section-title">📝 Grammatik-Übersicht</div>
-    <div class="section-sub">Alle wichtigen Zeiten für den Quali Bayern auf einen Blick</div>
-
-    <div class="grammar-box">
-      <h3>⏰ Zeitenübersicht</h3>
-
-      <div class="tense-tabs">
-        <button class="ttab active" onclick="showTense('past-simple',this)">Simple Past</button>
-        <button class="ttab" onclick="showTense('present-perfect',this)">Present Perfect</button>
-        <button class="ttab" onclick="showTense('past-prog',this)">Past Progressive</button>
-        <button class="ttab" onclick="showTense('will',this)">Will-Future</button>
-        <button class="ttab" onclick="showTense('going-to',this)">Going-to</button>
-        <button class="ttab" onclick="showTense('conditional',this)">Conditional I</button>
-      </div>
-
-      <!-- Simple Past -->
-      <div class="tense-content show" id="t-past-simple">
-        <div class="formula">Subjekt + <span>verb-ed</span> / <span>unregelmäßige Form</span> + …</div>
-        <table class="tense-table">
-          <tr><th>Satzart</th><th>Beispiel</th></tr>
-          <tr><td>✅ Aussage</td><td class="ex">She <b>visited</b> London last year.</td></tr>
-          <tr><td>❌ Verneinung</td><td class="ex">She <b>didn't visit</b> Paris.</td></tr>
-          <tr><td>❓ Frage</td><td class="ex"><b>Did</b> she <b>visit</b> London?</td></tr>
-        </table>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">📌 <b>Signalwörter:</b> yesterday, last year/week/month, ago, in 2020, then, when</p>
-      </div>
-
-      <!-- Present Perfect -->
-      <div class="tense-content" id="t-present-perfect">
-        <div class="formula">Subjekt + <span>have/has</span> + <span>past participle</span></div>
-        <table class="tense-table">
-          <tr><th>Satzart</th><th>Beispiel</th></tr>
-          <tr><td>✅ Aussage</td><td class="ex">I <b>have lived</b> here for 5 years.</td></tr>
-          <tr><td>❌ Verneinung</td><td class="ex">She <b>hasn't seen</b> the film yet.</td></tr>
-          <tr><td>❓ Frage</td><td class="ex"><b>Have</b> you <b>ever been</b> to Africa?</td></tr>
-        </table>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">📌 <b>for/since:</b> I have lived here <b>for</b> 5 years. / <b>since</b> 2019.</p>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.3rem">📌 <b>Weitere Signalwörter:</b> already, yet, just, ever, never, recently</p>
-      </div>
-
-      <!-- Past Progressive -->
-      <div class="tense-content" id="t-past-prog">
-        <div class="formula">Subjekt + <span>was/were</span> + <span>verb-ing</span></div>
-        <table class="tense-table">
-          <tr><th>Satzart</th><th>Beispiel</th></tr>
-          <tr><td>✅ Aussage</td><td class="ex">I <b>was sleeping</b> at 8 pm.</td></tr>
-          <tr><td>❌ Verneinung</td><td class="ex">They <b>weren't watching</b> TV.</td></tr>
-          <tr><td>❓ Frage</td><td class="ex"><b>Was</b> she <b>studying</b>?</td></tr>
-        </table>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">📌 Oft mit Simple Past kombiniert: While I <b>was cooking</b>, the phone <b>rang</b>.</p>
-      </div>
-
-      <!-- Will Future -->
-      <div class="tense-content" id="t-will">
-        <div class="formula">Subjekt + <span>will</span> + <span>Infinitiv</span></div>
-        <table class="tense-table">
-          <tr><th>Satzart</th><th>Beispiel</th></tr>
-          <tr><td>✅ Aussage</td><td class="ex">I <b>will help</b> you tomorrow.</td></tr>
-          <tr><td>❌ Verneinung</td><td class="ex">She <b>won't come</b> to the party.</td></tr>
-          <tr><td>❓ Frage</td><td class="ex"><b>Will</b> you <b>call</b> me later?</td></tr>
-        </table>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">📌 Für spontane Entscheidungen, Versprechen, Vorhersagen ohne Plan</p>
-      </div>
-
-      <!-- Going-to -->
-      <div class="tense-content" id="t-going-to">
-        <div class="formula">Subjekt + <span>am/is/are going to</span> + <span>Infinitiv</span></div>
-        <table class="tense-table">
-          <tr><th>Satzart</th><th>Beispiel</th></tr>
-          <tr><td>✅ Aussage</td><td class="ex">We <b>are going to visit</b> Berlin.</td></tr>
-          <tr><td>❌ Verneinung</td><td class="ex">He <b>isn't going to play</b> football.</td></tr>
-          <tr><td>❓ Frage</td><td class="ex"><b>Are</b> you <b>going to study</b> tonight?</td></tr>
-        </table>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">📌 Für geplante Absichten und Vorhersagen mit Beweisen</p>
-      </div>
-
-      <!-- Conditional I -->
-      <div class="tense-content" id="t-conditional">
-        <div class="formula"><span>If</span> + Simple Present, <span>will</span> + Infinitiv</div>
-        <table class="tense-table">
-          <tr><th>Satzart</th><th>Beispiel</th></tr>
-          <tr><td>✅ Aussage</td><td class="ex"><b>If</b> it rains, we <b>will</b> stay home.</td></tr>
-          <tr><td>❌ Verneinung</td><td class="ex">If she <b>doesn't study</b>, she <b>won't pass</b>.</td></tr>
-          <tr><td>❓ Frage</td><td class="ex">What <b>will</b> you do if you <b>pass</b> the Quali?</td></tr>
-        </table>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">📌 Reale Bedingungen in der Gegenwart/Zukunft. If-Satz = Simple Present!</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════ MOTIVATION ══════════════════ -->
-  <div class="motivation">
-    <h3>🎯 Quali-Tipps</h3>
-    <p>So bereitest du dich am besten vor</p>
-    <ul class="tip-list">
-      <li>Jeden Tag 10 Minuten Vokabeln üben ist besser als einmal 2 Stunden</li>
-      <li>Schreibe unbekannte Wörter auf und lies sie laut vor</li>
-      <li>Übe alle Zeiten bis du sie ohne Nachdenken bildest</li>
-      <li>Lies englische Texte – auch kurze reichen!</li>
-      <li>Nutze den Vokabeltrainer im Bus oder in der Pause</li>
-    </ul>
-  </div>
-
-</main>
-
-<footer>
-  Mittelschule am Sportpark Unterhaching · Englisch 9. Klasse · Lernplattform
-</footer>
-
-<script>
-function showUnit(unit, btn) {
-  // Update tab buttons
-  document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  const sections = ['u1','u2','u3','u4','grammar'];
-  sections.forEach(id => {
-    const el = document.getElementById('sec-'+id);
-    if (!el) return;
-    if (unit === 'all') {
-      el.classList.add('show');
-    } else {
-      el.classList.toggle('show', unit === id);
-    }
-  });
-
-  // Scroll to top of main
-  document.querySelector('main').scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-function showTense(id, btn) {
-  document.querySelectorAll('.tense-content').forEach(el => el.classList.remove('show'));
-  document.querySelectorAll('.ttab').forEach(b => b.classList.remove('active'));
-  document.getElementById('t-'+id).classList.add('show');
-  btn.classList.add('active');
-}
-</script>
 </body>
 </html>
