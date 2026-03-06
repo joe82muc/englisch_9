@@ -1,687 +1,433 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1e3a5f">
-<title>Present Perfect – Unit 3</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --navy:#1e3a5f; --blue:#2563eb; --sky:#93c5fd;
-  --bg:#eff6ff; --card:#fff; --border:#bfdbfe;
-  --text:#0f172a; --muted:#64748b;
-  --green:#15803d; --greenbg:#dcfce7; --greenb:#16a34a;
-  --red:#dc2626; --redbg:#fef2f2;
-  --gold:#b45309; --goldbg:#fef9c3; --goldborder:#fde047;
-  --purple:#7c3aed; --purplebg:#ede9fe;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:3rem;}
-.header{background:var(--navy);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 1.6rem;position:relative;overflow:hidden;}
-.header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
-.back-btn{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.65);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
-.unit-tag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sky);margin-bottom:.3rem;}
-h1{font-family:'Fraunces',serif;font-size:clamp(1.6rem,5vw,2.4rem);font-weight:900;color:#fff;line-height:1.1;}
-h1 em{font-style:italic;opacity:.8;}
-.header-sub{font-size:.82rem;color:rgba(255,255,255,.6);margin-top:.3rem;}
-.wrap{padding:1.4rem 1.2rem 0;max-width:720px;margin:0 auto;}
-.info-box{background:var(--card);border:2px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(30,58,95,.08);margin-bottom:1.4rem;}
-.info-hdr{background:linear-gradient(135deg,var(--navy),#1a4a8a);padding:.9rem 1.2rem;display:flex;align-items:center;gap:.6rem;cursor:pointer;user-select:none;}
-.info-hdr h2{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;color:#fff;flex:1;}
-.toggle{color:rgba(255,255,255,.8);font-size:1.1rem;transition:transform .3s;}
-.info-hdr.open .toggle{transform:rotate(180deg);}
-.info-body{padding:1.2rem;display:none;}
-.info-body.open{display:block;}
-.formula{background:#eff6ff;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:.85rem 1rem;margin-bottom:1rem;font-size:.95rem;font-weight:700;color:var(--navy);font-family:'Fraunces',serif;}
-.formula span{color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif;font-size:.8rem;}
-.gram-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1rem;}
-.gram-table th{background:#eff6ff;color:var(--navy);padding:.5rem .75rem;text-align:left;font-weight:700;border-bottom:2px solid var(--border);}
-.gram-table td{padding:.5rem .75rem;border-bottom:1px solid #f0f7ff;vertical-align:top;}
-.gram-table tr:last-child td{border-bottom:none;}
-.gram-table .ex{color:var(--muted);font-style:italic;}
-.gram-table b{color:var(--blue);}
-.sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem;}
-.sw-box{border-radius:12px;padding:.8rem;}
-.sw-box.for{background:var(--purplebg);border:1.5px solid #c4b5fd;}
-.sw-box.since{background:var(--goldbg);border:1.5px solid var(--goldborder);}
-.sw-title{font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem;}
-.sw-box.for .sw-title{color:var(--purple);}
-.sw-box.since .sw-title{color:var(--gold);}
-.sw-chips{display:flex;flex-wrap:wrap;gap:.3rem;}
-.chip{font-size:.72rem;font-weight:600;border-radius:20px;padding:.2rem .65rem;}
-.chip.for{background:#ddd6fe;color:var(--purple);}
-.chip.since{background:var(--goldbg);color:var(--gold);border:1px solid #fde047;}
-.level-tabs{display:flex;background:#dbeafe;border-radius:12px;padding:3px;gap:0;margin-bottom:1.2rem;}
-.ltab{flex:1;padding:.5rem .4rem;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--blue);transition:all .2s;text-align:center;line-height:1.2;}
-.ltab.active{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(30,58,95,.25);}
-.level-section{display:none;}
-.level-section.show{display:block;}
-.level-intro{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem;font-size:.82rem;line-height:1.6;color:var(--muted);}
-.level-intro strong{color:var(--navy);}
-.score-bar{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:.85rem 1.1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap;}
-.score-nums{display:flex;gap:1.2rem;}
-.sn{text-align:center;}
-.sn strong{display:block;font-family:'Fraunces',serif;font-size:1.5rem;font-weight:900;color:var(--navy);}
-.sn span{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
-.reset-btn{padding:.42rem 1rem;background:#f1f5f9;color:var(--muted);border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;}
-.ex-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:.85rem;box-shadow:0 2px 8px rgba(30,58,95,.05);}
-.ex-num{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:.5rem;}
-.ex-sentence{font-size:.95rem;line-height:1.75;color:var(--text);margin-bottom:.75rem;}
-.gap{display:inline-block;border:none;border-bottom:2px solid var(--blue);background:transparent;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;color:var(--navy);min-width:75px;text-align:center;padding:.1rem .3rem;outline:none;-webkit-appearance:none;transition:border-color .2s;}
-.gap:focus{border-color:var(--navy);}
-.gap.correct{border-color:var(--greenb);background:var(--greenbg);border-radius:6px;color:var(--green);}
-.gap.wrong{border-color:var(--red);background:var(--redbg);border-radius:6px;color:var(--red);}
-.mc-choices{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem;}
-.mc-btn{padding:.45rem 1rem;border:1.5px solid var(--border);border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:#f8fbff;color:var(--text);transition:all .15s;-webkit-appearance:none;}
-.mc-btn:hover{border-color:var(--blue);color:var(--navy);}
-.mc-btn.correct{background:var(--greenbg);border-color:var(--greenb);color:var(--green);}
-.mc-btn.wrong{background:var(--redbg);border-color:var(--red);color:var(--red);}
-.mc-btn:disabled{cursor:default;}
-.tr-input{width:100%;padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:#f8fbff;color:var(--text);outline:none;transition:border .2s;margin-bottom:.6rem;-webkit-appearance:none;}
-.tr-input:focus{border-color:var(--blue);}
-.tr-input.correct{border-color:var(--greenb);background:var(--greenbg);}
-.tr-input.wrong{border-color:var(--red);background:var(--redbg);}
-.fb-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
-.fb{font-size:.8rem;font-weight:700;min-height:1.1rem;}
-.fb.good{color:var(--green);}
-.fb.bad{color:var(--red);}
-.check-btn{padding:.38rem .9rem;background:var(--navy);color:#fff;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .18s;}
-.check-btn:active{transform:scale(.96);}
-.check-btn:disabled{background:#94a3b8;cursor:default;}
-.show-btn,.task-reset-btn{padding:.38rem .9rem;background:transparent;color:var(--muted);border:1.5px solid #e2e8f0;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;}
-.task-reset-btn{color:var(--blue);border-color:#bfdbfe;background:#f8fbff;}
-.ai-hint{
-  display:none;
-  margin-top:.75rem;
-  padding:.75rem .9rem;
-  border-radius:12px;
-  background:#eff6ff;
-  border:1.5px solid #bfdbfe;
-  color:#1e3a5f;
-  font-size:.82rem;
-  line-height:1.5;
-}
-.ai-hint.show{display:block;}
-.ai-hint.loading{opacity:.8;}
-</style>
-</head>
-<body>
-
-<div class="header">
-  <a href="../index.html" class="back-btn">← Back</a>
-  <div class="unit-tag">Unit 3 · Grammar G8</div>
-  <h1>Present Perfect<br><em>for &amp; since</em></h1>
-  <p class="header-sub">Das Perfekt mit for und since · A2+</p>
-</div>
-
-<div class="wrap">
-
-<div class="info-box">
-  <div class="info-hdr open" onclick="toggleInfo()">
-    <h2>📘 Present Perfect – How it works</h2>
-    <span class="toggle">▼</span>
-  </div>
-  <div class="info-body open" id="info-body">
-    <div class="formula">
-      have / has + past participle (3rd form)
-      <span>&nbsp;→&nbsp; help → help<b>ed</b> · write → <b>written</b> · be → <b>been</b></span>
-    </div>
-
-    <table class="gram-table">
-      <tr><th>Type</th><th>Example</th><th>Deutsch</th></tr>
-      <tr><td>✅ Positive</td><td>I <b>have just tidied</b> my room.</td><td class="ex">Ich habe gerade mein Zimmer aufgeräumt.</td></tr>
-      <tr><td>❌ Negative</td><td>I <b>haven't been</b> to South Africa yet.</td><td class="ex">Ich war noch nicht in Südafrika.</td></tr>
-      <tr><td>❓ Question</td><td><b>Have</b> you ever <b>met</b> a famous person?</td><td class="ex">Hast du jemals eine berühmte Person getroffen?</td></tr>
-      <tr><td>⏱ for / since</td><td>I <b>haven't seen</b> Mia <b>for</b> a week.</td><td class="ex">Ich habe Mia seit einer Woche nicht gesehen.</td></tr>
-    </table>
-
-    <p style="font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:.6rem;">⏱ for vs. since</p>
-    <div class="sw-grid">
-      <div class="sw-box for">
-        <div class="sw-title">FOR = Zeitspanne</div>
-        <div class="sw-chips">
-          <span class="chip for">for an hour</span>
-          <span class="chip for">for two years</span>
-          <span class="chip for">for a long time</span>
-          <span class="chip for">for many years</span>
-          <span class="chip for">for a week</span>
-        </div>
-      </div>
-      <div class="sw-box since">
-        <div class="sw-title">SINCE = Zeitpunkt</div>
-        <div class="sw-chips">
-          <span class="chip since">since Sunday</span>
-          <span class="chip since">since 6:00 a.m.</span>
-          <span class="chip since">since May</span>
-          <span class="chip since">since 1994</span>
-          <span class="chip since">since I was young</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="level-tabs">
-  <button class="ltab active" onclick="setLevel('a',this)">⭐ Level A<br><small>Fill in</small></button>
-  <button class="ltab" onclick="setLevel('b',this)">⭐⭐ Level B<br><small>for / since</small></button>
-  <button class="ltab" onclick="setLevel('c',this)">⭐⭐⭐ Level C<br><small>Write it</small></button>
-</div>
-
-<div class="level-section show" id="level-a">
-  <div class="score-bar">
-    <div class="score-nums">
-      <div class="sn"><strong id="a-r">0</strong><span>Correct</span></div>
-      <div class="sn"><strong id="a-w">0</strong><span>Wrong</span></div>
-    </div>
-    <button class="reset-btn" onclick="resetLevel('a')">🔄 Reset level</button>
-  </div>
-  <div class="level-intro"><strong>Level A – Fill in the gaps.</strong> Use the <em>Present Perfect</em> (have/has + past participle).</div>
-
-  <div class="ex-card" id="a1">
-    <div class="ex-num">Exercise 1</div>
-    <div class="ex-sentence">I <input class="gap" id="a1g" size="12"> to South Africa a few times. <em>(already / be)</em></div>
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkGap('a1','have already been','a')">Check ✓</button>
-      <button class="show-btn" onclick="showGap('a1','have already been','a')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('a1')">Reset task</button>
-      <span class="fb" id="a1f"></span>
-    </div>
-    <div class="ai-hint" id="a1h"></div>
-  </div>
-
-  <div class="ex-card" id="a2">
-    <div class="ex-num">Exercise 2</div>
-    <div class="ex-sentence">There <input class="gap" id="a2g" size="12"> serious problems with AIDS for many years. <em>(be)</em></div>
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkGap('a2','have been','a')">Check ✓</button>
-      <button class="show-btn" onclick="showGap('a2','have been','a')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('a2')">Reset task</button>
-      <span class="fb" id="a2f"></span>
-    </div>
-    <div class="ai-hint" id="a2h"></div>
-  </div>
-
-  <div class="ex-card" id="a3">
-    <div class="ex-num">Exercise 3</div>
-    <div class="ex-sentence">Mia <input class="gap" id="a3g" size="10"> in South Africa since she was young. <em>(live)</em></div>
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkGap('a3','has lived','a')">Check ✓</button>
-      <button class="show-btn" onclick="showGap('a3','has lived','a')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('a3')">Reset task</button>
-      <span class="fb" id="a3f"></span>
-    </div>
-    <div class="ai-hint" id="a3h"></div>
-  </div>
-
-  <div class="ex-card" id="a4">
-    <div class="ex-num">Exercise 4</div>
-    <div class="ex-sentence">South African people <input class="gap" id="a4g" size="14"> a lot since 1994. <em>(achieve)</em></div>
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkGap('a4','have achieved','a')">Check ✓</button>
-      <button class="show-btn" onclick="showGap('a4','have achieved','a')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('a4')">Reset task</button>
-      <span class="fb" id="a4f"></span>
-    </div>
-    <div class="ai-hint" id="a4h"></div>
-  </div>
-
-  <div class="ex-card" id="a5">
-    <div class="ex-num">Exercise 5</div>
-    <div class="ex-sentence"><input class="gap" id="a5g" size="8"> you ever <input class="gap" id="a5g2" size="8"> to South African music? <em>(ever / listen)</em></div>
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkGap2('a5','have','listened','a')">Check ✓</button>
-      <button class="show-btn" onclick="showGap2('a5','Have','listened','a')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('a5')">Reset task</button>
-      <span class="fb" id="a5f"></span>
-    </div>
-    <div class="ai-hint" id="a5h"></div>
-  </div>
-
-  <div class="ex-card" id="a6">
-    <div class="ex-num">Exercise 6</div>
-    <div class="ex-sentence">I <input class="gap" id="a6g" size="14"> the zoo for two years. <em>(not visit)</em></div>
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkGap('a6','haven\\'t visited','a',['have not visited','havent visited'])">Check ✓</button>
-      <button class="show-btn" onclick="showGap('a6','haven\\'t visited','a')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('a6')">Reset task</button>
-      <span class="fb" id="a6f"></span>
-    </div>
-    <div class="ai-hint" id="a6h"></div>
-  </div>
-</div>
-
-<div class="level-section" id="level-b">
-  <div class="score-bar">
-    <div class="score-nums">
-      <div class="sn"><strong id="b-r">0</strong><span>Correct</span></div>
-      <div class="sn"><strong id="b-w">0</strong><span>Wrong</span></div>
-    </div>
-    <button class="reset-btn" onclick="resetLevel('b')">🔄 Reset level</button>
-  </div>
-  <div class="level-intro"><strong>Level B – Choose for or since.</strong></div>
-
-  <div class="ex-card" id="b1">
-    <div class="ex-num">Exercise 1</div>
-    <div class="ex-sentence">I haven't seen Mia ________ Sunday.</div>
-    <div class="mc-choices">
-      <button class="mc-btn" onclick="checkMC('b1',this,'since','b')">since</button>
-      <button class="mc-btn" onclick="checkMC('b1',this,'for','b')">for</button>
-    </div>
-    <div class="fb-row">
-      <button class="task-reset-btn" onclick="resetTask('b1')">Reset task</button>
-      <span class="fb" id="b1f"></span>
-    </div>
-    <div class="ai-hint" id="b1h"></div>
-  </div>
-
-  <div class="ex-card" id="b2">
-    <div class="ex-num">Exercise 2</div>
-    <div class="ex-sentence">I haven't seen Mia ________ a week.</div>
-    <div class="mc-choices">
-      <button class="mc-btn" onclick="checkMC('b2',this,'for','b')">for</button>
-      <button class="mc-btn" onclick="checkMC('b2',this,'since','b')">since</button>
-    </div>
-    <div class="fb-row">
-      <button class="task-reset-btn" onclick="resetTask('b2')">Reset task</button>
-      <span class="fb" id="b2f"></span>
-    </div>
-    <div class="ai-hint" id="b2h"></div>
-  </div>
-</div>
-
-<div class="level-section" id="level-c">
-  <div class="score-bar">
-    <div class="score-nums">
-      <div class="sn"><strong id="c-r">0</strong><span>Correct</span></div>
-      <div class="sn"><strong id="c-w">0</strong><span>Wrong</span></div>
-    </div>
-    <button class="reset-btn" onclick="resetLevel('c')">🔄 Reset level</button>
-  </div>
-  <div class="level-intro"><strong>Level C – Write full sentences.</strong></div>
-
-  <div class="ex-card" id="c1">
-    <div class="ex-num">Exercise 1 – Negative</div>
-    <div class="ex-sentence">Make it negative: <em>She / meet / a famous person / yet.</em></div>
-    <input class="tr-input" id="c1i" type="text">
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkTr('c1',['she hasn\\'t met a famous person yet','she has not met a famous person yet'],'c')">Check ✓</button>
-      <button class="show-btn" onclick="showTr('c1','She hasn\\'t met a famous person yet.','c')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('c1')">Reset task</button>
-      <span class="fb" id="c1f"></span>
-    </div>
-    <div class="ai-hint" id="c1h"></div>
-  </div>
-
-  <div class="ex-card" id="c2">
-    <div class="ex-num">Exercise 2 – Question</div>
-    <div class="ex-sentence">Write a question: <em>your friend / ever / be / on TV?</em></div>
-    <input class="tr-input" id="c2i" type="text">
-    <div class="fb-row">
-      <button class="check-btn" onclick="checkTr('c2',['has your friend ever been on tv'],'c')">Check ✓</button>
-      <button class="show-btn" onclick="showTr('c2','Has your friend ever been on TV?','c')">Show</button>
-      <button class="task-reset-btn" onclick="resetTask('c2')">Reset task</button>
-      <span class="fb" id="c2f"></span>
-    </div>
-    <div class="ai-hint" id="c2h"></div>
-  </div>
-</div>
-
-</div>
-
 <script>
-const scores={a:{r:0,w:0},b:{r:0,w:0},c:{r:0,w:0}};
-const taskState={};
+const scores = {
+  a: { r: 0, w: 0 },
+  b: { r: 0, w: 0 },
+  c: { r: 0, w: 0 }
+};
 
-function updScore(l){
-  document.getElementById(l+'-r').textContent=scores[l].r;
-  document.getElementById(l+'-w').textContent=scores[l].w;
+const taskState = {};
+
+function updScore(level) {
+  const r = document.getElementById(level + "-r");
+  const w = document.getElementById(level + "-w");
+  if (r) r.textContent = scores[level].r;
+  if (w) w.textContent = scores[level].w;
 }
 
-function toggleInfo(){
-  const b=document.getElementById('info-body');
-  const h=document.querySelector('.info-hdr');
-  b.classList.toggle('open');
-  h.classList.toggle('open');
+function toggleInfo() {
+  const body = document.getElementById("info-body");
+  const header = document.querySelector(".info-hdr");
+  if (body) body.classList.toggle("open");
+  if (header) header.classList.toggle("open");
 }
 
-function setLevel(l,btn){
-  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.level-section').forEach(s=>s.classList.remove('show'));
-  document.getElementById('level-'+l).classList.add('show');
+function setLevel(level, btn) {
+  document.querySelectorAll(".ltab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.querySelectorAll(".level-section").forEach(s => s.classList.remove("show"));
+  const section = document.getElementById("level-" + level);
+  if (section) section.classList.add("show");
 }
 
-function norm(s){
-  return s.toLowerCase().replace(/[?.!,]/g,'').replace(/\\s+/g,' ').trim();
+function norm(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[?.!,]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function markScoredOnce(id,lvl,ok){
-  if(taskState[id]?.scored) return;
-  if(ok) scores[lvl].r++; else scores[lvl].w++;
-  updScore(lvl);
-  taskState[id]={...(taskState[id]||{}),scored:true,locked:ok};
+function clearHint(id) {
+  const box = document.getElementById(id + "h");
+  if (!box) return;
+  box.textContent = "";
+  box.className = "ai-hint";
 }
 
-function unlockTask(id){
-  taskState[id]={scored:false,locked:false};
+function setHint(id, text, loading = false) {
+  const box = document.getElementById(id + "h");
+  if (!box) return;
+  box.textContent = text;
+  box.className = loading ? "ai-hint show loading" : "ai-hint show";
 }
 
-function clearHint(id){
-  const box=document.getElementById(id+'h');
-  if(box){
-    box.textContent='';
-    box.className='ai-hint';
+function localPresentPerfectHint(studentAnswer, correctAnswer, grammarTopic) {
+  const s = norm(studentAnswer);
+  const c = norm(correctAnswer);
+  const g = norm(grammarTopic);
+
+  if (g.includes("for vs since")) {
+    if (c.includes("since")) return "Denke an einen Startpunkt: Tag, Jahr oder Uhrzeit → since.";
+    if (c.includes("for")) return "Denke an eine Zeitspanne: a week, two years → for.";
   }
+
+  if ((c.includes("have") || c.includes("has")) && !(s.includes("have") || s.includes("has"))) {
+    return "Dir fehlt have oder has.";
+  }
+
+  if (c.includes("has") && s.includes("have")) {
+    return "Bei he, she, it brauchst du has.";
+  }
+
+  if (c.includes("have") && s.includes("has")) {
+    return "Bei I, you, we, they brauchst du have.";
+  }
+
+  if (c.includes("been") && !s.includes("been")) {
+    return "Die 3. Form von be ist been.";
+  }
+
+  if (c.includes("lived") && !s.includes("lived")) {
+    return "Nach have oder has brauchst du hier lived.";
+  }
+
+  if (c.includes("achieved") && !s.includes("achieved")) {
+    return "Nach have oder has brauchst du hier achieved.";
+  }
+
+  if (c.includes("listened") && !s.includes("listened")) {
+    return "Nach have oder has brauchst du hier listened.";
+  }
+
+  if (c.includes("visited") && !s.includes("visited")) {
+    return "Nach have oder has brauchst du hier visited.";
+  }
+
+  if (c.includes("sung") && !s.includes("sung")) {
+    return "Achte auf das unregelmäßige Verb: sing – sang – sung.";
+  }
+
+  if (c.includes("already") && !s.includes("already")) {
+    return "Das Signalwort already fehlt.";
+  }
+
+  if (c.includes("ever") && !s.includes("ever")) {
+    return "In der Frage fehlt ever.";
+  }
+
+  if ((c.includes("haven't") || c.includes("have not")) && !(s.includes("not") || s.includes("haven't"))) {
+    return "Der Satz muss verneint sein: haven't / have not.";
+  }
+
+  return "Prüfe have oder has und dann die 3. Verbform.";
 }
 
-function setHint(id,text,loading=false){
-  const box=document.getElementById(id+'h');
-  if(box){
-    box.textContent=text;
-    box.className='ai-hint show'+(loading?' loading':'');
-  }
-}
+async function getAiHint(obj) {
+  try {
+    setHint(obj.exerciseId, "KI denkt nach ...", true);
 
-function localPresentPerfectHint(studentAnswer, correctAnswer, grammarTopic=''){
-  const s=(studentAnswer||'').toLowerCase().trim();
-  const c=(correctAnswer||'').toLowerCase();
-
-  if(grammarTopic.includes('for vs since')){
-    if(c.includes('since')) return 'Denke an einen Startpunkt: Tag, Jahr, Uhrzeit oder since + Nebensatz.';
-    if(c.includes('for')) return 'Denke an eine Zeitspanne: for two years, for a week, for a long time.';
-  }
-
-  if(!s.includes('have') && !s.includes('has') && (c.includes('have') || c.includes('has'))){
-    return 'Dir fehlt das Hilfsverb have oder has.';
-  }
-
-  if(c.includes('has') && s.includes('have')){
-    return 'Achte auf das Subjekt: bei he, she, it nimmst du has.';
-  }
-
-  if(c.includes('have') && s.includes('has')){
-    return 'Achte auf das Subjekt: bei I, you, we, they nimmst du have.';
-  }
-
-  if(c.includes('been') && !s.includes('been')){
-    return 'Bei be brauchst du im Present Perfect die 3. Form been.';
-  }
-
-  if(c.includes('lived') && !s.includes('lived')){
-    return 'Nach have oder has brauchst du die 3. Form: lived.';
-  }
-
-  if(c.includes('achieved') && !s.includes('achieved')){
-    return 'Nimm nach have oder has das past participle: achieved.';
-  }
-
-  if(c.includes('listened') && !s.includes('listened')){
-    return 'Für listen brauchst du hier die 3. Form listened.';
-  }
-
-  if(c.includes('visited') && !s.includes('visited')){
-    return 'Für visit brauchst du hier die 3. Form visited.';
-  }
-
-  if(c.includes('sung') && !s.includes('sung')){
-    return 'Achte auf das unregelmäßige Verb: sing – sang – sung.';
-  }
-
-  if(c.includes('already') && !s.includes('already')){
-    return 'Das Signalwort already gehört in den Satz.';
-  }
-
-  if(c.includes('ever') && !s.includes('ever')){
-    return 'In Fragesätzen passt hier ever.';
-  }
-
-  if(c.includes(\"haven't\") || c.includes('have not')){
-    return 'Es muss eine Verneinung sein: have not oder haven’t + past participle.';
-  }
-
-  return 'Prüfe have oder has, dann die 3. Verbform und bei Bedarf for oder since.';
-}
-
-async function getAiHint({exerciseId,studentAnswer,correctAnswer,exerciseText,grammarTopic}){
-  try{
-    setHint(exerciseId,'KI denkt nach ...',true);
-
-    const response=await fetch('https://englisch-9.onrender.com/hint',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({studentAnswer,correctAnswer,exerciseText,grammarTopic})
+    const response = await fetch("https://englisch-9.onrender.com/hint", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(obj)
     });
 
-    if(!response.ok) throw new Error('server');
-    const data=await response.json();
-    const hint=(data.hint||'').trim();
+    if (!response.ok) {
+      throw new Error("Serverfehler");
+    }
 
-    if(!hint || /-ing/i.test(hint)){
-      setHint(exerciseId,'💡 '+localPresentPerfectHint(studentAnswer,correctAnswer,grammarTopic));
+    const data = await response.json();
+    const hint = (data.hint || "").trim();
+
+    if (!hint || hint.toLowerCase().includes("-ing")) {
+      setHint(obj.exerciseId, "💡 " + localPresentPerfectHint(obj.studentAnswer, obj.correctAnswer, obj.grammarTopic));
       return;
     }
 
-    setHint(exerciseId,'💡 '+hint);
-  }catch(e){
-    setHint(exerciseId,'💡 '+localPresentPerfectHint(studentAnswer,correctAnswer,grammarTopic));
+    setHint(obj.exerciseId, "💡 " + hint);
+  } catch (e) {
+    setHint(obj.exerciseId, "💡 " + localPresentPerfectHint(obj.studentAnswer, obj.correctAnswer, obj.grammarTopic));
   }
 }
 
-function taskLocked(id){
-  return !!taskState[id]?.locked;
+function taskLocked(id) {
+  return !!(taskState[id] && taskState[id].locked);
 }
 
-async function checkGap(id,correct,lvl,extra=[]){
-  if(taskLocked(id)) return;
+function markScoredOnce(id, level, ok) {
+  if (taskState[id] && taskState[id].scored) return;
+
+  if (ok) {
+    scores[level].r++;
+  } else {
+    scores[level].w++;
+  }
+
+  updScore(level);
+
+  taskState[id] = {
+    scored: true,
+    locked: ok
+  };
+}
+
+async function checkGap(id, correct, level, extra = []) {
+  if (taskLocked(id)) return;
+
   clearHint(id);
 
-  const inp=document.getElementById(id+'g');
-  const val=norm(inp.value);
-  const accepted=[norm(correct),...extra.map(norm)];
-  const ok=accepted.includes(val);
+  const input = document.getElementById(id + "g");
+  const fb = document.getElementById(id + "f");
+  if (!input || !fb) return;
 
-  inp.classList.remove('correct','wrong');
-  inp.classList.add(ok?'correct':'wrong');
+  const val = norm(input.value);
+  const accepted = [norm(correct), ...extra.map(norm)];
+  const ok = accepted.includes(val);
 
-  const fb=document.getElementById(id+'f');
-  fb.className='fb '+(ok?'good':'bad');
-  fb.textContent=ok?'✅ Correct!':'❌ Not correct. Improve your answer and check again.';
+  input.classList.remove("correct", "wrong");
+  input.classList.add(ok ? "correct" : "wrong");
 
-  markScoredOnce(id,lvl,ok);
+  fb.className = "fb " + (ok ? "good" : "bad");
+  fb.textContent = ok ? "✅ Correct!" : "❌ Not correct. Improve your answer and check again.";
 
-  if(ok){
-    taskState[id].locked=true;
-    inp.disabled=true;
-  }else{
+  markScoredOnce(id, level, ok);
+
+  if (ok) {
+    input.disabled = true;
+    taskState[id].locked = true;
+  } else {
     await getAiHint({
-      exerciseId:id,
-      studentAnswer:inp.value,
-      correctAnswer:correct,
-      exerciseText:document.querySelector('#'+id+' .ex-sentence')?.innerText || '',
-      grammarTopic:'Present Perfect'
+      exerciseId: id,
+      studentAnswer: input.value,
+      correctAnswer: correct,
+      exerciseText: document.querySelector("#" + id + " .ex-sentence")?.innerText || "",
+      grammarTopic: "Present Perfect"
     });
   }
 }
 
-function showGap(id,correct,lvl){
+function showGap(id, correct, level) {
   clearHint(id);
-  const inp=document.getElementById(id+'g');
-  inp.value=correct;
-  inp.classList.remove('wrong');
-  inp.classList.add('correct');
-  inp.disabled=true;
-  taskState[id]={scored:true,locked:true};
-  const fb=document.getElementById(id+'f');
-  fb.className='fb good';
-  fb.textContent='→ '+correct;
+
+  const input = document.getElementById(id + "g");
+  const fb = document.getElementById(id + "f");
+  if (!input || !fb) return;
+
+  input.value = correct;
+  input.classList.remove("wrong");
+  input.classList.add("correct");
+  input.disabled = true;
+
+  fb.className = "fb good";
+  fb.textContent = "→ " + correct;
+
+  taskState[id] = {
+    scored: true,
+    locked: true
+  };
 }
 
-async function checkGap2(id,c1,c2,lvl){
-  if(taskLocked(id)) return;
+async function checkGap2(id, first, second, level) {
+  if (taskLocked(id)) return;
+
   clearHint(id);
 
-  const i1=document.getElementById(id+'g');
-  const i2=document.getElementById(id+'g2');
-  const ok=norm(i1.value)===norm(c1) && norm(i2.value)===norm(c2);
+  const i1 = document.getElementById(id + "g");
+  const i2 = document.getElementById(id + "g2");
+  const fb = document.getElementById(id + "f");
+  if (!i1 || !i2 || !fb) return;
 
-  [i1,i2].forEach(i=>i.classList.remove('correct','wrong'));
-  [i1,i2].forEach(i=>i.classList.add(ok?'correct':'wrong'));
+  const ok = norm(i1.value) === norm(first) && norm(i2.value) === norm(second);
 
-  const fb=document.getElementById(id+'f');
-  fb.className='fb '+(ok?'good':'bad');
-  fb.textContent=ok?'✅ Correct!':'❌ Not correct. Improve your answer and check again.';
+  i1.classList.remove("correct", "wrong");
+  i2.classList.remove("correct", "wrong");
 
-  markScoredOnce(id,lvl,ok);
+  i1.classList.add(ok ? "correct" : "wrong");
+  i2.classList.add(ok ? "correct" : "wrong");
 
-  if(ok){
-    taskState[id].locked=true;
-    i1.disabled=true;
-    i2.disabled=true;
-  }else{
+  fb.className = "fb " + (ok ? "good" : "bad");
+  fb.textContent = ok ? "✅ Correct!" : "❌ Not correct. Improve your answer and check again.";
+
+  markScoredOnce(id, level, ok);
+
+  if (ok) {
+    i1.disabled = true;
+    i2.disabled = true;
+    taskState[id].locked = true;
+  } else {
     await getAiHint({
-      exerciseId:id,
-      studentAnswer:(i1.value+' '+i2.value).trim(),
-      correctAnswer:c1+' '+c2,
-      exerciseText:document.querySelector('#'+id+' .ex-sentence')?.innerText || '',
-      grammarTopic:'Present Perfect question with ever'
+      exerciseId: id,
+      studentAnswer: (i1.value + " " + i2.value).trim(),
+      correctAnswer: first + " " + second,
+      exerciseText: document.querySelector("#" + id + " .ex-sentence")?.innerText || "",
+      grammarTopic: "Present Perfect question with ever"
     });
   }
 }
 
-function showGap2(id,c1,c2,lvl){
+function showGap2(id, first, second, level) {
   clearHint(id);
-  const i1=document.getElementById(id+'g');
-  const i2=document.getElementById(id+'g2');
-  i1.value=c1;
-  i2.value=c2;
-  [i1,i2].forEach(i=>{
-    i.classList.remove('wrong');
-    i.classList.add('correct');
-    i.disabled=true;
-  });
-  taskState[id]={scored:true,locked:true};
-  const fb=document.getElementById(id+'f');
-  fb.className='fb good';
-  fb.textContent='→ '+c1+' … '+c2;
+
+  const i1 = document.getElementById(id + "g");
+  const i2 = document.getElementById(id + "g2");
+  const fb = document.getElementById(id + "f");
+  if (!i1 || !i2 || !fb) return;
+
+  i1.value = first;
+  i2.value = second;
+
+  i1.classList.remove("wrong");
+  i2.classList.remove("wrong");
+
+  i1.classList.add("correct");
+  i2.classList.add("correct");
+
+  i1.disabled = true;
+  i2.disabled = true;
+
+  fb.className = "fb good";
+  fb.textContent = "→ " + first + " … " + second;
+
+  taskState[id] = {
+    scored: true,
+    locked: true
+  };
 }
 
-async function checkMC(id,btn,correct,lvl){
-  if(taskLocked(id)) return;
+async function checkMC(id, btn, correct, level) {
+  if (taskLocked(id)) return;
+
   clearHint(id);
 
-  const choiceWrap=btn.closest('.mc-choices');
-  const chosen=btn.textContent.trim();
-  const ok=chosen===correct;
+  const wrapper = btn.closest(".mc-choices");
+  const fb = document.getElementById(id + "f");
+  if (!wrapper || !fb) return;
 
-  choiceWrap.querySelectorAll('.mc-btn').forEach(b=>b.classList.remove('correct','wrong'));
-  if(ok){
-    btn.classList.add('correct');
-    choiceWrap.querySelectorAll('.mc-btn').forEach(b=>b.disabled=true);
-    taskState[id]={scored:true,locked:true};
-  }else{
-    btn.classList.add('wrong');
-    choiceWrap.querySelectorAll('.mc-btn').forEach(b=>{
-      if(b.textContent.trim()===correct) b.classList.add('correct');
-    });
-    markScoredOnce(id,lvl,false);
-  }
+  const chosen = btn.textContent.trim();
+  const ok = chosen === correct;
 
-  const fb=document.getElementById(id+'f');
-  fb.className='fb '+(ok?'good':'bad');
-  fb.textContent=ok?'✅ Correct!':'❌ Not correct. Reset this task and try again.';
-
-  if(ok){
-    markScoredOnce(id,lvl,true);
-  }else{
-    await getAiHint({
-      exerciseId:id,
-      studentAnswer:chosen,
-      correctAnswer:correct,
-      exerciseText:document.querySelector('#'+id+' .ex-sentence')?.innerText || '',
-      grammarTopic:'for vs since'
-    });
-  }
-}
-
-async function checkTr(id,accepted,lvl){
-  if(taskLocked(id)) return;
-  clearHint(id);
-
-  const inp=document.getElementById(id+'i');
-  const val=norm(inp.value);
-  const ok=accepted.map(norm).includes(val);
-
-  inp.classList.remove('correct','wrong');
-  inp.classList.add(ok?'correct':'wrong');
-
-  const fb=document.getElementById(id+'f');
-  fb.className='fb '+(ok?'good':'bad');
-  fb.textContent=ok?'✅ Correct!':'❌ Not correct. Improve your answer and check again.';
-
-  markScoredOnce(id,lvl,ok);
-
-  if(ok){
-    taskState[id].locked=true;
-    inp.disabled=true;
-  }else{
-    await getAiHint({
-      exerciseId:id,
-      studentAnswer:inp.value,
-      correctAnswer:accepted[0],
-      exerciseText:document.querySelector('#'+id+' .ex-sentence')?.innerText || '',
-      grammarTopic:'Present Perfect sentence building'
-    });
-  }
-}
-
-function showTr(id,answer,lvl){
-  clearHint(id);
-  const inp=document.getElementById(id+'i');
-  inp.value=answer;
-  inp.classList.remove('wrong');
-  inp.classList.add('correct');
-  inp.disabled=true;
-  taskState[id]={scored:true,locked:true};
-  const fb=document.getElementById(id+'f');
-  fb.className='fb good';
-  fb.textContent='→ Model answer shown';
-}
-
-function resetTask(id){
-  clearHint(id);
-  taskState[id]={scored:false,locked:false};
-
-  const card=document.getElementById(id);
-  card.querySelectorAll('.gap').forEach(i=>{
-    i.value='';
-    i.disabled=false;
-    i.className='gap';
-  });
-  card.querySelectorAll('.tr-input').forEach(i=>{
-    i.value='';
-    i.disabled=false;
-    i.className='tr-input';
-  });
-  card.querySelectorAll('.mc-btn').forEach(b=>{
-    b.disabled=false;
-    b.className='mc-btn';
+  wrapper.querySelectorAll(".mc-btn").forEach(b => {
+    b.classList.remove("correct", "wrong");
   });
 
-  const fb=document.getElementById(id+'f');
-  if(fb){
-    fb.textContent='';
-    fb.className='fb';
+  if (ok) {
+    btn.classList.add("correct");
+    wrapper.querySelectorAll(".mc-btn").forEach(b => b.disabled = true);
+    markScoredOnce(id, level, true);
+    taskState[id].locked = true;
+    fb.className = "fb good";
+    fb.textContent = "✅ Correct!";
+  } else {
+    btn.classList.add("wrong");
+    wrapper.querySelectorAll(".mc-btn").forEach(b => {
+      if (b.textContent.trim() === correct) b.classList.add("correct");
+    });
+    markScoredOnce(id, level, false);
+    fb.className = "fb bad";
+    fb.textContent = "❌ Not correct. Reset this task and try again.";
+
+    await getAiHint({
+      exerciseId: id,
+      studentAnswer: chosen,
+      correctAnswer: correct,
+      exerciseText: document.querySelector("#" + id + " .ex-sentence")?.innerText || "",
+      grammarTopic: "for vs since"
+    });
   }
 }
 
-function resetLevel(lvl){
-  scores[lvl]={r:0,w:0};
-  updScore(lvl);
-  const sec=document.getElementById('level-'+lvl);
-  sec.querySelectorAll('.ex-card').forEach(card=>resetTask(card.id));
+async function checkTr(id, accepted, level) {
+  if (taskLocked(id)) return;
+
+  clearHint(id);
+
+  const input = document.getElementById(id + "i");
+  const fb = document.getElementById(id + "f");
+  if (!input || !fb) return;
+
+  const val = norm(input.value);
+  const ok = accepted.map(norm).includes(val);
+
+  input.classList.remove("correct", "wrong");
+  input.classList.add(ok ? "correct" : "wrong");
+
+  fb.className = "fb " + (ok ? "good" : "bad");
+  fb.textContent = ok ? "✅ Correct!" : "❌ Not correct. Improve your answer and check again.";
+
+  markScoredOnce(id, level, ok);
+
+  if (ok) {
+    input.disabled = true;
+    taskState[id].locked = true;
+  } else {
+    await getAiHint({
+      exerciseId: id,
+      studentAnswer: input.value,
+      correctAnswer: accepted[0],
+      exerciseText: document.querySelector("#" + id + " .ex-sentence")?.innerText || "",
+      grammarTopic: "Present Perfect sentence building"
+    });
+  }
+}
+
+function showTr(id, answer, level) {
+  clearHint(id);
+
+  const input = document.getElementById(id + "i");
+  const fb = document.getElementById(id + "f");
+  if (!input || !fb) return;
+
+  input.value = answer;
+  input.classList.remove("wrong");
+  input.classList.add("correct");
+  input.disabled = true;
+
+  fb.className = "fb good";
+  fb.textContent = "→ Model answer shown";
+
+  taskState[id] = {
+    scored: true,
+    locked: true
+  };
+}
+
+function resetTask(id) {
+  clearHint(id);
+
+  const card = document.getElementById(id);
+  if (!card) return;
+
+  card.querySelectorAll(".gap").forEach(i => {
+    i.value = "";
+    i.disabled = false;
+    i.className = "gap";
+  });
+
+  card.querySelectorAll(".tr-input").forEach(i => {
+    i.value = "";
+    i.disabled = false;
+    i.className = "tr-input";
+  });
+
+  card.querySelectorAll(".mc-btn").forEach(b => {
+    b.disabled = false;
+    b.className = "mc-btn";
+  });
+
+  const fb = document.getElementById(id + "f");
+  if (fb) {
+    fb.textContent = "";
+    fb.className = "fb";
+  }
+
+  taskState[id] = {
+    scored: false,
+    locked: false
+  };
+}
+
+function resetLevel(level) {
+  scores[level] = { r: 0, w: 0 };
+  updScore(level);
+
+  const section = document.getElementById("level-" + level);
+  if (!section) return;
+
+  section.querySelectorAll(".ex-card").forEach(card => {
+    resetTask(card.id);
+  });
 }
 </script>
-</body>
-</html>
