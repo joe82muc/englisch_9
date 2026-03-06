@@ -1,1 +1,14 @@
-
+{
+  "name": "englisch_9",
+  "version": "1.0.0",
+  "description": "backend for english exercises",
+  "main": "api/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node api/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
