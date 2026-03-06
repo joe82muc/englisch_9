@@ -5,8 +5,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post("/hint", (req, res) => {
+app.get("/", (req, res) => {
+  res.send("Server läuft.");
+});
 
+app.post("/hint", (req, res) => {
   const { studentAnswer, correctAnswer } = req.body;
 
   let hint = "Think about the correct tense.";
@@ -20,7 +23,6 @@ app.post("/hint", (req, res) => {
   }
 
   res.json({ hint });
-
 });
 
 app.listen(3000, () => {
