@@ -459,14 +459,98 @@ function chkStatement(id) {
   answered[id]=true; if(ok)scores.c.r++;else scores.c.w++; updScore('c');
 }
 
-/* ── AW Live German Tips ── */
+/* ── AW Live German Tips – detailliert & eingabeabhängig ── */
 var C_TIPS={
-  c1:function(v){if(!v)return null;if(v.length<5)return'💡 Tipp: Beginne mit „What is your …"';if(!v.toLowerCase().includes('what'))return'💡 Tipp: Frage beginnt mit „What …"';if(!v.toLowerCase().includes('date')&&!v.toLowerCase().includes('birth'))return'💡 Tipp: „Geburtsdatum" = „date of birth".';if(v.toLowerCase().includes('date of birth'))return'👍 Drücke „Check ✓".';return null;},
-  c2:function(v){if(!v)return null;if(v.length<5)return'💡 Tipp: „I arrived at …" + Uhrzeit';if(!v.toLowerCase().includes('arrived'))return'💡 Tipp: „I arrived at …"';if(!v.toLowerCase().includes('before'))return'💡 Tipp: „… minutes before I arrived."';return'👍 Drücke „Check ✓".';},
-  c3:function(v){if(!v)return null;if(v.length<10)return'💡 Tipp: „First, … Then, … After that, …"';var l=v.toLowerCase();if(!l.includes('first'))return'💡 Tipp: Beginne mit „First, …"';if(!l.includes('then'))return'💡 Tipp: Füge „Then, …" hinzu.';if(!l.includes('after'))return'💡 Tipp: „After that, …"';if(v.length<40)return'💡 Tipp: Mindestens 2-3 Sätze.';return'👍 Drücke „Check ✓".';},
-  c4:function(v){if(!v)return null;if(v.length<5)return'💡 Tipp: „Can you …"';if(!v.toLowerCase().includes('can you'))return'💡 Tipp: „Can you …?"';if(!v.toLowerCase().includes('explain')&&!v.toLowerCase().includes('detail'))return'💡 Tipp: „explain" + „detail"';if(!v.toLowerCase().includes('please'))return'💡 Tipp: Vergiss nicht „please"!';return'👍 Drücke „Check ✓".';},
-  c5:function(v){if(!v)return null;if(v.length<5)return'💡 Tipp: „Thank you for your help."';var l=v.toLowerCase();if(!l.includes('thank'))return'💡 Tipp: „Thank you for …"';if(!l.includes('touch')&&!l.includes('question'))return'💡 Tipp: „We will get in touch if …"';if(v.length<20)return'💡 Tipp: Schreibe 2 Sätze.';return'👍 Drücke „Check ✓".';},
-  c6:function(v){if(!v)return null;if(v.length<10)return'💡 Tipp: „My name is … My date of birth is …"';var l=v.toLowerCase();if(!l.includes('name'))return'💡 Tipp: „My name is …"';if(!l.includes('arrived')&&!l.includes('p.m'))return'💡 Tipp: „I arrived at 3:30 p.m."';if(!l.includes('first')&&!l.includes('then'))return'💡 Tipp: „First, … Then, … After that, …"';if(v.length<100)return'💡 Tipp: 5-6 Sätze!';return'👍 Drücke „Check ✓".';}
+  c1:function(v){
+    if(!v) return null;
+    var l=v.toLowerCase();
+    if(v.length<3) return '💡 Tipp: Du sollst nach dem Geburtsdatum fragen. Beginne mit „What is your …"';
+    if(!l.includes('what')) return '💡 Tipp: Eine Frage auf Englisch – beginne mit „What …"';
+    if(l.includes('what')&&!l.includes('date')&&!l.includes('birth')) return '💡 Tipp: Du fragst nach dem Geburtsdatum. „Geburtsdatum" heißt auf Englisch „date of birth".';
+    if(l.includes('what')&&l.includes('date')&&!l.includes('birth')) return '💡 Tipp: Fast! „date" alleine reicht nicht – es heißt „date of birth".';
+    if(l.includes('date of birth')&&!l.includes('your')) return '💡 Tipp: Vergiss nicht „your" – „What is your date of birth?"';
+    if(l.includes('date of birth')) return '👍 Sieht gut aus! Drücke „Check ✓".';
+    return null;
+  },
+  c2:function(v){
+    if(!v) return null;
+    var l=v.toLowerCase();
+    if(v.length<3) return '💡 Tipp: Sage, wann du angekommen bist: „I arrived at …" + Uhrzeit.';
+    if(!l.includes('arrived')&&!l.includes('i arrived')) return '💡 Tipp: Beginne mit „I arrived at …" und nenne eine Uhrzeit (z.B. 5 p.m.).';
+    if(l.includes('arrived')&&!l.includes('accident')&&!l.includes('before')) return '💡 Tipp: Gut! Jetzt sage, wann der Unfall war: „I think the accident happened … minutes before I arrived."';
+    if(l.includes('accident')&&!l.includes('before')) return '💡 Tipp: Benutze „before" um die Zeitfolge zu beschreiben: „… minutes before I arrived."';
+    if(l.includes('before')&&!l.includes('minutes')&&!l.includes('ten')&&!l.includes('five')) return '💡 Tipp: Nenne eine Zeitangabe: „ten minutes before" oder „five minutes before".';
+    if(l.includes('arrived')&&l.includes('before')) return '👍 Guter Ansatz! Drücke „Check ✓".';
+    return null;
+  },
+  c3:function(v){
+    if(!v) return null;
+    var l=v.toLowerCase();
+    if(v.length<5) return '💡 Tipp: Beschreibe den Unfall in 3 Schritten: „First, … Then, … After that, …"';
+    if(!l.includes('first')) return '💡 Tipp: Beginne mit „First, …" – was ist als erstes passiert? (z.B. „First, the van ran the red light.")';
+    if(l.includes('first')&&!l.includes('then')) return '💡 Tipp: Was passierte danach? Füge „Then, …" hinzu. (z.B. „Then, it hit the cyclist.")';
+    if(l.includes('then')&&!l.includes('after')) return '💡 Tipp: Und am Ende? Schreibe „After that, …" (z.B. „After that, both stopped.")';
+    if(l.includes('first')&&l.includes('then')&&l.includes('after')&&v.length<40) return '💡 Tipp: Super Struktur! Schreibe die Sätze aber noch etwas ausführlicher aus.';
+    if(l.includes('first')&&l.includes('then')&&l.includes('after')) return '👍 Gut strukturiert! Drücke „Check ✓".';
+    return null;
+  },
+  c4:function(v){
+    if(!v) return null;
+    var l=v.toLowerCase();
+    if(v.length<3) return '💡 Tipp: Du bist der Polizist und willst mehr Details. Beginne höflich: „Can you …"';
+    if(!l.includes('can')) return '💡 Tipp: Eine höfliche Bitte beginnt mit „Can you …?"';
+    if(l.includes('can')&&!l.includes('explain')&&!l.includes('tell')) return '💡 Tipp: Was soll der Zeuge tun? Du willst, dass er es erklärt → „Can you explain …"';
+    if(l.includes('explain')&&!l.includes('detail')) return '💡 Tipp: Du willst MEHR Details → „… in more detail"';
+    if(l.includes('detail')&&!l.includes('please')) return '💡 Tipp: Sei höflich! Füge „please" am Ende hinzu.';
+    if(l.includes('explain')&&l.includes('detail')&&l.includes('please')) return '👍 Perfekt höflich! Drücke „Check ✓".';
+    if(l.includes('explain')&&l.includes('detail')) return '👍 Fast perfekt! Drücke „Check ✓".';
+    return null;
+  },
+  c5:function(v){
+    if(!v) return null;
+    var l=v.toLowerCase();
+    if(v.length<3) return '💡 Tipp: Du beendest das Gespräch. Bedanke dich zuerst: „Thank you for your help."';
+    if(!l.includes('thank')) return '💡 Tipp: Du hast dich noch nicht bedankt! Schreibe „Thank you for your help."';
+    if(l.includes('thank')&&!l.includes('help')&&!l.includes('your')) return '💡 Tipp: Bedanke dich für die Hilfe: „Thank you for your help."';
+    if(l.includes('thank')&&!l.includes('get in touch')&&!l.includes('touch')&&!l.includes('contact')&&!l.includes('question')) return '💡 Tipp: Gut, der Dank ist da! Jetzt noch sagen, dass ihr euch meldet: „We will get in touch if we have any more questions."';
+    if(l.includes('thank')&&(l.includes('touch')||l.includes('question'))&&v.length<25) return '💡 Tipp: Schreibe die beiden Sätze etwas vollständiger aus.';
+    if(l.includes('thank')&&(l.includes('touch')||l.includes('question'))) return '👍 Gute Verabschiedung! Drücke „Check ✓".';
+    return null;
+  },
+  c6:function(v){
+    if(!v) return null;
+    var l=v.toLowerCase();
+    // Analysiere was vorhanden ist
+    var hasName = l.includes('my name is') || l.includes('name is');
+    var hasDOB = l.includes('date of birth') || l.includes('born');
+    var hasTime = l.includes('arrived') || l.includes('p.m') || l.includes('o\'clock') || l.includes('oclock');
+    var hasAccident = l.includes('accident happened') || l.includes('before i arrived');
+    var hasFirst = l.includes('first');
+    var hasThen = l.includes('then');
+    var hasAfter = l.includes('after');
+    var hasSequence = hasFirst || hasThen || hasAfter;
+    var hasVehicle = l.includes('car') || l.includes('van') || l.includes('cyclist') || l.includes('bike');
+    var hasPeople = l.includes('people') || l.includes('person') || l.includes('involved');
+
+    // Fehlendes identifizieren
+    var missing = [];
+    if(!hasName) missing.push('deinen Namen („My name is …")');
+    if(!hasDOB) missing.push('dein Geburtsdatum („My date of birth is …")');
+    if(!hasTime) missing.push('wann du angekommen bist („I arrived at 3:30 p.m.")');
+    if(!hasAccident && hasTime) missing.push('wann der Unfall war („I think the accident happened … minutes before I arrived.")');
+    if(!hasSequence) missing.push('den Unfallhergang mit „First, … Then, … After that, …"');
+    if(hasFirst && !hasThen) missing.push('„Then, …" als zweiten Schritt');
+    if(hasThen && !hasAfter) missing.push('„After that, …" als dritten Schritt');
+    if(!hasVehicle && hasSequence) missing.push('welche Fahrzeuge beteiligt waren (car, van, cyclist)');
+    if(!hasPeople && hasSequence && hasVehicle) missing.push('wie viele Personen beteiligt waren („There were 2 people …")');
+
+    if(v.length<5) return '💡 Tipp: Beginne mit deinem Namen: „My name is …" Dann Geburtsdatum, Uhrzeit, Unfallbeschreibung.';
+    if(missing.length === 0 && v.length > 80) return '👍 Sehr vollständig! Drücke „Check ✓".';
+    if(missing.length === 0) return '💡 Tipp: Sieht schon gut aus, aber schreibe 5-6 Sätze für eine vollständige Aussage.';
+    if(missing.length === 1) return '💡 Tipp: Fast komplett! Dir fehlt noch ' + missing[0] + '.';
+    if(missing.length === 2) return '💡 Tipp: Dir fehlt noch ' + missing[0] + ' und ' + missing[1] + '.';
+    return '💡 Tipp: Dir fehlt noch: ' + missing.slice(0,2).join(', ') + '. Insgesamt brauchst du 5-6 Sätze.';
+  }
 };
 
 if (PAGE==='aw') {
@@ -507,4 +591,3 @@ function resetLevel(lvl) {
 function resetA(){resetLevel('a');}
 function resetB(){resetLevel('b');}
 function resetC(){resetLevel('c');}
-
