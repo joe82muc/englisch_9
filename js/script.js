@@ -239,7 +239,6 @@ async function spellCheck(id) {
       'wher':'where','wehn':'when',
       'peopel':'people','peple':'people',
       'minuts':'minutes','minites':'minutes',
-      'oclock':"o'clock",'o clock':"o'clock",
       'cylcist':'cyclist','ciclist':'cyclist','cyclis':'cyclist',
       'polise':'police','plice':'police',
       'witniss':'witness','witnes':'witness',
@@ -247,13 +246,39 @@ async function spellCheck(id) {
       'detale':'detail','detial':'detail',
       'expain':'explain','explane':'explain',
       'togehter':'together','togther':'together',
-      'supper':'super','supermarkt':'supermarket',
-      'invovled':'involved','invloved':'involved'
+      'supermarkt':'supermarket',
+      'invovled':'involved','invloved':'involved',
+      'ag':'at','nane':'name','naem':'name','nam':'name',
+      'mame':'name','nme':'name'
     };
     Object.keys(typos).forEach(function(w) {
       var re = new RegExp('\\b' + w + '\\b', 'gi');
       if (re.test(fixed)) { fixed = fixed.replace(re, typos[w]); changes.push('"' + w + '" → "' + typos[w] + '"'); }
     });
+    
+    // 3b. Fix phrase-level corrections
+    // "birth date" or "bith date" → "date of birth"
+    fixed = fixed.replace(/\b(birth|bith)\s+date\b/gi, 'date of birth');
+    // "My birth date is the" → "My date of birth is"
+    fixed = fixed.replace(/\bmy\s+(birth|bith)\s+date\s+is\s+(the\s*)?/gi, 'My date of birth is ');
+    // "My date is the" → "My date of birth is"  
+    fixed = fixed.replace(/\bmy\s+date\s+is\s+(the\s*)?/gi, 'My date of birth is ');
+    // Fix "P. M." or "P.M." or "p. m." → "p.m."
+    fixed = fixed.replace(/\b[Pp]\.\s*[Mm]\.\s*/g, 'p.m. ');
+    fixed = fixed.replace(/\b[Aa]\.\s*[Mm]\.\s*/g, 'a.m. ');
+    // Fix "6pm" or "3pm" → "6 p.m." 
+    fixed = fixed.replace(/(\d)\s*pm\b/gi, '$1 p.m.');
+    fixed = fixed.replace(/(\d)\s*am\b/gi, '$1 a.m.');
+    // Fix "oclock" → "o'clock"
+    fixed = fixed.replace(/\boclock\b/gi, "o'clock");
+    fixed = fixed.replace(/\bo clock\b/gi, "o'clock");
+    // Fix "the 7." or "the.7" as incomplete date → remove or note
+    fixed = fixed.replace(/\bthe\s*\.\s*\d/g, function(m) { return m.replace('.', ' '); });
+    // Fix "date of birth is the 27.7.1982" → keep as is (valid)
+    // Fix "date of birth is the.7" → "date of birth is the 7th"
+    fixed = fixed.replace(/\bis\s+the\s*\.?\s*(\d{1,2})\.\s*$/gi, 'is the $1th.');
+    // Fix standalone "the." at end → remove
+    fixed = fixed.replace(/\bthe\.\s*$/gi, '');
     
     // 4. Fix lowercase "i" → "I" (standalone)
     before = fixed;
@@ -275,27 +300,33 @@ async function spellCheck(id) {
     fixed = fixed.replace(/\s+\w{1,2}$/, '.');
     if (!fixed.endsWith('.') && !fixed.endsWith('!') && !fixed.endsWith('?')) fixed += '.';
     
-    if (fixed !== val) {
-      // Check what's still missing and add hints
-      var low = fixed.toLowerCase();
-      var missing = [];
-      if (!low.includes('my name is')) missing.push('Name fehlt noch');
-      if (!low.includes('date of birth')) missing.push('Geburtsdatum fehlt noch');
-      if (!low.includes('arrived')) missing.push('Ankunftszeit fehlt');
-      if (!low.includes('first') && !low.includes('then')) missing.push('Reihenfolge-Wörter (First/Then/After that) fehlen');
-      
-      if (inp) {
-        inp.value = fixed;
-        inp.style.transition = 'background 0.5s';
-        inp.style.background = '#dcfce7';
-        setTimeout(function(){ inp.style.background = ''; }, 2000);
-      }
-      var msg = changes.join(', ');
-      if (missing.length > 0) msg += '. <br>💡 <strong>Es fehlt noch:</strong> ' + missing.join(', ');
-      if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
-    } else {
-      if (panel) { panel.innerHTML = '✅ Keine offensichtlichen Fehler gefunden! Nutze die KI-Hilfe für eine genauere Prüfung.'; panel.classList.add('show'); }
+    // 8. Add missing periods between sentences (lowercase after space without period)
+    fixed = fixed.replace(/([a-z])\s+(My |I |First|Then|After|The |There |We )/g, '$1. $2');
+    
+    // Always update and always check what's missing
+    var low = fixed.toLowerCase();
+    var missing = [];
+    if (!low.includes('my name is') && !low.includes('name is')) missing.push('Name ("My name is …")');
+    if (!low.includes('date of birth')) missing.push('Geburtsdatum ("My date of birth is …")');
+    if (!low.includes('arrived')) missing.push('Ankunftszeit ("I arrived at … p.m.")');
+    if (!low.includes('first') && !low.includes('then') && !low.includes('after')) missing.push('Reihenfolge (First/Then/After that)');
+    if (!low.includes('accident') && !low.includes('hit') && !low.includes('crash') && !low.includes('fast')) missing.push('Unfallbeschreibung');
+    
+    // Always write corrected text back
+    if (inp) {
+      inp.value = fixed;
+      inp.classList.remove('ok','err');
+      inp.style.transition = 'background 0.5s';
+      inp.style.background = '#dcfce7';
+      setTimeout(function(){ inp.style.background = ''; }, 2000);
     }
+    
+    var msg = '';
+    if (changes.length > 0) msg = changes.join(', ') + '.';
+    if (fixed === val && changes.length === 0) msg = 'Rechtschreibung OK.';
+    if (missing.length > 0) msg += ' <br>💡 <strong>Es fehlt noch:</strong> ' + missing.join(', ') + '.';
+    if (missing.length === 0 && changes.length === 0) msg = '✅ Text sieht gut aus!';
+    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
   }
 
   if (korrBtn) { korrBtn.disabled = false; korrBtn.innerHTML = '✍️ Korrektur'; }
