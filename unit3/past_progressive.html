@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#166534">
+<title>Past Progressive – Unit 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:  #166534;
+  --green2: #15803d;
+  --lime:   #4ade80;
+  --bg:     #f0fdf4;
+  --card:   #ffffff;
+  --text:   #0f172a;
+  --muted:  #64748b;
+  --border: #d1fae5;
+  --yellow: #fef9c3;
+  --yellowb:#ca8a04;
+  --red:    #dc2626;
+  --redbg:  #fef2f2;
+  --greenbg:#f0fdf4;
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:3rem;
+}
+
+/* ── HEADER ── */
+.header {
+  background:var(--green);
+  padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 1.4rem;
+  position:relative; overflow:hidden;
+}
+.header::after {
+  content:'';
+  position:absolute; bottom:-1px; left:0; right:0; height:24px;
+  background:var(--bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.back-btn {
+  display:inline-flex; align-items:center; gap:.4rem;
+  color:rgba(255,255,255,.7); font-size:.78rem; font-weight:600;
+  background:none; border:none; cursor:pointer; margin-bottom:.8rem;
+  text-decoration:none;
+}
+.back-btn:hover { color:#fff; }
+.unit-tag {
+  font-size:.62rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--lime);
+  margin-bottom:.3rem;
+}
+h1 {
+  font-family:'Fraunces',serif;
+  font-size:clamp(1.6rem,5vw,2.4rem);
+  font-weight:900; color:#fff; line-height:1.1;
+}
+h1 em { font-style:italic; opacity:.8; }
+.header-sub { font-size:.82rem; color:rgba(255,255,255,.6); margin-top:.3rem; }
+
+/* ── INFO BOX ── */
+.info-wrap { padding:1.5rem 1.2rem 0; max-width:720px; margin:0 auto; }
+
+.info-box {
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(22,101,52,.08);
+  margin-bottom:1.5rem;
+  position:relative; z-index:1;
+}
+.info-header {
+  background:linear-gradient(135deg,var(--green),var(--green2));
+  padding:.9rem 1.2rem;
+  display:flex; align-items:center; gap:.6rem; cursor:pointer;
+  user-select:none;
+}
+.info-header h2 {
+  font-family:'Fraunces',serif;
+  font-size:1.05rem; font-weight:700; color:#fff; flex:1;
+}
+.info-header .toggle {
+  color:rgba(255,255,255,.8); font-size:1.1rem;
+  transition:transform .3s;
+}
+.info-header.open .toggle { transform:rotate(180deg); }
+.info-body { padding:1.2rem; display:none; }
+.info-body.open { display:block; }
+
+/* Formula */
+.formula {
+  background:var(--greenbg);
+  border-left:4px solid var(--green2);
+  border-radius:0 12px 12px 0;
+  padding:.85rem 1rem; margin-bottom:1rem;
+  font-size:.95rem; font-weight:600; color:var(--green);
+  font-family:'Fraunces',serif;
+}
+.formula span { color:var(--text); font-weight:400; font-family:'DM Sans',sans-serif; font-size:.82rem; }
+
+/* Table */
+.gram-table { width:100%; border-collapse:collapse; font-size:.82rem; margin-bottom:1rem; }
+.gram-table th {
+  background:#f0fdf4; color:var(--green);
+  padding:.5rem .75rem; text-align:left; font-weight:700;
+  border-bottom:2px solid var(--border);
+}
+.gram-table td { padding:.5rem .75rem; border-bottom:1px solid #f0f9f0; vertical-align:top; }
+.gram-table tr:last-child td { border-bottom:none; }
+.gram-table .ex { color:var(--muted); font-style:italic; }
+.gram-table b { color:var(--green2); }
+
+/* Keywords */
+.kw-row { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; }
+.kw {
+  background:var(--yellow); border:1px solid #fde047;
+  border-radius:20px; padding:.22rem .75rem;
+  font-size:.75rem; font-weight:700; color:var(--yellowb);
+}
+
+/* ── LEVEL TABS ── */
+.tabs-wrap { padding:0 1.2rem; max-width:720px; margin:0 auto 1.2rem; position:relative; z-index:10; }
+.level-tabs {
+  display:flex; background:#dcfce7;
+  border-radius:12px; padding:3px; gap:0;
+}
+.ltab {
+  flex:1; padding:.5rem .5rem; border:none;
+  border-radius:10px; font-family:'DM Sans',sans-serif;
+  font-size:.8rem; font-weight:700; cursor:pointer;
+  background:transparent; color:var(--green2);
+  transition:all .2s; text-align:center; line-height:1.2;
+  position:relative; z-index:10;
+}
+.ltab.active { background:var(--green); color:#fff; box-shadow:0 2px 8px rgba(22,101,52,.25); }
+
+/* ── EXERCISES ── */
+.ex-wrap { padding:0 1.2rem; max-width:720px; margin:0 auto; }
+.level-section { display:none; }
+.level-section.show { display:block; }
+
+.level-intro {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:1rem 1.1rem; margin-bottom:1.1rem;
+  font-size:.82rem; line-height:1.6; color:var(--muted);
+}
+.level-intro strong { color:var(--green); }
+
+.ex-card {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:1.1rem;
+  margin-bottom:.85rem;
+  box-shadow:0 2px 8px rgba(22,101,52,.05);
+}
+.ex-num {
+  font-size:.62rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--green2); margin-bottom:.5rem;
+}
+.ex-sentence {
+  font-size:.96rem; line-height:1.7; color:var(--text);
+  margin-bottom:.7rem;
+}
+
+/* Gap input */
+.gap {
+  display:inline-block;
+  border:none; border-bottom:2px solid var(--green2);
+  background:transparent;
+  font-family:'DM Sans',sans-serif; font-size:.92rem; font-weight:600;
+  color:var(--green); min-width:80px; text-align:center;
+  padding:.1rem .3rem; outline:none;
+  -webkit-appearance:none;
+  transition:border-color .2s;
+}
+.gap:focus { border-color:var(--green); }
+.gap.correct { border-color:#16a34a; background:#dcfce7; border-radius:6px; color:#15803d; }
+.gap.wrong   { border-color:var(--red); background:var(--redbg); border-radius:6px; color:var(--red); }
+
+/* MC choices */
+.mc-choices { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem; }
+.mc-btn {
+  padding:.45rem 1rem; border:1.5px solid var(--border);
+  border-radius:50px; font-family:'DM Sans',sans-serif;
+  font-size:.82rem; font-weight:600; cursor:pointer;
+  background:#f8fffe; color:var(--text);
+  transition:all .15s; -webkit-appearance:none;
+}
+.mc-btn:hover { border-color:var(--green2); color:var(--green2); }
+.mc-btn.correct { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+.mc-btn.wrong   { background:var(--redbg); border-color:var(--red); color:var(--red); }
+.mc-btn:disabled { cursor:default; }
+
+/* Transform / free write */
+.transform-input {
+  width:100%; padding:.6rem .85rem;
+  border:1.5px solid var(--border); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:.9rem;
+  background:#fafffe; color:var(--text); outline:none;
+  transition:border .2s; margin-bottom:.6rem;
+  -webkit-appearance:none;
+}
+.transform-input:focus { border-color:var(--green2); }
+.transform-input.correct { border-color:#16a34a; background:#dcfce7; }
+.transform-input.wrong   { border-color:var(--red); background:var(--redbg); }
+
+/* Feedback row */
+.fb-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.fb-msg { font-size:.8rem; font-weight:700; min-height:1.1rem; }
+.fb-msg.good { color:#15803d; }
+.fb-msg.bad  { color:var(--red); }
+.check-btn {
+  padding:.38rem .9rem; background:var(--green); color:#fff;
+  border:none; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
+  cursor:pointer; -webkit-appearance:none; transition:all .18s;
+}
+.check-btn:active { transform:scale(.96); }
+.check-btn:disabled { background:#94a3b8; cursor:default; }
+.show-btn {
+  padding:.38rem .9rem; background:transparent; color:var(--muted);
+  border:1.5px solid #e2e8f0; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:600;
+  cursor:pointer; -webkit-appearance:none;
+}
+
+/* Score bar */
+.score-bar {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:.9rem 1.1rem;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:1rem; gap:1rem; flex-wrap:wrap;
+}
+.score-nums { display:flex; gap:1.2rem; }
+.sn { text-align:center; }
+.sn strong { display:block; font-family:'Fraunces',serif; font-size:1.5rem; font-weight:900; color:var(--green); }
+.sn span { font-size:.68rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.reset-btn {
+  padding:.42rem 1rem; background:#f1f5f9; color:var(--muted);
+  border:none; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
+  cursor:pointer;
+}
+
+.section-heading {
+  font-family:'Fraunces',serif;
+  font-size:1rem; font-weight:700; color:var(--green);
+  margin:.6rem 0 .7rem; display:flex; align-items:center; gap:.5rem;
+}
+
+/* ── TIP BUTTON ── */
+.tip-btn {
+  padding:.38rem .85rem;
+  background:#fffbeb; color:#92400e;
+  border:1.5px solid #fde68a; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
+  cursor:pointer; display:inline-flex; align-items:center; gap:.3rem;
+  transition:all .15s; -webkit-appearance:none;
+}
+.tip-btn:hover { background:#fde68a; }
+
+/* ── TIP PANEL – hidden by default ── */
+.info-tip {
+  background:#fffbeb; border:1.5px solid #fde68a;
+  border-radius:10px; padding:.75rem 1rem;
+  margin-top:.55rem; font-size:.82rem; line-height:1.65;
+  color:#78350f; display:none;
+}
+.info-tip.show { display:block; }
+
+/* ── AI BUTTON ── */
+.ai-btn {
+  padding:.38rem .85rem;
+  background:#ecfeff; color:#0e7490;
+  border:1.5px solid #a5f3fc; border-radius:50px;
+  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
+  cursor:pointer; display:inline-flex; align-items:center; gap:.3rem;
+  transition:all .18s; -webkit-appearance:none;
+}
+.ai-btn:hover  { background:#cffafe; border-color:#0e7490; }
+.ai-btn:disabled { opacity:.5; cursor:default; }
+.ai-btn .spin  { display:inline-block; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── AI PANEL – hidden by default ── */
+.ai-panel {
+  background:#ecfeff; border:1.5px solid #a5f3fc;
+  border-radius:10px; padding:.75rem 1rem;
+  margin-top:.55rem; font-size:.82rem; line-height:1.65;
+  color:#155e75; display:none;
+}
+.ai-panel.show { display:block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <a href="unit3.html" class="back-btn">← Back to Unit 3</a>
+  <div class="unit-tag">Unit 3 · Grammar G7</div>
+  <h1>The Past<br><em>Progressive</em></h1>
+  <p class="header-sub">Die Verlaufsform der Vergangenheit · A2+</p>
+</div>
+
+<!-- INFO BOX -->
+<div class="info-wrap">
+  <div class="info-box">
+    <div class="info-header open" id="info-toggle" onclick="toggleInfo()">
+      <h2>📘 How to form the Past Progressive</h2>
+      <span class="toggle" id="info-arrow">▼</span>
+    </div>
+    <div class="info-body open" id="info-body">
+
+      <div class="formula">
+        was / were + verb<span style="color:var(--green)">-ing</span>
+        <span>&nbsp;→ &nbsp;I/he/she/it = <b>was</b> &nbsp;·&nbsp; you/we/they = <b>were</b></span>
+      </div>
+
+      <table class="gram-table">
+        <tr>
+          <th>Type</th>
+          <th>Example</th>
+          <th>Deutsch</th>
+        </tr>
+        <tr>
+          <td>✅ Positive</td>
+          <td>She <b>was walking</b> in the park.</td>
+          <td class="ex">Sie war gerade am Gehen.</td>
+        </tr>
+        <tr>
+          <td>❌ Negative</td>
+          <td>They <b>weren't sleeping</b>.</td>
+          <td class="ex">Sie schliefen nicht gerade.</td>
+        </tr>
+        <tr>
+          <td>❓ Question</td>
+          <td><b>Was</b> he <b>studying</b>?</td>
+          <td class="ex">Lernte er gerade?</td>
+        </tr>
+        <tr>
+          <td>⚡ while / when</td>
+          <td>While I <b>was cooking</b>, the phone rang.</td>
+          <td class="ex">Währ. ich kochte, klingelte das Telefon.</td>
+        </tr>
+      </table>
+
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
+        💡 <b>Use it when:</b> something was <u>in progress</u> in the past, and was interrupted by another event (Simple Past).
+      </p>
+
+      <div class="kw-row">
+        <span class="kw">while</span>
+        <span class="kw">when</span>
+        <span class="kw">at that moment</span>
+        <span class="kw">all day</span>
+        <span class="kw">at 8 o'clock</span>
+        <span class="kw">yesterday at noon</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL TABS -->
+  <div class="tabs-wrap" style="padding:0">
+    <div class="level-tabs">
+      <button class="ltab active" onclick="setLevel('a',this)">⭐ Level A<br><small>Fill in</small></button>
+      <button class="ltab" onclick="setLevel('b',this)">⭐⭐ Level B<br><small>Choose</small></button>
+      <button class="ltab" onclick="setLevel('c',this)">⭐⭐⭐ Level C<br><small>Transform</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISES -->
+<div class="ex-wrap">
+
+  <!-- ══════════ LEVEL A – Fill in the gaps ══════════ -->
+  <div class="level-section show" id="level-a">
+    <div class="score-bar">
+      <div class="score-nums">
+        <div class="sn"><strong id="a-right">0</strong><span>Correct</span></div>
+        <div class="sn"><strong id="a-wrong">0</strong><span>Wrong</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetLevel('a')">🔄 Reset</button>
+    </div>
+
+    <div class="level-intro">
+      <strong>Level A – Fill in the gaps.</strong> Write the correct form of the Past Progressive. Use <em>was/were + verb‑ing</em>.
+    </div>
+
+    <!-- Ex A1 -->
+    <div class="ex-card" id="a1">
+      <div class="ex-num">Exercise 1</div>
+      <div class="ex-sentence">
+        Yesterday at 6 p.m., I <input class="gap" id="a1-g" placeholder="watch" size="14"> TV.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a1','was watching','a')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a1','was watching','a')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('a1tip')">💡 Tipp</button>
+        <button class="ai-btn" id="a1-ai" onclick="getAIHintGap('a1','was watching','Yesterday at 6 p.m., I ___ TV.','past progressive')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="a1-fb"></span>
+      </div>
+      <div class="info-tip" id="a1tip">📌 <strong>Formel:</strong> Subjekt + <strong>was/were</strong> + Verb<strong>-ing</strong><br>Subjekt <em>I</em> → <strong>was</strong> · Verb <em>watch</em> → watch<strong>ing</strong><br>✏️ I <strong>was watching</strong> TV …</div>
+      <div class="ai-panel" id="a1-aipanel"></div>
+    </div>
+
+    <!-- Ex A2 -->
+    <div class="ex-card" id="a2">
+      <div class="ex-num">Exercise 2</div>
+      <div class="ex-sentence">
+        While we <input class="gap" id="a2-g" placeholder="visit" size="14"> the park, it started to rain.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a2','were visiting','a')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a2','were visiting','a')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('a2tip')">💡 Tipp</button>
+        <button class="ai-btn" id="a2-ai" onclick="getAIHintGap('a2','were visiting','While we ___ the park, it started to rain.','past progressive')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="a2-fb"></span>
+      </div>
+      <div class="info-tip" id="a2tip">📌 <strong>while</strong> → laufende Aktion = Past Progressive<br>Subjekt <em>we</em> → <strong>were</strong> · visit → visit<strong>ing</strong><br>✏️ While we <strong>were visiting</strong> the park, it started …</div>
+      <div class="ai-panel" id="a2-aipanel"></div>
+    </div>
+
+    <!-- Ex A3 -->
+    <div class="ex-card" id="a3">
+      <div class="ex-num">Exercise 3</div>
+      <div class="ex-sentence">
+        She <input class="gap" id="a3-g" placeholder="work" size="14"> at her desk when the accident happened.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a3','was working','a')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a3','was working','a')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('a3tip')">💡 Tipp</button>
+        <button class="ai-btn" id="a3-ai" onclick="getAIHintGap('a3','was working','She ___ at her desk when the accident happened.','past progressive')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="a3-fb"></span>
+      </div>
+      <div class="info-tip" id="a3tip">📌 <strong>when</strong> + Simple Past unterbricht → laufende Aktion = Past Progressive<br>Subjekt <em>She</em> → <strong>was</strong> · work → work<strong>ing</strong><br>✏️ She <strong>was working</strong> when the accident happened.</div>
+      <div class="ai-panel" id="a3-aipanel"></div>
+    </div>
+
+    <!-- Ex A4 -->
+    <div class="ex-card" id="a4">
+      <div class="ex-num">Exercise 4</div>
+      <div class="ex-sentence">
+        They <input class="gap" id="a4-g" placeholder="play" size="14"> football all afternoon.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a4','were playing','a')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a4','were playing','a')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('a4tip')">💡 Tipp</button>
+        <button class="ai-btn" id="a4-ai" onclick="getAIHintGap('a4','were playing','They ___ football all afternoon.','past progressive')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="a4-fb"></span>
+      </div>
+      <div class="info-tip" id="a4tip">📌 <strong>all afternoon</strong> = Dauer → Past Progressive<br>Subjekt <em>They</em> = Plural → <strong>were</strong> · play → play<strong>ing</strong><br>✏️ They <strong>were playing</strong> football all afternoon.</div>
+      <div class="ai-panel" id="a4-aipanel"></div>
+    </div>
+
+    <!-- Ex A5 -->
+    <div class="ex-card" id="a5">
+      <div class="ex-num">Exercise 5</div>
+      <div class="ex-sentence">
+        Nick <input class="gap" id="a5-g" placeholder="prepare" size="14"> some food while I was working in the garden.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a5','was preparing','a')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a5','was preparing','a')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('a5tip')">💡 Tipp</button>
+        <button class="ai-btn" id="a5-ai" onclick="getAIHintGap('a5','was preparing','Nick ___ some food while I was working.','past progressive')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="a5-fb"></span>
+      </div>
+      <div class="info-tip" id="a5tip">📌 Zwei gleichzeitige Aktionen mit <strong>while</strong> → beide Past Progressive<br>Subjekt <em>Nick</em> → <strong>was</strong> · prepare → <strong>preparing</strong> (e fällt weg!)<br>✏️ Nick <strong>was preparing</strong> … while I was working …</div>
+      <div class="ai-panel" id="a5-aipanel"></div>
+    </div>
+
+    <!-- Ex A6 -->
+    <div class="ex-card" id="a6">
+      <div class="ex-num">Exercise 6</div>
+      <div class="ex-sentence">
+        At 10 a.m. yesterday, the elephants <input class="gap" id="a6-g" placeholder="drink" size="14"> at the lake.
+      </div>
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkGap('a6','were drinking','a')">Check ✓</button>
+        <button class="show-btn" onclick="showAns('a6','were drinking','a')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('a6tip')">💡 Tipp</button>
+        <button class="ai-btn" id="a6-ai" onclick="getAIHintGap('a6','were drinking','At 10 a.m. yesterday, the elephants ___ at the lake.','past progressive')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="a6-fb"></span>
+      </div>
+      <div class="info-tip" id="a6tip">📌 <strong>At 10 a.m.</strong> = bestimmter Zeitpunkt → Past Progressive<br>Subjekt <em>the elephants</em> = Plural → <strong>were</strong> · drink → drink<strong>ing</strong><br>✏️ the elephants <strong>were drinking</strong> at the lake.</div>
+      <div class="ai-panel" id="a6-aipanel"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ LEVEL B – Multiple Choice ══════════ -->
+  <div class="level-section" id="level-b">
+    <div class="score-bar">
+      <div class="score-nums">
+        <div class="sn"><strong id="b-right">0</strong><span>Correct</span></div>
+        <div class="sn"><strong id="b-wrong">0</strong><span>Wrong</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetLevel('b')">🔄 Reset</button>
+    </div>
+
+    <div class="level-intro">
+      <strong>Level B – Choose the correct answer.</strong> Select Past Progressive <em>or</em> Simple Past – which one fits?
+    </div>
+
+    <!-- B1 -->
+    <div class="ex-card" id="b1">
+      <div class="ex-num">Exercise 1</div>
+      <div class="ex-sentence">I ________ for the train when I got Dad's message.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b1',this,'was waiting')">was waiting</button>
+        <button class="mc-btn" onclick="checkMC('b1',this,'was waiting')">waited</button>
+        <button class="mc-btn" onclick="checkMC('b1',this,'was waiting')">were waiting</button>
+      </div>
+      <div class="fb-row">
+        <button class="tip-btn" onclick="toggleTip('b1tip')">💡 Tipp</button>
+        <button class="ai-btn" id="b1-ai" onclick="getAIHintMC('b1','was waiting','I ___ for the train when I got Dad's message.','past progressive vs simple past')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="b1-fb"></span>
+      </div>
+      <div class="info-tip" id="b1tip">📌 <strong>when + got</strong> (Simple Past) unterbricht → laufende Aktion = Past Progressive<br>Subjekt <em>I</em> → <strong>was</strong> · wait → wait<strong>ing</strong><br>✏️ I <strong>was waiting</strong> … when I got …</div>
+      <div class="ai-panel" id="b1-aipanel"></div>
+    </div>
+
+    <!-- B2 -->
+    <div class="ex-card" id="b2">
+      <div class="ex-num">Exercise 2</div>
+      <div class="ex-sentence">What ________ you ________ between 8 a.m. and 10 a.m. yesterday?</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b2',this,'were … doing')">were … doing</button>
+        <button class="mc-btn" onclick="checkMC('b2',this,'were … doing')">did … do</button>
+        <button class="mc-btn" onclick="checkMC('b2',this,'were … doing')">was … doing</button>
+      </div>
+      <div class="fb-row">
+        <button class="tip-btn" onclick="toggleTip('b2tip')">💡 Tipp</button>
+        <button class="ai-btn" id="b2-ai" onclick="getAIHintMC('b2','were … doing','What ___ you ___ between 8 a.m. and 10 a.m. yesterday?','past progressive vs simple past')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="b2-fb"></span>
+      </div>
+      <div class="info-tip" id="b2tip">📌 <strong>between 8 and 10 a.m.</strong> = Zeitraum → Past Progressive<br>Frage: <strong>Were/Was</strong> + Subjekt + Verb-ing? · you → <strong>were</strong> · do → do<strong>ing</strong><br>✏️ What <strong>were</strong> you <strong>doing</strong> between …?</div>
+      <div class="ai-panel" id="b2-aipanel"></div>
+    </div>
+
+    <!-- B3 -->
+    <div class="ex-card" id="b3">
+      <div class="ex-num">Exercise 3</div>
+      <div class="ex-sentence">While we ________ our garden party, it started to rain heavily.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b3',this,'were having')">were having</button>
+        <button class="mc-btn" onclick="checkMC('b3',this,'were having')">had</button>
+        <button class="mc-btn" onclick="checkMC('b3',this,'were having')">have had</button>
+      </div>
+      <div class="fb-row">
+        <button class="tip-btn" onclick="toggleTip('b3tip')">💡 Tipp</button>
+        <button class="ai-btn" id="b3-ai" onclick="getAIHintMC('b3','were having','While we ___ our garden party, it started to rain.','past progressive vs simple past')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="b3-fb"></span>
+      </div>
+      <div class="info-tip" id="b3tip">📌 <strong>while</strong> + laufende Aktion → Past Progressive<br>we → <strong>were</strong> · have → hav<strong>ing</strong> (e fällt weg!)<br>✏️ While we <strong>were having</strong> … it started …</div>
+      <div class="ai-panel" id="b3-aipanel"></div>
+    </div>
+
+    <!-- B4 -->
+    <div class="ex-card" id="b4">
+      <div class="ex-num">Exercise 4</div>
+      <div class="ex-sentence">Joe ________ in the park when he suddenly saw a rainbow.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b4',this,'was running')">was running</button>
+        <button class="mc-btn" onclick="checkMC('b4',this,'was running')">ran</button>
+        <button class="mc-btn" onclick="checkMC('b4',this,'was running')">is running</button>
+      </div>
+      <div class="fb-row">
+        <button class="tip-btn" onclick="toggleTip('b4tip')">💡 Tipp</button>
+        <button class="ai-btn" id="b4-ai" onclick="getAIHintMC('b4','was running','Joe ___ in the park when he suddenly saw a rainbow.','past progressive vs simple past')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="b4-fb"></span>
+      </div>
+      <div class="info-tip" id="b4tip">📌 <strong>when + saw</strong> = plötzliche Unterbrechung → laufende Aktion = Past Progressive<br>Joe = he → <strong>was</strong> · run → runn<strong>ing</strong> (n wird verdoppelt!)<br>✏️ Joe <strong>was running</strong> … when he saw …</div>
+      <div class="ai-panel" id="b4-aipanel"></div>
+    </div>
+
+    <!-- B5 -->
+    <div class="ex-card" id="b5">
+      <div class="ex-num">Exercise 5</div>
+      <div class="ex-sentence">My wallet ________ out of my pocket while I was walking.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b5',this,'fell')">fell</button>
+        <button class="mc-btn" onclick="checkMC('b5',this,'fell')">was falling</button>
+        <button class="mc-btn" onclick="checkMC('b5',this,'fell')">falls</button>
+      </div>
+      <div class="fb-row">
+        <button class="tip-btn" onclick="toggleTip('b5tip')">💡 Tipp</button>
+        <button class="ai-btn" id="b5-ai" onclick="getAIHintMC('b5','fell','My wallet ___ out of my pocket while I was walking.','past progressive vs simple past')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="b5-fb"></span>
+      </div>
+      <div class="info-tip" id="b5tip">📌 Das Herausfallen = kurze, abgeschlossene Aktion → <strong>Simple Past</strong><br>(I was walking = Past Progressive bereits vorhanden)<br>fall → unregelmäßig: fall – <strong>fell</strong> – fallen<br>✏️ My wallet <strong>fell</strong> out … while I was walking.</div>
+      <div class="ai-panel" id="b5-aipanel"></div>
+    </div>
+
+    <!-- B6 -->
+    <div class="ex-card" id="b6">
+      <div class="ex-num">Exercise 6</div>
+      <div class="ex-sentence">She ________ at her desk at 9 o'clock this morning.</div>
+      <div class="mc-choices">
+        <button class="mc-btn" onclick="checkMC('b6',this,'was working')">was working</button>
+        <button class="mc-btn" onclick="checkMC('b6',this,'was working')">worked</button>
+        <button class="mc-btn" onclick="checkMC('b6',this,'was working')">works</button>
+      </div>
+      <div class="fb-row">
+        <button class="tip-btn" onclick="toggleTip('b6tip')">💡 Tipp</button>
+        <button class="ai-btn" id="b6-ai" onclick="getAIHintMC('b6','was working','She ___ at her desk at 9 o'clock this morning.','past progressive vs simple past')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="b6-fb"></span>
+      </div>
+      <div class="info-tip" id="b6tip">📌 <strong>at 9 o'clock</strong> = bestimmter Zeitpunkt → Past Progressive<br>She → <strong>was</strong> · work → work<strong>ing</strong><br>✏️ She <strong>was working</strong> at her desk at 9 o'clock.</div>
+      <div class="ai-panel" id="b6-aipanel"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ LEVEL C – Transform ══════════ -->
+  <div class="level-section" id="level-c">
+    <div class="score-bar">
+      <div class="score-nums">
+        <div class="sn"><strong id="c-right">0</strong><span>Correct</span></div>
+        <div class="sn"><strong id="c-wrong">0</strong><span>Wrong</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetLevel('c')">🔄 Reset</button>
+    </div>
+
+    <div class="level-intro">
+      <strong>Level C – Write a full sentence.</strong> Use the words in brackets. Form the Past Progressive or combine it with the Simple Past.
+    </div>
+
+    <!-- C1 -->
+    <div class="ex-card" id="c1">
+      <div class="ex-num">Exercise 1</div>
+      <div class="ex-sentence">Make a negative sentence:<br>
+        <em>He / study / when the film started.</em> → He was <u>not</u> studying when the film started.
+      </div>
+      <input class="transform-input" id="c1-i" type="text" placeholder="He ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c1',['he was not studying when the film started','he wasn\'t studying when the film started'],'c')">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c1','He wasn\'t studying when the film started.','c')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('c1tip')">💡 Tipp</button>
+        <button class="ai-btn" id="c1-ai" onclick="getAIHintInput('c1','He wasn\'t studying when the film started','He / study / when the film started. (negative)','past progressive transform')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="c1-fb"></span>
+      </div>
+      <div class="info-tip" id="c1tip">📌 <strong>Verneinung:</strong> Subjekt + <strong>wasn't/weren't</strong> + Verb-ing<br>He → <strong>wasn't</strong> · study → study<strong>ing</strong> (y bleibt!) · started = Simple Past (bleibt)<br>✏️ He <strong>wasn't studying</strong> when the film started.</div>
+      <div class="ai-panel" id="c1-aipanel"></div>
+    </div>
+
+    <!-- C2 -->
+    <div class="ex-card" id="c2">
+      <div class="ex-num">Exercise 2</div>
+      <div class="ex-sentence">Write a question:<br>
+        <em>What / she / do / at midnight?</em>
+      </div>
+      <input class="transform-input" id="c2-i" type="text" placeholder="What ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c2',['what was she doing at midnight'],'c')">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c2','What was she doing at midnight?','c')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('c2tip')">💡 Tipp</button>
+        <button class="ai-btn" id="c2-ai" onclick="getAIHintInput('c2','What was she doing at midnight?','What / she / do / at midnight? (question)','past progressive transform')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="c2-fb"></span>
+      </div>
+      <div class="info-tip" id="c2tip">📌 <strong>Frage:</strong> Fragewort + <strong>was/were</strong> + Subjekt + Verb-ing?<br>she → <strong>was</strong> · do → do<strong>ing</strong><br>✏️ What <strong>was</strong> she <strong>doing</strong> at midnight?</div>
+      <div class="ai-panel" id="c2-aipanel"></div>
+    </div>
+
+    <!-- C3 -->
+    <div class="ex-card" id="c3">
+      <div class="ex-num">Exercise 3</div>
+      <div class="ex-sentence">Combine with <em>while</em>:<br>
+        <em>I / listen to music. My sister / cook dinner.</em>
+      </div>
+      <input class="transform-input" id="c3-i" type="text" placeholder="While I ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c3',['while i was listening to music my sister was cooking dinner','while my sister was cooking dinner i was listening to music'],'c')">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c3','While I was listening to music, my sister was cooking dinner.','c')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('c3tip')">💡 Tipp</button>
+        <button class="ai-btn" id="c3-ai" onclick="getAIHintInput('c3','While I was listening to music, my sister was cooking dinner','I / listen to music. My sister / cook dinner. (use while)','past progressive transform')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="c3-fb"></span>
+      </div>
+      <div class="info-tip" id="c3tip">📌 Zwei gleichzeitige Aktionen → beide im Past Progressive<br>I → <strong>was listening</strong> · My sister → <strong>was cooking</strong><br>✏️ While I <strong>was listening</strong> to music, my sister <strong>was cooking</strong> dinner.</div>
+      <div class="ai-panel" id="c3-aipanel"></div>
+    </div>
+
+    <!-- C4 -->
+    <div class="ex-card" id="c4">
+      <div class="ex-num">Exercise 4</div>
+      <div class="ex-sentence">Use <em>when</em> + Simple Past:<br>
+        <em>We / drive through the park. We / see two lions.</em>
+      </div>
+      <input class="transform-input" id="c4-i" type="text" placeholder="When we ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkTransform('c4',['when we were driving through the park we saw two lions','we saw two lions when we were driving through the park'],'c')">Check ✓</button>
+        <button class="show-btn" onclick="showTransform('c4','When we were driving through the park, we saw two lions.','c')">Lösung</button>
+        <button class="tip-btn" onclick="toggleTip('c4tip')">💡 Tipp</button>
+        <button class="ai-btn" id="c4-ai" onclick="getAIHintInput('c4','When we were driving through the park, we saw two lions','We / drive through the park. We / see two lions. (use when)','past progressive transform')">🤖 KI-Hilfe</button>
+        <span class="fb-msg" id="c4-fb"></span>
+      </div>
+      <div class="info-tip" id="c4tip">📌 Laufende Aktion (Past Prog.) wird unterbrochen (Simple Past)<br>drive → <strong>were driving</strong> · see → unregelmäßig: see – <strong>saw</strong> – seen<br>✏️ When we <strong>were driving</strong> … we <strong>saw</strong> two lions.</div>
+      <div class="ai-panel" id="c4-aipanel"></div>
+    </div>
+
+    <!-- C5 -->
+    <div class="ex-card" id="c5">
+      <div class="ex-num">Exercise 5 – Your own sentence!</div>
+      <div class="ex-sentence">Write your own sentence using the Past Progressive and <em>while</em> or <em>when</em>. Use a word from Unit 3 (e.g. safari, township, injured, inspired …).</div>
+      <input class="transform-input" id="c5-i" type="text" placeholder="While / When ..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="fb-row">
+        <button class="check-btn" onclick="checkFree('c5')">Check ✓</button>
+        <button class="ai-btn" id="c5-ai" onclick="getAIHintFree('c5')">🤖 KI-Feedback</button>
+        <span class="fb-msg" id="c5-fb"></span>
+      </div>
+      <div class="ai-panel" id="c5-aipanel"></div>
+    </div>
+  </div>
+
+</div><!-- /ex-wrap -->
+
+<script>
+/* ═══════════ CONFIG ═══════════ */
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+
+/* ═══════════ STATE ═══════════ */
+const scores   = {a:{r:0,w:0}, b:{r:0,w:0}, c:{r:0,w:0}};
+const answered = {};
+const mcLastAnswer = {};
+
+/* ═══════════ SCORE ═══════════ */
+function updScore(lvl) {
+  document.getElementById(lvl+'-right').textContent = scores[lvl].r;
+  document.getElementById(lvl+'-wrong').textContent = scores[lvl].w;
+}
+
+/* ═══════════ INFO TOGGLE ═══════════ */
+function toggleInfo() {
+  document.getElementById('info-body').classList.toggle('open');
+  document.getElementById('info-toggle').classList.toggle('open');
+}
+
+/* ═══════════ LEVEL SWITCH ═══════════ */
+function setLevel(l, btn) {
+  document.querySelectorAll('.ltab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.level-section').forEach(s => s.classList.remove('show'));
+  document.getElementById('level-'+l).classList.add('show');
+}
+
+/* ═══════════ TIP TOGGLE ═══════════ */
+function toggleTip(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
+
+/* ═══════════ NORMALIZE ═══════════ */
+function norm(s) {
+  return s.toLowerCase().replace(/[?.!,]/g,'').replace(/\s+/g,' ').trim();
+}
+
+/* ═══════════ AI HINT – CORE ═══════════ */
+async function fetchHint(exerciseId, studentAnswer, correctAnswer, exerciseText, grammarTopic) {
+  const btn   = document.getElementById(exerciseId + '-ai');
+  const panel = document.getElementById(exerciseId + '-aipanel');
+
+  if (!studentAnswer || studentAnswer.trim().length < 2) {
+    panel.innerHTML = '✏️ Schreib erst eine Antwort, dann kann ich dir helfen!';
+    panel.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> Lädt…';
+  panel.classList.remove('show');
+
+  try {
+    const res = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': '',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 150,
+        system: `Du bist ein freundlicher Englischlehrer für eine 9. Klasse (Bayern).
+Thema dieser Übung: PAST PROGRESSIVE (was/were + Verb-ing) – NICHT Present Perfect!
+
+Formel: was/were + Verb-ing
+- I/he/she/it → was · you/we/they → were
+- while = zwei gleichzeitige Aktionen (beide Past Progressive)
+- when + Simple Past = Unterbrechung der laufenden Aktion
+- Verneinung: wasn't/weren't + Verb-ing
+- Spelling: -e fällt weg (have→having), Konsonant verdoppeln (run→running)
+
+REGELN: 2-3 deutsche Sätze · Lösung NIE verraten · ermutigend · max. 60 Wörter`,
+        messages: [{
+          role: 'user',
+          content: `Aufgabe: "${exerciseText}"
+Schülerantwort: "${studentAnswer}"
+Richtige Antwort (nicht verraten!): "${correctAnswer}"
+Gib einen Tipp zum PAST PROGRESSIVE.`
+        }]
+      })
+    });
+    if (!res.ok) throw new Error('api');
+    const data = await res.json();
+    const hint = data.content?.[0]?.text || 'Kein Tipp verfügbar.';
+    panel.innerHTML = '🤖 <strong>KI-Tipp:</strong> ' + hint;
+    panel.classList.add('show');
+  } catch(e) {
+    panel.innerHTML = '💡 <strong>Tipp:</strong> ' + localHint(correctAnswer, grammarTopic);
+    panel.classList.add('show');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🤖 KI-Hilfe';
+}
+
+/* ─ Gap (Level A) ─ */
+function getAIHintGap(id, correct, exText, topic) {
+  const val = (document.getElementById(id+'-g') || {}).value || '';
+  fetchHint(id, val, correct, exText, topic);
+}
+
+/* ─ MC (Level B) ─ */
+function getAIHintMC(id, correct, exText, topic) {
+  fetchHint(id, mcLastAnswer[id] || 'Noch keine Auswahl', correct, exText, topic);
+}
+
+/* ─ Transform (Level C) ─ */
+function getAIHintInput(id, correct, exText, topic) {
+  const val = (document.getElementById(id+'-i') || {}).value || '';
+  fetchHint(id, val, correct, exText, topic);
+}
+
+/* ─ Free writing (C5) ─ */
+async function getAIHintFree(id) {
+  const inp   = document.getElementById(id+'-i');
+  const panel = document.getElementById(id+'-aipanel');
+  const btn   = document.getElementById(id+'-ai');
+  const val   = inp ? inp.value : '';
+
+  if (!val || val.trim().length < 5) {
+    panel.textContent = '✏️ Schreib erst einen Satz!';
+    panel.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> Lädt…';
+
+  try {
+    const res = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': '',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 150,
+        system: `Du bist ein freundlicher Englischlehrer für eine 9. Klasse (Bayern). Thema: PAST PROGRESSIVE (was/were + Verb-ing). Gib Feedback auf den Schülersatz in 2-3 deutschen Sätzen. Nie die Lösung verraten. Max. 60 Wörter.`,
+        messages: [{ role: 'user', content: `Schülersatz (Past Progressive + while/when): "${val}"\nGib konstruktives Feedback.` }]
+      })
+    });
+    const data = await res.json();
+    panel.innerHTML = '🤖 <strong>KI-Feedback:</strong> ' + (data.content?.[0]?.text || 'Guter Versuch!');
+    panel.classList.add('show');
+  } catch(e) {
+    const v = val.toLowerCase();
+    const hasAux = /\b(was|were|wasn't|weren't)\b/.test(v);
+    const hasIng = /\w+ing\b/.test(v);
+    const hasCon = /\b(while|when)\b/.test(v);
+    let msg = !hasAux ? 'Du brauchst <strong>was</strong> oder <strong>were</strong> als Hilfsverb.'
+            : !hasIng ? 'Das Verb braucht die <strong>-ing</strong> Endung.'
+            : !hasCon ? 'Verbinde die Sätze mit <strong>while</strong> oder <strong>when</strong>.'
+            : 'Prüfe ob <em>was/were</em> zum Subjekt passt.';
+    panel.innerHTML = '💡 <strong>Tipp:</strong> ' + msg;
+    panel.classList.add('show');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🤖 KI-Feedback';
+}
+
+/* ═══════════ LOCAL FALLBACK HINTS ═══════════ */
+function localHint(correct, topic) {
+  const c = (correct || '').toLowerCase();
+  const t = (topic   || '').toLowerCase();
+  if (c.startsWith('was '))          return 'Das Subjekt ist I/he/she/it → du brauchst <strong>was</strong> als Hilfsverb, dann das Verb mit <strong>-ing</strong>.';
+  if (c.startsWith('were '))         return 'Das Subjekt ist you/we/they → du brauchst <strong>were</strong> als Hilfsverb, dann das Verb mit <strong>-ing</strong>.';
+  if (c.includes("wasn't"))          return 'Verneinung: Subjekt + <strong>wasn&#39;t</strong> (= was not) + Verb-ing.';
+  if (c.includes("weren't"))         return 'Verneinung: Subjekt + <strong>weren&#39;t</strong> (= were not) + Verb-ing.';
+  if (t.includes('question'))        return 'Frage: <strong>Was/Were</strong> + Subjekt + Verb-ing? Das Hilfsverb kommt an den Satzanfang!';
+  if (t.includes('simple past'))     return 'Hier ist eine kurze, abgeschlossene Aktion gefragt → <strong>Simple Past</strong>. Bei unregelmäßigen Verben schau in die Verbformen-Liste!';
+  if (t.includes('while'))           return 'Mit <strong>while</strong> verbindest du zwei gleichzeitige Aktionen – beide im Past Progressive (was/were + -ing).';
+  return 'Denk an die Formel: <strong>was/were + Verb-ing</strong>. Das Subjekt bestimmt was oder were.';
+}
+
+/* ═══════════ CHECK – LEVEL A (Gap) ═══════════ */
+function checkGap(id, correct, lvl) {
+  const inp = document.getElementById(id+'-g');
+  const val = inp.value.trim().toLowerCase();
+  const ok  = val === correct.toLowerCase();
+  inp.classList.remove('correct','wrong');
+  inp.classList.add(ok ? 'correct' : 'wrong');
+  if (ok) inp.disabled = true;                 // keep editable on wrong
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  fb.textContent = ok ? '✅ Correct!' : '❌ Nochmal versuchen!';
+  if (!answered[id]) {
+    if (ok) { answered[id] = true; scores[lvl].r++; updScore(lvl); }
+  }
+}
+
+function showAns(id, correct, lvl) {
+  const inp = document.getElementById(id+'-g');
+  inp.value = correct;
+  inp.classList.remove('correct','wrong');
+  inp.classList.add('correct');
+  inp.disabled = true;
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg good';
+  fb.textContent = '✅ Lösung: ' + correct;
+  if (!answered[id]) { answered[id] = true; scores[lvl].w++; updScore(lvl); }
+}
+
+/* ═══════════ CHECK – LEVEL B (MC) ═══════════ */
+function checkMC(id, btn, correct) {
+  if (answered[id]) return;
+  const clicked = btn.textContent.trim();
+  mcLastAnswer[id] = clicked;
+  answered[id] = true;
+  btn.closest('.mc-choices').querySelectorAll('.mc-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent.trim() === correct) b.classList.add('correct');
+  });
+  const ok = clicked === correct;
+  if (!ok) btn.classList.add('wrong');
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  fb.textContent = ok ? '✅ Correct!' : '❌ → ' + correct;
+  if (ok) scores.b.r++; else scores.b.w++;
+  updScore('b');
+}
+
+/* ═══════════ CHECK – LEVEL C (Transform) ═══════════ */
+function checkTransform(id, accepted, lvl) {
+  const inp = document.getElementById(id+'-i');
+  const val = norm(inp.value);
+  const ok  = accepted.some(a => norm(a) === val);
+  inp.classList.remove('correct','wrong');
+  inp.classList.add(ok ? 'correct' : 'wrong');
+  if (ok) inp.disabled = true;                 // keep editable on wrong
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  fb.textContent = ok ? '✅ Correct!' : '❌ Nochmal versuchen – nutze 💡 oder 🤖';
+  if (!answered[id]) {
+    if (ok) { answered[id] = true; scores[lvl].r++; updScore(lvl); }
+  }
+}
+
+function showTransform(id, answer, lvl) {
+  const inp = document.getElementById(id+'-i');
+  inp.value = answer;
+  inp.classList.remove('correct','wrong');
+  inp.classList.add('correct');
+  inp.disabled = true;
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg good';
+  fb.textContent = '✅ Lösung: ' + answer;
+  if (!answered[id]) { answered[id] = true; scores[lvl].w++; updScore(lvl); }
+}
+
+/* ─ C5 Free writing ─ */
+function checkFree(id) {
+  const inp = document.getElementById(id+'-i');
+  const val = inp.value.trim().toLowerCase();
+  const hasAux = /\b(was|were|wasn't|weren't)\b/.test(val);
+  const hasIng = /\w+ing\b/.test(val);
+  const hasCon = /\b(while|when)\b/.test(val);
+  const ok = hasAux && hasIng && hasCon && val.length > 15;
+  inp.classList.remove('correct','wrong');
+  inp.classList.add(ok ? 'correct' : 'wrong');
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'fb-msg ' + (ok ? 'good' : 'bad');
+  if (ok) { fb.textContent = '✅ Sehr gut!'; if (!answered[id]) { answered[id]=true; scores.c.r++; updScore('c'); } }
+  else    { fb.textContent = '💡 Nutze was/were + Verb-ing + while/when'; }
+}
+
+/* ═══════════ RESET ═══════════ */
+function resetLevel(lvl) {
+  scores[lvl] = {r:0, w:0}; updScore(lvl);
+  const section = document.getElementById('level-'+lvl);
+  section.querySelectorAll('.gap').forEach(i => { i.value=''; i.className='gap'; i.disabled=false; });
+  section.querySelectorAll('.mc-btn').forEach(b => { b.className='mc-btn'; b.disabled=false; });
+  section.querySelectorAll('.transform-input').forEach(i => { i.value=''; i.className='transform-input'; i.disabled=false; });
+  section.querySelectorAll('.fb-msg').forEach(f => { f.textContent=''; f.className='fb-msg'; });
+  section.querySelectorAll('.ai-panel').forEach(p => { p.textContent=''; p.classList.remove('show'); });
+  section.querySelectorAll('.info-tip').forEach(t => t.classList.remove('show'));
+  section.querySelectorAll('.ai-btn').forEach(b => { b.disabled=false; b.innerHTML='🤖 KI-Hilfe'; });
+  section.querySelectorAll('.check-btn, .show-btn').forEach(b => b.disabled=false);
+  Object.keys(answered).forEach(k => { if(k.startsWith(lvl)) delete answered[k]; });
+  Object.keys(mcLastAnswer).forEach(k => { if(k.startsWith(lvl)) delete mcLastAnswer[k]; });
+}
+</script>
+</body>
+</html>
