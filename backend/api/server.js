@@ -119,6 +119,44 @@ Gib einen hilfreichen Tipp auf Deutsch.`;
 });
 
 /* ═══════════════════════════════════════════════════
+   POST /api/korrektur – Spelling & Grammar Check
+   ═══════════════════════════════════════════════════ */
+app.post("/api/korrektur", async (req, res) => {
+    try {
+        const { studentAnswer } = req.body;
+
+        if (!studentAnswer || studentAnswer.trim().length < 3) {
+            return res.status(400).json({ error: "Text zu kurz." });
+        }
+
+        const message = await client.messages.create({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 300,
+            system: `Du bist ein freundlicher Englischlehrer für eine 9. Klasse (Gymnasium, Bayern).
+
+AUFGABE: Korrigiere den englischen Text des Schülers. Der Text ist ein Zeugenbericht über einen Unfall.
+
+REGELN:
+- Schreibe auf Deutsch
+- Finde ALLE Fehler: Rechtschreibung, Grammatik, Groß-/Kleinschreibung, Satzzeichen
+- Nenne JEDEN Fehler einzeln so: "❌ 'falsch' → ✅ 'richtig'"
+- Wenn der Text Buchstabensalat/Quatsch enthält, sage das klar
+- Wenn deutsche Wörter im englischen Text sind, weise darauf hin
+- Wenn keine echten Fehler: lobe den Schüler!
+- Gib am Ende den korrigierten Gesamttext an
+- Max. 120 Wörter`,
+            messages: [{ role: "user", content: `Schülertext: "${studentAnswer}"\n\nKorrigiere alle Fehler.` }]
+        });
+
+        const hint = message.content[0].text;
+        res.json({ hint });
+    } catch (error) {
+        console.error("Fehler bei /api/korrektur:", error);
+        res.status(500).json({ error: "Serverfehler bei der Korrektur." });
+    }
+});
+
+/* ═══════════════════════════════════════════════════
    Server starten
    ═══════════════════════════════════════════════════ */
 const PORT = process.env.PORT || 3001;
