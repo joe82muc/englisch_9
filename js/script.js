@@ -224,7 +224,32 @@ async function spellCheck(id) {
     });
     
     // 3. Fix common typos
-    var typos = {'arived':'arrived','arrved':'arrived','happend':'happened','accidnet':'accident','befor':'before','frist':'first','teh':'the'};
+    var typos = {
+      'arived':'arrived','arrved':'arrived','arivved':'arrived',
+      'happend':'happened','happned':'happened',
+      'accidnet':'accident','accidant':'accident','acident':'accident',
+      'befor':'before','bevore':'before',
+      'frist':'first','fist':'first',
+      'teh':'the','hte':'the',
+      'bith':'birth','brith':'birth','birht':'birth',
+      'adress':'address','adres':'address',
+      'ther':'there','thier':'their',
+      'wich':'which','whit':'with','wiht':'with',
+      'becaus':'because','becouse':'because',
+      'wher':'where','wehn':'when',
+      'peopel':'people','peple':'people',
+      'minuts':'minutes','minites':'minutes',
+      'oclock':"o'clock",'o clock':"o'clock",
+      'cylcist':'cyclist','ciclist':'cyclist','cyclis':'cyclist',
+      'polise':'police','plice':'police',
+      'witniss':'witness','witnes':'witness',
+      'questons':'questions','questins':'questions',
+      'detale':'detail','detial':'detail',
+      'expain':'explain','explane':'explain',
+      'togehter':'together','togther':'together',
+      'supper':'super','supermarkt':'supermarket',
+      'invovled':'involved','invloved':'involved'
+    };
     Object.keys(typos).forEach(function(w) {
       var re = new RegExp('\\b' + w + '\\b', 'gi');
       if (re.test(fixed)) { fixed = fixed.replace(re, typos[w]); changes.push('"' + w + '" → "' + typos[w] + '"'); }
