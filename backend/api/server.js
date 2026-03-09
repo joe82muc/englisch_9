@@ -12,9 +12,6 @@ app.get("/", (req, res) => {
     res.send("Englisch 9 hint server läuft. ✅");
 });
 
-/* ═══════════════════════════════════════════════════
-   SYSTEM PROMPT – deckt Present Perfect + Past Progressive ab
-   ═══════════════════════════════════════════════════ */
 const SYSTEM_PROMPT = `Du bist ein freundlicher Englischlehrer für eine 9. Klasse (Gymnasium, Bayern).
 
 DEINE REGELN:
@@ -32,9 +29,6 @@ THEMEN die du abdeckst:
 4. Irregular verbs (go-went-gone, etc.)
 5. Verneinung und Fragebildung`;
 
-/* ═══════════════════════════════════════════════════
-   SYSTEM PROMPT – Accident Wordbank (Unit 3)
-   ═══════════════════════════════════════════════════ */
 const ACCIDENT_PROMPT = `Du bist ein freundlicher Englischlehrer für eine 9. Klasse (Gymnasium, Bayern).
 Thema: Talking about an accident – englische Dialogsituationen (Polizist / Zeuge).
 
@@ -56,79 +50,58 @@ REGELN:
 - Gib Beispielsätze auf Englisch kursiv an
 - Max. 80 Wörter`;
 
-/* ═══════════════════════════════════════════════════
-   POST /api/hint – Present Perfect / Past Progressive
-   ═══════════════════════════════════════════════════ */
 app.post("/api/hint", async (req, res) => {
     try {
         const { studentAnswer, correctAnswer, exerciseContext } = req.body;
-
         if (!studentAnswer || !correctAnswer) {
             return res.status(400).json({ error: "studentAnswer und correctAnswer sind erforderlich." });
         }
-
         const userMessage = `Aufgabe/Kontext: "${exerciseContext || ''}"
 Schülerantwort: "${studentAnswer}"
 Richtige Antwort (nicht verraten!): "${correctAnswer}"
 Gib einen hilfreichen Tipp auf Deutsch.`;
-
         const message = await client.messages.create({
             model: "claude-haiku-4-5-20251001",
             max_tokens: 150,
             system: SYSTEM_PROMPT,
             messages: [{ role: "user", content: userMessage }]
         });
-
-        const hint = message.content[0].text;
-        res.json({ hint });
+        res.json({ hint: message.content[0].text });
     } catch (error) {
         console.error("Fehler bei /api/hint:", error);
-        res.status(500).json({ error: "Serverfehler beim Generieren des Tipps." });
+        res.status(500).json({ error: "Serverfehler." });
     }
 });
 
-/* ═══════════════════════════════════════════════════
-   POST /api/hint-accident – Accident Wordbank (Unit 3)
-   ═══════════════════════════════════════════════════ */
 app.post("/api/hint-accident", async (req, res) => {
     try {
         const { studentAnswer, correctAnswer, exerciseContext } = req.body;
-
         if (!studentAnswer || !correctAnswer) {
             return res.status(400).json({ error: "studentAnswer und correctAnswer sind erforderlich." });
         }
-
         const userMessage = `Aufgabe/Kontext: "${exerciseContext || ''}"
 Schülerantwort: "${studentAnswer}"
 Richtige Antwort (nicht verraten!): "${correctAnswer}"
 Gib einen hilfreichen Tipp auf Deutsch.`;
-
         const message = await client.messages.create({
             model: "claude-haiku-4-5-20251001",
             max_tokens: 150,
             system: ACCIDENT_PROMPT,
             messages: [{ role: "user", content: userMessage }]
         });
-
-        const hint = message.content[0].text;
-        res.json({ hint });
+        res.json({ hint: message.content[0].text });
     } catch (error) {
         console.error("Fehler bei /api/hint-accident:", error);
-        res.status(500).json({ error: "Serverfehler beim Generieren des Tipps." });
+        res.status(500).json({ error: "Serverfehler." });
     }
 });
 
-/* ═══════════════════════════════════════════════════
-   POST /api/korrektur – Spelling & Grammar Check
-   ═══════════════════════════════════════════════════ */
 app.post("/api/korrektur", async (req, res) => {
     try {
         const { studentAnswer } = req.body;
-
         if (!studentAnswer || studentAnswer.trim().length < 3) {
             return res.status(400).json({ error: "Text zu kurz." });
         }
-
         const message = await client.messages.create({
             model: "claude-haiku-4-5-20251001",
             max_tokens: 400,
@@ -140,34 +113,21 @@ WICHTIG – Antworte EXAKT in diesem JSON-Format und NICHTS anderes:
 REGELN für "corrected":
 - Korrigiere ALLE Rechtschreib- und Grammatikfehler
 - Entferne Buchstabensalat/Quatsch/sinnlose Zeichenketten komplett
-- Ersetze deutsche Wörter durch englische (z.B. "ist" → "is")
-- Ergänze fehlende Teile einer Zeugenaussage (Geburtsdatum, Ankunftszeit, "After that" etc.) NUR wenn der Schüler es offensichtlich versucht hat aber etwas fehlt
+- Ersetze deutsche Wörter durch englische
 - Behalte den Inhalt und Stil des Schülers bei
 - Korrekte Groß-/Kleinschreibung und Satzzeichen
 
 REGELN für "changes":
-- Kurz auf Deutsch erklären was geändert wurde (max. 3 Sätze)
-- Z.B. "‚ist' → ‚is', ‚arived' → ‚arrived'. Quatsch am Ende entfernt. Satzanfänge groß geschrieben."`,
+- Kurz auf Deutsch erklären was geändert wurde (max. 3 Sätze)`,
             messages: [{ role: "user", content: studentAnswer }]
         });
-
         const raw = message.content[0].text;
-        
-        // Try to parse as JSON
         try {
-            // Remove potential markdown code fences
             const clean = raw.replace(/```json\s*/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(clean);
-            res.json({ 
-                corrected: parsed.corrected || studentAnswer, 
-                changes: parsed.changes || 'Korrektur durchgeführt.' 
-            });
+            res.json({ corrected: parsed.corrected || studentAnswer, changes: parsed.changes || 'Korrektur durchgeführt.' });
         } catch(parseErr) {
-            // If JSON parsing fails, use the raw text as changes and try to extract corrected text
-            res.json({ 
-                corrected: studentAnswer, 
-                changes: raw 
-            });
+            res.json({ corrected: studentAnswer, changes: raw });
         }
     } catch (error) {
         console.error("Fehler bei /api/korrektur:", error);
@@ -175,9 +135,6 @@ REGELN für "changes":
     }
 });
 
-/* ═══════════════════════════════════════════════════
-   Server starten
-   ═══════════════════════════════════════════════════ */
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`✅ Server läuft auf Port ${PORT}`);
