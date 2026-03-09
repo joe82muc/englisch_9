@@ -162,20 +162,24 @@ function getAIHintC(id, correct, context) {
 
 /* ── Spell Check / Korrektur – sends text specifically for correction ── */
 async function spellCheck(id) {
-  var inp = $(id+'i');
-  var panel = $(id+'-aipanel');
+  var inp = document.getElementById(id+'i');
+  var panel = document.getElementById(id+'-aipanel');
   var val = inp ? inp.value.trim() : '';
 
   if (!val || val.length < 5) {
-    panel.innerHTML = '✏️ Schreib erst etwas, dann kann ich korrigieren!';
-    panel.classList.add('show');
+    if (panel) { panel.innerHTML = '✏️ Schreib erst etwas, dann kann ich korrigieren!'; panel.classList.add('show'); }
     return;
   }
 
-  // Find the button that was clicked and show loading
-  var btns = document.querySelectorAll('#' + id + ' .ai-btn');
-  btns.forEach(function(b) { if (b.textContent.includes('Korrektur')) { b.disabled = true; b.innerHTML = '<span class="spin">⏳</span> Prüft…'; } });
-  panel.classList.remove('show');
+  // Show loading on all Korrektur buttons in this exercise
+  var card = document.getElementById(id);
+  var korrBtn = null;
+  if (card) {
+    card.querySelectorAll('.ai-btn').forEach(function(b) {
+      if (b.textContent.includes('Korrektur')) { korrBtn = b; b.disabled = true; b.innerHTML = '<span class="spin">⏳</span> Prüft…'; }
+    });
+  }
+  if (panel) panel.classList.remove('show');
 
   try {
     var res = await fetch(API_BASE + '/api/hint-accident', {
@@ -184,21 +188,19 @@ async function spellCheck(id) {
       body: JSON.stringify({
         studentAnswer: val,
         correctAnswer: 'Korrekte englische Sätze zum Thema Unfallbericht',
-        exerciseContext: 'RECHTSCHREIBPRÜFUNG: Korrigiere den Text des Schülers. Finde ALLE Rechtschreib- und Grammatikfehler. Nenne jeden Fehler einzeln: was falsch ist → was richtig wäre. Wenn keine Fehler: lobe den Schüler!',
+        exerciseContext: 'RECHTSCHREIBPRÜFUNG: Korrigiere den Text des Schülers. Finde ALLE Rechtschreib- und Grammatikfehler. Nenne jeden Fehler einzeln auf Deutsch: was falsch ist → was richtig wäre. Wenn keine Fehler: lobe den Schüler! Prüfe auch Groß-/Kleinschreibung und Satzzeichen.',
         exerciseText: 'Spelling and grammar check',
         grammarTopic: 'accident dialogue spelling check'
       })
     });
     if (!res.ok) throw new Error('err');
     var data = await res.json();
-    panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + (data.hint || 'Keine Fehler gefunden – gut gemacht!');
-    panel.classList.add('show');
+    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + (data.hint || 'Keine Fehler gefunden – gut gemacht!'); panel.classList.add('show'); }
   } catch(e) {
-    panel.innerHTML = '✍️ <strong>Tipp:</strong> Achte auf Groß-/Kleinschreibung, Satzzeichen und die korrekte Schreibweise englischer Wörter.';
-    panel.classList.add('show');
+    if (panel) { panel.innerHTML = '✍️ <strong>Tipp:</strong> Achte auf Groß-/Kleinschreibung, Satzzeichen und die korrekte Schreibweise englischer Wörter.'; panel.classList.add('show'); }
   }
 
-  btns.forEach(function(b) { if (b.textContent.includes('Prüft')) { b.disabled = false; b.innerHTML = '✍️ Korrektur'; } });
+  if (korrBtn) { korrBtn.disabled = false; korrBtn.innerHTML = '✍️ Korrektur'; }
 }
 
 async function getAIHintFree(id) {
