@@ -297,10 +297,10 @@ async function handleSend() {
   sendBtn.disabled = true;
   inputEl.value = '';
   
+  var step = STEPS[currentStep];
+  
   // Show student message
   addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
-  
-  var step = STEPS[currentStep];
   attempts++;
   
   // Try AI evaluation first, fallback to local
@@ -310,31 +310,28 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
+    currentStep++;
+    updateProgress();
+    
     if (step.direction === 'en-de' || !step.ranger) {
-      // No ranger response needed for en-de steps
-      currentStep++;
-      updateProgress();
+      // en-de: no ranger response, go to next step
       setTimeout(function() { startStep(); }, 800);
     } else {
-      // Check if next step is en-de with same text - if so, skip ranger here (will show in next step)
-      var nextStep = STEPS[currentStep + 1];
+      // de-en: check if next step shows same ranger text
+      var nextStep = STEPS[currentStep];
       if (nextStep && nextStep.direction === 'en-de' && nextStep.rangerSays === step.ranger) {
-        // Skip ranger response - it will appear as the en-de prompt
-        currentStep++;
-        updateProgress();
+        // Next step will show this ranger text, so skip it here
         setTimeout(function() { startStep(); }, 800);
       } else {
-        // Show ranger response after delay
+        // Show ranger response
         setTimeout(function() {
           var typing = addTyping();
           setTimeout(function() {
             removeTyping();
-          addMsg('ranger', '👮 Polizist', step.ranger);
-          currentStep++;
-          updateProgress();
-          setTimeout(function() { startStep(); }, 1200);
-        }, 1500);
-      }, 800);
+            addMsg('ranger', '👮 Polizist', step.ranger);
+            setTimeout(function() { startStep(); }, 1000);
+          }, 1200);
+        }, 600);
       }
     }
     

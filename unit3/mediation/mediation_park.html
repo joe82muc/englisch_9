@@ -295,10 +295,10 @@ async function handleSend() {
   sendBtn.disabled = true;
   inputEl.value = '';
   
+  var step = STEPS[currentStep];
+  
   // Show student message
   addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
-  
-  var step = STEPS[currentStep];
   attempts++;
   
   // Try AI evaluation first, fallback to local
@@ -308,21 +308,28 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
+    currentStep++;
+    updateProgress();
+    
     if (step.direction === 'en-de' || !step.ranger) {
-      currentStep++;
-      updateProgress();
+      // en-de: no ranger response, go to next step
       setTimeout(function() { startStep(); }, 800);
     } else {
-      setTimeout(function() {
-        var typing = addTyping();
+      // de-en: check if next step shows same ranger text
+      var nextStep = STEPS[currentStep];
+      if (nextStep && nextStep.direction === 'en-de' && nextStep.rangerSays === step.ranger) {
+        // Next step will show this ranger text, so skip it here
+        setTimeout(function() { startStep(); }, 800);
+      } else {
+        // Show ranger response
         setTimeout(function() {
-          removeTyping();
-          addMsg('ranger', '🌿 Park Ranger', step.ranger);
-          currentStep++;
-          updateProgress();
-          setTimeout(function() { startStep(); }, 1200);
-        }, 1500);
-      }, 800);
+          var typing = addTyping();
+          setTimeout(function() {
+            removeTyping();
+            addMsg('ranger', '🌿 Park Ranger', step.ranger);
+            setTimeout(function() { startStep(); }, 1000);
+          }, 1200);
+        }, 600);
       }
     }
     
