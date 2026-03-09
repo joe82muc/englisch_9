@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#065f46">
-<title>Mediation – Visiting a National Park</title>
+<meta name="theme-color" content="#7c2d12">
+<title>Mediation – At the Craft Market</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --green:#065f46;--green2:#047857;--lime:#dcfce7;--limeb:#86efac;
+  --green:#7c2d12;--green2:#7c2d12;--lime:#dcfce7;--limeb:#86efac;
   --orange:#c2410c;--orangebg:#fff7ed;--orangeb:#fdba74;
   --blue:#1d4ed8;--bluebg:#eff6ff;--blueb:#93c5fd;
-  --bg:#f0fdf4;--card:#fff;--border:#d1fae5;
+  #eff6ff;--card:#fff;--border:#d1fae5;
   --text:#0f172a;--muted:#64748b;
   --red:#dc2626;--redbg:#fef2f2;
   --gbg:#dcfce7;--gb:#16a34a;
@@ -21,7 +21,7 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,var(--green),#047857);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#7c2d12,#c2410c);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
 .back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
 .utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#86efac;margin-bottom:.3rem;}
@@ -102,15 +102,15 @@ h1 em{font-style:italic;opacity:.85;}
 
 <div class="hdr">
   <a href="index.html" class="back">← Back</a>
-  <div class="utag">Unit 3 · Mediation · Speaking</div>
-  <h1>Visiting a<br><em>National Park</em> 🌿</h1>
-  <p class="hsub">Du vermittelst zwischen deinem Onkel und dem Park Ranger</p>
+  <div class="utag">Unit 3 · Mediation · Shopping</div>
+  <h1>At the<br><em>Craft Market</em> 🎨</h1>
+  <p class="hsub">Du vermittelst zwischen deiner Oma und einer Verkäuferin</p>
 </div>
 
 <div class="scenario">
   <div class="scene-card">
     <h2>🎭 Situation</h2>
-    <p>Du machst Urlaub in Südafrika mit deinem Onkel. Ihr besucht den „Kruger National Park". Am Eingang gibt euch ein Park Ranger Auskunft. Dein Onkel spricht kein Englisch – du musst vermitteln!</p>
+    <p>Du bist mit deiner Oma auf einem Kunsthandwerksmarkt in Kapstadt. Sie möchte Souvenirs kaufen, spricht aber kein Englisch. Du musst zwischen ihr und der Verkäuferin vermitteln!</p>
   </div>
 </div>
 
@@ -124,7 +124,7 @@ h1 em{font-style:italic;opacity:.85;}
 </div>
 
 <div class="input-bar" id="inputBar">
-  <textarea id="userInput" rows="1" placeholder="Übersetze für den Park Ranger…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <textarea id="userInput" rows="1" placeholder="Übersetze für die Verkäuferin…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
 </div>
 
@@ -136,71 +136,71 @@ var API_BASE = 'https://englisch-9.onrender.com';
    ═══════════════════════════════════════ */
 var STEPS = [
   {
-    uncle: "Hallo, wir wollen jetzt in den Park fahren. Kann man aus dem Auto aussteigen, wenn man zum Beispiel Fotos von den Tieren machen will?",
-    instruction: "🇩🇪→🇬🇧 Frag den Ranger, ob man aussteigen darf um Fotos zu machen. ('Her/His' oder 'My/We' – beides OK!)",
+    uncle: "Oh, die Holzfiguren sind schön! Frag mal, wie viel die kosten.",
+    instruction: "🇩🇪→🇬🇧 Frag nach dem Preis der Holzfiguren.",
     direction: "de-en",
-    keywords: ['car','out','get out','leave','photos','pictures','animals','stop'],
-    minWords: 5,
-    ranger: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp."
+    keywords: ['how much','price','cost','wooden','figures','these'],
+    minWords: 4,
+    ranger: "These are hand-carved wooden animals. They cost 150 Rand each, or you can get three for 400 Rand."
   },
   {
     uncle: "",
-    rangerSays: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man darf nicht aussteigen. Übersetze das für deinen Onkel!",
+    rangerSays: "These are hand-carved wooden animals. They cost 150 Rand each, or you can get three for 400 Rand.",
+    instruction: "🇬🇧→🇩🇪 Die Verkäuferin sagt den Preis. Übersetze für deine Oma!",
     direction: "en-de",
-    keywords: ['auto','bleiben','tür','geschlossen','schilder','entfernung','camp','nein','nicht aussteigen'],
+    keywords: ['handgeschnitzt','holz','150','rand','drei','400','stück','kosten'],
     minWords: 4,
     ranger: ""
   },
   {
-    uncle: "OK. Können wir im Park telefonieren mit dem Handy?",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man im Park das Handy benutzen darf.",
+    uncle: "Das ist mir zu teuer. Kann man da handeln? Frag ob sie einen besseren Preis machen kann.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob es einen besseren Preis gibt.",
     direction: "de-en",
-    keywords: ['phone','mobile','call','use','park'],
+    keywords: ['cheaper','discount','better price','less','lower','deal'],
     minWords: 4,
-    ranger: "No, you can only use your phones in camps, at gates or in emergencies."
+    ranger: "Well, if you buy three or more, I can give you a special price. How about 350 Rand for three?"
   },
   {
     uncle: "",
-    rangerSays: "No, you can only use your phones in camps, at gates or in emergencies.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, Handys nur in Camps und Notfällen. Übersetze!",
+    rangerSays: "Well, if you buy three or more, I can give you a special price. How about 350 Rand for three?",
+    instruction: "🇬🇧→🇩🇪 Sie bietet 350 Rand für drei an. Übersetze!",
     direction: "en-de",
-    keywords: ['handy','nur','camp','notfall','notfälle','eingang','tor'],
+    keywords: ['drei','350','rand','sonderpreis','angebot','kaufen'],
     minWords: 3,
     ranger: ""
   },
   {
-    uncle: "Frag doch mal, ob man die Tiere im Park füttern darf.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man die Tiere füttern darf.",
+    uncle: "Ok, ich nehme drei. Und frag sie, woraus die gemacht sind.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass sie drei nimmt und frag nach dem Material.",
     direction: "de-en",
-    keywords: ['feed','animals','allowed','can','may'],
+    keywords: ['take','three','made','what','material','wood'],
     minWords: 4,
-    ranger: "Of course not. Never feed or disturb the animals."
+    ranger: "Great choice! They are made from African olive wood. Each one is hand-carved by local artists."
   },
   {
-    uncle: "Das verstehe ich. Frag ihn doch bitte, ob es im Park gefährlich werden kann.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob es im Park gefährlich sein kann.",
+    uncle: "Kann ich mit Kreditkarte bezahlen oder nur bar?",
+    instruction: "🇩🇪→🇬🇧 Frag, ob man mit Kreditkarte bezahlen kann.",
     direction: "de-en",
-    keywords: ['dangerous','danger','safe','happen','anything','risk'],
+    keywords: ['pay','card','credit','cash','credit card'],
     minWords: 4,
-    ranger: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close."
+    ranger: "I'm sorry, we only take cash here. But there's an ATM just around the corner."
   },
   {
     uncle: "",
-    rangerSays: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man ist sicher wenn man die Regeln befolgt. Übersetze!",
+    rangerSays: "I'm sorry, we only take cash here. But there's an ATM just around the corner.",
+    instruction: "🇬🇧→🇩🇪 Nur Bargeld, aber ein Geldautomat ist um die Ecke. Übersetze!",
     direction: "en-de",
-    keywords: ['sicher','regel','befolg','camp','tor','zurück','schließ'],
-    minWords: 4,
+    keywords: ['bargeld','bar','geldautomat','ecke','nur','kein','karte'],
+    minWords: 3,
     ranger: ""
   },
   {
-    uncle: "Vielen Dank für die Informationen! Thank you!",
-    instruction: "🇩🇪→🇬🇧 Bedanke dich beim Ranger und verabschiede dich.",
+    uncle: "Alles klar, ich zahle bar. Vielen Dank, die sind wirklich wunderschön!",
+    instruction: "🇩🇪→🇬🇧 Sag, sie zahlt bar und bedanke dich.",
     direction: "de-en",
-    keywords: ['thank','information','help','goodbye','bye'],
+    keywords: ['pay','cash','thank','beautiful','lovely'],
     minWords: 3,
-    ranger: "You're welcome! Enjoy your visit and stay safe!"
+    ranger: "Thank you so much! Have a wonderful stay in Cape Town!"
   }
 ];
 
@@ -234,7 +234,7 @@ function addTyping() {
   var div = document.createElement('div');
   div.className = 'msg ranger';
   div.id = 'typing';
-  div.innerHTML = '<div class="sender">🌿 Park Ranger</div><div class="typing"><span></span><span></span><span></span></div>';
+  div.innerHTML = '<div class="sender">🛍️ Verkäuferin</div><div class="typing"><span></span><span></span><span></span></div>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
   return div;
@@ -263,19 +263,19 @@ function startStep() {
   attempts = 0;
   
   if (step.direction === 'en-de') {
-    addMsg('ranger', '🌿 Park Ranger', step.rangerSays);
+    addMsg('ranger', '🛍️ Verkäuferin', step.rangerSays);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Onkel…';
+      inputEl.placeholder = 'Übersetze auf Deutsch für deine Oma…';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
     }, 600);
   } else {
-    addMsg('uncle', '👨 Onkel (Deutsch)', step.uncle);
+    addMsg('uncle', '👵 Oma (Deutsch)', step.uncle);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Englisch für den Ranger…';
+      inputEl.placeholder = 'Übersetze auf Englisch für die Verkäuferin…';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
@@ -326,7 +326,7 @@ async function handleSend() {
           var typing = addTyping();
           setTimeout(function() {
             removeTyping();
-            addMsg('ranger', '🌿 Park Ranger', step.ranger);
+            addMsg('ranger', '🛍️ Verkäuferin', step.ranger);
             setTimeout(function() { startStep(); }, 1000);
           }, 1200);
         }, 600);

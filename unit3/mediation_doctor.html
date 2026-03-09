@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#065f46">
-<title>Mediation – Visiting a National Park</title>
+<title>Mediation – At the Doctor's</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --green:#065f46;--green2:#047857;--lime:#dcfce7;--limeb:#86efac;
+  --green:#0369a1;--green2:#0369a1;--lime:#dcfce7;--limeb:#7dd3fc;
   --orange:#c2410c;--orangebg:#fff7ed;--orangeb:#fdba74;
   --blue:#1d4ed8;--bluebg:#eff6ff;--blueb:#93c5fd;
-  --bg:#f0fdf4;--card:#fff;--border:#d1fae5;
+  --bg:#f0f9ff;--card:#fff;--border:#e2e8f0;
   --text:#0f172a;--muted:#64748b;
   --red:#dc2626;--redbg:#fef2f2;
   --gbg:#dcfce7;--gb:#16a34a;
@@ -21,10 +21,10 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,var(--green),#047857);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#0369a1,#0ea5e9);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
 .back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
-.utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#86efac;margin-bottom:.3rem;}
+.utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7dd3fc;margin-bottom:.3rem;}
 h1{font-family:'Fraunces',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#fff;line-height:1.1;}
 h1 em{font-style:italic;opacity:.85;}
 .hsub{font-size:.8rem;color:rgba(255,255,255,.6);margin-top:.3rem;}
@@ -75,7 +75,7 @@ h1 em{font-style:italic;opacity:.85;}
 
 /* INPUT BAR */
 .input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1.5px solid var(--border);padding:.7rem 1rem calc(env(safe-area-inset-bottom) + .7rem);display:flex;gap:.5rem;align-items:flex-end;z-index:10;}
-.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fdf9;}
+.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fafc;}
 .input-bar textarea:focus{border-color:var(--green2);}
 .input-bar textarea:disabled{background:#f1f5f9;color:#94a3b8;}
 .send-btn{background:var(--green);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
@@ -102,15 +102,15 @@ h1 em{font-style:italic;opacity:.85;}
 
 <div class="hdr">
   <a href="index.html" class="back">← Back</a>
-  <div class="utag">Unit 3 · Mediation · Speaking</div>
-  <h1>Visiting a<br><em>National Park</em> 🌿</h1>
-  <p class="hsub">Du vermittelst zwischen deinem Onkel und dem Park Ranger</p>
+  <div class="utag">Unit 3 · Mediation · Health</div>
+  <h1>At the<br><em>Doctor's</em> 🏥</h1>
+  <p class="hsub">Du vermittelst zwischen deinem Opa und der Ärztin</p>
 </div>
 
 <div class="scenario">
   <div class="scene-card">
     <h2>🎭 Situation</h2>
-    <p>Du machst Urlaub in Südafrika mit deinem Onkel. Ihr besucht den „Kruger National Park". Am Eingang gibt euch ein Park Ranger Auskunft. Dein Onkel spricht kein Englisch – du musst vermitteln!</p>
+    <p>Dein Opa hat sich im Urlaub in Südafrika nicht wohl gefühlt. Ihr geht zusammen zu einer Ärztin in Kapstadt. Dein Opa spricht kein Englisch – du musst ihm beim Arztbesuch helfen!</p>
   </div>
 </div>
 
@@ -124,7 +124,7 @@ h1 em{font-style:italic;opacity:.85;}
 </div>
 
 <div class="input-bar" id="inputBar">
-  <textarea id="userInput" rows="1" placeholder="Übersetze für den Park Ranger…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <textarea id="userInput" rows="1" placeholder="Übersetze für die Ärztin…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
 </div>
 
@@ -136,71 +136,71 @@ var API_BASE = 'https://englisch-9.onrender.com';
    ═══════════════════════════════════════ */
 var STEPS = [
   {
-    uncle: "Hallo, wir wollen jetzt in den Park fahren. Kann man aus dem Auto aussteigen, wenn man zum Beispiel Fotos von den Tieren machen will?",
-    instruction: "🇩🇪→🇬🇧 Frag den Ranger, ob man aussteigen darf um Fotos zu machen. ('Her/His' oder 'My/We' – beides OK!)",
+    uncle: "Sag der Ärztin, dass mir seit gestern der Bauch wehtut und mir übel ist.",
+    instruction: "🇩🇪→🇬🇧 Beschreibe die Symptome. ('He has...' oder 'I have...' – beides OK!)",
     direction: "de-en",
-    keywords: ['car','out','get out','leave','photos','pictures','animals','stop'],
+    keywords: ['stomach','pain','ache','hurts','since yesterday','sick','feel','nauseous'],
     minWords: 5,
-    ranger: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp."
+    ranger: "I'm sorry to hear that. When exactly did the pain start? Was it after eating something?"
   },
   {
     uncle: "",
-    rangerSays: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man darf nicht aussteigen. Übersetze das für deinen Onkel!",
+    rangerSays: "I'm sorry to hear that. When exactly did the pain start? Was it after eating something?",
+    instruction: "🇬🇧→🇩🇪 Die Ärztin fragt, wann es anfing und ob es nach dem Essen war. Übersetze!",
     direction: "en-de",
-    keywords: ['auto','bleiben','tür','geschlossen','schilder','entfernung','camp','nein','nicht aussteigen'],
+    keywords: ['wann','angefangen','schmerz','essen','nach dem'],
     minWords: 4,
     ranger: ""
   },
   {
-    uncle: "OK. Können wir im Park telefonieren mit dem Handy?",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man im Park das Handy benutzen darf.",
+    uncle: "Es hat gestern Abend nach dem Essen angefangen. Wir haben Fisch gegessen in einem Restaurant am Hafen.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass es nach dem Fischessen gestern Abend angefangen hat.",
     direction: "de-en",
-    keywords: ['phone','mobile','call','use','park'],
-    minWords: 4,
-    ranger: "No, you can only use your phones in camps, at gates or in emergencies."
+    keywords: ['started','yesterday','evening','after','eating','fish','restaurant'],
+    minWords: 5,
+    ranger: "That could be food poisoning. Does he have a fever or any other symptoms?"
   },
   {
     uncle: "",
-    rangerSays: "No, you can only use your phones in camps, at gates or in emergencies.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, Handys nur in Camps und Notfällen. Übersetze!",
+    rangerSays: "That could be food poisoning. Does he have a fever or any other symptoms?",
+    instruction: "🇬🇧→🇩🇪 Könnte eine Lebensmittelvergiftung sein. Hat er Fieber? Übersetze!",
     direction: "en-de",
-    keywords: ['handy','nur','camp','notfall','notfälle','eingang','tor'],
+    keywords: ['lebensmittelvergiftung','vergiftung','fieber','symptom','andere'],
     minWords: 3,
     ranger: ""
   },
   {
-    uncle: "Frag doch mal, ob man die Tiere im Park füttern darf.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man die Tiere füttern darf.",
+    uncle: "Ich glaube, ich habe ein bisschen Fieber. Und ich habe Kopfschmerzen und bin sehr müde.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass er leichtes Fieber, Kopfschmerzen und Müdigkeit hat.",
     direction: "de-en",
-    keywords: ['feed','animals','allowed','can','may'],
-    minWords: 4,
-    ranger: "Of course not. Never feed or disturb the animals."
-  },
-  {
-    uncle: "Das verstehe ich. Frag ihn doch bitte, ob es im Park gefährlich werden kann.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob es im Park gefährlich sein kann.",
-    direction: "de-en",
-    keywords: ['dangerous','danger','safe','happen','anything','risk'],
-    minWords: 4,
-    ranger: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close."
+    keywords: ['fever','temperature','headache','tired','head','little','bit'],
+    minWords: 5,
+    ranger: "I'll give him some medicine. He needs to drink a lot of water and rest today."
   },
   {
     uncle: "",
-    rangerSays: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man ist sicher wenn man die Regeln befolgt. Übersetze!",
+    rangerSays: "I'll give him some medicine. He needs to drink a lot of water and rest today.",
+    instruction: "🇬🇧→🇩🇪 Medizin, viel Wasser trinken und heute ausruhen. Übersetze!",
     direction: "en-de",
-    keywords: ['sicher','regel','befolg','camp','tor','zurück','schließ'],
-    minWords: 4,
+    keywords: ['medizin','wasser','trinken','ausruhen','ruhe','heute'],
+    minWords: 3,
     ranger: ""
   },
   {
-    uncle: "Vielen Dank für die Informationen! Thank you!",
-    instruction: "🇩🇪→🇬🇧 Bedanke dich beim Ranger und verabschiede dich.",
+    uncle: "Frag, ob ich die Medizin vor oder nach dem Essen nehmen soll.",
+    instruction: "🇩🇪→🇬🇧 Frag wann und wie oft die Medizin genommen werden soll.",
     direction: "de-en",
-    keywords: ['thank','information','help','goodbye','bye'],
-    minWords: 3,
-    ranger: "You're welcome! Enjoy your visit and stay safe!"
+    keywords: ['medicine','take','before','after','eating','how often','times','day'],
+    minWords: 5,
+    ranger: "Three times a day, after meals. And at least two litres of water."
+  },
+  {
+    uncle: "Vielen Dank, Frau Doktor! Frag noch, ob wir morgen den Ausflug machen können.",
+    instruction: "🇩🇪→🇬🇧 Bedanke dich und frag ob der Opa morgen einen Ausflug machen kann.",
+    direction: "de-en",
+    keywords: ['thank','tomorrow','trip','excursion','go out','better','ok'],
+    minWords: 4,
+    ranger: "If he rests today, he should feel better tomorrow. But if it gets worse, come back!"
   }
 ];
 
@@ -234,7 +234,7 @@ function addTyping() {
   var div = document.createElement('div');
   div.className = 'msg ranger';
   div.id = 'typing';
-  div.innerHTML = '<div class="sender">🌿 Park Ranger</div><div class="typing"><span></span><span></span><span></span></div>';
+  div.innerHTML = '<div class="sender">👩‍⚕️ Ärztin</div><div class="typing"><span></span><span></span><span></span></div>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
   return div;
@@ -263,19 +263,19 @@ function startStep() {
   attempts = 0;
   
   if (step.direction === 'en-de') {
-    addMsg('ranger', '🌿 Park Ranger', step.rangerSays);
+    addMsg('ranger', '👩‍⚕️ Ärztin', step.rangerSays);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Onkel…';
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Opa…';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
     }, 600);
   } else {
-    addMsg('uncle', '👨 Onkel (Deutsch)', step.uncle);
+    addMsg('uncle', '👴 Opa (Deutsch)', step.uncle);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Englisch für den Ranger…';
+      inputEl.placeholder = 'Übersetze auf Englisch für die Ärztin…';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
@@ -326,7 +326,7 @@ async function handleSend() {
           var typing = addTyping();
           setTimeout(function() {
             removeTyping();
-            addMsg('ranger', '🌿 Park Ranger', step.ranger);
+            addMsg('ranger', '👩‍⚕️ Ärztin', step.ranger);
             setTimeout(function() { startStep(); }, 1000);
           }, 1200);
         }, 600);

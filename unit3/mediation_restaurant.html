@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#065f46">
-<title>Mediation – Visiting a National Park</title>
+<meta name="theme-color" content="#1e3a5f">
+<title>Mediation – At the Restaurant</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --green:#065f46;--green2:#047857;--lime:#dcfce7;--limeb:#86efac;
+  --green:#1e3a5f;--green2:#1e3a5f;--lime:#dcfce7;--limeb:#86efac;
   --orange:#c2410c;--orangebg:#fff7ed;--orangeb:#fdba74;
   --blue:#1d4ed8;--bluebg:#eff6ff;--blueb:#93c5fd;
-  --bg:#f0fdf4;--card:#fff;--border:#d1fae5;
+  #eff6ff;--card:#fff;--border:#d1fae5;
   --text:#0f172a;--muted:#64748b;
   --red:#dc2626;--redbg:#fef2f2;
   --gbg:#dcfce7;--gb:#16a34a;
@@ -21,7 +21,7 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,var(--green),#047857);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
 .back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
 .utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#86efac;margin-bottom:.3rem;}
@@ -102,15 +102,15 @@ h1 em{font-style:italic;opacity:.85;}
 
 <div class="hdr">
   <a href="index.html" class="back">← Back</a>
-  <div class="utag">Unit 3 · Mediation · Speaking</div>
-  <h1>Visiting a<br><em>National Park</em> 🌿</h1>
-  <p class="hsub">Du vermittelst zwischen deinem Onkel und dem Park Ranger</p>
+  <div class="utag">Unit 3 · Mediation · Food</div>
+  <h1>At the<br><em>Restaurant</em> 🍽️</h1>
+  <p class="hsub">Du vermittelst zwischen deinem Vater und dem Kellner</p>
 </div>
 
 <div class="scenario">
   <div class="scene-card">
     <h2>🎭 Situation</h2>
-    <p>Du machst Urlaub in Südafrika mit deinem Onkel. Ihr besucht den „Kruger National Park". Am Eingang gibt euch ein Park Ranger Auskunft. Dein Onkel spricht kein Englisch – du musst vermitteln!</p>
+    <p>Du bist mit deinem Vater in einem Restaurant in Durban, Südafrika. Euer Kellner spricht nur Englisch. Dein Vater hat Fragen zum Essen und braucht deine Hilfe beim Bestellen!</p>
   </div>
 </div>
 
@@ -124,7 +124,7 @@ h1 em{font-style:italic;opacity:.85;}
 </div>
 
 <div class="input-bar" id="inputBar">
-  <textarea id="userInput" rows="1" placeholder="Übersetze für den Park Ranger…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <textarea id="userInput" rows="1" placeholder="Übersetze für den Kellner…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
 </div>
 
@@ -136,71 +136,62 @@ var API_BASE = 'https://englisch-9.onrender.com';
    ═══════════════════════════════════════ */
 var STEPS = [
   {
-    uncle: "Hallo, wir wollen jetzt in den Park fahren. Kann man aus dem Auto aussteigen, wenn man zum Beispiel Fotos von den Tieren machen will?",
-    instruction: "🇩🇪→🇬🇧 Frag den Ranger, ob man aussteigen darf um Fotos zu machen. ('Her/His' oder 'My/We' – beides OK!)",
+    uncle: "Frag den Kellner, ob er ein Gericht ohne Fleisch empfehlen kann.",
+    instruction: "🇩🇪→🇬🇧 Frag nach einer vegetarischen Empfehlung.",
     direction: "de-en",
-    keywords: ['car','out','get out','leave','photos','pictures','animals','stop'],
-    minWords: 5,
-    ranger: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp."
+    keywords: ['vegetarian','without meat','recommend','suggest','no meat','dish'],
+    minWords: 4,
+    ranger: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice."
   },
   {
     uncle: "",
-    rangerSays: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man darf nicht aussteigen. Übersetze das für deinen Onkel!",
+    rangerSays: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice.",
+    instruction: "🇬🇧→🇩🇪 Der Kellner empfiehlt Suppe und Gemüse-Curry. Übersetze!",
     direction: "en-de",
-    keywords: ['auto','bleiben','tür','geschlossen','schilder','entfernung','camp','nein','nicht aussteigen'],
+    keywords: ['suppe','curry','gemüse','reis','vorspeise','hauptgericht','empf'],
     minWords: 4,
     ranger: ""
   },
   {
-    uncle: "OK. Können wir im Park telefonieren mit dem Handy?",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man im Park das Handy benutzen darf.",
+    uncle: "Das klingt gut. Ist das Curry scharf? Ich vertrage kein scharfes Essen.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob das Curry scharf ist.",
     direction: "de-en",
-    keywords: ['phone','mobile','call','use','park'],
+    keywords: ['spicy','hot','curry','mild','not spicy'],
     minWords: 4,
-    ranger: "No, you can only use your phones in camps, at gates or in emergencies."
+    ranger: "It's medium spicy, but we can make it mild for you."
+  },
+  {
+    uncle: "Dann bitte mild. Und frag, was für Getränke sie haben.",
+    instruction: "🇩🇪→🇬🇧 Bestelle mild und frag nach Getränken.",
+    direction: "de-en",
+    keywords: ['mild','juice','fresh','drink','please','order','beverage'],
+    minWords: 4,
+    ranger: "We have fresh orange juice, mango juice, and a special South African rooibos iced tea."
   },
   {
     uncle: "",
-    rangerSays: "No, you can only use your phones in camps, at gates or in emergencies.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, Handys nur in Camps und Notfällen. Übersetze!",
+    rangerSays: "We have fresh orange juice, mango juice, and a special South African rooibos iced tea.",
+    instruction: "🇬🇧→🇩🇪 Orangensaft, Mangosaft und Rooibos-Eistee. Übersetze!",
     direction: "en-de",
-    keywords: ['handy','nur','camp','notfall','notfälle','eingang','tor'],
+    keywords: ['orangensaft','mangosaft','rooibos','eistee','saft','frisch'],
     minWords: 3,
     ranger: ""
   },
   {
-    uncle: "Frag doch mal, ob man die Tiere im Park füttern darf.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man die Tiere füttern darf.",
+    uncle: "Ich nehme den Mangosaft. Frag, ob das Essen lange dauert – wir haben um 3 eine Führung.",
+    instruction: "🇩🇪→🇬🇧 Bestelle Mangosaft und frag wie lange es dauert.",
     direction: "de-en",
-    keywords: ['feed','animals','allowed','can','may'],
+    keywords: ['mango','how long','wait','time','tour','three'],
     minWords: 4,
-    ranger: "Of course not. Never feed or disturb the animals."
+    ranger: "The food usually takes about 20 minutes. You should have plenty of time!"
   },
   {
-    uncle: "Das verstehe ich. Frag ihn doch bitte, ob es im Park gefährlich werden kann.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob es im Park gefährlich sein kann.",
+    uncle: "Das Essen war fantastisch. Sag dem Kellner, dass es uns sehr gut geschmeckt hat.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass das Essen fantastisch war.",
     direction: "de-en",
-    keywords: ['dangerous','danger','safe','happen','anything','risk'],
-    minWords: 4,
-    ranger: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close."
-  },
-  {
-    uncle: "",
-    rangerSays: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close.",
-    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man ist sicher wenn man die Regeln befolgt. Übersetze!",
-    direction: "en-de",
-    keywords: ['sicher','regel','befolg','camp','tor','zurück','schließ'],
-    minWords: 4,
-    ranger: ""
-  },
-  {
-    uncle: "Vielen Dank für die Informationen! Thank you!",
-    instruction: "🇩🇪→🇬🇧 Bedanke dich beim Ranger und verabschiede dich.",
-    direction: "de-en",
-    keywords: ['thank','information','help','goodbye','bye'],
+    keywords: ['food','great','delicious','fantastic','wonderful','enjoyed','amazing','thank'],
     minWords: 3,
-    ranger: "You're welcome! Enjoy your visit and stay safe!"
+    ranger: "Thank you so much! I'm really glad you enjoyed it!"
   }
 ];
 
@@ -234,7 +225,7 @@ function addTyping() {
   var div = document.createElement('div');
   div.className = 'msg ranger';
   div.id = 'typing';
-  div.innerHTML = '<div class="sender">🌿 Park Ranger</div><div class="typing"><span></span><span></span><span></span></div>';
+  div.innerHTML = '<div class="sender">🍽️ Kellner</div><div class="typing"><span></span><span></span><span></span></div>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
   return div;
@@ -263,19 +254,19 @@ function startStep() {
   attempts = 0;
   
   if (step.direction === 'en-de') {
-    addMsg('ranger', '🌿 Park Ranger', step.rangerSays);
+    addMsg('ranger', '🍽️ Kellner', step.rangerSays);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Onkel…';
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Papa…';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
     }, 600);
   } else {
-    addMsg('uncle', '👨 Onkel (Deutsch)', step.uncle);
+    addMsg('uncle', '👨 Papa (Deutsch)', step.uncle);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Englisch für den Ranger…';
+      inputEl.placeholder = 'Übersetze auf Englisch für den Kellner…';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
@@ -326,7 +317,7 @@ async function handleSend() {
           var typing = addTyping();
           setTimeout(function() {
             removeTyping();
-            addMsg('ranger', '🌿 Park Ranger', step.ranger);
+            addMsg('ranger', '🍽️ Kellner', step.ranger);
             setTimeout(function() { startStep(); }, 1000);
           }, 1200);
         }, 600);
