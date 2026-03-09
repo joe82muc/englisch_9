@@ -160,7 +160,7 @@ function getAIHintC(id, correct, context) {
   fetchHint(id, val, correct, enrichedContext, 'accident dialogue');
 }
 
-/* ── Spell Check / Korrektur – dedicated endpoint ── */
+/* ── Korrektur – KI korrigiert Text direkt im Textfeld ── */
 async function spellCheck(id) {
   var inp = document.getElementById(id+'i');
   var panel = document.getElementById(id+'-aipanel');
@@ -176,7 +176,7 @@ async function spellCheck(id) {
   var korrBtn = null;
   if (card) {
     card.querySelectorAll('.ai-btn').forEach(function(b) {
-      if (b.textContent.includes('Korrektur')) { korrBtn = b; b.disabled = true; b.innerHTML = '<span class="spin">⏳</span> Prüft…'; }
+      if (b.textContent.includes('Korrektur')) { korrBtn = b; b.disabled = true; b.innerHTML = '<span class="spin">⏳</span> Korrigiert…'; }
     });
   }
   if (panel) panel.classList.remove('show');
@@ -189,21 +189,49 @@ async function spellCheck(id) {
     });
     if (!res.ok) throw new Error('Server ' + res.status);
     var data = await res.json();
-    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + (data.hint || 'Keine Fehler gefunden!'); panel.classList.add('show'); }
+    if (data.corrected && inp) {
+      // Write corrected text into the textarea
+      inp.value = data.corrected;
+      inp.classList.remove('ok','err');
+      inp.style.transition = 'background 0.5s';
+      inp.style.background = '#dcfce7';
+      setTimeout(function(){ inp.style.background = ''; }, 2000);
+    }
+    if (data.changes && panel) {
+      panel.innerHTML = '✍️ <strong>Änderungen:</strong> ' + data.changes;
+      panel.classList.add('show');
+    } else if (panel) {
+      panel.innerHTML = '✅ Keine Fehler gefunden!';
+      panel.classList.add('show');
+    }
   } catch(e) {
-    // Local fallback: basic checks
-    var fixes = [];
-    if (/\bist\b/.test(val)) fixes.push('❌ "ist" → ✅ "is" (Englisch, nicht Deutsch!)');
-    if (/\bi [a-z]/.test(val)) fixes.push('❌ "i" → ✅ "I" (immer groß schreiben!)');
-    if (/\bmy name is [a-z]/.test(val)) fixes.push('❌ Name klein → ✅ Namen immer groß schreiben!');
-    if (/\barived\b/.test(val)) fixes.push('❌ "arived" → ✅ "arrived" (doppeltes r)');
-    if (/\baccidnet\b|\baccidant\b/.test(val)) fixes.push('❌ Schreibfehler → ✅ "accident"');
-    if (/[a-z]\.\s*[a-z]/.test(val)) fixes.push('💡 Nach einem Punkt groß weiterschreiben!');
-    var msg = fixes.length > 0 ? fixes.join('<br>') : '⚠️ Server nicht erreichbar. Prüfe Groß-/Kleinschreibung, Satzzeichen und Rechtschreibung.';
-    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
+    // Local fallback: fix what we can
+    var fixed = val;
+    var changes = [];
+    // Fix "ist" → "is"
+    if (/\bist\b/g.test(fixed)) { fixed = fixed.replace(/\bist\b/g, 'is'); changes.push('"ist" → "is"'); }
+    // Fix "arived" → "arrived"
+    if (/\barived\b/g.test(fixed)) { fixed = fixed.replace(/\barived\b/g, 'arrived'); changes.push('"arived" → "arrived"'); }
+    // Fix lowercase "i" → "I"
+    fixed = fixed.replace(/\bi\b/g, 'I'); if (val !== fixed && changes.indexOf('"i" → "I"') < 0) changes.push('"i" → "I"');
+    // Capitalize after periods
+    fixed = fixed.replace(/\.\s*([a-z])/g, function(m, c) { return '. ' + c.toUpperCase(); });
+    // Capitalize first letter
+    fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
+    // Remove obvious gibberish (sequences of consonants/numbers without vowels)
+    fixed = fixed.replace(/\b[bcdfghjklmnpqrstvwxyz0-9]{4,}\b/gi, '').replace(/\s{2,}/g, ' ').replace(/\.\s*\./g, '.').trim();
+    if (fixed !== val) changes.push('Quatsch entfernt, Groß-/Kleinschreibung korrigiert');
+
+    if (inp) inp.value = fixed;
+    if (panel && changes.length > 0) {
+      panel.innerHTML = '✍️ <strong>Lokale Korrektur:</strong> ' + changes.join(', ') + ' (Server nicht erreichbar – für bessere Korrektur später nochmal versuchen)';
+      panel.classList.add('show');
+    }
   }
 
   if (korrBtn) { korrBtn.disabled = false; korrBtn.innerHTML = '✍️ Korrektur'; }
+  // Reset answered state so student can check again after correction
+  delete answered[id];
 }
 
 async function getAIHintFree(id) {
