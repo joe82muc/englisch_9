@@ -298,7 +298,7 @@ async function handleSend() {
   inputEl.value = '';
   
   // Show student message
-  addMsg('student', '🎓 Du (Englisch)', val);
+  addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
   
   var step = STEPS[currentStep];
   attempts++;
@@ -316,17 +316,26 @@ async function handleSend() {
       updateProgress();
       setTimeout(function() { startStep(); }, 800);
     } else {
-      // Show ranger response after delay
-      setTimeout(function() {
-        var typing = addTyping();
+      // Check if next step is en-de with same text - if so, skip ranger here (will show in next step)
+      var nextStep = STEPS[currentStep + 1];
+      if (nextStep && nextStep.direction === 'en-de' && nextStep.rangerSays === step.ranger) {
+        // Skip ranger response - it will appear as the en-de prompt
+        currentStep++;
+        updateProgress();
+        setTimeout(function() { startStep(); }, 800);
+      } else {
+        // Show ranger response after delay
         setTimeout(function() {
-          removeTyping();
+          var typing = addTyping();
+          setTimeout(function() {
+            removeTyping();
           addMsg('ranger', '👮 Polizist', step.ranger);
           currentStep++;
           updateProgress();
           setTimeout(function() { startStep(); }, 1200);
         }, 1500);
       }, 800);
+      }
     }
     
   } else {

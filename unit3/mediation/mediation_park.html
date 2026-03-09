@@ -296,7 +296,7 @@ async function handleSend() {
   inputEl.value = '';
   
   // Show student message
-  addMsg('student', '🎓 Du (Englisch)', val);
+  addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
   
   var step = STEPS[currentStep];
   attempts++;
@@ -323,6 +323,7 @@ async function handleSend() {
           setTimeout(function() { startStep(); }, 1200);
         }, 1500);
       }, 800);
+      }
     }
     
   } else {
