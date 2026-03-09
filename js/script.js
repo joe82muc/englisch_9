@@ -142,7 +142,22 @@ function getAIHintInput(id, correct, context, topic) {
 
 function getAIHintC(id, correct, context) {
   var inp = $(id+'i');
-  fetchHint(id, inp?inp.value.trim():'', correct, context, 'accident dialogue');
+  var val = inp ? inp.value.trim() : '';
+  // Build detailed context for the AI
+  var l = val.toLowerCase();
+  var analysis = [];
+  if (val.length < 10) analysis.push('Schüler hat kaum etwas geschrieben, braucht Starthilfe.');
+  if (val.length > 30) {
+    // Check for missing elements
+    if (!l.includes('name')) analysis.push('Name fehlt');
+    if (!l.includes('date of birth') && !l.includes('born')) analysis.push('Geburtsdatum fehlt');
+    if (!l.includes('arrived') && !l.includes('p.m')) analysis.push('Ankunftszeit fehlt');
+    if (!l.includes('first') && !l.includes('then') && !l.includes('after')) analysis.push('Reihenfolge-Wörter (First/Then/After that) fehlen');
+    if (val.length > 50) analysis.push('Schüler hat viel geschrieben – bitte Rechtschreibung und Grammatik prüfen!');
+  }
+  var enrichedContext = context;
+  if (analysis.length > 0) enrichedContext += '\n\nAnalyse der Eingabe: ' + analysis.join(', ');
+  fetchHint(id, val, correct, enrichedContext, 'accident dialogue');
 }
 
 async function getAIHintFree(id) {
@@ -196,7 +211,7 @@ function getLocalHint(correct, topic) {
     return '<strong>was/were + Verb-ing</strong>.';
   }
   // AW
-  if (PAGE==='aw') return 'Schau in die Word Bank oben.';
+  if (PAGE==='aw') return 'Denke an die Struktur: Name → Geburtsdatum → Ankunftszeit → Unfallbeschreibung mit <strong>First, Then, After that</strong> → beteiligte Fahrzeuge/Personen.';
   return 'Überprüfe die Regeln in der Infobox.';
 }
 var localHint = getLocalHint;
