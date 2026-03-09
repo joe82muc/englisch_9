@@ -316,15 +316,29 @@ async function evaluateWithAI(studentText, step) {
     // Try to parse JSON from AI response
     try {
       var clean = hint.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-      var parsed = JSON.parse(clean);
-      return {
-        pass: parsed.pass === true,
-        feedback: parsed.feedback || 'Versuche es nochmal!',
-        example: parsed.example || ''
-      };
+      // Extract JSON object from text (might have extra text before/after)
+      var jsonMatch = clean.match(/\{[\s\S]*?"pass"\s*:\s*(true|false)[\s\S]*?\}/);
+      if (jsonMatch) {
+        var parsed = JSON.parse(jsonMatch[0]);
+        return {
+          pass: parsed.pass === true,
+          feedback: parsed.feedback || 'Versuche es nochmal!',
+          example: parsed.example || ''
+        };
+      }
+      // If no JSON found but text contains "true" or positive indicators
+      if (hint.toLowerCase().includes('"pass": true') || hint.toLowerCase().includes('"pass":true')) {
+        return { pass: true, feedback: 'Sehr gut! Der Ranger versteht dich.', example: '' };
+      }
+      // Use as plain feedback
+      return { pass: false, feedback: hint.substring(0, 200), example: '' };
     } catch(e) {
-      // AI didn't return JSON, use as feedback text
-      return { pass: false, feedback: hint, example: '' };
+      // Check if AI said it's correct even without valid JSON
+      var lower = hint.toLowerCase();
+      if (lower.includes('korrekt') || lower.includes('sehr gut') || lower.includes('richtig') || lower.includes('pass": true')) {
+        return { pass: true, feedback: 'Gut gemacht! Der Ranger hat dich verstanden.', example: '' };
+      }
+      return { pass: false, feedback: hint.substring(0, 200), example: '' };
     }
   } catch(e) {
     // Fallback to local evaluation
