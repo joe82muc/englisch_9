@@ -344,7 +344,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig? (1. und 3. Person beide OK!) Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION (9. Klasse). Richtung: ' + step.direction + '. Original: "' + (step.uncle || step.rangerSays || '') + '" Schüler: "' + studentText + '" REGELN: Schüler spricht DIREKT mit Gesprächspartner (NICHT Tell him/Say to her). 1. Person UND 3. Person beide OK. SINN muss stimmen, nicht exakte Worte. Sei NICHT zu streng - wenn Sinn passt = pass:true. Antworte NUR JSON: {"pass":true,"feedback":"Kurzes Lob","example":""} oder {"pass":false,"feedback":"Was fehlt","example":"Beispiel"}'
       })
     });
     if (!res.ok) throw new Error('err');
