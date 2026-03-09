@@ -424,49 +424,40 @@ function evaluateLocal(text, step) {
   var low = text.toLowerCase();
   var words = text.trim().split(/\s+/).length;
   
-  // Check minimum length
   if (words < step.minWords) {
     return {pass: false, feedback: 'Dein Satz ist zu kurz. Versuche eine vollständige Übersetzung.', example: ''};
   }
   
   if (step.direction === 'en-de') {
-    // Student should write GERMAN - check for English words
-    var englishWords = ['the','is','and','you','your','we','they','this','that','have','has','can','will'];
-    var hasEnglish = englishWords.some(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); });
-    if (hasEnglish) {
+    // Student should write GERMAN
+    var engWords = ['the','you','your','they','have','can','will','would','should','could','what','please'];
+    var engCount = engWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
+    if (engCount >= 2) {
       return {pass: false, feedback: 'Du sollst auf DEUTSCH übersetzen! Es sind noch englische Wörter im Satz.', example: ''};
     }
   } else {
-    // Student should write ENGLISH - check for German words
-    var germanWords = ['und','ist','kann','darf','man','wir','der','die','das','bitte','fragen','ob','auch','nicht'];
-    var hasGerman = germanWords.some(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); });
-    if (hasGerman) {
+    // Student should write ENGLISH
+    var deWords = ['und','kann','darf','wir','bitte','fragen','ob','auch','nicht','mein','haben','gibt'];
+    var deCount = deWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
+    if (deCount >= 2) {
       return {pass: false, feedback: 'Du sollst auf ENGLISCH übersetzen! Es sind noch deutsche Wörter im Satz.', example: ''};
     }
   }
   
-  // Check for keywords (at least 2 should match)
   var matchCount = step.keywords.filter(function(kw) { return low.includes(kw); }).length;
   
   if (matchCount >= 2) {
-    // Check for question mark if it should be a question
-    var isQuestion = step.instruction.toLowerCase().includes('frag');
-    if (isQuestion && !text.includes('?')) {
-      return {pass: false, feedback: 'Fast richtig! Vergiss das Fragezeichen nicht – du stellst eine Frage.', example: ''};
+    if (step.direction === 'de-en') {
+      var isQuestion = step.instruction.toLowerCase().includes('frag');
+      if (isQuestion && !text.includes('?')) {
+        return {pass: false, feedback: 'Fast richtig! Vergiss das Fragezeichen nicht – du stellst eine Frage.', example: ''};
+      }
     }
-    return {pass: true, feedback: 'Sehr gut! Der Polizist hat dich verstanden.', example: ''};
+    return {pass: true, feedback: step.direction === 'en-de' ? 'Gut übersetzt!' : 'Sehr gut!', example: ''};
   } else if (matchCount === 1) {
-    return {pass: false, feedback: 'Du bist auf dem richtigen Weg, aber der Satz ist noch nicht vollständig. Was genau möchte dein Onkel wissen?', example: ''};
+    return {pass: false, feedback: 'Du bist auf dem richtigen Weg, aber es fehlt noch etwas. Lies nochmal genau.', example: ''};
   } else {
-    var examples = [
-      'Can we get out of the car to take photos of the animals?',
-      'Can we use our phones in the park?',
-      'Are we allowed to feed the animals?',
-      'Can it be dangerous in the park?',
-      'Thank you very much for the information!'
-    ];
-    var ex = attempts >= 3 ? examples[currentStep] || '' : '';
-    return {pass: false, feedback: 'Hmm, das trifft noch nicht ganz das, was dein Onkel meint. Lies nochmal was er sagt und übersetze den Sinn.', example: ex};
+    return {pass: false, feedback: 'Das trifft noch nicht ganz. Lies nochmal den Originaltext und übersetze den Sinn.', example: ''};
   }
 }
 
