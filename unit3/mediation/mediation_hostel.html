@@ -443,7 +443,7 @@ function evaluateLocal(text, step) {
     if (isQuestion && !text.includes('?')) {
       return {pass: false, feedback: 'Fast richtig! Vergiss das Fragezeichen nicht – du stellst eine Frage.', example: ''};
     }
-    return {pass: true, feedback: 'Sehr gut! Der Park Ranger hat dich verstanden.', example: ''};
+    return {pass: true, feedback: 'Sehr gut! Der Rezeptionist hat dich verstanden.', example: ''};
   } else if (matchCount === 1) {
     return {pass: false, feedback: 'Du bist auf dem richtigen Weg, aber der Satz ist noch nicht vollständig. Was genau möchte dein Onkel wissen?', example: ''};
   } else {
