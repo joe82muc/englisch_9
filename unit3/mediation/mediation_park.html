@@ -137,35 +137,67 @@ var API_BASE = 'https://englisch-9.onrender.com';
 var STEPS = [
   {
     uncle: "Hallo, wir wollen jetzt in den Park fahren. Kann man aus dem Auto aussteigen, wenn man zum Beispiel Fotos von den Tieren machen will?",
-    instruction: "Frag den Ranger, ob man aus dem Auto aussteigen darf, um Fotos zu machen.",
+    instruction: "🇩🇪→🇬🇧 Frag den Ranger, ob man aussteigen darf um Fotos zu machen. ('Her/His' oder 'My/We' – beides OK!)",
+    direction: "de-en",
     keywords: ['car','out','get out','leave','photos','pictures','animals','stop'],
     minWords: 5,
     ranger: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp."
   },
   {
+    uncle: "",
+    rangerSays: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp.",
+    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man darf nicht aussteigen. Übersetze das für deinen Onkel!",
+    direction: "en-de",
+    keywords: ['auto','bleiben','tür','geschlossen','schilder','entfernung','camp','nein','nicht aussteigen'],
+    minWords: 4,
+    ranger: ""
+  },
+  {
     uncle: "OK. Können wir im Park telefonieren mit dem Handy?",
-    instruction: "Frag, ob man im Park das Handy benutzen darf.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob man im Park das Handy benutzen darf.",
+    direction: "de-en",
     keywords: ['phone','mobile','call','use','park'],
     minWords: 4,
     ranger: "No, you can only use your phones in camps, at gates or in emergencies."
   },
   {
+    uncle: "",
+    rangerSays: "No, you can only use your phones in camps, at gates or in emergencies.",
+    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, Handys nur in Camps und Notfällen. Übersetze!",
+    direction: "en-de",
+    keywords: ['handy','nur','camp','notfall','notfälle','eingang','tor'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
     uncle: "Frag doch mal, ob man die Tiere im Park füttern darf.",
-    instruction: "Frag, ob man die Tiere füttern darf.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob man die Tiere füttern darf.",
+    direction: "de-en",
     keywords: ['feed','animals','allowed','can','may'],
     minWords: 4,
     ranger: "Of course not. Never feed or disturb the animals."
   },
   {
-    uncle: "Das verstehe ich. Mir liegt die Natur ja auch sehr am Herzen. Frag ihn doch bitte, ob es im Park gefährlich werden kann.",
-    instruction: "Frag, ob es im Park gefährlich sein kann.",
+    uncle: "Das verstehe ich. Frag ihn doch bitte, ob es im Park gefährlich werden kann.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob es im Park gefährlich sein kann.",
+    direction: "de-en",
     keywords: ['dangerous','danger','safe','happen','anything','risk'],
     minWords: 4,
-    ranger: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close. They are closed to protect visitors against wildlife. An officer can be found walking around in the camp. You know, I've worked in the park for more than five years now and there has never been any dangerous situation."
+    ranger: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close."
+  },
+  {
+    uncle: "",
+    rangerSays: "You'd be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close.",
+    instruction: "🇬🇧→🇩🇪 Der Ranger sagt, man ist sicher wenn man die Regeln befolgt. Übersetze!",
+    direction: "en-de",
+    keywords: ['sicher','regel','befolg','camp','tor','zurück','schließ'],
+    minWords: 4,
+    ranger: ""
   },
   {
     uncle: "Vielen Dank für die Informationen! Thank you!",
-    instruction: "Bedanke dich beim Ranger und verabschiede dich höflich.",
+    instruction: "🇩🇪→🇬🇧 Bedanke dich beim Ranger und verabschiede dich.",
+    direction: "de-en",
     keywords: ['thank','information','help','goodbye','bye'],
     minWords: 3,
     ranger: "You're welcome! Enjoy your visit and stay safe!"
@@ -229,14 +261,28 @@ function startStep() {
   }
   var step = STEPS[currentStep];
   attempts = 0;
-  addMsg('uncle', '👨 Onkel (Deutsch)', step.uncle);
-  setTimeout(function() {
-    addInstruction(step.instruction);
-    inputEl.disabled = false;
-    inputEl.focus();
-    sendBtn.disabled = false;
-  }, 600);
+  
+  if (step.direction === 'en-de') {
+    addMsg('ranger', '🌿 Park Ranger', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Onkel…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    addMsg('uncle', '👨 Onkel (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für den Ranger…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
 }
+
 
 /* ═══════════════════════════════════════
    HANDLE SEND
@@ -262,21 +308,22 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
-    // Show ranger response after delay
-    setTimeout(function() {
-      var typing = addTyping();
+    if (step.direction === 'en-de' || !step.ranger) {
+      currentStep++;
+      updateProgress();
+      setTimeout(function() { startStep(); }, 800);
+    } else {
       setTimeout(function() {
-        removeTyping();
-        addMsg('ranger', '🌿 Park Ranger', step.ranger);
-        
-        currentStep++;
-        updateProgress();
-        
+        var typing = addTyping();
         setTimeout(function() {
-          startStep();
-        }, 1200);
-      }, 1500);
-    }, 800);
+          removeTyping();
+          addMsg('ranger', '🌿 Park Ranger', step.ranger);
+          currentStep++;
+          updateProgress();
+          setTimeout(function() { startStep(); }, 1200);
+        }, 1500);
+      }, 800);
+    }
     
   } else {
     // Not good enough
@@ -306,7 +353,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig? (1. und 3. Person beide OK!) Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
     if (!res.ok) throw new Error('err');

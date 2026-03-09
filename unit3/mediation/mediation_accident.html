@@ -137,38 +137,70 @@ var API_BASE = 'https://englisch-9.onrender.com';
 var STEPS = [
   {
     uncle: "Sag dem Polizisten unsere Namen. Ich heiße Maria Schmidt und bin am 15. März 1978 geboren.",
-    instruction: "Nenne dem Polizisten den Namen und das Geburtsdatum deiner Tante.",
+    instruction: "🇩🇪→🇬🇧 Nenne dem Polizisten den Namen und das Geburtsdatum. Du kannst 'Her name is...' (3. Person) oder 'My name is...' (1. Person für sie) sagen.",
+    direction: "de-en",
     keywords: ['name','maria','schmidt','date','birth','born','march','1978'],
     minWords: 5,
     ranger: "Thank you. And what is your address and phone number, please?"
   },
   {
+    uncle: "",
+    rangerSays: "Thank you. And what is your address and phone number, please?",
+    instruction: "🇬🇧→🇩🇪 Der Polizist will die Adresse und Telefonnummer wissen. Übersetze das für deine Tante auf Deutsch!",
+    direction: "en-de",
+    keywords: ['adresse','telefonnummer','nummer','anschrift','telefon','wo wohn'],
+    minWords: 4,
+    ranger: ""
+  },
+  {
     uncle: "Unsere Adresse ist das Hotel Sunshine, Long Street 42. Unsere Telefonnummer ist 0049-176-1234567.",
-    instruction: "Nenne die Adresse und Telefonnummer.",
+    instruction: "🇩🇪→🇬🇧 Nenne die Adresse und Telefonnummer auf Englisch.",
+    direction: "de-en",
     keywords: ['address','hotel','sunshine','long street','phone','number'],
     minWords: 5,
     ranger: "Got it. Now, can you tell me what time the accident happened?"
   },
   {
+    uncle: "",
+    rangerSays: "Got it. Now, can you tell me what time the accident happened?",
+    instruction: "🇬🇧→🇩🇪 Der Polizist fragt, wann der Unfall passiert ist. Übersetze für deine Tante!",
+    direction: "en-de",
+    keywords: ['wann','unfall','passiert','zeit','uhrzeit','geschehen'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
     uncle: "Wir sind um 3 Uhr angekommen. Ich glaube der Unfall ist ungefähr zehn Minuten vorher passiert.",
-    instruction: "Sag, wann ihr angekommen seid und wann der Unfall etwa passiert ist. Benutze 'I arrived at …' und 'before'.",
+    instruction: "🇩🇪→🇬🇧 Sag dem Polizisten, wann ihr ankamt und wann der Unfall war. Benutze 'arrived at …' und 'before'.",
+    direction: "de-en",
     keywords: ['arrived','three','ten','minutes','before','happened','think','accident'],
     minWords: 6,
     ranger: "I see. And what exactly did you see? Can you describe what happened?"
   },
   {
     uncle: "Also, zuerst ist das Auto viel zu schnell um die Ecke gefahren. Dann hat es den Radfahrer erwischt. Danach sind beide stehen geblieben.",
-    instruction: "Beschreibe den Unfallhergang. Benutze 'First … Then … After that …'.",
+    instruction: "🇩🇪→🇬🇧 Beschreibe den Unfallhergang. Benutze 'First … Then … After that …'.",
+    direction: "de-en",
     keywords: ['first','then','after','car','fast','cyclist','hit','stopped','corner'],
     minWords: 7,
     ranger: "Thank you. How many people were involved in the accident?"
   },
   {
     uncle: "Es waren zwei Personen beteiligt – der Autofahrer und der Radfahrer. Der Radfahrer lag auf der Straße.",
-    instruction: "Sag, wie viele Personen beteiligt waren und was du gesehen hast.",
+    instruction: "🇩🇪→🇬🇧 Sag, wie viele Personen beteiligt waren.",
+    direction: "de-en",
     keywords: ['two','people','driver','cyclist','involved','road','street','ground'],
     minWords: 5,
-    ranger: "Thank you for your help. We will get in touch if we have any more questions. Please stay safe."
+    ranger: "Thank you for your help. We will get in touch if we have any more questions."
+  },
+  {
+    uncle: "",
+    rangerSays: "Thank you for your help. We will get in touch if we have any more questions. Please stay safe.",
+    instruction: "🇬🇧→🇩🇪 Der Polizist bedankt sich. Übersetze das für deine Tante!",
+    direction: "en-de",
+    keywords: ['danke','hilfe','melden','fragen','weitere','sicher','pass auf'],
+    minWords: 3,
+    ranger: ""
   }
 ];
 
@@ -229,14 +261,30 @@ function startStep() {
   }
   var step = STEPS[currentStep];
   attempts = 0;
-  addMsg('uncle', '👩 Tante (Deutsch)', step.uncle);
-  setTimeout(function() {
-    addInstruction(step.instruction);
-    inputEl.disabled = false;
-    inputEl.focus();
-    sendBtn.disabled = false;
-  }, 600);
+  
+  if (step.direction === 'en-de') {
+    // Ranger said something, student translates to German for relative
+    addMsg('ranger', '👮 Polizist', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deine Tante…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    // Relative says something in German, student translates to English
+    addMsg('uncle', '👩 Tante (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für den Polizisten…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
 }
+
 
 /* ═══════════════════════════════════════
    HANDLE SEND
@@ -262,21 +310,24 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
-    // Show ranger response after delay
-    setTimeout(function() {
-      var typing = addTyping();
+    if (step.direction === 'en-de' || !step.ranger) {
+      // No ranger response needed for en-de steps
+      currentStep++;
+      updateProgress();
+      setTimeout(function() { startStep(); }, 800);
+    } else {
+      // Show ranger response after delay
       setTimeout(function() {
-        removeTyping();
-        addMsg('ranger', '👮 Polizist', step.ranger);
-        
-        currentStep++;
-        updateProgress();
-        
+        var typing = addTyping();
         setTimeout(function() {
-          startStep();
-        }, 1200);
-      }, 1500);
-    }, 800);
+          removeTyping();
+          addMsg('ranger', '👮 Polizist', step.ranger);
+          currentStep++;
+          updateProgress();
+          setTimeout(function() { startStep(); }, 1200);
+        }, 1500);
+      }, 800);
+    }
     
   } else {
     // Not good enough
@@ -306,7 +357,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? (1. Person UND 3. Person sind BEIDE korrekt, z.B. sowohl \'My name is...\' als auch \'Her name is...\') Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
     if (!res.ok) throw new Error('err');
@@ -369,14 +420,23 @@ function evaluateLocal(text, step) {
   
   // Check minimum length
   if (words < step.minWords) {
-    return {pass: false, feedback: 'Dein Satz ist zu kurz. Versuche eine vollständige Frage oder Aussage zu formulieren.', example: ''};
+    return {pass: false, feedback: 'Dein Satz ist zu kurz. Versuche eine vollständige Übersetzung.', example: ''};
   }
   
-  // Check if it contains German words (common ones)
-  var germanWords = ['und','ist','kann','darf','man','wir','der','die','das','ich','bitte','fragen','ob','auch','nicht'];
-  var hasGerman = germanWords.some(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); });
-  if (hasGerman) {
-    return {pass: false, feedback: 'Du hast noch deutsche Wörter im Satz! Übersetze alles auf Englisch.', example: ''};
+  if (step.direction === 'en-de') {
+    // Student should write GERMAN - check for English words
+    var englishWords = ['the','is','and','you','your','we','they','this','that','have','has','can','will'];
+    var hasEnglish = englishWords.some(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); });
+    if (hasEnglish) {
+      return {pass: false, feedback: 'Du sollst auf DEUTSCH übersetzen! Es sind noch englische Wörter im Satz.', example: ''};
+    }
+  } else {
+    // Student should write ENGLISH - check for German words
+    var germanWords = ['und','ist','kann','darf','man','wir','der','die','das','bitte','fragen','ob','auch','nicht'];
+    var hasGerman = germanWords.some(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); });
+    if (hasGerman) {
+      return {pass: false, feedback: 'Du sollst auf ENGLISCH übersetzen! Es sind noch deutsche Wörter im Satz.', example: ''};
+    }
   }
   
   // Check for keywords (at least 2 should match)

@@ -137,38 +137,70 @@ var API_BASE = 'https://englisch-9.onrender.com';
 var STEPS = [
   {
     uncle: "Sag der Ärztin, dass mir seit gestern der Bauch wehtut und mir übel ist.",
-    instruction: "Beschreibe die Symptome: Bauchschmerzen seit gestern und Übelkeit.",
+    instruction: "🇩🇪→🇬🇧 Beschreibe die Symptome. ('He has...' oder 'I have...' – beides OK!)",
+    direction: "de-en",
     keywords: ['stomach','pain','ache','hurts','since yesterday','sick','feel','nauseous'],
     minWords: 5,
-    ranger: "I'm sorry to hear that. Can you tell me when exactly the pain started? Was it after eating something?"
+    ranger: "I'm sorry to hear that. When exactly did the pain start? Was it after eating something?"
+  },
+  {
+    uncle: "",
+    rangerSays: "I'm sorry to hear that. When exactly did the pain start? Was it after eating something?",
+    instruction: "🇬🇧→🇩🇪 Die Ärztin fragt, wann es anfing und ob es nach dem Essen war. Übersetze!",
+    direction: "en-de",
+    keywords: ['wann','angefangen','schmerz','essen','nach dem'],
+    minWords: 4,
+    ranger: ""
   },
   {
     uncle: "Es hat gestern Abend nach dem Essen angefangen. Wir haben Fisch gegessen in einem Restaurant am Hafen.",
-    instruction: "Sag, dass es gestern Abend nach dem Fischessen angefangen hat.",
-    keywords: ['started','yesterday','evening','after','eating','fish','restaurant','dinner'],
+    instruction: "🇩🇪→🇬🇧 Sag, dass es nach dem Fischessen gestern Abend angefangen hat.",
+    direction: "de-en",
+    keywords: ['started','yesterday','evening','after','eating','fish','restaurant'],
     minWords: 5,
     ranger: "That could be food poisoning. Does he have a fever or any other symptoms?"
   },
   {
+    uncle: "",
+    rangerSays: "That could be food poisoning. Does he have a fever or any other symptoms?",
+    instruction: "🇬🇧→🇩🇪 Könnte eine Lebensmittelvergiftung sein. Hat er Fieber? Übersetze!",
+    direction: "en-de",
+    keywords: ['lebensmittelvergiftung','vergiftung','fieber','symptom','andere'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
     uncle: "Ich glaube, ich habe ein bisschen Fieber. Und ich habe Kopfschmerzen und bin sehr müde.",
-    instruction: "Sag, dass dein Opa leichtes Fieber, Kopfschmerzen und Müdigkeit hat.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass er leichtes Fieber, Kopfschmerzen und Müdigkeit hat.",
+    direction: "de-en",
     keywords: ['fever','temperature','headache','tired','head','little','bit'],
     minWords: 5,
-    ranger: "It sounds like food poisoning. I'll give him some medicine. He needs to drink a lot of water and rest today."
+    ranger: "I'll give him some medicine. He needs to drink a lot of water and rest today."
   },
   {
-    uncle: "Frag die Ärztin, ob ich die Medizin vor oder nach dem Essen nehmen soll. Und wie oft am Tag.",
-    instruction: "Frag, wann und wie oft die Medizin genommen werden soll.",
+    uncle: "",
+    rangerSays: "I'll give him some medicine. He needs to drink a lot of water and rest today.",
+    instruction: "🇬🇧→🇩🇪 Medizin, viel Wasser trinken und heute ausruhen. Übersetze!",
+    direction: "en-de",
+    keywords: ['medizin','wasser','trinken','ausruhen','ruhe','heute'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
+    uncle: "Frag, ob ich die Medizin vor oder nach dem Essen nehmen soll.",
+    instruction: "🇩🇪→🇬🇧 Frag wann und wie oft die Medizin genommen werden soll.",
+    direction: "de-en",
     keywords: ['medicine','take','before','after','eating','how often','times','day'],
     minWords: 5,
-    ranger: "He should take the medicine three times a day, after meals. And he should drink at least two litres of water today."
+    ranger: "Three times a day, after meals. And at least two litres of water."
   },
   {
-    uncle: "Vielen Dank, Frau Doktor! Frag noch, ob wir morgen trotzdem den Ausflug nach Kapstadt machen können.",
-    instruction: "Bedanke dich und frag, ob der Opa morgen einen Ausflug machen kann.",
-    keywords: ['thank','tomorrow','trip','excursion','go out','cape town','better','ok','possible'],
+    uncle: "Vielen Dank, Frau Doktor! Frag noch, ob wir morgen den Ausflug machen können.",
+    instruction: "🇩🇪→🇬🇧 Bedanke dich und frag ob der Opa morgen einen Ausflug machen kann.",
+    direction: "de-en",
+    keywords: ['thank','tomorrow','trip','excursion','go out','better','ok'],
     minWords: 4,
-    ranger: "You're welcome! If he rests today and takes the medicine, he should feel much better tomorrow. But if the pain gets worse, please come back immediately."
+    ranger: "If he rests today, he should feel better tomorrow. But if it gets worse, come back!"
   }
 ];
 
@@ -229,14 +261,28 @@ function startStep() {
   }
   var step = STEPS[currentStep];
   attempts = 0;
-  addMsg('uncle', '👴 Opa (Deutsch)', step.uncle);
-  setTimeout(function() {
-    addInstruction(step.instruction);
-    inputEl.disabled = false;
-    inputEl.focus();
-    sendBtn.disabled = false;
-  }, 600);
+  
+  if (step.direction === 'en-de') {
+    addMsg('ranger', '👩‍⚕️ Ärztin', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Opa…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    addMsg('uncle', '👴 Opa (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für die Ärztin…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
 }
+
 
 /* ═══════════════════════════════════════
    HANDLE SEND
@@ -262,21 +308,22 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
-    // Show ranger response after delay
-    setTimeout(function() {
-      var typing = addTyping();
+    if (step.direction === 'en-de' || !step.ranger) {
+      currentStep++;
+      updateProgress();
+      setTimeout(function() { startStep(); }, 800);
+    } else {
       setTimeout(function() {
-        removeTyping();
-        addMsg('ranger', '👩‍⚕️ Ärztin', step.ranger);
-        
-        currentStep++;
-        updateProgress();
-        
+        var typing = addTyping();
         setTimeout(function() {
-          startStep();
-        }, 1200);
-      }, 1500);
-    }, 800);
+          removeTyping();
+          addMsg('ranger', '👩‍⚕️ Ärztin', step.ranger);
+          currentStep++;
+          updateProgress();
+          setTimeout(function() { startStep(); }, 1200);
+        }, 1500);
+      }, 800);
+    }
     
   } else {
     // Not good enough
@@ -306,7 +353,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig? (1. und 3. Person beide OK!) Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
     if (!res.ok) throw new Error('err');

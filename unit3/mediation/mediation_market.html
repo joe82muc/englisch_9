@@ -137,38 +137,70 @@ var API_BASE = 'https://englisch-9.onrender.com';
 var STEPS = [
   {
     uncle: "Oh, die Holzfiguren sind schön! Frag mal, wie viel die kosten.",
-    instruction: "Frag die Verkäuferin nach dem Preis der Holzfiguren.",
+    instruction: "🇩🇪→🇬🇧 Frag nach dem Preis der Holzfiguren.",
+    direction: "de-en",
     keywords: ['how much','price','cost','wooden','figures','these'],
     minWords: 4,
     ranger: "These are hand-carved wooden animals. They cost 150 Rand each, or you can get three for 400 Rand."
   },
   {
+    uncle: "",
+    rangerSays: "These are hand-carved wooden animals. They cost 150 Rand each, or you can get three for 400 Rand.",
+    instruction: "🇬🇧→🇩🇪 Die Verkäuferin sagt den Preis. Übersetze für deine Oma!",
+    direction: "en-de",
+    keywords: ['handgeschnitzt','holz','150','rand','drei','400','stück','kosten'],
+    minWords: 4,
+    ranger: ""
+  },
+  {
     uncle: "Das ist mir zu teuer. Kann man da handeln? Frag ob sie einen besseren Preis machen kann.",
-    instruction: "Frag, ob die Verkäuferin einen besseren Preis machen kann.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob es einen besseren Preis gibt.",
+    direction: "de-en",
     keywords: ['cheaper','discount','better price','less','lower','deal'],
     minWords: 4,
     ranger: "Well, if you buy three or more, I can give you a special price. How about 350 Rand for three?"
   },
   {
+    uncle: "",
+    rangerSays: "Well, if you buy three or more, I can give you a special price. How about 350 Rand for three?",
+    instruction: "🇬🇧→🇩🇪 Sie bietet 350 Rand für drei an. Übersetze!",
+    direction: "en-de",
+    keywords: ['drei','350','rand','sonderpreis','angebot','kaufen'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
     uncle: "Ok, ich nehme drei. Und frag sie, woraus die gemacht sind.",
-    instruction: "Sag, dass deine Oma drei nimmt und frag, woraus sie gemacht sind.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass sie drei nimmt und frag nach dem Material.",
+    direction: "de-en",
     keywords: ['take','three','made','what','material','wood'],
     minWords: 4,
-    ranger: "Great choice! They are made from African olive wood. Each one is hand-carved by local artists here in Cape Town."
+    ranger: "Great choice! They are made from African olive wood. Each one is hand-carved by local artists."
   },
   {
     uncle: "Kann ich mit Kreditkarte bezahlen oder nur bar?",
-    instruction: "Frag, ob man mit Kreditkarte bezahlen kann.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob man mit Kreditkarte bezahlen kann.",
+    direction: "de-en",
     keywords: ['pay','card','credit','cash','credit card'],
     minWords: 4,
-    ranger: "I'm sorry, we only take cash here. But there's an ATM just around the corner if you need one."
+    ranger: "I'm sorry, we only take cash here. But there's an ATM just around the corner."
+  },
+  {
+    uncle: "",
+    rangerSays: "I'm sorry, we only take cash here. But there's an ATM just around the corner.",
+    instruction: "🇬🇧→🇩🇪 Nur Bargeld, aber ein Geldautomat ist um die Ecke. Übersetze!",
+    direction: "en-de",
+    keywords: ['bargeld','bar','geldautomat','ecke','nur','kein','karte'],
+    minWords: 3,
+    ranger: ""
   },
   {
     uncle: "Alles klar, ich zahle bar. Vielen Dank, die sind wirklich wunderschön!",
-    instruction: "Sag, dass deine Oma bar zahlt und bedanke dich.",
+    instruction: "🇩🇪→🇬🇧 Sag, sie zahlt bar und bedanke dich.",
+    direction: "de-en",
     keywords: ['pay','cash','thank','beautiful','lovely'],
     minWords: 3,
-    ranger: "Thank you so much! I hope your grandmother enjoys them. Have a wonderful stay in Cape Town!"
+    ranger: "Thank you so much! Have a wonderful stay in Cape Town!"
   }
 ];
 
@@ -229,14 +261,28 @@ function startStep() {
   }
   var step = STEPS[currentStep];
   attempts = 0;
-  addMsg('uncle', '👵 Oma (Deutsch)', step.uncle);
-  setTimeout(function() {
-    addInstruction(step.instruction);
-    inputEl.disabled = false;
-    inputEl.focus();
-    sendBtn.disabled = false;
-  }, 600);
+  
+  if (step.direction === 'en-de') {
+    addMsg('ranger', '🛍️ Verkäuferin', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deine Oma…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    addMsg('uncle', '👵 Oma (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für die Verkäuferin…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
 }
+
 
 /* ═══════════════════════════════════════
    HANDLE SEND
@@ -262,21 +308,22 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
-    // Show ranger response after delay
-    setTimeout(function() {
-      var typing = addTyping();
+    if (step.direction === 'en-de' || !step.ranger) {
+      currentStep++;
+      updateProgress();
+      setTimeout(function() { startStep(); }, 800);
+    } else {
       setTimeout(function() {
-        removeTyping();
-        addMsg('ranger', '🛍️ Verkäuferin', step.ranger);
-        
-        currentStep++;
-        updateProgress();
-        
+        var typing = addTyping();
         setTimeout(function() {
-          startStep();
-        }, 1200);
-      }, 1500);
-    }, 800);
+          removeTyping();
+          addMsg('ranger', '🛍️ Verkäuferin', step.ranger);
+          currentStep++;
+          updateProgress();
+          setTimeout(function() { startStep(); }, 1200);
+        }, 1500);
+      }, 800);
+    }
     
   } else {
     // Not good enough
@@ -306,7 +353,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig? (1. und 3. Person beide OK!) Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
     if (!res.ok) throw new Error('err');

@@ -136,39 +136,62 @@ var API_BASE = 'https://englisch-9.onrender.com';
    ═══════════════════════════════════════ */
 var STEPS = [
   {
-    uncle: "Frag den Kellner, ob er ein Gericht ohne Fleisch empfehlen kann. Ich möchte gerne etwas Vegetarisches.",
-    instruction: "Frag nach einer vegetarischen Empfehlung.",
+    uncle: "Frag den Kellner, ob er ein Gericht ohne Fleisch empfehlen kann.",
+    instruction: "🇩🇪→🇬🇧 Frag nach einer vegetarischen Empfehlung.",
+    direction: "de-en",
     keywords: ['vegetarian','without meat','recommend','suggest','no meat','dish'],
     minWords: 4,
-    ranger: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice. It's one of our most popular dishes."
+    ranger: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice."
+  },
+  {
+    uncle: "",
+    rangerSays: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice.",
+    instruction: "🇬🇧→🇩🇪 Der Kellner empfiehlt Suppe und Gemüse-Curry. Übersetze!",
+    direction: "en-de",
+    keywords: ['suppe','curry','gemüse','reis','vorspeise','hauptgericht','empf'],
+    minWords: 4,
+    ranger: ""
   },
   {
     uncle: "Das klingt gut. Ist das Curry scharf? Ich vertrage kein scharfes Essen.",
-    instruction: "Frag, ob das Curry scharf ist.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob das Curry scharf ist.",
+    direction: "de-en",
     keywords: ['spicy','hot','curry','mild','not spicy'],
     minWords: 4,
-    ranger: "It's medium spicy, but we can make it mild for you. Just let me know when you're ready to order."
+    ranger: "It's medium spicy, but we can make it mild for you."
   },
   {
-    uncle: "Dann bitte mild. Und frag ihn, was für Getränke sie haben. Am liebsten hätte ich einen frischen Saft.",
-    instruction: "Bestelle das Curry mild und frag nach frischen Säften.",
-    keywords: ['mild','juice','fresh','drink','please','order'],
+    uncle: "Dann bitte mild. Und frag, was für Getränke sie haben.",
+    instruction: "🇩🇪→🇬🇧 Bestelle mild und frag nach Getränken.",
+    direction: "de-en",
+    keywords: ['mild','juice','fresh','drink','please','order','beverage'],
     minWords: 4,
-    ranger: "No problem, I'll make it mild. We have fresh orange juice, mango juice, and a special South African rooibos iced tea. What would you like?"
+    ranger: "We have fresh orange juice, mango juice, and a special South African rooibos iced tea."
   },
   {
-    uncle: "Ich nehme den Mangosaft. Und frag bitte, ob das Essen lange dauert. Wir haben um 3 Uhr eine Führung gebucht.",
-    instruction: "Bestelle Mangosaft und frag, wie lange das Essen dauert.",
-    keywords: ['mango','how long','wait','time','tour','three','hurry','quick'],
+    uncle: "",
+    rangerSays: "We have fresh orange juice, mango juice, and a special South African rooibos iced tea.",
+    instruction: "🇬🇧→🇩🇪 Orangensaft, Mangosaft und Rooibos-Eistee. Übersetze!",
+    direction: "en-de",
+    keywords: ['orangensaft','mangosaft','rooibos','eistee','saft','frisch'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
+    uncle: "Ich nehme den Mangosaft. Frag, ob das Essen lange dauert – wir haben um 3 eine Führung.",
+    instruction: "🇩🇪→🇬🇧 Bestelle Mangosaft und frag wie lange es dauert.",
+    direction: "de-en",
+    keywords: ['mango','how long','wait','time','tour','three'],
     minWords: 4,
-    ranger: "The mango juice is a great choice! The food usually takes about 20 minutes. You should have plenty of time before your tour."
+    ranger: "The food usually takes about 20 minutes. You should have plenty of time!"
   },
   {
-    uncle: "Perfekt! Das Essen war übrigens fantastisch. Sag dem Kellner bitte, dass es uns sehr gut geschmeckt hat.",
-    instruction: "Sag dem Kellner, dass das Essen fantastisch war.",
+    uncle: "Das Essen war fantastisch. Sag dem Kellner, dass es uns sehr gut geschmeckt hat.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass das Essen fantastisch war.",
+    direction: "de-en",
     keywords: ['food','great','delicious','fantastic','wonderful','enjoyed','amazing','thank'],
     minWords: 3,
-    ranger: "Thank you so much! I'm really glad you enjoyed it. Would you like to see the dessert menu?"
+    ranger: "Thank you so much! I'm really glad you enjoyed it!"
   }
 ];
 
@@ -229,14 +252,28 @@ function startStep() {
   }
   var step = STEPS[currentStep];
   attempts = 0;
-  addMsg('uncle', '👨 Papa (Deutsch)', step.uncle);
-  setTimeout(function() {
-    addInstruction(step.instruction);
-    inputEl.disabled = false;
-    inputEl.focus();
-    sendBtn.disabled = false;
-  }, 600);
+  
+  if (step.direction === 'en-de') {
+    addMsg('ranger', '🍽️ Kellner', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Papa…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    addMsg('uncle', '👨 Papa (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für den Kellner…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
 }
+
 
 /* ═══════════════════════════════════════
    HANDLE SEND
@@ -262,21 +299,22 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
-    // Show ranger response after delay
-    setTimeout(function() {
-      var typing = addTyping();
+    if (step.direction === 'en-de' || !step.ranger) {
+      currentStep++;
+      updateProgress();
+      setTimeout(function() { startStep(); }, 800);
+    } else {
       setTimeout(function() {
-        removeTyping();
-        addMsg('ranger', '🍽️ Kellner', step.ranger);
-        
-        currentStep++;
-        updateProgress();
-        
+        var typing = addTyping();
         setTimeout(function() {
-          startStep();
-        }, 1200);
-      }, 1500);
-    }, 800);
+          removeTyping();
+          addMsg('ranger', '🍽️ Kellner', step.ranger);
+          currentStep++;
+          updateProgress();
+          setTimeout(function() { startStep(); }, 1200);
+        }, 1500);
+      }, 800);
+    }
     
   } else {
     // Not good enough
@@ -306,7 +344,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig? (1. und 3. Person beide OK!) Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
     if (!res.ok) throw new Error('err');

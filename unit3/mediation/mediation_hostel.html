@@ -136,39 +136,71 @@ var API_BASE = 'https://englisch-9.onrender.com';
    ═══════════════════════════════════════ */
 var STEPS = [
   {
-    uncle: "Hallo! Wir haben ein Zimmer reserviert auf den Namen Müller. Frag bitte, ob unsere Reservierung da ist.",
-    instruction: "Sag dem Rezeptionisten den Namen und frag nach der Reservierung.",
+    uncle: "Wir haben ein Zimmer reserviert auf den Namen Müller.",
+    instruction: "🇩🇪→🇬🇧 Sag dem Rezeptionisten den Namen und frag nach der Reservierung.",
+    direction: "de-en",
     keywords: ['reservation','booking','room','name','booked','reserved'],
     minWords: 4,
-    ranger: "Welcome! Let me check... Yes, I have a reservation for Müller. A double room for three nights, is that correct?"
+    ranger: "Welcome! Let me check... Yes, a double room for three nights. Is that correct?"
   },
   {
-    uncle: "Ja genau, drei Nächte. Frag mal, ob es WLAN im Zimmer gibt und wie das Passwort ist.",
-    instruction: "Frag nach WLAN und dem Passwort.",
-    keywords: ['wifi','wi-fi','internet','password','wireless','connection'],
+    uncle: "",
+    rangerSays: "Welcome! Let me check... Yes, a double room for three nights. Is that correct?",
+    instruction: "🇬🇧→🇩🇪 Doppelzimmer für drei Nächte – stimmt das? Übersetze!",
+    direction: "en-de",
+    keywords: ['doppelzimmer','drei','nächte','stimmt','richtig','willkommen'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
+    uncle: "Ja genau. Frag mal, ob es WLAN gibt und wie das Passwort ist.",
+    instruction: "🇩🇪→🇬🇧 Frag nach WLAN und dem Passwort.",
+    direction: "de-en",
+    keywords: ['wifi','wi-fi','internet','password','wireless'],
     minWords: 4,
-    ranger: "Yes, we have free Wi-Fi in all rooms. The network is called 'JHB-Hostel' and the password is on the card in your room."
+    ranger: "Yes, free Wi-Fi in all rooms. The network is 'JHB-Hostel' and the password is on the card in your room."
   },
   {
-    uncle: "Gut. Und was gibt es zum Frühstück? Und wann wird es serviert?",
-    instruction: "Frag, was es zum Frühstück gibt und wann es serviert wird.",
-    keywords: ['breakfast','what','time','when','morning','served','eat'],
+    uncle: "",
+    rangerSays: "Yes, free Wi-Fi in all rooms. The network is 'JHB-Hostel' and the password is on the card in your room.",
+    instruction: "🇬🇧→🇩🇪 Kostenloses WLAN, Passwort auf der Karte im Zimmer. Übersetze!",
+    direction: "en-de",
+    keywords: ['wlan','kostenlos','passwort','karte','zimmer','gratis'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
+    uncle: "Gut. Was gibt es zum Frühstück? Und wann wird es serviert?",
+    instruction: "🇩🇪→🇬🇧 Frag nach Frühstück und Uhrzeit.",
+    direction: "de-en",
+    keywords: ['breakfast','what','time','when','morning','served'],
     minWords: 4,
-    ranger: "Breakfast is served from 7 to 10 in the morning. We have toast, eggs, fruit, cereal and coffee or tea. On Sundays, we also have pancakes!"
+    ranger: "Breakfast is from 7 to 10. We have toast, eggs, fruit, cereal and coffee. On Sundays, pancakes!"
   },
   {
-    uncle: "Das klingt toll. Ach ja – können die unser Taxi zum Flughafen bestellen, wenn wir abreisen?",
-    instruction: "Frag, ob das Hostel ein Taxi zum Flughafen bestellen kann.",
+    uncle: "",
+    rangerSays: "Breakfast is from 7 to 10. We have toast, eggs, fruit, cereal and coffee. On Sundays, pancakes!",
+    instruction: "🇬🇧→🇩🇪 Frühstück 7-10 Uhr, Toast, Eier usw. Übersetze!",
+    direction: "en-de",
+    keywords: ['frühstück','7','10','toast','eier','obst','müsli','kaffee','sonntag','pfannkuchen'],
+    minWords: 4,
+    ranger: ""
+  },
+  {
+    uncle: "Können die ein Taxi zum Flughafen bestellen, wenn wir abreisen?",
+    instruction: "🇩🇪→🇬🇧 Frag, ob das Hostel ein Taxi zum Flughafen bestellen kann.",
+    direction: "de-en",
     keywords: ['taxi','airport','book','order','arrange','call','leave'],
     minWords: 4,
-    ranger: "Of course! Just let us know the day before you leave and we'll arrange a taxi for you. The airport is about 30 minutes from here."
+    ranger: "Of course! Just let us know the day before. The airport is about 30 minutes away."
   },
   {
-    uncle: "Super, das ist wirklich nett. Sag ihm vielen Dank für die Hilfe!",
-    instruction: "Bedanke dich für die Hilfe.",
-    keywords: ['thank','help','kind','great','nice','appreciate'],
+    uncle: "Super! Sag ihm vielen Dank für die Hilfe!",
+    instruction: "🇩🇪→🇬🇧 Bedanke dich für die Hilfe.",
+    direction: "de-en",
+    keywords: ['thank','help','kind','great'],
     minWords: 3,
-    ranger: "You're very welcome! If you need anything else during your stay, just come to the front desk. Enjoy Johannesburg!"
+    ranger: "You're welcome! Enjoy Johannesburg!"
   }
 ];
 
@@ -229,14 +261,28 @@ function startStep() {
   }
   var step = STEPS[currentStep];
   attempts = 0;
-  addMsg('uncle', '👩 Mama (Deutsch)', step.uncle);
-  setTimeout(function() {
-    addInstruction(step.instruction);
-    inputEl.disabled = false;
-    inputEl.focus();
-    sendBtn.disabled = false;
-  }, 600);
+  
+  if (step.direction === 'en-de') {
+    addMsg('ranger', '🏨 Rezeptionist', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deine Mama…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    addMsg('uncle', '👩 Mama (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für den Rezeptionisten…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
 }
+
 
 /* ═══════════════════════════════════════
    HANDLE SEND
@@ -262,21 +308,22 @@ async function handleSend() {
     // Success!
     addMsg('ok', '✅ Gut gemacht!', result.feedback);
     
-    // Show ranger response after delay
-    setTimeout(function() {
-      var typing = addTyping();
+    if (step.direction === 'en-de' || !step.ranger) {
+      currentStep++;
+      updateProgress();
+      setTimeout(function() { startStep(); }, 800);
+    } else {
       setTimeout(function() {
-        removeTyping();
-        addMsg('ranger', '🏨 Rezeptionist', step.ranger);
-        
-        currentStep++;
-        updateProgress();
-        
+        var typing = addTyping();
         setTimeout(function() {
-          startStep();
-        }, 1200);
-      }, 1500);
-    }, 800);
+          removeTyping();
+          addMsg('ranger', '🏨 Rezeptionist', step.ranger);
+          currentStep++;
+          updateProgress();
+          setTimeout(function() { startStep(); }, 1200);
+        }, 1500);
+      }, 800);
+    }
     
   } else {
     // Not good enough
@@ -306,7 +353,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
+        exerciseContext: 'MEDIATION: Schüler übersetzt zwischen Deutsch und Englisch. Richtung: ' + step.direction + '.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig? (1. und 3. Person beide OK!) Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
     if (!res.ok) throw new Error('err');
