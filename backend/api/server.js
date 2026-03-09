@@ -131,25 +131,44 @@ app.post("/api/korrektur", async (req, res) => {
 
         const message = await client.messages.create({
             model: "claude-haiku-4-5-20251001",
-            max_tokens: 300,
-            system: `Du bist ein freundlicher Englischlehrer für eine 9. Klasse (Gymnasium, Bayern).
+            max_tokens: 400,
+            system: `Du bist ein Englischlehrer. Korrigiere den Text eines Schülers (9. Klasse, Thema: Unfallbericht).
 
-AUFGABE: Korrigiere den englischen Text des Schülers. Der Text ist ein Zeugenbericht über einen Unfall.
+WICHTIG – Antworte EXAKT in diesem JSON-Format und NICHTS anderes:
+{"corrected": "Der vollständig korrigierte englische Text hier", "changes": "Deutsche Erklärung der Änderungen hier"}
 
-REGELN:
-- Schreibe auf Deutsch
-- Finde ALLE Fehler: Rechtschreibung, Grammatik, Groß-/Kleinschreibung, Satzzeichen
-- Nenne JEDEN Fehler einzeln so: "❌ 'falsch' → ✅ 'richtig'"
-- Wenn der Text Buchstabensalat/Quatsch enthält, sage das klar
-- Wenn deutsche Wörter im englischen Text sind, weise darauf hin
-- Wenn keine echten Fehler: lobe den Schüler!
-- Gib am Ende den korrigierten Gesamttext an
-- Max. 120 Wörter`,
-            messages: [{ role: "user", content: `Schülertext: "${studentAnswer}"\n\nKorrigiere alle Fehler.` }]
+REGELN für "corrected":
+- Korrigiere ALLE Rechtschreib- und Grammatikfehler
+- Entferne Buchstabensalat/Quatsch/sinnlose Zeichenketten komplett
+- Ersetze deutsche Wörter durch englische (z.B. "ist" → "is")
+- Ergänze fehlende Teile einer Zeugenaussage (Geburtsdatum, Ankunftszeit, "After that" etc.) NUR wenn der Schüler es offensichtlich versucht hat aber etwas fehlt
+- Behalte den Inhalt und Stil des Schülers bei
+- Korrekte Groß-/Kleinschreibung und Satzzeichen
+
+REGELN für "changes":
+- Kurz auf Deutsch erklären was geändert wurde (max. 3 Sätze)
+- Z.B. "‚ist' → ‚is', ‚arived' → ‚arrived'. Quatsch am Ende entfernt. Satzanfänge groß geschrieben."`,
+            messages: [{ role: "user", content: studentAnswer }]
         });
 
-        const hint = message.content[0].text;
-        res.json({ hint });
+        const raw = message.content[0].text;
+        
+        // Try to parse as JSON
+        try {
+            // Remove potential markdown code fences
+            const clean = raw.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(clean);
+            res.json({ 
+                corrected: parsed.corrected || studentAnswer, 
+                changes: parsed.changes || 'Korrektur durchgeführt.' 
+            });
+        } catch(parseErr) {
+            // If JSON parsing fails, use the raw text as changes and try to extract corrected text
+            res.json({ 
+                corrected: studentAnswer, 
+                changes: raw 
+            });
+        }
     } catch (error) {
         console.error("Fehler bei /api/korrektur:", error);
         res.status(500).json({ error: "Serverfehler bei der Korrektur." });
