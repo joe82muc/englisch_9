@@ -306,42 +306,56 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION-ÜBUNG: Der Schüler soll den deutschen Satz seines Onkels auf Englisch für den Park Ranger übersetzen.\n\nOnkel sagt: "' + step.uncle + '"\nDer Schüler hat geschrieben: "' + studentText + '"\n\nBEWERTE:\n1. Ist der Sinn korrekt übertragen? (Muss NICHT wortwörtlich sein!)\n2. Ist die Grammatik OK?\n3. Ist es verständlich für einen englischen Muttersprachler?\n\nAntworte EXAKT in JSON:\n{"pass": true/false, "feedback": "Deutscher Feedback-Text", "example": "Englischer Beispielsatz"}\n\nWenn pass=true: Lobe kurz.\nWenn pass=false: Erkläre was fehlt oder falsch ist. Gib nach dem 3. Versuch ein Beispiel.'
+        exerciseContext: 'MEDIATION: Schüler übersetzt deutschen Satz ins Englische.\nDeutsch: "' + step.uncle + '"\nSchüler schreibt: "' + studentText + '"\n\nBewerte: Ist der SINN richtig übertragen? Grammatik OK? Verständlich?\nAntworte NUR mit JSON, KEIN anderer Text:\n{"pass":true,"feedback":"Lob auf Deutsch","example":""}\noder\n{"pass":false,"feedback":"Was fehlt/falsch ist auf Deutsch","example":"Beispielsatz auf Englisch"}'
       })
     });
-    if (!res.ok) throw new Error('Server error');
+    if (!res.ok) throw new Error('err');
     var data = await res.json();
     var hint = data.hint || '';
     
-    // Try to parse JSON from AI response
-    try {
-      var clean = hint.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-      // Extract JSON object from text (might have extra text before/after)
-      var jsonMatch = clean.match(/\{[\s\S]*?"pass"\s*:\s*(true|false)[\s\S]*?\}/);
-      if (jsonMatch) {
-        var parsed = JSON.parse(jsonMatch[0]);
-        return {
-          pass: parsed.pass === true,
-          feedback: parsed.feedback || 'Versuche es nochmal!',
-          example: parsed.example || ''
-        };
-      }
-      // If no JSON found but text contains "true" or positive indicators
-      if (hint.toLowerCase().includes('"pass": true') || hint.toLowerCase().includes('"pass":true')) {
-        return { pass: true, feedback: 'Sehr gut! Der Ranger versteht dich.', example: '' };
-      }
-      // Use as plain feedback
-      return { pass: false, feedback: hint.substring(0, 200), example: '' };
-    } catch(e) {
-      // Check if AI said it's correct even without valid JSON
-      var lower = hint.toLowerCase();
-      if (lower.includes('korrekt') || lower.includes('sehr gut') || lower.includes('richtig') || lower.includes('pass": true')) {
-        return { pass: true, feedback: 'Gut gemacht! Der Ranger hat dich verstanden.', example: '' };
-      }
-      return { pass: false, feedback: hint.substring(0, 200), example: '' };
+    // Robust JSON extraction
+    // Remove markdown fences
+    var clean = hint.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    // Try to find JSON object with pass field
+    var m = clean.match(/\{[^{}]*"pass"\s*:\s*(true|false)[^{}]*\}/);
+    if (m) {
+      try {
+        var p = JSON.parse(m[0]);
+        return { pass: p.pass === true, feedback: p.feedback || '', example: p.example || '' };
+      } catch(e) {}
     }
+    
+    // Try parsing the whole thing
+    try {
+      var p2 = JSON.parse(clean);
+      if (typeof p2.pass !== 'undefined') {
+        return { pass: p2.pass === true, feedback: p2.feedback || '', example: p2.example || '' };
+      }
+    } catch(e) {}
+    
+    // Extract feedback from text if JSON fails
+    var feedbackMatch = clean.match(/"feedback"\s*:\s*"([^"]+)"/);
+    var passMatch = clean.match(/"pass"\s*:\s*(true|false)/);
+    if (feedbackMatch) {
+      return {
+        pass: passMatch ? passMatch[1] === 'true' : false,
+        feedback: feedbackMatch[1],
+        example: ''
+      };
+    }
+    
+    // Last resort: use keywords
+    var lower = hint.toLowerCase();
+    if (lower.includes('sehr gut') || lower.includes('korrekt') || lower.includes('richtig übertragen') || lower.includes('pass": true') || lower.includes('pass":true')) {
+      return { pass: true, feedback: 'Gut gemacht!', example: '' };
+    }
+    
+    // Strip JSON artifacts and show as tip
+    var cleanFeedback = hint.replace(/[{}"]/g, '').replace(/pass\s*:\s*(true|false),?/gi, '').replace(/feedback\s*:/gi, '').replace(/example\s*:/gi, '').replace(/```json/gi, '').replace(/```/g, '').trim();
+    return { pass: false, feedback: cleanFeedback.substring(0, 250) || 'Versuche es nochmal!', example: '' };
+    
   } catch(e) {
-    // Fallback to local evaluation
     return evaluateLocal(studentText, step);
   }
 }
