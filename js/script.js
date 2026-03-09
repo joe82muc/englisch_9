@@ -205,27 +205,71 @@ async function spellCheck(id) {
       panel.classList.add('show');
     }
   } catch(e) {
-    // Local fallback: fix what we can
+    // Local fallback: fix what we can without server
     var fixed = val;
     var changes = [];
-    // Fix "ist" → "is"
-    if (/\bist\b/g.test(fixed)) { fixed = fixed.replace(/\bist\b/g, 'is'); changes.push('"ist" → "is"'); }
-    // Fix "arived" → "arrived"
-    if (/\barived\b/g.test(fixed)) { fixed = fixed.replace(/\barived\b/g, 'arrived'); changes.push('"arived" → "arrived"'); }
-    // Fix lowercase "i" → "I"
-    fixed = fixed.replace(/\bi\b/g, 'I'); if (val !== fixed && changes.indexOf('"i" → "I"') < 0) changes.push('"i" → "I"');
-    // Capitalize after periods
+    
+    // 1. Remove pure number sequences and gibberish
+    var before = fixed;
+    fixed = fixed.replace(/\b\d{3,}\b/g, '');
+    fixed = fixed.replace(/\b[a-z0-9]*\d[a-z0-9]*\d[a-z0-9]*\b/gi, '');
+    fixed = fixed.replace(/\b[bcdfghjklmnpqrstvwxyz]{4,}\b/gi, '');
+    if (fixed !== before) changes.push('Quatsch/Zahlen entfernt');
+    
+    // 2. Fix German words → English
+    var deToEn = {'hallo':'Hello','ist':'is','und':'and','ich':'I','mein':'my','nicht':'not','aber':'but','war':'was','Uhr':"o'clock",'schnell':'fast','Auto':'car'};
+    Object.keys(deToEn).forEach(function(de) {
+      var re = new RegExp('\\b' + de + '\\b', 'gi');
+      if (re.test(fixed)) { fixed = fixed.replace(re, deToEn[de]); changes.push('"' + de + '" → "' + deToEn[de] + '"'); }
+    });
+    
+    // 3. Fix common typos
+    var typos = {'arived':'arrived','arrved':'arrived','happend':'happened','accidnet':'accident','befor':'before','frist':'first','teh':'the'};
+    Object.keys(typos).forEach(function(w) {
+      var re = new RegExp('\\b' + w + '\\b', 'gi');
+      if (re.test(fixed)) { fixed = fixed.replace(re, typos[w]); changes.push('"' + w + '" → "' + typos[w] + '"'); }
+    });
+    
+    // 4. Fix lowercase "i" → "I" (standalone)
+    before = fixed;
+    fixed = fixed.replace(/(^|\s)i(\s|$|[.,!?])/g, '$1I$2');
+    if (fixed !== before) changes.push('"i" → "I"');
+    
+    // 5. Capitalize after "My name is", "I am", etc.
+    fixed = fixed.replace(/\b(my name is|i am|name is)\s+([a-z])/gi, function(m, prefix, letter) {
+      return prefix + ' ' + letter.toUpperCase();
+    });
+    
+    // 6. Capitalize after periods and at start
     fixed = fixed.replace(/\.\s*([a-z])/g, function(m, c) { return '. ' + c.toUpperCase(); });
-    // Capitalize first letter
     fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
-    // Remove obvious gibberish (sequences of consonants/numbers without vowels)
-    fixed = fixed.replace(/\b[bcdfghjklmnpqrstvwxyz0-9]{4,}\b/gi, '').replace(/\s{2,}/g, ' ').replace(/\.\s*\./g, '.').trim();
-    if (fixed !== val) changes.push('Quatsch entfernt, Groß-/Kleinschreibung korrigiert');
-
-    if (inp) inp.value = fixed;
-    if (panel && changes.length > 0) {
-      panel.innerHTML = '✍️ <strong>Lokale Korrektur:</strong> ' + changes.join(', ') + ' (Server nicht erreichbar – für bessere Korrektur später nochmal versuchen)';
-      panel.classList.add('show');
+    
+    // 7. Clean up extra spaces, orphaned dots
+    fixed = fixed.replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.').replace(/\.\s*\./g, '.').replace(/,\s*\./g, '.').trim();
+    // Remove trailing incomplete words/fragments
+    fixed = fixed.replace(/\s+\w{1,2}$/, '.');
+    if (!fixed.endsWith('.') && !fixed.endsWith('!') && !fixed.endsWith('?')) fixed += '.';
+    
+    if (fixed !== val) {
+      // Check what's still missing and add hints
+      var low = fixed.toLowerCase();
+      var missing = [];
+      if (!low.includes('my name is')) missing.push('Name fehlt noch');
+      if (!low.includes('date of birth')) missing.push('Geburtsdatum fehlt noch');
+      if (!low.includes('arrived')) missing.push('Ankunftszeit fehlt');
+      if (!low.includes('first') && !low.includes('then')) missing.push('Reihenfolge-Wörter (First/Then/After that) fehlen');
+      
+      if (inp) {
+        inp.value = fixed;
+        inp.style.transition = 'background 0.5s';
+        inp.style.background = '#dcfce7';
+        setTimeout(function(){ inp.style.background = ''; }, 2000);
+      }
+      var msg = changes.join(', ');
+      if (missing.length > 0) msg += '. <br>💡 <strong>Es fehlt noch:</strong> ' + missing.join(', ');
+      if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
+    } else {
+      if (panel) { panel.innerHTML = '✅ Keine offensichtlichen Fehler gefunden! Nutze die KI-Hilfe für eine genauere Prüfung.'; panel.classList.add('show'); }
     }
   }
 
