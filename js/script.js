@@ -160,7 +160,7 @@ function getAIHintC(id, correct, context) {
   fetchHint(id, val, correct, enrichedContext, 'accident dialogue');
 }
 
-/* ── Spell Check / Korrektur – sends text specifically for correction ── */
+/* ── Spell Check / Korrektur – dedicated endpoint ── */
 async function spellCheck(id) {
   var inp = document.getElementById(id+'i');
   var panel = document.getElementById(id+'-aipanel');
@@ -171,7 +171,7 @@ async function spellCheck(id) {
     return;
   }
 
-  // Show loading on all Korrektur buttons in this exercise
+  // Find and disable the Korrektur button
   var card = document.getElementById(id);
   var korrBtn = null;
   if (card) {
@@ -182,22 +182,25 @@ async function spellCheck(id) {
   if (panel) panel.classList.remove('show');
 
   try {
-    var res = await fetch(API_BASE + '/api/hint-accident', {
+    var res = await fetch(API_BASE + '/api/korrektur', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentAnswer: val,
-        correctAnswer: 'Korrekte englische Sätze zum Thema Unfallbericht',
-        exerciseContext: 'RECHTSCHREIBPRÜFUNG: Korrigiere den Text des Schülers. Finde ALLE Rechtschreib- und Grammatikfehler. Nenne jeden Fehler einzeln auf Deutsch: was falsch ist → was richtig wäre. Wenn keine Fehler: lobe den Schüler! Prüfe auch Groß-/Kleinschreibung und Satzzeichen.',
-        exerciseText: 'Spelling and grammar check',
-        grammarTopic: 'accident dialogue spelling check'
-      })
+      body: JSON.stringify({ studentAnswer: val })
     });
-    if (!res.ok) throw new Error('err');
+    if (!res.ok) throw new Error('Server ' + res.status);
     var data = await res.json();
-    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + (data.hint || 'Keine Fehler gefunden – gut gemacht!'); panel.classList.add('show'); }
+    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + (data.hint || 'Keine Fehler gefunden!'); panel.classList.add('show'); }
   } catch(e) {
-    if (panel) { panel.innerHTML = '✍️ <strong>Tipp:</strong> Achte auf Groß-/Kleinschreibung, Satzzeichen und die korrekte Schreibweise englischer Wörter.'; panel.classList.add('show'); }
+    // Local fallback: basic checks
+    var fixes = [];
+    if (/\bist\b/.test(val)) fixes.push('❌ "ist" → ✅ "is" (Englisch, nicht Deutsch!)');
+    if (/\bi [a-z]/.test(val)) fixes.push('❌ "i" → ✅ "I" (immer groß schreiben!)');
+    if (/\bmy name is [a-z]/.test(val)) fixes.push('❌ Name klein → ✅ Namen immer groß schreiben!');
+    if (/\barived\b/.test(val)) fixes.push('❌ "arived" → ✅ "arrived" (doppeltes r)');
+    if (/\baccidnet\b|\baccidant\b/.test(val)) fixes.push('❌ Schreibfehler → ✅ "accident"');
+    if (/[a-z]\.\s*[a-z]/.test(val)) fixes.push('💡 Nach einem Punkt groß weiterschreiben!');
+    var msg = fixes.length > 0 ? fixes.join('<br>') : '⚠️ Server nicht erreichbar. Prüfe Groß-/Kleinschreibung, Satzzeichen und Rechtschreibung.';
+    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
   }
 
   if (korrBtn) { korrBtn.disabled = false; korrBtn.innerHTML = '✍️ Korrektur'; }
@@ -508,12 +511,35 @@ function chkClosing(id) {
 }
 function chkStatement(id) {
   if(answered[id])return;
-  var inp=$(id+'i'), val=inp.value.toLowerCase();
-  var ch=[val.includes('name'),val.includes('arrived')||val.includes("o'clock")||val.includes('p.m'),val.includes('first')||val.includes('then')||val.includes('after'),val.length>100];
-  var ok=ch.filter(Boolean).length>=3;
+  var inp=$(id+'i'), val=inp.value, low=val.toLowerCase();
+  
+  // Check for real content (not gibberish)
+  var words = val.trim().split(/\s+/);
+  var realWords = words.filter(function(w) { return /^[a-zA-Z,.!?']+$/.test(w) && w.length > 1; });
+  var realRatio = words.length > 0 ? realWords.length / words.length : 0;
+  
+  // Count actual sentences (ending with . ! ?)
+  var sentences = val.split(/[.!?]+/).filter(function(s) { return s.trim().length > 5; });
+  
+  var hasName = low.includes('my name is') || low.includes('name is');
+  var hasDOB = low.includes('date of birth') || low.includes('birthday');
+  var hasTime = low.includes('arrived') || low.includes('p.m') || low.includes("o'clock");
+  var hasSequence = low.includes('first') || low.includes('then') || low.includes('after that');
+  var hasAccident = low.includes('accident') || low.includes('hit') || low.includes('crash') || low.includes('fast');
+  
+  var checks = [hasName, hasDOB || hasTime, hasSequence, hasAccident, sentences.length >= 3, realRatio > 0.7];
+  var score = checks.filter(Boolean).length;
+  var ok = score >= 5;
+  
   inp.classList.add(ok?'ok':'err');
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Excellent statement!':'❌ Musterlösung: '+MODEL[id];
+  if (ok) {
+    fb.textContent = '✅ Excellent statement!';
+  } else if (score >= 3) {
+    fb.textContent = '⚠️ Guter Anfang, aber es fehlen noch Teile. Nutze die KI-Hilfe!';
+  } else {
+    fb.textContent = '❌ Musterlösung: ' + MODEL[id];
+  }
   answered[id]=true; if(ok)scores.c.r++;else scores.c.w++; updScore('c');
 }
 
