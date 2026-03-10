@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Übung 1 – Gemischte Zeiten</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0c10;--card:#111419;--card2:#161a22;--accent:#f0a030;--accent2:#ffc857;--green:#2dd4a0;--red:#f47272;--text:#cdd5e0;--muted:#7a8494;--border:#1e2330;--input:#151a24;--glow:rgba(240,160,48,.12)}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:1.5rem 1rem;line-height:1.6}
+.wrap{max-width:840px;margin:0 auto}
+header{text-align:center;padding:2rem 0 1.2rem;position:relative}
+header::before{content:'01';position:absolute;top:-20px;right:5%;font-family:'Crimson Pro',serif;font-size:9rem;font-weight:700;color:#ffffff04;pointer-events:none;line-height:1}
+.tag{display:inline-block;background:var(--accent);color:#000;font-size:.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;padding:.3rem 1rem;border-radius:3px;margin-bottom:.7rem}
+h1{font-family:'Crimson Pro',serif;font-size:2.3rem;color:#fff;letter-spacing:-.5px}
+h1 em{color:var(--accent);font-style:normal}
+.sub{color:var(--muted);font-size:.88rem;margin-top:.3rem}
+.scores{display:flex;gap:.8rem;justify-content:center;margin:1.4rem 0;flex-wrap:wrap}
+.sc-chip{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.6rem 1.1rem;text-align:center;min-width:90px}
+.sc-chip .n{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.sc-chip .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-top:2px}
+.tip{background:linear-gradient(135deg,var(--card),var(--card2));border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin-bottom:1.6rem;font-size:.86rem;line-height:1.75;color:var(--muted)}
+.tip b{color:var(--accent2)}.tip i{color:var(--text)}
+.tip-t{color:var(--accent);font-weight:700;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem}
+.blk{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:.9rem;transition:border-color .4s,box-shadow .4s}
+.blk.ok{border-color:var(--green);box-shadow:0 0 18px rgba(45,212,160,.07)}
+.blk.nope{border-color:var(--red);box-shadow:0 0 18px rgba(244,114,114,.07)}
+.blk-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.qn{font-size:.68rem;font-weight:700;color:var(--accent);letter-spacing:2px}
+.pt{font-size:.78rem;font-weight:600;color:var(--muted)}.pt.g1{color:var(--green)}.pt.g05{color:var(--accent)}.pt.g0{color:var(--red)}
+.sn{font-size:1rem;line-height:2.1}
+.sn input{background:var(--input);border:2px solid var(--border);border-radius:6px;color:#fff;font-family:'Outfit',sans-serif;font-size:.92rem;padding:.3rem .55rem;width:175px;text-align:center;outline:none;transition:border-color .3s,background .3s}
+.sn input:focus{border-color:var(--accent)}
+.sn input.ok{border-color:var(--green);background:rgba(45,212,160,.07)}
+.sn input.nope{border-color:var(--red);background:rgba(244,114,114,.07)}
+.ht{color:var(--muted);font-size:.76rem;font-style:italic;margin-top:.15rem}
+.fb{margin-top:.35rem;font-size:.8rem;min-height:1em;font-weight:500}
+.fb.gr{color:var(--green)}.fb.rd{color:var(--red)}.fb.yl{color:var(--accent)}
+.ki-row{margin-top:.4rem;display:flex;gap:.5rem;align-items:flex-start;flex-wrap:wrap}
+.ki-b{background:none;border:1px dashed var(--accent);color:var(--accent);font-size:.75rem;padding:.22rem .65rem;border-radius:5px;cursor:pointer;transition:all .3s;font-family:inherit;white-space:nowrap}
+.ki-b:hover{background:var(--glow)}.ki-b:disabled{opacity:.5;cursor:not-allowed}
+.ki-msg{font-size:.8rem;color:var(--accent2);line-height:1.5;padding:.4rem .7rem;background:rgba(240,160,48,.06);border-radius:6px;max-width:100%;animation:fadeIn .3s}
+.ki-ld{color:var(--muted);font-size:.78rem;font-style:italic}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.btns{display:flex;gap:.7rem;justify-content:center;margin:2rem 0;flex-wrap:wrap}
+.btn{font-family:inherit;font-size:.92rem;font-weight:600;padding:.65rem 1.8rem;border-radius:7px;border:none;cursor:pointer;transition:all .3s}
+.btn-c{background:var(--accent);color:#000}.btn-c:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-r{background:transparent;border:2px solid var(--border);color:var(--text)}.btn-r:hover{border-color:var(--accent);color:var(--accent)}
+.btn-s{background:transparent;border:2px solid var(--green);color:var(--green)}.btn-s:hover{background:rgba(45,212,160,.08)}
+.res{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:2rem;text-align:center;margin:2rem 0;display:none}
+.res.show{display:block;animation:fadeUp .5s ease}
+.res .gr{font-family:'Crimson Pro',serif;font-size:4.5rem;font-weight:700}
+.res .gl{font-size:.95rem;color:var(--muted);margin-bottom:.2rem}
+.res .gd{font-size:.88rem;color:var(--muted);margin-top:.4rem}
+.nav{display:flex;justify-content:space-between;margin-top:1.5rem;padding-bottom:2rem}
+.nav a{color:var(--accent);text-decoration:none;font-weight:600;font-size:.88rem;border-bottom:1px dashed var(--accent);transition:color .3s}
+.nav a:hover{color:var(--accent2)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){h1{font-size:1.6rem}.sn input{width:135px}.blk{padding:1rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="tag">Übung 1 von 6</div>
+  <h1>English Tenses <em>Mixed</em></h1>
+  <p class="sub">Past Simple · Will Future · Present Progressive · Simple Present</p>
+</header>
+<div class="scores">
+  <div class="sc-chip"><div class="n" id="sc">0</div><div class="l">Punkte</div></div>
+  <div class="sc-chip"><div class="n" id="mx">12</div><div class="l">Maximum</div></div>
+  <div class="sc-chip"><div class="n" id="at">0</div><div class="l">Versuche</div></div>
+</div>
+<div class="tip">
+  <div class="tip-t">📚 Grammatik-Tipps</div>
+  <b>Past Simple:</b> Signalwörter: <i>yesterday, last week, ago, in 2010</i>. Regelmäßig → <i>-ed</i>, unregelmäßig → 2. Spalte lernen!<br>
+  <b>Will Future:</b> Spontane Entschlüsse &amp; Vorhersagen → <i>will + Infinitiv</i>. Signalwörter: <i>tomorrow, I think, probably, next…</i><br>
+  <b>Present Progressive:</b> Gerade jetzt → <i>am/is/are + -ing</i>. Signalwörter: <i>right now, at the moment, Look!</i><br>
+  <b>Simple Present:</b> Gewohnheiten &amp; Fakten → Grundform (bei <i>he/she/it</i> → <i>-s</i>). Signalwörter: <i>always, usually, every day, often, never</i>.
+</div>
+<div id="exercises"></div>
+<div class="btns">
+  <button class="btn btn-c" onclick="checkAll()">✓ Überprüfen</button>
+  <button class="btn btn-s" onclick="showSolutions()">Lösungen zeigen</button>
+  <button class="btn btn-r" onclick="resetAll()">↺ Reset</button>
+</div>
+<div class="res" id="result">
+  <div class="gl">Deine Note</div>
+  <div class="gr" id="grade">–</div>
+  <div class="gd" id="details"></div>
+</div>
+<div class="nav"><span></span><a href="exercise2_mixed.html">Weiter zu Übung 2 →</a></div>
+</div>
+<script>
+const API='https://englisch-9.onrender.com';
+const data=[
+  {sent:'Yesterday, my sister ___ (go) to the library and ___ (borrow) three interesting books.',gaps:['went','borrowed'],base:['go','borrow'],hints:['"Yesterday" → Vergangenheit! "go" ist unregelmäßig.','"borrow" ist regelmäßig → was hängst du an?']},
+  {sent:'I think it ___ (snow) tomorrow because the clouds are very dark today.',gaps:['will snow'],base:['snow'],hints:['"I think" + "tomorrow" → Vermutung über die Zukunft!']},
+  {sent:'Look! The cat ___ (sit) on the roof right now. She ___ (not want) to come down.',gaps:['is sitting',"doesn't want"],base:['sit','not want'],hints:['"Look!" + "right now" → was passiert gerade? Achtung: sit → doppel-t!','Allgemeine Tatsache über die Katze → welche Zeitform für Fakten?']},
+  {sent:'Tom usually ___ (get up) at seven, but last Monday he ___ (sleep) until nine.',gaps:['gets up','slept'],base:['get up','sleep'],hints:['"usually" → Gewohnheit! Tom = he/she/it!','"last Monday" → Vergangenheit! "sleep" ist unregelmäßig.']},
+  {sent:'Be quiet! The baby ___ (sleep) at the moment.',gaps:['is sleeping'],base:['sleep'],hints:['"at the moment" → gerade jetzt! Das Baby = it.']},
+  {sent:'We ___ (visit) Paris two weeks ago. It ___ (be) a wonderful trip.',gaps:['visited','was'],base:['visit','be'],hints:['"two weeks ago" → abgeschlossene Vergangenheit!','"be" im Past Simple → it = Singular!']},
+  {sent:'I promise I ___ (help) you with your homework after dinner.',gaps:['will help'],base:['help'],hints:['"I promise" → spontanes Versprechen → welche Zukunftsform?']},
+  {sent:'She never ___ (eat) fast food because she ___ (think) it is unhealthy.',gaps:['eats','thinks'],base:['eat','think'],hints:['"never" → Gewohnheit! she → he/she/it-Regel!','Dauerhafte Meinung → gleiche Zeitform. she + think?']},
+  {sent:'Right now, the students ___ (write) a test in the classroom.',gaps:['are writing'],base:['write'],hints:['"Right now" → genau jetzt! Plural: the students = they.']},
+  {sent:'Water ___ (boil) at 100 degrees Celsius. That is a scientific fact.',gaps:['boils'],base:['boil'],hints:['Naturgesetz / Fakt → welche Zeitform? "water" = it!']},
+];
+const state=data.map(q=>({att:q.gaps.map(()=>0),ok:q.gaps.map(()=>false),pts:q.gaps.map(()=>0)}));
+function render(){const c=document.getElementById('exercises');let h='';data.forEach((q,i)=>{let s=q.sent;q.gaps.forEach((_,gi)=>{s=s.replace('___',`<input type="text" id="g${i}_${gi}" autocomplete="off" spellcheck="false" placeholder="(${q.base[gi]})">`);});h+=`<div class="blk" id="b${i}"><div class="blk-h"><span class="qn">AUFGABE ${i+1}</span><span class="pt" id="p${i}">–</span></div><div class="sn">${s}</div><div class="ht">${q.hints.join(' | ')}</div><div class="ki-row"><button class="ki-b" onclick="askKI(${i})" id="kb${i}">🤖 KI-Tipp</button><div id="km${i}"></div></div><div class="fb" id="fb${i}"></div></div>`;});c.innerHTML=h;document.getElementById('mx').textContent=data.reduce((s,q)=>s+q.gaps.length,0);}
+async function askKI(i){const btn=document.getElementById('kb'+i);const box=document.getElementById('km'+i);btn.disabled=true;box.innerHTML='<span class="ki-ld">⏳ KI denkt nach…</span>';const q=data[i];let ui=state[i].ok.indexOf(false);if(ui===-1)ui=0;const uv=document.getElementById(`g${i}_${ui}`).value||'(leer)';const prompt=`Du bist ein freundlicher Englisch-Nachhilfelehrer für deutsche 9.-Klässler. Der Schüler soll diese Lücke füllen: "${q.sent}" Das Verb in Klammern: (${q.base[ui]}). Der Schüler hat eingegeben: "${uv}". Die richtige Antwort: "${q.gaps[ui]}". Gib einen KURZEN deutschen Tipp (max 2 Sätze). Verrate NICHT die Lösung! Gib nur einen Hinweis auf die richtige Zeitform und einen kleinen Denkanstoß. Sei ermutigend.`;try{const r=await fetch(API+'/hint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});if(!r.ok)throw new Error();const d=await r.json();const t=d.hint||d.content||d.message||d.text||'Schau dir die Signalwörter im Satz genau an!';box.innerHTML=`<div class="ki-msg">💡 ${t}</div>`;}catch(e){box.innerHTML=`<div class="ki-msg">💡 Schau dir die Signalwörter im Satz genau an – sie verraten dir die Zeitform!</div>`;}btn.disabled=false;}
+function norm(s){return s.trim().toLowerCase().replace(/\s+/g,' ').replace(/[''´`]/g,"'")}
+function checkAll(){let tp=0;data.forEach((q,i)=>{q.gaps.forEach((ans,gi)=>{const inp=document.getElementById(`g${i}_${gi}`);if(state[i].ok[gi]){tp+=state[i].pts[gi];return;}const v=norm(inp.value);if(v==='')return;const a=norm(ans);const alts=[a];if(a==="doesn't want")alts.push("does not want");if(a==="don't want")alts.push("do not want");if(alts.includes(v)){state[i].ok[gi]=true;state[i].att[gi]++;state[i].pts[gi]=state[i].att[gi]===1?1:state[i].att[gi]===2?0.5:0;inp.classList.remove('nope');inp.classList.add('ok');inp.disabled=true;tp+=state[i].pts[gi];}else{state[i].att[gi]++;inp.classList.add('nope');setTimeout(()=>inp.classList.remove('nope'),700);}});const blk=document.getElementById('b'+i);const ao=state[i].ok.every(s=>s);const at=state[i].att.some((a,gi)=>!state[i].ok[gi]&&a>0);blk.classList.toggle('ok',ao);blk.classList.toggle('nope',!ao&&at);const qp=state[i].pts.reduce((a,b)=>a+b,0);const pe=document.getElementById('p'+i);if(ao){pe.textContent=fmt(qp)+' Pkt';pe.className='pt '+(qp>=q.gaps.length*.8?'g1':qp>0?'g05':'g0');}const fb=document.getElementById('fb'+i);if(ao){fb.textContent='✓ Richtig!';fb.className='fb gr';}else if(at){fb.textContent=`Noch ${state[i].ok.filter(s=>!s).length} Lücke(n) offen.`;fb.className='fb rd';}});document.getElementById('sc').textContent=fmt(state.reduce((s,q)=>s+q.pts.reduce((a,b)=>a+b,0),0));document.getElementById('at').textContent=state.reduce((s,q)=>s+q.att.reduce((a,b)=>a+b,0),0);if(state.every(q=>q.ok.every(s=>s)))showResult();}
+function fmt(n){return n%1?n.toFixed(1):n.toString()}
+function showResult(){const pts=state.reduce((s,q)=>s+q.pts.reduce((a,b)=>a+b,0),0);const mx=data.reduce((s,q)=>s+q.gaps.length,0);const pct=pts/mx*100;let note=pct>=92?1:pct>=78?2:pct>=64?3:pct>=50?4:pct>=25?5:6;const g=document.getElementById('grade');g.textContent=note;g.style.color=note<=2?'var(--green)':note<=4?'var(--accent)':'var(--red)';document.getElementById('details').textContent=`${fmt(pts)} von ${mx} Punkten (${pct.toFixed(0)}%)`;const r=document.getElementById('result');r.classList.add('show');r.scrollIntoView({behavior:'smooth'});}
+function showSolutions(){data.forEach((q,i)=>{q.gaps.forEach((ans,gi)=>{const inp=document.getElementById(`g${i}_${gi}`);inp.value=ans;inp.classList.add('ok');inp.disabled=true;if(!state[i].ok[gi]){state[i].ok[gi]=true;state[i].pts[gi]=0;state[i].att[gi]=Math.max(state[i].att[gi],2);}});document.getElementById('b'+i).className='blk ok';const fb=document.getElementById('fb'+i);fb.textContent='Lösung angezeigt';fb.className='fb yl';});document.getElementById('sc').textContent=fmt(state.reduce((s,q)=>s+q.pts.reduce((a,b)=>a+b,0),0));showResult();}
+function resetAll(){state.forEach((q,i)=>{q.att=q.att.map(()=>0);q.ok=q.ok.map(()=>false);q.pts=q.pts.map(()=>0);data[i].gaps.forEach((_,gi)=>{const inp=document.getElementById(`g${i}_${gi}`);inp.value='';inp.disabled=false;inp.className='';});document.getElementById('b'+i).className='blk';document.getElementById('p'+i).textContent='–';document.getElementById('p'+i).className='pt';document.getElementById('fb'+i).textContent='';document.getElementById('km'+i).innerHTML='';});document.getElementById('sc').textContent='0';document.getElementById('at').textContent='0';document.getElementById('result').classList.remove('show');}
+render();
+</script>
+</body>
+</html>
