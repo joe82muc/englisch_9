@@ -134,7 +134,84 @@ REGELN für "changes":
         res.status(500).json({ error: "Serverfehler bei der Korrektur." });
     }
 });
+// ===============================
+// KI Conversation (Ranger Chat)
+// ===============================
 
+app.post("/api/conversation", async (req, res) => {
+    try {
+
+        const { studentMessage } = req.body;
+
+        if (!studentMessage || studentMessage.trim().length < 2) {
+            return res.status(400).json({ error: "studentMessage fehlt." });
+        }
+
+        const message = await client.messages.create({
+
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 300,
+
+            system: `Du bist ein freundlicher Ranger in einem Nationalpark.
+
+Du sprichst mit einem Schüler (Englisch Niveau A2).
+
+Antworte IMMER exakt in diesem JSON Format:
+
+{
+"reply": "englische Antwort im Gespräch",
+"correction": "falls nötig korrigierter englischer Satz des Schülers",
+"hint": "kurzer deutscher Tipp zur Verbesserung",
+"score": 0 oder 1
+}
+
+REGELN:
+- reply = einfache englische Sätze
+- correction nur wenn Fehler vorhanden
+- hint maximal 1 kurzer deutscher Tipp
+- score = 1 wenn verständlich
+- score = 0 wenn schlecht verständlich`,
+
+            messages: [
+                {
+                    role: "user",
+                    content: studentMessage
+                }
+            ]
+        });
+
+        const raw = message.content[0].text;
+
+        try {
+
+            const clean = raw
+                .replace(/```json\s*/g, '')
+                .replace(/```/g, '')
+                .trim();
+
+            const parsed = JSON.parse(clean);
+
+            res.json(parsed);
+
+        } catch {
+
+            res.json({
+                reply: raw,
+                correction: "",
+                hint: "",
+                score: 1
+            });
+
+        }
+
+    } catch (error) {
+
+        console.error("Fehler bei /api/conversation:", error);
+
+        res.status(500).json({ error: "Serverfehler." });
+
+    }
+});
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`✅ Server läuft auf Port ${PORT}`);
