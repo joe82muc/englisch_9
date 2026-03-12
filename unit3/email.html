@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email to a Magazine – Meet & Greet</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+--green:#065f46;
+--green2:#047857;
+--bg:#f0fdf4;
+--card:#fff;
+--border:#e2e8f0;
+--muted:#64748b;
+--lime:#dcfce7;
+--bluebg:#eff6ff;
+--blue:#1d4ed8;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+font-family:'DM Sans',sans-serif;
+background:var(--bg);
+}
+
+header{
+background:linear-gradient(135deg,#065f46,#16a34a);
+color:white;
+padding:1.5rem;
+}
+
+h1{
+font-family:'Fraunces',serif;
+font-size:1.8rem;
+}
+
+.sub{
+opacity:.8;
+font-size:.9rem;
+}
+
+.chat-wrap{
+max-width:700px;
+margin:auto;
+padding:1rem;
+}
+
+.chat{
+display:flex;
+flex-direction:column;
+gap:.6rem;
+}
+
+.msg{
+max-width:80%;
+padding:.8rem 1rem;
+border-radius:14px;
+font-size:.9rem;
+line-height:1.5;
+}
+
+.ai{
+background:var(--bluebg);
+border:1px solid #93c5fd;
+}
+
+.student{
+background:var(--lime);
+align-self:flex-end;
+border:1px solid #7dd3fc;
+}
+
+.tip{
+background:#fff7ed;
+border:1px solid #fdba74;
+align-self:center;
+}
+
+.check{
+background:#ecfeff;
+border:1px solid #67e8f9;
+align-self:center;
+}
+
+.input-bar{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:white;
+border-top:1px solid var(--border);
+padding:.7rem;
+display:flex;
+gap:.5rem;
+}
+
+textarea{
+flex:1;
+border-radius:10px;
+border:1px solid var(--border);
+padding:.6rem;
+font-size:.9rem;
+resize:none;
+}
+
+button{
+background:var(--green);
+color:white;
+border:none;
+border-radius:10px;
+padding:.5rem 1rem;
+cursor:pointer;
+}
+
+.progress{
+max-width:700px;
+margin:10px auto;
+padding:0 1rem;
+}
+
+.bar{
+background:#d1fae5;
+height:8px;
+border-radius:20px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+background:var(--green);
+width:0%;
+transition:.4s;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Email to a Magazine ⭐</h1>
+<div class="sub">Write why you want to meet your favourite star</div>
+</header>
+
+<div class="progress">
+<div class="bar">
+<div class="fill" id="fill"></div>
+</div>
+</div>
+
+<div class="chat-wrap">
+<div class="chat" id="chat"></div>
+</div>
+
+<div class="input-bar">
+<textarea id="input" rows="1" placeholder="Write your next sentence..."></textarea>
+<button onclick="send()">Send</button>
+</div>
+
+<script>
+
+const API="https://englisch-9.onrender.com/api/korrektur";
+
+let emailParts={
+greeting:false,
+star:false,
+fan:false,
+rolemodel:false,
+closing:false
+}
+
+function addMsg(text,type){
+
+let div=document.createElement("div");
+div.className="msg "+type;
+div.innerHTML=text;
+
+document.getElementById("chat").appendChild(div);
+
+window.scrollTo(0,document.body.scrollHeight)
+
+}
+
+addMsg("👋 Hello! Let's write an email to a magazine. Start with a greeting.","ai")
+
+function updateProgress(){
+
+let score=Object.values(emailParts).filter(v=>v).length;
+
+document.getElementById("fill").style.width=(score/5*100)+"%"
+
+}
+
+function analyse(text){
+
+let t=text.toLowerCase()
+
+if(t.includes("dear"))emailParts.greeting=true
+if(t.includes("my favourite")||t.includes("favorite"))emailParts.star=true
+if(t.includes("i like")||t.includes("i love"))emailParts.fan=true
+if(t.includes("because")||t.includes("helps")||t.includes("inspire"))emailParts.rolemodel=true
+if(t.includes("best wishes")||t.includes("kind regards"))emailParts.closing=true
+
+updateProgress()
+
+}
+
+async function send(){
+
+let input=document.getElementById("input")
+
+let text=input.value.trim()
+
+if(!text)return
+
+addMsg(text,"student")
+
+analyse(text)
+
+input.value=""
+
+let res=await fetch(API,{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({studentAnswer:text})
+})
+
+let data=await res.json()
+
+if(data.corrected && data.corrected!==text){
+
+addMsg("✏️ Correction:<br>"+data.corrected,"check")
+
+}
+
+let missing=[]
+
+if(!emailParts.greeting)missing.push("Greeting (Dear magazine...)")
+if(!emailParts.star)missing.push("Name of your favourite star")
+if(!emailParts.fan)missing.push("Why you are a fan")
+if(!emailParts.rolemodel)missing.push("Why this person is great")
+if(!emailParts.closing)missing.push("Closing sentence")
+
+if(missing.length>0){
+
+addMsg("💡 Your email still needs:<br>"+missing.join("<br>"),"tip")
+
+}else{
+
+addMsg("✅ Great! Your email has all important parts!","check")
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
