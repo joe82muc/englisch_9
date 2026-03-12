@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Email to a Magazine – Meet & Greet</title>
+
+<title>Email to a Magazine – Role Model</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -13,12 +16,12 @@
 --green:#065f46;
 --green2:#047857;
 --bg:#f0fdf4;
---card:#fff;
+--card:#ffffff;
 --border:#e2e8f0;
 --muted:#64748b;
---lime:#dcfce7;
 --bluebg:#eff6ff;
 --blue:#1d4ed8;
+--lime:#dcfce7;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -26,6 +29,8 @@
 body{
 font-family:'DM Sans',sans-serif;
 background:var(--bg);
+min-height:100vh;
+overflow-y:auto;
 }
 
 header{
@@ -48,6 +53,7 @@ font-size:.9rem;
 max-width:700px;
 margin:auto;
 padding:1rem;
+padding-bottom:120px;
 }
 
 .chat{
@@ -81,10 +87,37 @@ border:1px solid #fdba74;
 align-self:center;
 }
 
-.check{
+.correct{
 background:#ecfeff;
 border:1px solid #67e8f9;
 align-self:center;
+}
+
+.progress{
+max-width:700px;
+margin:10px auto;
+padding:0 1rem;
+}
+
+.bar{
+background:#d1fae5;
+height:8px;
+border-radius:20px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+background:var(--green);
+width:0%;
+transition:.4s;
+}
+
+.score{
+text-align:center;
+font-size:.9rem;
+margin-top:6px;
+color:var(--muted);
 }
 
 .input-bar{
@@ -117,82 +150,76 @@ padding:.5rem 1rem;
 cursor:pointer;
 }
 
-.progress{
-max-width:700px;
-margin:10px auto;
-padding:0 1rem;
-}
-
-.bar{
-background:#d1fae5;
-height:8px;
-border-radius:20px;
-overflow:hidden;
-}
-
-.fill{
-height:100%;
-background:var(--green);
-width:0%;
-transition:.4s;
-}
-
 </style>
+
 </head>
 
 <body>
 
 <header>
+
 <h1>Email to a Magazine ⭐</h1>
-<div class="sub">Write why you want to meet your favourite star</div>
+<div class="sub">Win a Meet & Greet with your favourite star</div>
+
 </header>
+
 
 <div class="progress">
 <div class="bar">
 <div class="fill" id="fill"></div>
 </div>
+<div class="score" id="score">Progress: 0 / 5</div>
 </div>
+
 
 <div class="chat-wrap">
 <div class="chat" id="chat"></div>
 </div>
 
+
 <div class="input-bar">
-<textarea id="input" rows="1" placeholder="Write your next sentence..."></textarea>
+<textarea id="input" rows="1" placeholder="Write the next sentence..."></textarea>
 <button onclick="send()">Send</button>
 </div>
 
+
 <script>
 
-const API="https://englisch-9.onrender.com/api/korrektur";
+const API_CORRECT="https://englisch-9.onrender.com/api/korrektur"
 
-let emailParts={
+let emailText=""
+
+let parts={
 greeting:false,
 star:false,
 fan:false,
-rolemodel:false,
+great:false,
 closing:false
 }
 
 function addMsg(text,type){
 
-let div=document.createElement("div");
-div.className="msg "+type;
-div.innerHTML=text;
+let div=document.createElement("div")
 
-document.getElementById("chat").appendChild(div);
+div.className="msg "+type
+
+div.innerHTML=text
+
+document.getElementById("chat").appendChild(div)
 
 window.scrollTo(0,document.body.scrollHeight)
 
 }
 
-addMsg("👋 Hello! Let's write an email to a magazine. Start with a greeting.","ai")
+addMsg("Hello! Let's write your email to the magazine. Start with a greeting like <b>Dear magazine team</b>.","ai")
 
 function updateProgress(){
 
-let score=Object.values(emailParts).filter(v=>v).length;
+let score=Object.values(parts).filter(v=>v).length
 
 document.getElementById("fill").style.width=(score/5*100)+"%"
+
+document.getElementById("score").innerText="Progress: "+score+" / 5"
 
 }
 
@@ -200,13 +227,32 @@ function analyse(text){
 
 let t=text.toLowerCase()
 
-if(t.includes("dear"))emailParts.greeting=true
-if(t.includes("my favourite")||t.includes("favorite"))emailParts.star=true
-if(t.includes("i like")||t.includes("i love"))emailParts.fan=true
-if(t.includes("because")||t.includes("helps")||t.includes("inspire"))emailParts.rolemodel=true
-if(t.includes("best wishes")||t.includes("kind regards"))emailParts.closing=true
+if(t.includes("dear"))parts.greeting=true
+
+if(t.includes("my favourite")||t.includes("my favorite"))parts.star=true
+
+if(t.includes("i like")||t.includes("i love")||t.includes("i am a fan"))parts.fan=true
+
+if(t.includes("because")||t.includes("inspire")||t.includes("helps"))parts.great=true
+
+if(t.includes("best wishes")||t.includes("kind regards")||t.includes("sincerely"))parts.closing=true
 
 updateProgress()
+
+}
+
+function calculateGrade(){
+
+let score=Object.values(parts).filter(v=>v).length
+
+let percent=score/5
+
+if(percent>=0.9)return 1
+if(percent>=0.75)return 2
+if(percent>=0.6)return 3
+if(percent>=0.5)return 4
+if(percent>=0.3)return 5
+return 6
 
 }
 
@@ -220,11 +266,13 @@ if(!text)return
 
 addMsg(text,"student")
 
-analyse(text)
+emailText+=" "+text
+
+analyse(emailText)
 
 input.value=""
 
-let res=await fetch(API,{
+let res=await fetch(API_CORRECT,{
 method:"POST",
 headers:{'Content-Type':'application/json'},
 body:JSON.stringify({studentAnswer:text})
@@ -234,17 +282,21 @@ let data=await res.json()
 
 if(data.corrected && data.corrected!==text){
 
-addMsg("✏️ Correction:<br>"+data.corrected,"check")
+addMsg("✏️ Correction:<br>"+data.corrected,"correct")
 
 }
 
 let missing=[]
 
-if(!emailParts.greeting)missing.push("Greeting (Dear magazine...)")
-if(!emailParts.star)missing.push("Name of your favourite star")
-if(!emailParts.fan)missing.push("Why you are a fan")
-if(!emailParts.rolemodel)missing.push("Why this person is great")
-if(!emailParts.closing)missing.push("Closing sentence")
+if(!parts.greeting)missing.push("Greeting (Dear magazine...)")
+
+if(!parts.star)missing.push("Favourite star")
+
+if(!parts.fan)missing.push("Why you are a fan")
+
+if(!parts.great)missing.push("Why this person is great")
+
+if(!parts.closing)missing.push("Closing sentence")
 
 if(missing.length>0){
 
@@ -252,7 +304,9 @@ addMsg("💡 Your email still needs:<br>"+missing.join("<br>"),"tip")
 
 }else{
 
-addMsg("✅ Great! Your email has all important parts!","check")
+let grade=calculateGrade()
+
+addMsg("✅ Your email is complete!<br><br><b>Grade: "+grade+"</b>","correct")
 
 }
 
