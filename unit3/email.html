@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Email to a Magazine – Role Model</title>
+<title>E-Mail an ein Magazin – Role Model</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -150,6 +150,10 @@ padding:.5rem 1rem;
 cursor:pointer;
 }
 
+.btn-secondary{
+background:#1d4ed8;
+}
+
 </style>
 
 </head>
@@ -158,8 +162,8 @@ cursor:pointer;
 
 <header>
 
-<h1>Email to a Magazine ⭐</h1>
-<div class="sub">Win a Meet & Greet with your favourite star</div>
+<h1>E-Mail an ein Magazin ⭐</h1>
+<div class="sub">Schreibtraining mit KI-Begleitung + Endfeedback</div>
 
 </header>
 
@@ -178,8 +182,9 @@ cursor:pointer;
 
 
 <div class="input-bar">
-<textarea id="input" rows="1" placeholder="Write the next sentence..."></textarea>
+<textarea id="input" rows="1" placeholder="Schreibe den nächsten englischen Satz..."></textarea>
 <button onclick="send()">Send</button>
+<button class="btn-secondary" onclick="finishEmail()">Final Check</button>
 </div>
 
 
@@ -211,7 +216,7 @@ window.scrollTo(0,document.body.scrollHeight)
 
 }
 
-addMsg("Hello! Let's write your email to the magazine. Start with a greeting like <b>Dear magazine team</b>.","ai")
+addMsg("👋 Wir schreiben jetzt Schritt für Schritt eine <b>E-Mail an ein Magazin</b> (Task 10).<br>Start: Begrüßung auf Englisch, z. B. <b>Dear magazine team,</b>","ai")
 
 function updateProgress(){
 
@@ -239,6 +244,38 @@ if(t.includes("best wishes")||t.includes("kind regards")||t.includes("sincerely"
 
 updateProgress()
 
+}
+
+function sentenceTips(text){
+
+let tips=[]
+let clean=text.toLowerCase()
+
+if(clean.split(" ").length < 6){
+tips.push("Schreibe etwas länger: mindestens 6 Wörter in einem Satz.")
+}
+
+if(clean.includes("i am fan") || clean.includes("im fan")){
+tips.push("Achte auf Artikel: besser <i>I am <b>a</b> fan of ...</i>")
+}
+
+if(!clean.includes("because") && (clean.includes("i like") || clean.includes("i love") || clean.includes("fan"))){
+tips.push("Super Anfang! Ergänze noch einen reason-Satz mit <i>because ...</i>.")
+}
+
+if(clean.includes("he have") || clean.includes("she have")){
+tips.push("Denk an 3. Person: <i>he/she <b>has</b></i> statt <i>have</i>.")
+}
+
+if(!/[.!?]$/.test(text.trim())){
+tips.push("Setze am Satzende ein Satzzeichen (., ! oder ?).")
+}
+
+if(tips.length===0){
+tips.push("Sehr gut! Inhalt passt. Als Nächstes den nächsten Baustein ergänzen.")
+}
+
+return tips[0]
 }
 
 function calculateGrade(){
@@ -272,44 +309,68 @@ analyse(emailText)
 
 input.value=""
 
-let res=await fetch(API_CORRECT,{
-method:"POST",
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({studentAnswer:text})
-})
-
-let data=await res.json()
-
-if(data.corrected && data.corrected!==text){
-
-addMsg("✏️ Correction:<br>"+data.corrected,"correct")
-
-}
+addMsg("💡 Tipp: "+sentenceTips(text),"tip")
 
 let missing=[]
 
-if(!parts.greeting)missing.push("Greeting (Dear magazine...)")
+if(!parts.greeting)missing.push("Begrüßung (Dear ...)")
 
-if(!parts.star)missing.push("Favourite star")
+if(!parts.star)missing.push("Lieblingsstar klar benennen")
 
-if(!parts.fan)missing.push("Why you are a fan")
+if(!parts.fan)missing.push("Warum du Fan bist")
 
-if(!parts.great)missing.push("Why this person is great")
+if(!parts.great)missing.push("Weitere Gründe, warum die Person großartig ist (z. B. charity/helping others)")
 
-if(!parts.closing)missing.push("Closing sentence")
+if(!parts.closing)missing.push("Passender Abschluss (Best wishes / Kind regards)")
 
 if(missing.length>0){
 
-addMsg("💡 Your email still needs:<br>"+missing.join("<br>"),"tip")
+addMsg("🧭 Es fehlt noch in deiner E-Mail:<br>"+missing.join("<br>"),"tip")
 
 }else{
 
 let grade=calculateGrade()
 
-addMsg("✅ Your email is complete!<br><br><b>Grade: "+grade+"</b>","correct")
+addMsg("✅ Inhaltlich vollständig! Klicke jetzt auf <b>Final Check</b> für Gesamtkorrektur + Endnote.","correct")
 
 }
 
+}
+
+async function finishEmail(){
+
+if(emailText.trim().length < 20){
+addMsg("⚠️ Bitte schreibe zuerst eine längere E-Mail (mindestens 20 Zeichen).","tip")
+return
+}
+
+let res
+try{
+res=await fetch(API_CORRECT,{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({studentAnswer:emailText.trim()})
+})
+}catch(e){
+addMsg("⚠️ Die Verbindung zur Korrektur-API hat nicht funktioniert. Versuche es bitte erneut.","tip")
+return
+}
+
+if(!res.ok){
+addMsg("⚠️ Die Korrektur konnte gerade nicht geladen werden (Serverfehler).","tip")
+return
+}
+
+let data=await res.json()
+let corrected=data.corrected || emailText.trim()
+let teacherNote=data.changes || "Korrektur durchgeführt."
+
+analyse(corrected)
+let grade=calculateGrade()
+
+addMsg("📝 <b>Vollständig verbesserte E-Mail</b><br><br>"+corrected.replace(/\n/g,"<br>"),"correct")
+addMsg("📌 <b>Feedback:</b> "+teacherNote,"ai")
+addMsg("🏁 <b>Endnote: "+grade+"</b><br>Grundlage: Aufbau (5 Pflichtteile) + sprachliche Verbesserung.","correct")
 }
 
 </script>
