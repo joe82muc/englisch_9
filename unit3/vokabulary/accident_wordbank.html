@@ -524,31 +524,7 @@ h1 em{font-style:italic;opacity:.8;}
 
 </div><!-- /wrap -->
 
-<script>
-  function setLevel(l, btn) {
-    document.querySelectorAll('.ltab').forEach(function (b) { b.classList.remove('active'); });
-    if (btn) btn.classList.add('active');
-    document.querySelectorAll('.lsec').forEach(function (s) { s.classList.remove('show'); });
-    var sec = document.getElementById('level-' + l);
-    if (sec) sec.classList.add('show');
-  }
-
-  function toggleInfo() {
-    var ib = document.getElementById('ibody');
-    if (!ib) return;
-    ib.classList.toggle('open');
-    var ih = document.querySelector('.ihdr');
-    if (ih) ih.classList.toggle('open');
-  }
-</script>
 <script src="./script.js"></script>
-<script>
-  if (typeof setLevel !== "function") {
-    var fallback = document.createElement("script");
-    fallback.src = "../js/script.js";
-    document.body.appendChild(fallback);
-  }
-</script>
 </body>
 </html>
 
