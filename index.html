@@ -189,34 +189,6 @@
       border-color: #8cc9e6;
     }
 
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: .7rem;
-    }
-
-    .scene {
-      border: 1px solid #b7dff3;
-      border-radius: 14px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .scene img {
-      display: block;
-      width: 100%;
-      height: 170px;
-      object-fit: cover;
-      background: #dff2ff;
-    }
-
-    .scene figcaption {
-      padding: .5rem .62rem;
-      font-weight: 700;
-      color: #213c34;
-      background: #eff9ff;
-    }
-
     .mini {
       margin-top: .9rem;
       border: 1px solid #b7dff3;
@@ -239,28 +211,19 @@
 
     .mini li { margin: .3rem 0; }
 
-    @media (min-width: 960px) {
-      .main-grid { grid-template-columns: 1.1fr 1fr; }
-    }
-
-    @media (max-width: 620px) {
-      .gallery-grid { grid-template-columns: 1fr; }
-      .scene img { height: 190px; }
-    }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="hero">
-      <h1>English Unit 3: South Africa Explorer</h1>
-      <p class="sub">Lerne mit klaren Lernpfaden, schnellen Einstiegen und spannenden Themen.</p>
+      <h1>English Unit 3: South Africa</h1>
+      <p class="sub">Interaktive Übungen mit KI-Unterstützung.</p>
       <span class="badge">Mittelschule am Sportpark Unterhaching | von Johannes Mössner | 9. Klasse</span>
     </section>
 
     <section class="main-grid">
       <article class="panel">
-        <h2>Datei-Baum</h2>
-        <p class="hint">Die Menüs öffnen nur noch auf Klick. Kein automatisches Aufspringen mehr.</p>
+        <h2>Übersicht</h2>
 
         <ul class="tree" id="treeMenu">
           <li class="branch">
@@ -302,34 +265,6 @@
         </ul>
       </article>
 
-      <article class="panel">
-        <h2>South Africa Gallery</h2>
-        <p class="hint">Echte Fotos aus Suedafrika: Landschaften und Menschen.</p>
-
-        <div class="gallery-grid">
-          <figure class="scene">
-            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_2821.jpg" alt="Landschaft in Kapstadt mit Table Mountain">
-            <figcaption>Cape Town</figcaption>
-          </figure>
-
-          <figure class="scene">
-            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_3437.jpg" alt="Table Mountain und Natur in Suedafrika">
-            <figcaption>Table Mountain Landscape</figcaption>
-          </figure>
-
-          <figure class="scene">
-            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Ko_Modendeng_Market_-_Winterveldt%2C_South_Africa_01.jpg" alt="Menschen auf einem Markt in Suedafrika">
-            <figcaption>People at Market (Winterveldt)</figcaption>
-          </figure>
-
-          <figure class="scene">
-            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Soweto_%284612445598%29.jpg" alt="Menschen in Soweto, Johannesburg">
-            <figcaption>People in Soweto</figcaption>
-          </figure>
-        </div>
-
-    
-      </article>
     </section>
   </main>
 
@@ -344,19 +279,6 @@
     branch.classList.toggle("open");
   });
 
-  function loadGalleryImages() {
-    document.querySelectorAll("img[data-src]").forEach((img) => {
-      if (!img.dataset.src) return;
-      img.src = img.dataset.src;
-      img.removeAttribute("data-src");
-    });
-  }
-
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(loadGalleryImages, { timeout: 2000 });
-  } else {
-    setTimeout(loadGalleryImages, 1200);
-  }
 </script>
 </body>
 </html>
