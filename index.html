@@ -6,14 +6,14 @@
   <title>Unit 3 | English 9 | South Africa</title>
   <style>
     :root {
-      --sand: #f3ead7;
-      --sand-2: #e9dcc1;
+      --sand: #dff3ff;
+      --sand-2: #cfeaff;
       --green: #0e7c57;
       --green-2: #0a5f43;
       --sun: #f3b14b;
       --ink: #1d2c28;
-      --card: #fffdf8;
-      --line: #d4c4a6;
+      --card: #f7fcff;
+      --line: #b7dff3;
       --blue: #2f91b8;
     }
 
@@ -23,10 +23,7 @@
       margin: 0;
       font-family: "Trebuchet MS", "Segoe UI", sans-serif;
       color: var(--ink);
-      background:
-        radial-gradient(circle at 12% 16%, #ffe8be 0, transparent 24%),
-        radial-gradient(circle at 85% 14%, #cdeedb 0, transparent 26%),
-        linear-gradient(180deg, var(--sand) 0%, #f6f0e4 100%);
+      background: linear-gradient(180deg, #e8f7ff 0%, #dff2ff 100%);
       min-height: 100vh;
     }
 
@@ -102,7 +99,9 @@
       grid-template-columns: 1fr;
     }
 
-    .panel {
+    \.panel {
+      content-visibility: auto;
+      contain-intrinsic-size: 420px;
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 18px;
@@ -130,9 +129,9 @@
     }
 
     .branch {
-      border: 1px solid #d7c7ab;
+      border: 1px solid #b7dff3;
       border-radius: 12px;
-      background: #fffaf0;
+      background: #eff9ff;
       margin-bottom: .55rem;
       overflow: hidden;
     }
@@ -162,9 +161,9 @@
       list-style: none;
       margin: 0;
       padding: .2rem .7rem .7rem;
-      border-top: 1px dashed #d5c4a7;
+      border-top: 1px dashed #b7dff3;
       display: none;
-      background: #fffef9;
+      background: #f4fbff;
     }
 
     .branch.open .children { display: block; }
@@ -177,7 +176,7 @@
       display: block;
       text-decoration: none;
       color: #174c3b;
-      border: 1px solid #d9ccb3;
+      border: 1px solid #b7dff3;
       background: #fff;
       border-radius: 9px;
       padding: .48rem .6rem;
@@ -186,8 +185,8 @@
     }
 
     .children a:hover {
-      background: #f4fff8;
-      border-color: #97d1b8;
+      background: #e8f7ff;
+      border-color: #8cc9e6;
     }
 
     .gallery-grid {
@@ -197,7 +196,7 @@
     }
 
     .scene {
-      border: 1px solid #d6c4a5;
+      border: 1px solid #b7dff3;
       border-radius: 14px;
       overflow: hidden;
       background: #fff;
@@ -208,22 +207,22 @@
       width: 100%;
       height: 170px;
       object-fit: cover;
-      background: #f2e8d5;
+      background: #dff2ff;
     }
 
     .scene figcaption {
       padding: .5rem .62rem;
       font-weight: 700;
       color: #213c34;
-      background: #fffaf0;
+      background: #eff9ff;
     }
 
     .mini {
       margin-top: .9rem;
-      border: 1px solid #d3c6b1;
+      border: 1px solid #b7dff3;
       border-radius: 12px;
       padding: .7rem;
-      background: #fffaf2;
+      background: #f2faff;
     }
 
     .mini h3 {
@@ -261,10 +260,10 @@
     <section class="main-grid">
       <article class="panel">
         <h2>Datei-Baum</h2>
-        <p class="hint">Die Menüs öffnen und schliessen sich automatisch. Tippe auf den Bereich, den du brauchst.</p>
+        <p class="hint">Die Menüs öffnen nur noch auf Klick. Kein automatisches Aufspringen mehr.</p>
 
         <ul class="tree" id="treeMenu">
-          <li class="branch open">
+          <li class="branch">
             <button type="button"><span>e-mail</span><span class="caret">v</span></button>
             <ul class="children">
               <li><a href="./unit3/email/email.html">Write an e-Mail</a></li>
@@ -309,22 +308,22 @@
 
         <div class="gallery-grid">
           <figure class="scene">
-            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_2821.jpg" alt="Landschaft in Kapstadt mit Table Mountain">
+            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_2821.jpg" alt="Landschaft in Kapstadt mit Table Mountain">
             <figcaption>Cape Town</figcaption>
           </figure>
 
           <figure class="scene">
-            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_3437.jpg" alt="Table Mountain und Natur in Suedafrika">
+            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_3437.jpg" alt="Table Mountain und Natur in Suedafrika">
             <figcaption>Table Mountain Landscape</figcaption>
           </figure>
 
           <figure class="scene">
-            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Ko_Modendeng_Market_-_Winterveldt%2C_South_Africa_01.jpg" alt="Menschen auf einem Markt in Suedafrika">
+            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Ko_Modendeng_Market_-_Winterveldt%2C_South_Africa_01.jpg" alt="Menschen auf einem Markt in Suedafrika">
             <figcaption>People at Market (Winterveldt)</figcaption>
           </figure>
 
           <figure class="scene">
-            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Soweto_%284612445598%29.jpg" alt="Menschen in Soweto, Johannesburg">
+            <img loading="lazy" decoding="async" fetchpriority="low" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/Soweto_%284612445598%29.jpg" alt="Menschen in Soweto, Johannesburg">
             <figcaption>People in Soweto</figcaption>
           </figure>
         </div>
@@ -334,31 +333,33 @@
     </section>
   </main>
 
-  <script>
-    const branches = Array.from(document.querySelectorAll(".branch"));
-    let activeIndex = 0;
+<script>
+  const treeMenu = document.getElementById("treeMenu");
 
-    function openBranch(index) {
-      branches.forEach((branch, i) => branch.classList.toggle("open", i === index));
-      activeIndex = index;
-    }
+  treeMenu.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const branch = btn.closest(".branch");
+    if (!branch) return;
+    branch.classList.toggle("open");
+  });
 
-    branches.forEach((branch, index) => {
-      branch.querySelector("button").addEventListener("click", () => {
-        const isOpen = branch.classList.contains("open");
-        branches.forEach(b => b.classList.remove("open"));
-        if (!isOpen) {
-          branch.classList.add("open");
-          activeIndex = index;
-        }
-      });
+  function loadGalleryImages() {
+    document.querySelectorAll("img[data-src]").forEach((img) => {
+      if (!img.dataset.src) return;
+      img.src = img.dataset.src;
+      img.removeAttribute("data-src");
     });
+  }
 
-    setInterval(() => {
-      const next = (activeIndex + 1) % branches.length;
-      openBranch(next);
-    }, 4200);
-  </script>
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(loadGalleryImages, { timeout: 2000 });
+  } else {
+    setTimeout(loadGalleryImages, 1200);
+  }
+</script>
 </body>
 </html>
+
+
 
