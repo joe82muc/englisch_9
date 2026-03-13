@@ -730,7 +730,10 @@ function disableCard(id) {
 
 // KI endpoint (set window.AI_HINT_ENDPOINT to override)
 const AI_HINT_ENDPOINTS = [
-  window.AI_HINT_ENDPOINT || '/api/ai/hint',
+  window.AI_HINT_ENDPOINT || 'https://englisch-9.onrender.com/api/ai/hint',
+  'https://englisch-9.onrender.com/api/hint',
+  'https://englisch-9.onrender.com/api/ai-help',
+  '/api/ai/hint',
   '/api/hint',
   '/api/ai-help'
 ];
@@ -848,7 +851,7 @@ async function getAIHint(exId) {
 
     panel.innerHTML = '<strong>KI-Hilfe:</strong> ' + escapeHtml(hint);
   } catch (err) {
-    panel.innerHTML = '<strong>KI-Fehler:</strong> Endpoint nicht erreichbar. Bitte Backend-Route fuer KI-Hinweise pruefen.';
+    panel.innerHTML = '<strong>KI-Fehler:</strong> Endpoint nicht erreichbar (oder CORS blockiert). Bitte Render-Backend-Route und CORS pruefen.';
   } finally {
     btn.disabled = false;
     btn.textContent = oldLabel;
@@ -917,4 +920,5 @@ function resetLevel(lvl) {
 </script>
 </body>
 </html>
+
 
