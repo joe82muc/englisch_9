@@ -1,449 +1,279 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0d2f4d">
-<title>Englisch 9 – Unit 3 · South Africa</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c1c0e">
+<title>Englisch 9. Klasse – MS Sportpark Unterhaching</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --dark: #1a1a2e;
-  --warm: #e2725b;
-  --gold: #d4a843;
-  --sand: #f5e6c8;
-  --sage: #4a7c59;
-  --sky: #5b8fb9;
-  --text: #2d2d2d;
-  --muted: #6b6b6b;
+:root{
+  --bg:#0c1c0e;
+  --gold:#d4a843;
+  --goldf:#f0c060;
+  --green:#2d6a35;
+  --greenl:#4a9e55;
+  --cream:#f5ede0;
+  --text:#e8ddd0;
+  --muted:rgba(232,221,208,.5);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Source Sans 3', sans-serif;
-  color: var(--text);
-  min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.1), rgba(245,230,200,.95) 30%),
-    url('https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1800&q=80') center top / cover fixed;
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);min-height:100vh;overflow-x:hidden;}
+
+/* ── HERO ── */
+.hero{
+  position:relative;height:100vh;min-height:580px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;
+}
+.hero-img{
+  position:absolute;inset:0;
+  background-image:url('https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=1400&q=80');
+  background-size:cover;background-position:center 40%;
+  transform:scale(1.08);
+  animation:slowzoom 20s ease-in-out infinite alternate;
+}
+@keyframes slowzoom{from{transform:scale(1.08) translateY(0)}to{transform:scale(1.15) translateY(-1.5%)}}
+.hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(170deg,rgba(12,28,14,.15) 0%,rgba(12,28,14,.55) 40%,rgba(12,28,14,.9) 75%,rgba(12,28,14,1) 100%);
+}
+.stripe{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--green),var(--gold),var(--green));}
+
+.hero-content{
+  position:relative;z-index:2;text-align:center;padding:0 1.5rem;
+  animation:fadeup .9s ease both;
+}
+@keyframes fadeup{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+.school-tag{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.3);
+  border-radius:50px;padding:.35rem 1rem;
+  font-size:.7rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:1.8rem;
+  animation:fadeup .9s .15s ease both;
+}
+h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.8rem,10vw,5.5rem);font-weight:900;
+  color:var(--cream);line-height:1.0;margin-bottom:.35rem;
+  animation:fadeup .9s .25s ease both;
+}
+h1 em{font-style:italic;color:var(--gold);display:block;}
+.subtitle{
+  font-size:clamp(.82rem,2.5vw,.95rem);color:var(--muted);
+  font-weight:300;letter-spacing:.06em;margin-bottom:0;
+  animation:fadeup .9s .35s ease both;
+}
+.scroll-hint{
+  position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:.4rem;
+  animation:bouncedown 2.2s ease infinite;z-index:2;
+}
+.scroll-hint span{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.scroll-arrow{width:1px;height:30px;background:linear-gradient(to bottom,var(--gold),transparent);}
+@keyframes bouncedown{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(7px)}}
+
+/* ── MAIN ── */
+.main{background:var(--bg);padding:2.5rem 1.5rem 5rem;display:flex;flex-direction:column;align-items:center;}
+
+/* Label */
+.section-label{
+  font-size:.63rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:1.2rem;text-align:center;
 }
 
-.hero {
-  position: relative;
-  min-height: 64vh;
-  background:
-    linear-gradient(140deg, rgba(8,18,38,.88) 0%, rgba(10,39,71,.82) 55%, rgba(16,71,108,.76) 100%),
-    url('https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1900&q=80') center center / cover no-repeat;
-  display: flex;
-  align-items: center;
-  padding: 5.5rem 1.5rem 7rem;
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 82% 20%, rgba(255,200,102,.24) 0%, transparent 44%),
-    radial-gradient(ellipse at 12% 78%, rgba(226,114,91,.16) 0%, transparent 46%);
-}
-.hero::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 92px;
-  background: var(--sand);
-  clip-path: ellipse(58% 100% at 50% 100%);
-}
-.hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 860px;
-  margin: 0 auto;
-  width: 100%;
-}
+/* NAV */
+.nav{display:flex;flex-direction:column;gap:.5rem;width:100%;max-width:420px;}
 
-.sun {
-  position: absolute;
-  top: 12%;
-  right: 8%;
-  width: 130px;
-  height: 130px;
-  background: radial-gradient(circle, #ffd882, #e2725b 72%);
-  border-radius: 50%;
-  opacity: .28;
-  filter: blur(2px);
-  animation: pulse 4s ease-in-out infinite;
+.unit-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:.9rem 1.2rem;
+  color:var(--text);font-family:'Outfit',sans-serif;
+  font-size:.95rem;font-weight:600;cursor:pointer;
+  transition:all .2s;width:100%;text-align:left;-webkit-appearance:none;
+  position:relative;overflow:hidden;
 }
-@keyframes pulse { 0%,100%{transform:scale(1);opacity:.24} 50%{transform:scale(1.08);opacity:.34} }
+.unit-btn::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--greenl);opacity:0;transition:opacity .2s;
+}
+.unit-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.17);}
+.unit-btn:hover::before,.unit-btn.open::before{opacity:1;}
+.unit-btn.open{border-radius:14px 14px 0 0;border-bottom-color:transparent;background:rgba(255,255,255,.07);}
 
-.trees {
-  position: absolute;
-  bottom: 88px;
-  left: 0;
-  right: 0;
-  height: 80px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 100'%3E%3Cpath d='M0,100 L0,60 Q50,20 100,55 Q120,10 140,50 Q160,25 180,55 L200,70 Q220,30 240,60 Q280,15 320,55 Q340,5 360,45 Q380,20 400,50 L420,65 Q460,25 500,50 Q520,10 540,45 Q570,30 600,55 Q630,8 660,40 Q690,20 720,50 L750,60 Q780,25 810,55 Q840,12 870,45 Q900,28 930,55 Q960,15 990,50 L1020,60 Q1050,30 1080,55 Q1110,18 1140,48 Q1170,35 1200,55 L1200,100Z' fill='%230f1935'/%3E%3C/svg%3E") center bottom / 1200px 100px repeat-x;
-  opacity: .62;
+.unit-left{display:flex;align-items:center;gap:.85rem;}
+.unit-num{
+  font-family:'Playfair Display',serif;
+  font-size:1.45rem;font-weight:700;font-style:italic;
+  color:var(--gold);opacity:.75;min-width:1.8rem;
 }
+.unit-title{font-size:.95rem;font-weight:600;color:var(--text);}
+.unit-sub{font-size:.75rem;color:var(--muted);font-weight:400;margin-top:.05rem;}
 
-.badge {
-  display: inline-block;
-  background: rgba(212,168,67,.22);
-  border: 1px solid rgba(212,168,67,.35);
-  color: #f2cd76;
-  font-size: .66rem;
-  font-weight: 700;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  padding: .38rem .95rem;
-  border-radius: 50px;
-  margin-bottom: 1rem;
-}
-h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2.2rem, 7vw, 3.4rem);
-  font-weight: 900;
-  color: #fff;
-  line-height: 1.05;
-  margin-bottom: .55rem;
-}
-h1 em { font-style: italic; color: var(--gold); }
-.hero-sub {
-  font-size: 1rem;
-  color: rgba(255,255,255,.88);
-  line-height: 1.5;
-  max-width: 580px;
-}
+.chevron{font-size:.85rem;opacity:.35;transition:transform .28s;flex-shrink:0;}
+.unit-btn.open .chevron{transform:rotate(90deg);opacity:.85;}
 
-.main {
-  max-width: 840px;
-  margin: -1.1rem auto 0;
-  padding: 0 1.2rem 4rem;
-  position: relative;
-  z-index: 3;
+/* Sub-menu */
+.sub-menu{
+  display:none;flex-direction:column;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.1);border-top:none;
+  border-radius:0 0 14px 14px;overflow:hidden;margin-top:-1px;
 }
+.sub-menu.open{display:flex;}
 
-.section {
-  margin-bottom: 1rem;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 5px 20px rgba(0,0,0,.08);
-  border: 1.5px solid rgba(0,0,0,.07);
-  backdrop-filter: blur(1px);
+.sub-link{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.78rem 1.3rem;
+  color:rgba(255,255,255,.62);text-decoration:none;
+  font-size:.84rem;font-weight:500;
+  border-top:1px solid rgba(255,255,255,.05);
+  transition:all .18s;position:relative;
 }
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-  padding: 1rem 1.2rem;
-  cursor: pointer;
-  user-select: none;
-  transition: background .2s;
-}
-.section-header:hover { filter: brightness(1.03); }
+.sub-link:first-child{border-top:none;}
+.sub-link:hover{background:rgba(212,168,67,.07);color:var(--cream);padding-left:1.7rem;}
+.sub-link .icon{font-size:.9rem;opacity:.7;flex-shrink:0;}
+.sub-link .lbl{flex:1;line-height:1.3;}
+.sub-link .arrow{opacity:0;font-size:.72rem;transition:all .2s;color:var(--gold);}
+.sub-link:hover .arrow{opacity:1;}
+.sub-link.soon{color:rgba(255,255,255,.22);cursor:default;pointer-events:none;}
 
-.section-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  flex-shrink: 0;
+.badge{
+  font-size:.56rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  background:rgba(255,255,255,.06);border-radius:20px;
+  padding:.15rem .55rem;color:rgba(255,255,255,.22);
 }
-.section-info { flex: 1; }
-.section-info h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.05rem;
-  font-weight: 700;
-  line-height: 1.2;
+.tag{
+  font-size:.58rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  border-radius:20px;padding:.15rem .55rem;flex-shrink:0;
 }
-.section-info p { font-size: .76rem; color: var(--muted); margin-top: .15rem; }
-.section-arrow { font-size: 1rem; color: var(--muted); transition: transform .3s; }
-.section.open .section-arrow { transform: rotate(180deg); }
+.tag-v{background:rgba(74,158,85,.18);color:#6ec97a;}
+.tag-s{background:rgba(212,168,67,.15);color:var(--gold);}
+.tag-g{background:rgba(96,165,250,.15);color:#93c5fd;}
 
-.section-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height .4s ease, padding .3s;
-  padding: 0 1.2rem;
-}
-.section.open .section-body {
-  max-height: 2200px;
-  padding: .5rem 1.2rem 1.2rem;
-}
-
-.ex-list { display: flex; flex-direction: column; gap: .5rem; }
-.ex-link {
-  display: flex;
-  align-items: center;
-  gap: .7rem;
-  text-decoration: none;
-  padding: .72rem .9rem;
-  border-radius: 12px;
-  border: 1.5px solid rgba(0,0,0,.06);
-  background: rgba(255,255,255,.84);
-  transition: all .2s;
-  color: var(--text);
-}
-.ex-link:hover {
-  transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(0,0,0,.09);
-  background: #fff;
-}
-.ex-emoji { font-size: 1.3rem; flex-shrink: 0; }
-.ex-text h3 { font-size: .9rem; font-weight: 700; }
-.ex-text p { font-size: .74rem; color: var(--muted); margin-top: .1rem; }
-.ex-arrow { margin-left: auto; color: #b0b0b0; font-size: .82rem; }
-
-.section.grammar .section-header { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-.section.grammar .section-icon { background: #dbeafe; color: #1d4ed8; }
-.section.grammar .section-info h2 { color: #1e40af; }
-
-.section.vocab .section-header { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
-.section.vocab .section-icon { background: #dcfce7; color: var(--sage); }
-.section.vocab .section-info h2 { color: #166534; }
-
-.section.mediation .section-header { background: linear-gradient(135deg, #fdf4ff, #f5d0fe); }
-.section.mediation .section-icon { background: #f5d0fe; color: #86198f; }
-.section.mediation .section-info h2 { color: #6b21a8; }
-
-.photo-banner {
-  margin: 1.6rem 0;
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-  height: 180px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.13);
-  border: 1px solid rgba(255,255,255,.5);
-}
-.photo-banner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.photo-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  padding: .9rem 1rem;
-  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.55));
-  color: #fff;
-  font-family: 'Playfair Display', serif;
-  font-size: .95rem;
-  font-weight: 700;
-  letter-spacing: .2px;
-}
-
-.footer {
-  text-align: center;
-  padding: 1.8rem 1rem;
-  font-size: .75rem;
-  color: #555;
-}
-
-.section { opacity: 0; transform: translateY(20px); animation: reveal .52s forwards; }
-.section:nth-child(1) { animation-delay: .08s; }
-.section:nth-child(2) { animation-delay: .16s; }
-.section:nth-child(3) { animation-delay: .24s; }
-@keyframes reveal { to { opacity: 1; transform: translateY(0); } }
-
-@media (max-width: 650px) {
-  body { background-attachment: scroll; }
-  .hero { min-height: 56vh; padding: 5rem 1rem 6rem; }
-  h1 { font-size: 2rem; }
-  .hero-sub { font-size: .95rem; }
-  .sun { width: 86px; height: 86px; top: 10%; right: 6%; }
-  .trees { bottom: 86px; }
-  .main { margin-top: -1rem; padding: 0 1rem 3rem; }
-  .photo-banner { height: 150px; }
-}
+.foot{margin-top:3rem;font-size:.65rem;color:rgba(255,255,255,.18);letter-spacing:1px;text-transform:uppercase;text-align:center;}
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="sun"></div>
-  <div class="trees"></div>
+<!-- HERO -->
+<section class="hero">
+  <div class="stripe"></div>
+  <div class="hero-img"></div>
+  <div class="hero-overlay"></div>
   <div class="hero-content">
-    <div class="badge">Mittelschule am Sportpark Unterhaching · 9. Klasse</div>
-    <h1>Unit 3<br><em>South Africa</em></h1>
-    <p class="hero-sub">Interaktive Übungen mit KI-Unterstützung · J. Mössner</p>
+    <div class="school-tag">🏫 MS Sportpark Unterhaching</div>
+    <h1>Englisch<br><em>9. Klasse</em></h1>
+    <p class="subtitle">Interaktive Übungen &nbsp;·&nbsp; Unit 3 – South Africa</p>
   </div>
-</div>
+  <div class="scroll-hint">
+    <span>Weiter</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
 
+<!-- MAIN -->
 <div class="main">
 
-  <div class="section grammar open" onclick="toggleSection(this)">
-    <div class="section-header">
-      <div class="section-icon">📐</div>
-      <div class="section-info">
-        <h2>Grammar</h2>
-        <p>Present Perfect · Past Progressive · Irregular Verbs</p>
-      </div>
-      <span class="section-arrow">▼</span>
-    </div>
-    <div class="section-body">
-      <div class="ex-list">
-        <a href="unit3/present_perfect.html" class="ex-link">
-          <span class="ex-emoji">✅</span>
-          <div class="ex-text">
-            <h3>Present Perfect</h3>
-            <p>have/has + past participle · for & since · 3 Level</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/past_progressive.html" class="ex-link">
-          <span class="ex-emoji">⏳</span>
-          <div class="ex-text">
-            <h3>Past Progressive</h3>
-            <p>was/were + -ing · while & when · 3 Level</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/irregular_verbs.html" class="ex-link">
-          <span class="ex-emoji">🔁</span>
-          <div class="ex-text">
-            <h3>Irregular Verbs</h3>
-            <p>go–went–gone · Alle wichtigen unregelmäßigen Verben</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-      </div>
-    </div>
-  </div>
+  <p class="section-label">Lernbereiche</p>
 
-  <div class="section vocab" onclick="toggleSection(this)">
-    <div class="section-header">
-      <div class="section-icon">📚</div>
-      <div class="section-info">
-        <h2>Vocabulary, Speaking & Writing</h2>
-        <p>Wortschatz · Dialoge · Roleplay · E-Mail</p>
-      </div>
-      <span class="section-arrow">▼</span>
-    </div>
-    <div class="section-body">
-      <div class="ex-list">
-        <a href="unit3/vokabeltrainer3.html" class="ex-link">
-          <span class="ex-emoji">🧠</span>
-          <div class="ex-text">
-            <h3>Vokabeltrainer Unit 3</h3>
-            <p>Alle Vokabeln aus der Unit trainieren</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/role_model.html" class="ex-link">
-          <span class="ex-emoji">⭐</span>
-          <div class="ex-text">
-            <h3>Role Models</h3>
-            <p>Über Vorbilder sprechen und schreiben</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/accident_wordbank.html" class="ex-link">
-          <span class="ex-emoji">🚗</span>
-          <div class="ex-text">
-            <h3>Talking about an Accident</h3>
-            <p>Polizeibefragung · Zeugenbericht · 3 Level + KI-Korrektur</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/email.html" class="ex-link">
-          <span class="ex-emoji">✉️</span>
-          <div class="ex-text">
-            <h3>E-Mail Writing</h3>
-            <p>Eine passende E-Mail zu South Africa planen und schreiben</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-      </div>
-    </div>
-  </div>
+  <nav class="nav">
 
-  <div class="photo-banner">
-    <img src="https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1200&q=80" alt="South Africa landscape">
-    <div class="photo-overlay">Discover South Africa: coast, savannah and city life</div>
-  </div>
-
-  <div class="section mediation" onclick="toggleSection(this)">
-    <div class="section-header">
-      <div class="section-icon">🎭</div>
-      <div class="section-info">
-        <h2>Mediation</h2>
-        <p>Interaktive Chatbots · Übersetzen & Vermitteln</p>
+    <!-- UNIT 1 -->
+    <button class="unit-btn" onclick="toggle('u1')">
+      <div class="unit-left">
+        <span class="unit-num">1</span>
+        <div><div class="unit-title">Unit 1</div><div class="unit-sub">Coming soon</div></div>
       </div>
-      <span class="section-arrow">▼</span>
+      <span class="chevron" id="u1-ch">›</span>
+    </button>
+    <div class="sub-menu" id="u1">
+      <a class="sub-link soon"><span class="icon">📖</span><span class="lbl">Vokabeltrainer</span><span class="badge">Demnächst</span></a>
+      <a class="sub-link soon"><span class="icon">📝</span><span class="lbl">Grammatik</span><span class="badge">Demnächst</span></a>
     </div>
-    <div class="section-body">
-      <div class="ex-list">
-        <a href="unit3/mediation/mediation_park_improved.html" class="ex-link">
-          <span class="ex-emoji">🌿</span>
-          <div class="ex-text">
-            <h3>Visiting a National Park</h3>
-            <p>Onkel & Park Ranger · Kruger National Park</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/mediation/mediation_accident.html" class="ex-link">
-          <span class="ex-emoji">🚗</span>
-          <div class="ex-text">
-            <h3>Reporting an Accident</h3>
-            <p>Tante & Polizist · Unfallbericht als Zeuge</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/mediation/mediation_doctor.html" class="ex-link">
-          <span class="ex-emoji">🏥</span>
-          <div class="ex-text">
-            <h3>At the Doctor's</h3>
-            <p>Opa & Ärztin · Symptome beschreiben</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/mediation/mediation_market.html" class="ex-link">
-          <span class="ex-emoji">🎨</span>
-          <div class="ex-text">
-            <h3>At the Craft Market</h3>
-            <p>Oma & Verkäuferin · Souvenirs kaufen in Kapstadt</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/mediation/mediation_restaurant.html" class="ex-link">
-          <span class="ex-emoji">🍽️</span>
-          <div class="ex-text">
-            <h3>At the Restaurant</h3>
-            <p>Papa & Kellner · Essen bestellen in Durban</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
-        <a href="unit3/mediation/mediation_hostel.html" class="ex-link">
-          <span class="ex-emoji">🏨</span>
-          <div class="ex-text">
-            <h3>At the Hostel</h3>
-            <p>Mama & Rezeptionist · Einchecken in Johannesburg</p>
-          </div>
-          <span class="ex-arrow">→</span>
-        </a>
+
+    <!-- UNIT 2 -->
+    <button class="unit-btn" onclick="toggle('u2')">
+      <div class="unit-left">
+        <span class="unit-num">2</span>
+        <div><div class="unit-title">Unit 2</div><div class="unit-sub">Coming soon</div></div>
       </div>
+      <span class="chevron" id="u2-ch">›</span>
+    </button>
+    <div class="sub-menu" id="u2">
+      <a class="sub-link soon"><span class="icon">📖</span><span class="lbl">Vokabeltrainer</span><span class="badge">Demnächst</span></a>
+      <a class="sub-link soon"><span class="icon">📝</span><span class="lbl">Grammatik</span><span class="badge">Demnächst</span></a>
     </div>
-  </div>
 
-</div>
+    <!-- UNIT 3 -->
+    <button class="unit-btn" onclick="toggle('u3')">
+      <div class="unit-left">
+        <span class="unit-num">3</span>
+        <div><div class="unit-title">Unit 3</div><div class="unit-sub">South Africa &amp; Role Models</div></div>
+      </div>
+      <span class="chevron" id="u3-ch">›</span>
+    </button>
+    <div class="sub-menu" id="u3">
+      <a href="unit3/klett_vokabeltrainer_pwa.html" class="sub-link">
+        <span class="icon">📖</span><span class="lbl">Vokabeltrainer Unit 3</span>
+        <span class="tag tag-v">Vocab</span><span class="arrow">→</span>
+      </a>
+      <a href="unit3/irregular_verbs.html" class="sub-link">
+        <span class="icon">🔀</span><span class="lbl">Irregular Verbs</span>
+        <span class="tag tag-v">Vocab</span><span class="arrow">→</span>
+      </a>
+      <a href="unit3/accident_wordbank.html" class="sub-link">
+        <span class="icon">🚨</span><span class="lbl">Talking about an Accident</span>
+        <span class="tag tag-s">Speaking</span><span class="arrow">→</span>
+      </a>
+      <a href="unit3/role_model.html" class="sub-link">
+        <span class="icon">⭐</span><span class="lbl">Describing a Role Model</span>
+        <span class="tag tag-s">Speaking</span><span class="arrow">→</span>
+      </a>
+      <a href="unit3/past_progressive.html" class="sub-link">
+        <span class="icon">📝</span><span class="lbl">Past Progressive</span>
+        <span class="tag tag-g">Grammar</span><span class="arrow">→</span>
+      </a>
+      <a href="unit3/present_perfect.html" class="sub-link">
+        <span class="icon">📝</span><span class="lbl">Present Perfect – for &amp; since</span>
+        <span class="tag tag-g">Grammar</span><span class="arrow">→</span>
+      </a>
+      <a href="unit3/schulaufgabe_trainer_u3.html" class="sub-link">
+        <span class="icon">🎯</span><span class="lbl">Für die Probe üben</span>
+        <span class="tag tag-g">Grammar</span><span class="arrow">→</span>
+      </a>
+    </div>
 
-<div class="footer">
-  Englisch 9M · Mittelschule am Sportpark · Johannes Mößner · 2025/26<br>
-  Mit KI-Unterstützung für individuelles Feedback
+    <!-- UNIT 4 -->
+    <button class="unit-btn" onclick="toggle('u4')">
+      <div class="unit-left">
+        <span class="unit-num">4</span>
+        <div><div class="unit-title">Unit 4</div><div class="unit-sub">Coming soon</div></div>
+      </div>
+      <span class="chevron" id="u4-ch">›</span>
+    </button>
+    <div class="sub-menu" id="u4">
+      <a class="sub-link soon"><span class="icon">📖</span><span class="lbl">Vokabeltrainer</span><span class="badge">Demnächst</span></a>
+      <a class="sub-link soon"><span class="icon">📝</span><span class="lbl">Grammatik</span><span class="badge">Demnächst</span></a>
+    </div>
+
+  </nav>
+
+  <p class="foot">Mittelschule am Sportpark Unterhaching &nbsp;·&nbsp; 9. Klasse Englisch</p>
 </div>
 
 <script>
-function toggleSection(el) {
-  if (event.target.closest('.ex-link')) return;
-  el.classList.toggle('open');
+function toggle(id){
+  const menu=document.getElementById(id);
+  const btn=menu.previousElementSibling;
+  const isOpen=menu.classList.contains('open');
+  document.querySelectorAll('.sub-menu').forEach(m=>m.classList.remove('open'));
+  document.querySelectorAll('.unit-btn').forEach(b=>b.classList.remove('open'));
+  if(!isOpen){menu.classList.add('open');btn.classList.add('open');}
 }
 </script>
 </body>
