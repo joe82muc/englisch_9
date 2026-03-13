@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1a1a2e">
+<meta name="theme-color" content="#0d2f4d">
 <title>Englisch 9 – Unit 3 · South Africa</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -16,115 +16,154 @@
   --sage: #4a7c59;
   --sky: #5b8fb9;
   --text: #2d2d2d;
-  --muted: #7a7a7a;
-  --card: #ffffff;
+  --muted: #6b6b6b;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Source Sans 3', sans-serif; background: var(--sand); color: var(--text); min-height: 100vh; }
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.1), rgba(245,230,200,.95) 30%),
+    url('https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1800&q=80') center top / cover fixed;
+}
 
-/* ── HERO ── */
 .hero {
   position: relative;
-  min-height: 55vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
-  display: flex; flex-direction: column; justify-content: flex-end;
-  padding: 2rem 1.5rem 3rem;
+  min-height: 64vh;
+  background:
+    linear-gradient(140deg, rgba(8,18,38,.88) 0%, rgba(10,39,71,.82) 55%, rgba(16,71,108,.76) 100%),
+    url('https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1900&q=80') center center / cover no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 5.5rem 1.5rem 7rem;
   overflow: hidden;
 }
 .hero::before {
   content: '';
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(ellipse at 80% 20%, rgba(212,168,67,.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 20% 80%, rgba(226,114,91,.1) 0%, transparent 50%);
+    radial-gradient(ellipse at 82% 20%, rgba(255,200,102,.24) 0%, transparent 44%),
+    radial-gradient(ellipse at 12% 78%, rgba(226,114,91,.16) 0%, transparent 46%);
 }
 .hero::after {
   content: '';
-  position: absolute; bottom: -2px; left: 0; right: 0; height: 60px;
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 92px;
   background: var(--sand);
-  clip-path: ellipse(55% 100% at 50% 100%);
+  clip-path: ellipse(58% 100% at 50% 100%);
 }
-.hero-content { position: relative; z-index: 2; max-width: 800px; margin: 0 auto; width: 100%; }
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
 
-/* Sun decoration */
 .sun {
-  position: absolute; top: 12%; right: 8%;
-  width: 120px; height: 120px;
-  background: radial-gradient(circle, var(--gold), #e2725b);
+  position: absolute;
+  top: 12%;
+  right: 8%;
+  width: 130px;
+  height: 130px;
+  background: radial-gradient(circle, #ffd882, #e2725b 72%);
   border-radius: 50%;
-  opacity: .2;
+  opacity: .28;
   filter: blur(2px);
   animation: pulse 4s ease-in-out infinite;
 }
-@keyframes pulse { 0%,100%{transform:scale(1);opacity:.2} 50%{transform:scale(1.1);opacity:.3} }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:.24} 50%{transform:scale(1.08);opacity:.34} }
 
-/* Silhouette trees */
 .trees {
-  position: absolute; bottom: 58px; left: 0; right: 0;
+  position: absolute;
+  bottom: 88px;
+  left: 0;
+  right: 0;
   height: 80px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 100'%3E%3Cpath d='M0,100 L0,60 Q50,20 100,55 Q120,10 140,50 Q160,25 180,55 L200,70 Q220,30 240,60 Q280,15 320,55 Q340,5 360,45 Q380,20 400,50 L420,65 Q460,25 500,50 Q520,10 540,45 Q570,30 600,55 Q630,8 660,40 Q690,20 720,50 L750,60 Q780,25 810,55 Q840,12 870,45 Q900,28 930,55 Q960,15 990,50 L1020,60 Q1050,30 1080,55 Q1110,18 1140,48 Q1170,35 1200,55 L1200,100Z' fill='%231a1a2e'/%3E%3C/svg%3E") center bottom / 1200px 100px repeat-x;
-  opacity: .6;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 100'%3E%3Cpath d='M0,100 L0,60 Q50,20 100,55 Q120,10 140,50 Q160,25 180,55 L200,70 Q220,30 240,60 Q280,15 320,55 Q340,5 360,45 Q380,20 400,50 L420,65 Q460,25 500,50 Q520,10 540,45 Q570,30 600,55 Q630,8 660,40 Q690,20 720,50 L750,60 Q780,25 810,55 Q840,12 870,45 Q900,28 930,55 Q960,15 990,50 L1020,60 Q1050,30 1080,55 Q1110,18 1140,48 Q1170,35 1200,55 L1200,100Z' fill='%230f1935'/%3E%3C/svg%3E") center bottom / 1200px 100px repeat-x;
+  opacity: .62;
 }
 
 .badge {
   display: inline-block;
-  background: rgba(212,168,67,.2);
-  border: 1px solid rgba(212,168,67,.3);
-  color: var(--gold);
-  font-size: .65rem; font-weight: 700;
-  letter-spacing: 2.5px; text-transform: uppercase;
-  padding: .35rem .9rem; border-radius: 50px;
-  margin-bottom: .8rem;
+  background: rgba(212,168,67,.22);
+  border: 1px solid rgba(212,168,67,.35);
+  color: #f2cd76;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: .38rem .95rem;
+  border-radius: 50px;
+  margin-bottom: 1rem;
 }
 h1 {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(2rem, 7vw, 3.2rem);
-  font-weight: 900; color: #fff;
-  line-height: 1.05; margin-bottom: .4rem;
+  font-size: clamp(2.2rem, 7vw, 3.4rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.05;
+  margin-bottom: .55rem;
 }
 h1 em { font-style: italic; color: var(--gold); }
-.hero-sub { font-size: .95rem; color: rgba(255,255,255,.5); line-height: 1.5; max-width: 500px; }
+.hero-sub {
+  font-size: 1rem;
+  color: rgba(255,255,255,.88);
+  line-height: 1.5;
+  max-width: 580px;
+}
 
-/* ── MAIN ── */
-.main { max-width: 800px; margin: 0 auto; padding: 1rem 1.2rem 4rem; }
+.main {
+  max-width: 840px;
+  margin: -1.1rem auto 0;
+  padding: 0 1.2rem 4rem;
+  position: relative;
+  z-index: 3;
+}
 
-/* ── SECTION CARDS ── */
 .section {
   margin-bottom: 1rem;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 16px rgba(0,0,0,.06);
-  border: 1.5px solid rgba(0,0,0,.06);
+  box-shadow: 0 5px 20px rgba(0,0,0,.08);
+  border: 1.5px solid rgba(0,0,0,.07);
+  backdrop-filter: blur(1px);
 }
 .section-header {
-  display: flex; align-items: center; gap: .8rem;
+  display: flex;
+  align-items: center;
+  gap: .8rem;
   padding: 1rem 1.2rem;
   cursor: pointer;
   user-select: none;
   transition: background .2s;
-  position: relative;
 }
 .section-header:hover { filter: brightness(1.03); }
 
 .section-icon {
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.5rem;
   flex-shrink: 0;
 }
 .section-info { flex: 1; }
 .section-info h2 {
   font-family: 'Playfair Display', serif;
-  font-size: 1.05rem; font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 700;
   line-height: 1.2;
 }
-.section-info p { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
-.section-arrow {
-  font-size: 1rem; color: var(--muted);
-  transition: transform .3s;
-  flex-shrink: 0;
-}
+.section-info p { font-size: .76rem; color: var(--muted); margin-top: .15rem; }
+.section-arrow { font-size: 1rem; color: var(--muted); transition: transform .3s; }
 .section.open .section-arrow { transform: rotate(180deg); }
 
 .section-body {
@@ -134,108 +173,112 @@ h1 em { font-style: italic; color: var(--gold); }
   padding: 0 1.2rem;
 }
 .section.open .section-body {
-  max-height: 2000px;
+  max-height: 2200px;
   padding: .5rem 1.2rem 1.2rem;
 }
 
-/* ── EXERCISE LINKS ── */
 .ex-list { display: flex; flex-direction: column; gap: .5rem; }
 .ex-link {
-  display: flex; align-items: center; gap: .7rem;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
   text-decoration: none;
-  padding: .7rem .9rem;
+  padding: .72rem .9rem;
   border-radius: 12px;
   border: 1.5px solid rgba(0,0,0,.06);
-  background: rgba(255,255,255,.7);
+  background: rgba(255,255,255,.84);
   transition: all .2s;
   color: var(--text);
 }
-.ex-link:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,.08); background: #fff; }
+.ex-link:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.09);
+  background: #fff;
+}
 .ex-emoji { font-size: 1.3rem; flex-shrink: 0; }
-.ex-text h3 { font-size: .88rem; font-weight: 700; }
-.ex-text p { font-size: .72rem; color: var(--muted); margin-top: .1rem; }
-.ex-arrow { margin-left: auto; color: #ccc; font-size: .8rem; }
+.ex-text h3 { font-size: .9rem; font-weight: 700; }
+.ex-text p { font-size: .74rem; color: var(--muted); margin-top: .1rem; }
+.ex-arrow { margin-left: auto; color: #b0b0b0; font-size: .82rem; }
 
-/* ── SECTION THEMES ── */
 .section.grammar .section-header { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-.section.grammar .section-icon { background: #dbeafe; color: var(--sky); }
+.section.grammar .section-icon { background: #dbeafe; color: #1d4ed8; }
 .section.grammar .section-info h2 { color: #1e40af; }
 
 .section.vocab .section-header { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
 .section.vocab .section-icon { background: #dcfce7; color: var(--sage); }
 .section.vocab .section-info h2 { color: #166534; }
 
-.section.speaking .section-header { background: linear-gradient(135deg, #fff7ed, #fed7aa); }
-.section.speaking .section-icon { background: #fed7aa; color: var(--warm); }
-.section.speaking .section-info h2 { color: #9a3412; }
-
 .section.mediation .section-header { background: linear-gradient(135deg, #fdf4ff, #f5d0fe); }
 .section.mediation .section-icon { background: #f5d0fe; color: #86198f; }
 .section.mediation .section-info h2 { color: #6b21a8; }
 
-/* ── PHOTO BANNER ── */
 .photo-banner {
-  margin: 1.5rem 0;
+  margin: 1.6rem 0;
   border-radius: 16px;
   overflow: hidden;
   position: relative;
-  height: 140px;
-  background: linear-gradient(135deg, var(--warm), var(--gold));
+  height: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.13);
+  border: 1px solid rgba(255,255,255,.5);
 }
 .photo-banner img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  opacity: .85;
 }
 .photo-overlay {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: .7rem 1rem;
-  background: linear-gradient(transparent, rgba(0,0,0,.6));
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: .9rem 1rem;
+  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.55));
   color: #fff;
   font-family: 'Playfair Display', serif;
-  font-size: .85rem; font-weight: 700;
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .2px;
 }
 
-/* ── FOOTER ── */
 .footer {
   text-align: center;
-  padding: 1.5rem;
-  font-size: .72rem;
-  color: var(--muted);
+  padding: 1.8rem 1rem;
+  font-size: .75rem;
+  color: #555;
 }
 
-/* ── STAGGER ANIMATION ── */
-.section { opacity: 0; transform: translateY(20px); animation: reveal .5s forwards; }
-.section:nth-child(1) { animation-delay: .1s; }
-.section:nth-child(2) { animation-delay: .2s; }
-.section:nth-child(3) { animation-delay: .3s; }
-.section:nth-child(4) { animation-delay: .4s; }
+.section { opacity: 0; transform: translateY(20px); animation: reveal .52s forwards; }
+.section:nth-child(1) { animation-delay: .08s; }
+.section:nth-child(2) { animation-delay: .16s; }
+.section:nth-child(3) { animation-delay: .24s; }
 @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
 
-@media(max-width:500px) {
-  .hero { min-height: 45vh; padding: 1.5rem 1rem 2.5rem; }
-  h1 { font-size: 1.8rem; }
-  .sun { width: 80px; height: 80px; top: 10%; right: 5%; }
+@media (max-width: 650px) {
+  body { background-attachment: scroll; }
+  .hero { min-height: 56vh; padding: 5rem 1rem 6rem; }
+  h1 { font-size: 2rem; }
+  .hero-sub { font-size: .95rem; }
+  .sun { width: 86px; height: 86px; top: 10%; right: 6%; }
+  .trees { bottom: 86px; }
+  .main { margin-top: -1rem; padding: 0 1rem 3rem; }
+  .photo-banner { height: 150px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ HERO ═══ -->
 <div class="hero">
   <div class="sun"></div>
   <div class="trees"></div>
   <div class="hero-content">
     <div class="badge">Mittelschule am Sportpark Unterhaching · 9. Klasse</div>
     <h1>Unit 3<br><em>South Africa</em></h1>
-    <p class="hero-sub">Interaktive Übungen mit KI-Unterstützung / J.Mössner</p>
+    <p class="hero-sub">Interaktive Übungen mit KI-Unterstützung · J. Mössner</p>
   </div>
 </div>
 
-<!-- ═══ MAIN ═══ -->
 <div class="main">
 
-  <!-- GRAMMAR -->
   <div class="section grammar open" onclick="toggleSection(this)">
     <div class="section-header">
       <div class="section-icon">📐</div>
@@ -264,7 +307,7 @@ h1 em { font-style: italic; color: var(--gold); }
           <span class="ex-arrow">→</span>
         </a>
         <a href="unit3/irregular_verbs.html" class="ex-link">
-          <span class="ex-emoji">🔀</span>
+          <span class="ex-emoji">🔁</span>
           <div class="ex-text">
             <h3>Irregular Verbs</h3>
             <p>go–went–gone · Alle wichtigen unregelmäßigen Verben</p>
@@ -275,13 +318,12 @@ h1 em { font-style: italic; color: var(--gold); }
     </div>
   </div>
 
-  <!-- VOCAB & SPEAKING -->
   <div class="section vocab" onclick="toggleSection(this)">
     <div class="section-header">
       <div class="section-icon">📚</div>
       <div class="section-info">
-        <h2>Vocabulary & Speaking</h2>
-        <p>Wortschatz · Dialoge · Roleplay</p>
+        <h2>Vocabulary, Speaking & Writing</h2>
+        <p>Wortschatz · Dialoge · Roleplay · E-Mail</p>
       </div>
       <span class="section-arrow">▼</span>
     </div>
@@ -311,17 +353,23 @@ h1 em { font-style: italic; color: var(--gold); }
           </div>
           <span class="ex-arrow">→</span>
         </a>
+        <a href="unit3/email.html" class="ex-link">
+          <span class="ex-emoji">✉️</span>
+          <div class="ex-text">
+            <h3>E-Mail Writing</h3>
+            <p>Eine passende E-Mail zu South Africa planen und schreiben</p>
+          </div>
+          <span class="ex-arrow">→</span>
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- PHOTO -->
   <div class="photo-banner">
-    <img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&h=300&fit=crop&crop=center" alt="South Africa Landscape" onerror="this.style.display='none'">
-    <div class="photo-overlay">🌍 Discover South Africa</div>
+    <img src="https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1200&q=80" alt="South Africa landscape">
+    <div class="photo-overlay">Discover South Africa: coast, savannah and city life</div>
   </div>
 
-  <!-- MEDIATION -->
   <div class="section mediation" onclick="toggleSection(this)">
     <div class="section-header">
       <div class="section-icon">🎭</div>
@@ -394,7 +442,6 @@ h1 em { font-style: italic; color: var(--gold); }
 
 <script>
 function toggleSection(el) {
-  // Don't toggle if clicking a link inside
   if (event.target.closest('.ex-link')) return;
   el.classList.toggle('open');
 }
