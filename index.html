@@ -1,280 +1,392 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0c1c0e">
-<title>Englisch 9. Klasse – MS Sportpark Unterhaching</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#0c1c0e;
-  --gold:#d4a843;
-  --goldf:#f0c060;
-  --green:#2d6a35;
-  --greenl:#4a9e55;
-  --cream:#f5ede0;
-  --text:#e8ddd0;
-  --muted:rgba(232,221,208,.5);
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Outfit',sans-serif;background:var(--bg);min-height:100vh;overflow-x:hidden;}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unit 3 | English 9 | Suedafrika</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f2e8;
+      --bg-soft: #fffaf3;
+      --ink: #1f2d28;
+      --accent: #1f7a4f;
+      --accent-2: #d88a27;
+      --card: #fff;
+      --line: #d7ccb8;
+      --ok: #176d42;
+      --warn: #8e4e10;
+      --bad: #8a2d2d;
+    }
 
-/* ── HERO ── */
-.hero{
-  position:relative;height:100vh;min-height:580px;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;overflow:hidden;
-}
-.hero-img{
-  position:absolute;inset:0;
-  background-image:url('https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=1400&q=80');
-  background-size:cover;background-position:center 40%;
-  transform:scale(1.08);
-  animation:slowzoom 20s ease-in-out infinite alternate;
-}
-@keyframes slowzoom{from{transform:scale(1.08) translateY(0)}to{transform:scale(1.15) translateY(-1.5%)}}
-.hero-overlay{
-  position:absolute;inset:0;
-  background:linear-gradient(170deg,rgba(12,28,14,.15) 0%,rgba(12,28,14,.55) 40%,rgba(12,28,14,.9) 75%,rgba(12,28,14,1) 100%);
-}
-.stripe{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--green),var(--gold),var(--green));}
+    * { box-sizing: border-box; }
 
-.hero-content{
-  position:relative;z-index:2;text-align:center;padding:0 1.5rem;
-  animation:fadeup .9s ease both;
-}
-@keyframes fadeup{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+    body {
+      margin: 0;
+      font-family: "Outfit", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, #ffe4b7 0, transparent 22%),
+        radial-gradient(circle at 82% 20%, #cdeccf 0, transparent 26%),
+        linear-gradient(180deg, #f7f2e8 0%, #f2e9d8 100%);
+      min-height: 100vh;
+    }
 
-.school-tag{
-  display:inline-flex;align-items:center;gap:.5rem;
-  background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.3);
-  border-radius:50px;padding:.35rem 1rem;
-  font-size:.7rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;
-  color:var(--gold);margin-bottom:1.8rem;
-  animation:fadeup .9s .15s ease both;
-}
-h1{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(2.8rem,10vw,5.5rem);font-weight:900;
-  color:var(--cream);line-height:1.0;margin-bottom:.35rem;
-  animation:fadeup .9s .25s ease both;
-}
-h1 em{font-style:italic;color:var(--gold);display:block;}
-.subtitle{
-  font-size:clamp(.82rem,2.5vw,.95rem);color:var(--muted);
-  font-weight:300;letter-spacing:.06em;margin-bottom:0;
-  animation:fadeup .9s .35s ease both;
-}
-.scroll-hint{
-  position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:.4rem;
-  animation:bouncedown 2.2s ease infinite;z-index:2;
-}
-.scroll-hint span{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
-.scroll-arrow{width:1px;height:30px;background:linear-gradient(to bottom,var(--gold),transparent);}
-@keyframes bouncedown{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(7px)}}
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 1.2rem 1rem 3rem;
+    }
 
-/* ── MAIN ── */
-.main{background:var(--bg);padding:2.5rem 1.5rem 5rem;display:flex;flex-direction:column;align-items:center;}
+    .hero {
+      background: linear-gradient(120deg, rgba(31,122,79,.96), rgba(27,96,67,.9));
+      color: #fff;
+      border-radius: 22px;
+      padding: 1.5rem 1.2rem;
+      box-shadow: 0 16px 30px rgba(0, 0, 0, .16);
+      position: relative;
+      overflow: hidden;
+    }
 
-/* Label */
-.section-label{
-  font-size:.63rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;
-  color:var(--gold);margin-bottom:1.2rem;text-align:center;
-}
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      filter: blur(2px);
+    }
 
-/* NAV */
-.nav{display:flex;flex-direction:column;gap:.5rem;width:100%;max-width:420px;}
+    .hero::before { top: -110px; right: -60px; }
+    .hero::after { bottom: -120px; left: -70px; }
 
-.unit-btn{
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
-  border-radius:14px;padding:.9rem 1.2rem;
-  color:var(--text);font-family:'Outfit',sans-serif;
-  font-size:.95rem;font-weight:600;cursor:pointer;
-  transition:all .2s;width:100%;text-align:left;-webkit-appearance:none;
-  position:relative;overflow:hidden;
-}
-.unit-btn::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:var(--greenl);opacity:0;transition:opacity .2s;
-}
-.unit-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.17);}
-.unit-btn:hover::before,.unit-btn.open::before{opacity:1;}
-.unit-btn.open{border-radius:14px 14px 0 0;border-bottom-color:transparent;background:rgba(255,255,255,.07);}
+    .hero h1 {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      line-height: 1.2;
+      position: relative;
+      z-index: 2;
+    }
 
-.unit-left{display:flex;align-items:center;gap:.85rem;}
-.unit-num{
-  font-family:'Playfair Display',serif;
-  font-size:1.45rem;font-weight:700;font-style:italic;
-  color:var(--gold);opacity:.75;min-width:1.8rem;
-}
-.unit-title{font-size:.95rem;font-weight:600;color:var(--text);}
-.unit-sub{font-size:.75rem;color:var(--muted);font-weight:400;margin-top:.05rem;}
+    .hero p {
+      margin: .6rem 0 0;
+      font-size: 1rem;
+      opacity: .95;
+      position: relative;
+      z-index: 2;
+    }
 
-.chevron{font-size:.85rem;opacity:.35;transition:transform .28s;flex-shrink:0;}
-.unit-btn.open .chevron{transform:rotate(90deg);opacity:.85;}
+    .credits {
+      display: inline-block;
+      margin-top: .9rem;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.28);
+      padding: .45rem .75rem;
+      border-radius: 999px;
+      font-size: .86rem;
+      position: relative;
+      z-index: 2;
+    }
 
-/* Sub-menu */
-.sub-menu{
-  display:none;flex-direction:column;
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.1);border-top:none;
-  border-radius:0 0 14px 14px;overflow:hidden;margin-top:-1px;
-}
-.sub-menu.open{display:flex;}
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
 
-.sub-link{
-  display:flex;align-items:center;gap:.75rem;
-  padding:.78rem 1.3rem;
-  color:rgba(255,255,255,.62);text-decoration:none;
-  font-size:.84rem;font-weight:500;
-  border-top:1px solid rgba(255,255,255,.05);
-  transition:all .18s;position:relative;
-}
-.sub-link:first-child{border-top:none;}
-.sub-link:hover{background:rgba(212,168,67,.07);color:var(--cream);padding-left:1.7rem;}
-.sub-link .icon{font-size:.9rem;opacity:.7;flex-shrink:0;}
-.sub-link .lbl{flex:1;line-height:1.3;}
-.sub-link .arrow{opacity:0;font-size:.72rem;transition:all .2s;color:var(--gold);}
-.sub-link:hover .arrow{opacity:1;}
-.sub-link.soon{color:rgba(255,255,255,.22);cursor:default;pointer-events:none;}
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1rem;
+      box-shadow: 0 10px 24px rgba(41, 35, 24, .08);
+    }
 
-.badge{
-  font-size:.56rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-  background:rgba(255,255,255,.06);border-radius:20px;
-  padding:.15rem .55rem;color:rgba(255,255,255,.22);
-}
-.tag{
-  font-size:.58rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-  border-radius:20px;padding:.15rem .55rem;flex-shrink:0;
-}
-.tag-v{background:rgba(74,158,85,.18);color:#6ec97a;}
-.tag-s{background:rgba(212,168,67,.15);color:var(--gold);}
-.tag-g{background:rgba(96,165,250,.15);color:#93c5fd;}
+    h2 {
+      margin-top: .1rem;
+      margin-bottom: .5rem;
+      font-family: "Fraunces", serif;
+      color: #17372b;
+      font-size: 1.35rem;
+    }
 
-.foot{margin-top:3rem;font-size:.65rem;color:rgba(255,255,255,.18);letter-spacing:1px;text-transform:uppercase;text-align:center;}
-</style>
+    .hint {
+      color: #3f4f47;
+      font-size: .94rem;
+      margin: .2rem 0 .9rem;
+    }
+
+    .tree {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .tree-branch {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--bg-soft);
+      margin-bottom: .7rem;
+      overflow: hidden;
+      transition: transform .25s ease;
+    }
+
+    .tree-branch:hover { transform: translateY(-1px); }
+
+    .tree-button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: .72rem .8rem;
+      display: flex;
+      gap: .7rem;
+      align-items: center;
+      justify-content: space-between;
+      color: #1f2d28;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .tree-left {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+    }
+
+    .folder {
+      display: inline-grid;
+      place-items: center;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: .35rem;
+      background: #ffe2b6;
+      color: #68410f;
+      font-size: .9rem;
+    }
+
+    .caret {
+      font-size: .95rem;
+      transition: transform .25s ease;
+      color: #426451;
+    }
+
+    .tree-branch.open .caret { transform: rotate(180deg); }
+
+    .children {
+      list-style: none;
+      margin: 0;
+      padding: 0 .7rem .7rem 2rem;
+      display: none;
+      border-top: 1px dashed #ccbfa8;
+      background: #fffdf7;
+    }
+
+    .tree-branch.open .children { display: block; }
+
+    .children li {
+      margin-top: .5rem;
+      position: relative;
+      padding-left: 1rem;
+    }
+
+    .children li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .55rem;
+      width: .6rem;
+      height: 1px;
+      background: #b7aa94;
+    }
+
+    .children a {
+      color: #1f5340;
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid transparent;
+    }
+
+    .children a:hover { border-bottom-color: currentColor; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .65rem;
+    }
+
+    .pic {
+      margin: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #d9cab0;
+      background: #f0e6d4;
+    }
+
+    .pic img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      transition: transform .55s ease;
+    }
+
+    .pic:hover img { transform: scale(1.06); }
+
+    .pic figcaption {
+      padding: .45rem .55rem;
+      font-size: .82rem;
+      color: #31433a;
+      background: #fffaf0;
+    }
+
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    @media (min-width: 920px) {
+      .grid {
+        grid-template-columns: 1.15fr 1fr;
+      }
+      .gallery {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .pic img { height: 180px; }
+    }
+
+    @media (max-width: 540px) {
+      .gallery { grid-template-columns: 1fr; }
+      .pic img { height: 200px; }
+      .hero { border-radius: 16px; }
+      .panel { border-radius: 14px; }
+    }
+  </style>
 </head>
 <body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>English Unit 3: South Africa Explorer</h1>
+      <p>Interaktive Aufgaben, Mediation, Grammar und Vocabulary in einer klaren Baum-Struktur.</p>
+      <span class="credits">Mittelschule am Sportpark Unterhaching | von Johannes Moessner | 9. Klasse</span>
+    </section>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="stripe"></div>
-  <div class="hero-img"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <div class="school-tag">🏫 MS Sportpark Unterhaching</div>
-    <h1>Englisch<br><em>9. Klasse</em></h1>
-    <p class="subtitle">Interaktive Übungen &nbsp;·&nbsp; Unit 3 – South Africa</p>
-  </div>
-  <div class="scroll-hint">
-    <span>Weiter</span>
-    <div class="scroll-arrow"></div>
-  </div>
-</section>
+    <section class="grid">
+      <article class="panel">
+        <h2>Materialien (Baum-Menue)</h2>
+        <p class="hint">Die Ordner oeffnen und schliessen sich automatisch. Du kannst sie auch anklicken.</p>
+        <ul class="tree" id="treeMenu">
+          <li class="tree-branch open">
+            <button class="tree-button" type="button">
+              <span class="tree-left"><span class="folder">DIR</span>email</span>
+              <span class="caret">v</span>
+            </button>
+            <ul class="children">
+              <li><a href="./email/email.html">email.html</a></li>
+            </ul>
+          </li>
 
-<!-- MAIN -->
-<div class="main">
+          <li class="tree-branch">
+            <button class="tree-button" type="button">
+              <span class="tree-left"><span class="folder">DIR</span>mediation</span>
+              <span class="caret">v</span>
+            </button>
+            <ul class="children">
+              <li><a href="./mediation/mediation_accident.html">mediation_accident.html</a></li>
+              <li><a href="./mediation/mediation_doctor.html">mediation_doctor.html</a></li>
+              <li><a href="./mediation/mediation_hostel.html">mediation_hostel.html</a></li>
+              <li><a href="./mediation/mediation_market.html">mediation_market.html</a></li>
+              <li><a href="./mediation/mediation_park_improved.html">mediation_park_improved.html</a></li>
+              <li><a href="./mediation/mediation_restaurant.html">mediation_restaurant.html</a></li>
+            </ul>
+          </li>
 
-  <p class="section-label">Lernbereiche</p>
+          <li class="tree-branch">
+            <button class="tree-button" type="button">
+              <span class="tree-left"><span class="folder">DIR</span>tense</span>
+              <span class="caret">v</span>
+            </button>
+            <ul class="children">
+              <li><a href="./tense/irregular_verbs.html">irregular_verbs.html</a></li>
+              <li><a href="./tense/past_progressive.html">past_progressive.html</a></li>
+            </ul>
+          </li>
 
-  <nav class="nav">
+          <li class="tree-branch">
+            <button class="tree-button" type="button">
+              <span class="tree-left"><span class="folder">DIR</span>vokabulary</span>
+              <span class="caret">v</span>
+            </button>
+            <ul class="children">
+              <li><a href="./vokabulary/accident_wordbank.html">accident_wordbank.html</a></li>
+              <li><a href="./vokabulary/irregular_verbs.html">irregular_verbs.html</a></li>
+              <li><a href="./vokabulary/role_model.html">role_model.html</a></li>
+              <li><a href="./vokabulary/vokabeltrainer.html">vokabeltrainer.html</a></li>
+            </ul>
+          </li>
+        </ul>
+      </article>
 
-    <!-- UNIT 1 -->
-    <button class="unit-btn" onclick="toggle('u1')">
-      <div class="unit-left">
-        <span class="unit-num">1</span>
-        <div><div class="unit-title">Unit 1</div><div class="unit-sub">Coming soon</div></div>
-      </div>
-      <span class="chevron" id="u1-ch">›</span>
-    </button>
-    <div class="sub-menu" id="u1">
-      <a class="sub-link soon"><span class="icon">📖</span><span class="lbl">Vokabeltrainer</span><span class="badge">Demnächst</span></a>
-      <a class="sub-link soon"><span class="icon">📝</span><span class="lbl">Grammatik</span><span class="badge">Demnächst</span></a>
-    </div>
+      <article class="panel">
+        <h2>South Africa Bilder</h2>
+        <p class="hint">Bildquellen laden direkt online und funktionieren ohne Zusatzdateien im Projekt.</p>
+        <div class="gallery">
+          <figure class="pic">
+            <img src="https://source.unsplash.com/900x600/?cape-town,south-africa" alt="Kapstadt und Meer">
+            <figcaption>Kapstadt</figcaption>
+          </figure>
+          <figure class="pic">
+            <img src="https://source.unsplash.com/900x600/?table-mountain,south-africa" alt="Table Mountain in Suedafrika">
+            <figcaption>Table Mountain</figcaption>
+          </figure>
+          <figure class="pic">
+            <img src="https://source.unsplash.com/900x600/?kruger-national-park,south-africa" alt="Safari im Kruger National Park">
+            <figcaption>Kruger National Park</figcaption>
+          </figure>
+          <figure class="pic">
+            <img src="https://source.unsplash.com/900x600/?soweto,johannesburg" alt="Strassenszene in Soweto">
+            <figcaption>Soweto / Johannesburg</figcaption>
+          </figure>
+        </div>
+      </article>
+    </section>
 
-    <!-- UNIT 2 -->
-    <button class="unit-btn" onclick="toggle('u2')">
-      <div class="unit-left">
-        <span class="unit-num">2</span>
-        <div><div class="unit-title">Unit 2</div><div class="unit-sub">Coming soon</div></div>
-      </div>
-      <span class="chevron" id="u2-ch">›</span>
-    </button>
-    <div class="sub-menu" id="u2">
-      <a class="sub-link soon"><span class="icon">📖</span><span class="lbl">Vokabeltrainer</span><span class="badge">Demnächst</span></a>
-      <a class="sub-link soon"><span class="icon">📝</span><span class="lbl">Grammatik</span><span class="badge">Demnächst</span></a>
-    </div>
+  </main>
 
-    <!-- UNIT 3 -->
-    <button class="unit-btn" onclick="toggle('u3')">
-      <div class="unit-left">
-        <span class="unit-num">3</span>
-        <div><div class="unit-title">Unit 3</div><div class="unit-sub">South Africa &amp; Role Models</div></div>
-      </div>
-      <span class="chevron" id="u3-ch">›</span>
-    </button>
-    <div class="sub-menu" id="u3">
-      <a href="unit3/klett_vokabeltrainer_pwa.html" class="sub-link">
-        <span class="icon">📖</span><span class="lbl">Vokabeltrainer Unit 3</span>
-        <span class="tag tag-v">Vocab</span><span class="arrow">→</span>
-      </a>
-      <a href="unit3/irregular_verbs.html" class="sub-link">
-        <span class="icon">🔀</span><span class="lbl">Irregular Verbs</span>
-        <span class="tag tag-v">Vocab</span><span class="arrow">→</span>
-      </a>
-      <a href="unit3/accident_wordbank.html" class="sub-link">
-        <span class="icon">🚨</span><span class="lbl">Talking about an Accident</span>
-        <span class="tag tag-s">Speaking</span><span class="arrow">→</span>
-      </a>
-      <a href="unit3/role_model.html" class="sub-link">
-        <span class="icon">⭐</span><span class="lbl">Describing a Role Model</span>
-        <span class="tag tag-s">Speaking</span><span class="arrow">→</span>
-      </a>
-      <a href="unit3/past_progressive.html" class="sub-link">
-        <span class="icon">📝</span><span class="lbl">Past Progressive</span>
-        <span class="tag tag-g">Grammar</span><span class="arrow">→</span>
-      </a>
-      <a href="unit3/present_perfect.html" class="sub-link">
-        <span class="icon">📝</span><span class="lbl">Present Perfect – for &amp; since</span>
-        <span class="tag tag-g">Grammar</span><span class="arrow">→</span>
-      </a>
-      <a href="unit3/schulaufgabe_trainer_u3.html" class="sub-link">
-        <span class="icon">🎯</span><span class="lbl">Für die Probe üben</span>
-        <span class="tag tag-g">Grammar</span><span class="arrow">→</span>
-      </a>
-    </div>
+  <script>
+    const branches = Array.from(document.querySelectorAll(".tree-branch"));
+    let activeIndex = 0;
 
-    <!-- UNIT 4 -->
-    <button class="unit-btn" onclick="toggle('u4')">
-      <div class="unit-left">
-        <span class="unit-num">4</span>
-        <div><div class="unit-title">Unit 4</div><div class="unit-sub">Coming soon</div></div>
-      </div>
-      <span class="chevron" id="u4-ch">›</span>
-    </button>
-    <div class="sub-menu" id="u4">
-      <a class="sub-link soon"><span class="icon">📖</span><span class="lbl">Vokabeltrainer</span><span class="badge">Demnächst</span></a>
-      <a class="sub-link soon"><span class="icon">📝</span><span class="lbl">Grammatik</span><span class="badge">Demnächst</span></a>
-    </div>
+    function openBranch(index) {
+      branches.forEach((branch, i) => {
+        branch.classList.toggle("open", i === index);
+      });
+      activeIndex = index;
+    }
 
-  </nav>
+    branches.forEach((branch, index) => {
+      const button = branch.querySelector(".tree-button");
+      button.addEventListener("click", () => {
+        const isOpen = branch.classList.contains("open");
+        branches.forEach(b => b.classList.remove("open"));
+        if (!isOpen) {
+          branch.classList.add("open");
+          activeIndex = index;
+        }
+      });
+    });
 
-  <p class="foot">Mittelschule am Sportpark Unterhaching &nbsp;·&nbsp; 9. Klasse Englisch</p>
-</div>
+    // Auto-Open/Close: rotiert durch die Ordner alle 4 Sekunden.
+    setInterval(() => {
+      const next = (activeIndex + 1) % branches.length;
+      openBranch(next);
+    }, 4000);
 
-<script>
-function toggle(id){
-  const menu=document.getElementById(id);
-  const btn=menu.previousElementSibling;
-  const isOpen=menu.classList.contains('open');
-  document.querySelectorAll('.sub-menu').forEach(m=>m.classList.remove('open'));
-  document.querySelectorAll('.unit-btn').forEach(b=>b.classList.remove('open'));
-  if(!isOpen){menu.classList.add('open');btn.classList.add('open');}
-}
-</script>
+  </script>
 </body>
 </html>
