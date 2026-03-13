@@ -1,12 +1,12 @@
-/* ═══════════════════════════════════════════════════════════════
-   ENGLISCH 9 – Zentrale Script-Datei (script.js)
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ENGLISCH 9 â€“ Zentrale Script-Datei (script.js)
    Bedient: Present Perfect, Past Progressive, Accident Wordbank
-   Alle KI-Hilfe läuft über das Render-Backend.
-   ═══════════════════════════════════════════════════════════════ */
+   Alle KI-Hilfe lÃ¤uft Ã¼ber das Render-Backend.
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 var API_BASE = 'https://englisch-9.onrender.com';
 
-/* ── Page Detection ── */
+/* â”€â”€ Page Detection â”€â”€ */
 var PAGE = (function() {
   var p = window.location.pathname.toLowerCase();
   var t = (document.title || '').toLowerCase();
@@ -16,13 +16,13 @@ var PAGE = (function() {
   return 'unknown';
 })();
 
-/* ── State ── */
+/* â”€â”€ State â”€â”€ */
 var scores = { a:{r:0,w:0}, b:{r:0,w:0}, c:{r:0,w:0} };
 var answered = {};
 var mcLastAnswer = {};
 var serverOk = null;
 
-/* ── Helpers ── */
+/* â”€â”€ Helpers â”€â”€ */
 function $(id) { return document.getElementById(id); }
 
 function norm(s) {
@@ -30,10 +30,10 @@ function norm(s) {
 }
 var nrm = norm;
 
-/* ═══════════════════════════════════════
-   SCORE – supports all ID conventions
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   SCORE â€“ supports all ID conventions
    pp:  a-r / a-w    pg: a-right / a-wrong    aw: ar / aw
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function updScore(lvl) {
   var r = $(lvl+'-r') || $(lvl+'-right') || $(lvl+'r');
   var w = $(lvl+'-w') || $(lvl+'-wrong')  || $(lvl+'w');
@@ -42,9 +42,9 @@ function updScore(lvl) {
 }
 var updSc = updScore;
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SERVER STATUS (PP only)
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showStatus(ok, msg) {
   var el=$('server-status'), dot=$('status-dot'), txt=$('status-text');
   if (!el||!dot||!txt) return;
@@ -54,9 +54,9 @@ function showStatus(ok, msg) {
   setTimeout(function(){ el.classList.add('hide'); }, 5000);
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    INFO BOX TOGGLE
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function toggleInfo() {
   // AW
   var ib = $('ibody');
@@ -71,9 +71,9 @@ function toggleInfo() {
 
 function toggleTip(id) { var el=$(id); if(el) el.classList.toggle('show'); }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LEVEL SWITCH
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function setLevel(l, btn) {
   document.querySelectorAll('.ltab').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
@@ -82,9 +82,9 @@ function setLevel(l, btn) {
   if (sec) sec.classList.add('show');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   KI-HILFE – All via Backend
-   ═══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   KI-HILFE â€“ All via Backend
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function _endpoint() {
   if (PAGE === 'aw') return API_BASE + '/api/hint-accident';
   return API_BASE + '/api/hint';
@@ -94,11 +94,11 @@ async function fetchHint(exId, studentAnswer, correctAnswer, context, topic) {
   var btn   = $(exId + '-ai');
   var panel = $(exId + '-aipanel');
   if (!studentAnswer || studentAnswer.trim().length < 2) {
-    panel.innerHTML = '✏️ Schreib erst eine Antwort, dann kann ich dir helfen!';
+    panel.innerHTML = 'âœï¸ Schreib erst eine Antwort, dann kann ich dir helfen!';
     panel.classList.add('show'); return;
   }
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin">⏳</span> Lädt…';
+  btn.innerHTML = '<span class="spin">â³</span> LÃ¤dtâ€¦';
   panel.classList.remove('show');
   try {
     var res = await fetch(_endpoint(), {
@@ -107,15 +107,15 @@ async function fetchHint(exId, studentAnswer, correctAnswer, context, topic) {
     });
     if (!res.ok) throw new Error('err');
     var data = await res.json();
-    panel.innerHTML = '🤖 <strong>KI-Tipp:</strong> ' + (data.hint || 'Kein Tipp verfügbar.');
+    panel.innerHTML = 'ðŸ¤– <strong>KI-Tipp:</strong> ' + (data.hint || 'Kein Tipp verfÃ¼gbar.');
     panel.classList.add('show'); serverOk = true;
   } catch(e) {
-    panel.innerHTML = '💡 <strong>Tipp:</strong> ' + getLocalHint(correctAnswer, topic);
+    panel.innerHTML = 'ðŸ’¡ <strong>Tipp:</strong> ' + getLocalHint(correctAnswer, topic);
     panel.classList.add('show'); serverOk = false;
-    showStatus(false, '⚠️ Server schläft – lokaler Tipp.');
+    showStatus(false, 'âš ï¸ Server schlÃ¤ft â€“ lokaler Tipp.');
   }
   btn.disabled = false;
-  btn.innerHTML = '🤖 KI-Hilfe';
+  btn.innerHTML = 'ðŸ¤– KI-Hilfe';
 }
 
 /* Wrappers */
@@ -128,7 +128,7 @@ var getAIHintGap = getAIHint;
 function getAIHintTwoGap(id, correct, context, topic) {
   var v1 = ($(id+'g')||$(id+'-g')||{}).value||'';
   var v2 = ($(id+'g2')||{}).value||'';
-  fetchHint(id, v1+' … '+v2, correct, context, topic);
+  fetchHint(id, v1+' â€¦ '+v2, correct, context, topic);
 }
 
 function getAIHintMC(id, correct, context, topic) {
@@ -146,28 +146,28 @@ function getAIHintC(id, correct, context) {
   // Build detailed context for the AI
   var l = val.toLowerCase();
   var analysis = [];
-  if (val.length < 10) analysis.push('Schüler hat kaum etwas geschrieben, braucht Starthilfe.');
+  if (val.length < 10) analysis.push('SchÃ¼ler hat kaum etwas geschrieben, braucht Starthilfe.');
   if (val.length > 30) {
     // Check for missing elements
     if (!l.includes('name')) analysis.push('Name fehlt');
     if (!l.includes('date of birth') && !l.includes('born')) analysis.push('Geburtsdatum fehlt');
     if (!l.includes('arrived') && !l.includes('p.m')) analysis.push('Ankunftszeit fehlt');
-    if (!l.includes('first') && !l.includes('then') && !l.includes('after')) analysis.push('Reihenfolge-Wörter (First/Then/After that) fehlen');
-    if (val.length > 50) analysis.push('Schüler hat viel geschrieben – bitte Rechtschreibung und Grammatik prüfen!');
+    if (!l.includes('first') && !l.includes('then') && !l.includes('after')) analysis.push('Reihenfolge-WÃ¶rter (First/Then/After that) fehlen');
+    if (val.length > 50) analysis.push('SchÃ¼ler hat viel geschrieben â€“ bitte Rechtschreibung und Grammatik prÃ¼fen!');
   }
   var enrichedContext = context;
   if (analysis.length > 0) enrichedContext += '\n\nAnalyse der Eingabe: ' + analysis.join(', ');
   fetchHint(id, val, correct, enrichedContext, 'accident dialogue');
 }
 
-/* ── Korrektur – KI korrigiert Text direkt im Textfeld ── */
+/* â”€â”€ Korrektur â€“ KI korrigiert Text direkt im Textfeld â”€â”€ */
 async function spellCheck(id) {
   var inp = document.getElementById(id+'i');
   var panel = document.getElementById(id+'-aipanel');
   var val = inp ? inp.value.trim() : '';
 
   if (!val || val.length < 5) {
-    if (panel) { panel.innerHTML = '✏️ Schreib erst etwas, dann kann ich korrigieren!'; panel.classList.add('show'); }
+    if (panel) { panel.innerHTML = 'âœï¸ Schreib erst etwas, dann kann ich korrigieren!'; panel.classList.add('show'); }
     return;
   }
 
@@ -176,7 +176,7 @@ async function spellCheck(id) {
   var korrBtn = null;
   if (card) {
     card.querySelectorAll('.ai-btn').forEach(function(b) {
-      if (b.textContent.includes('Korrektur')) { korrBtn = b; b.disabled = true; b.innerHTML = '<span class="spin">⏳</span> Korrigiert…'; }
+      if (b.textContent.includes('Korrektur')) { korrBtn = b; b.disabled = true; b.innerHTML = '<span class="spin">â³</span> Korrigiertâ€¦'; }
     });
   }
   if (panel) panel.classList.remove('show');
@@ -198,10 +198,10 @@ async function spellCheck(id) {
       setTimeout(function(){ inp.style.background = ''; }, 2000);
     }
     if (data.changes && panel) {
-      panel.innerHTML = '✍️ <strong>Änderungen:</strong> ' + data.changes;
+      panel.innerHTML = 'âœï¸ <strong>Ã„nderungen:</strong> ' + data.changes;
       panel.classList.add('show');
     } else if (panel) {
-      panel.innerHTML = '✅ Keine Fehler gefunden!';
+      panel.innerHTML = 'âœ… Keine Fehler gefunden!';
       panel.classList.add('show');
     }
   } catch(e) {
@@ -216,11 +216,11 @@ async function spellCheck(id) {
     fixed = fixed.replace(/\b[bcdfghjklmnpqrstvwxyz]{4,}\b/gi, '');
     if (fixed !== before) changes.push('Quatsch/Zahlen entfernt');
     
-    // 2. Fix German words → English
+    // 2. Fix German words â†’ English
     var deToEn = {'hallo':'Hello','ist':'is','und':'and','ich':'I','mein':'my','nicht':'not','aber':'but','war':'was','Uhr':"o'clock",'schnell':'fast','Auto':'car'};
     Object.keys(deToEn).forEach(function(de) {
       var re = new RegExp('\\b' + de + '\\b', 'gi');
-      if (re.test(fixed)) { fixed = fixed.replace(re, deToEn[de]); changes.push('"' + de + '" → "' + deToEn[de] + '"'); }
+      if (re.test(fixed)) { fixed = fixed.replace(re, deToEn[de]); changes.push('"' + de + '" â†’ "' + deToEn[de] + '"'); }
     });
     
     // 3. Fix common typos
@@ -253,37 +253,37 @@ async function spellCheck(id) {
     };
     Object.keys(typos).forEach(function(w) {
       var re = new RegExp('\\b' + w + '\\b', 'gi');
-      if (re.test(fixed)) { fixed = fixed.replace(re, typos[w]); changes.push('"' + w + '" → "' + typos[w] + '"'); }
+      if (re.test(fixed)) { fixed = fixed.replace(re, typos[w]); changes.push('"' + w + '" â†’ "' + typos[w] + '"'); }
     });
     
     // 3b. Fix phrase-level corrections
-    // "birth date" or "bith date" → "date of birth"
+    // "birth date" or "bith date" â†’ "date of birth"
     fixed = fixed.replace(/\b(birth|bith)\s+date\b/gi, 'date of birth');
-    // "My birth date is the" → "My date of birth is"
+    // "My birth date is the" â†’ "My date of birth is"
     fixed = fixed.replace(/\bmy\s+(birth|bith)\s+date\s+is\s+(the\s*)?/gi, 'My date of birth is ');
-    // "My date is the" → "My date of birth is"  
+    // "My date is the" â†’ "My date of birth is"  
     fixed = fixed.replace(/\bmy\s+date\s+is\s+(the\s*)?/gi, 'My date of birth is ');
-    // Fix "P. M." or "P.M." or "p. m." → "p.m."
+    // Fix "P. M." or "P.M." or "p. m." â†’ "p.m."
     fixed = fixed.replace(/\b[Pp]\.\s*[Mm]\.\s*/g, 'p.m. ');
     fixed = fixed.replace(/\b[Aa]\.\s*[Mm]\.\s*/g, 'a.m. ');
-    // Fix "6pm" or "3pm" → "6 p.m." 
+    // Fix "6pm" or "3pm" â†’ "6 p.m." 
     fixed = fixed.replace(/(\d)\s*pm\b/gi, '$1 p.m.');
     fixed = fixed.replace(/(\d)\s*am\b/gi, '$1 a.m.');
-    // Fix "oclock" → "o'clock"
+    // Fix "oclock" â†’ "o'clock"
     fixed = fixed.replace(/\boclock\b/gi, "o'clock");
     fixed = fixed.replace(/\bo clock\b/gi, "o'clock");
-    // Fix "the 7." or "the.7" as incomplete date → remove or note
+    // Fix "the 7." or "the.7" as incomplete date â†’ remove or note
     fixed = fixed.replace(/\bthe\s*\.\s*\d/g, function(m) { return m.replace('.', ' '); });
-    // Fix "date of birth is the 27.7.1982" → keep as is (valid)
-    // Fix "date of birth is the.7" → "date of birth is the 7th"
+    // Fix "date of birth is the 27.7.1982" â†’ keep as is (valid)
+    // Fix "date of birth is the.7" â†’ "date of birth is the 7th"
     fixed = fixed.replace(/\bis\s+the\s*\.?\s*(\d{1,2})\.\s*$/gi, 'is the $1th.');
-    // Fix standalone "the." at end → remove
+    // Fix standalone "the." at end â†’ remove
     fixed = fixed.replace(/\bthe\.\s*$/gi, '');
     
-    // 4. Fix lowercase "i" → "I" (standalone)
+    // 4. Fix lowercase "i" â†’ "I" (standalone)
     before = fixed;
     fixed = fixed.replace(/(^|\s)i(\s|$|[.,!?])/g, '$1I$2');
-    if (fixed !== before) changes.push('"i" → "I"');
+    if (fixed !== before) changes.push('"i" â†’ "I"');
     
     // 5. Capitalize after "My name is", "I am", etc.
     fixed = fixed.replace(/\b(my name is|i am|name is)\s+([a-z])/gi, function(m, prefix, letter) {
@@ -306,9 +306,9 @@ async function spellCheck(id) {
     // Always update and always check what's missing
     var low = fixed.toLowerCase();
     var missing = [];
-    if (!low.includes('my name is') && !low.includes('name is')) missing.push('Name ("My name is …")');
-    if (!low.includes('date of birth')) missing.push('Geburtsdatum ("My date of birth is …")');
-    if (!low.includes('arrived')) missing.push('Ankunftszeit ("I arrived at … p.m.")');
+    if (!low.includes('my name is') && !low.includes('name is')) missing.push('Name ("My name is â€¦")');
+    if (!low.includes('date of birth')) missing.push('Geburtsdatum ("My date of birth is â€¦")');
+    if (!low.includes('arrived')) missing.push('Ankunftszeit ("I arrived at â€¦ p.m.")');
     if (!low.includes('first') && !low.includes('then') && !low.includes('after')) missing.push('Reihenfolge (First/Then/After that)');
     if (!low.includes('accident') && !low.includes('hit') && !low.includes('crash') && !low.includes('fast')) missing.push('Unfallbeschreibung');
     
@@ -324,12 +324,12 @@ async function spellCheck(id) {
     var msg = '';
     if (changes.length > 0) msg = changes.join(', ') + '.';
     if (fixed === val && changes.length === 0) msg = 'Rechtschreibung OK.';
-    if (missing.length > 0) msg += ' <br>💡 <strong>Es fehlt noch:</strong> ' + missing.join(', ') + '.';
-    if (missing.length === 0 && changes.length === 0) msg = '✅ Text sieht gut aus!';
-    if (panel) { panel.innerHTML = '✍️ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
+    if (missing.length > 0) msg += ' <br>ðŸ’¡ <strong>Es fehlt noch:</strong> ' + missing.join(', ') + '.';
+    if (missing.length === 0 && changes.length === 0) msg = 'âœ… Text sieht gut aus!';
+    if (panel) { panel.innerHTML = 'âœï¸ <strong>Korrektur:</strong> ' + msg; panel.classList.add('show'); }
   }
 
-  if (korrBtn) { korrBtn.disabled = false; korrBtn.innerHTML = '✍️ Korrektur'; }
+  if (korrBtn) { korrBtn.disabled = false; korrBtn.innerHTML = 'âœï¸ Korrektur'; }
   // Reset answered state so student can check again after correction
   delete answered[id];
 }
@@ -337,63 +337,63 @@ async function spellCheck(id) {
 async function getAIHintFree(id) {
   var inp=$(id+'i')||$(id+'-i'), panel=$(id+'-aipanel'), btn=$(id+'-ai');
   var val = inp?inp.value:'';
-  if (!val||val.trim().length<5) { panel.textContent='✏️ Schreib erst einen Satz!'; panel.classList.add('show'); return; }
-  btn.disabled=true; btn.innerHTML='<span class="spin">⏳</span> Lädt…';
+  if (!val||val.trim().length<5) { panel.textContent='âœï¸ Schreib erst einen Satz!'; panel.classList.add('show'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spin">â³</span> LÃ¤dtâ€¦';
   var hint = PAGE==='pg' ? 'was/were + Verb-ing + while/when' : 'have/has + past participle + for/since';
   var topic = PAGE==='pg' ? 'past progressive free writing' : 'present perfect free writing';
   try {
     var res = await fetch(_endpoint(), { method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ studentAnswer:val, correctAnswer:hint, exerciseContext:'Free sentence', exerciseText:'Free sentence', grammarTopic:topic }) });
     var data = await res.json();
-    panel.innerHTML = '🤖 <strong>KI-Feedback:</strong> ' + (data.hint||'Schreib weiter!');
+    panel.innerHTML = 'ðŸ¤– <strong>KI-Feedback:</strong> ' + (data.hint||'Schreib weiter!');
     panel.classList.add('show');
   } catch(e) {
     var v=val.toLowerCase(), msg;
     if (PAGE==='pg') {
-      msg = !/\b(was|were)\b/.test(v) ? 'Du brauchst <strong>was/were</strong>.' : !/\w+ing\b/.test(v) ? 'Verb braucht <strong>-ing</strong>.' : 'Prüfe was/were.';
+      msg = !/\b(was|were)\b/.test(v) ? 'Du brauchst <strong>was/were</strong>.' : !/\w+ing\b/.test(v) ? 'Verb braucht <strong>-ing</strong>.' : 'PrÃ¼fe was/were.';
     } else {
-      msg = !/\b(have|has)\b/.test(v) ? 'Du brauchst <strong>have/has</strong> + Partizip.' : !/\b(for|since)\b/.test(v) ? 'Vergiss nicht <strong>for/since</strong>.' : 'Prüfe das Partizip.';
+      msg = !/\b(have|has)\b/.test(v) ? 'Du brauchst <strong>have/has</strong> + Partizip.' : !/\b(for|since)\b/.test(v) ? 'Vergiss nicht <strong>for/since</strong>.' : 'PrÃ¼fe das Partizip.';
     }
-    panel.innerHTML = '💡 <strong>Tipp:</strong> ' + msg; panel.classList.add('show');
+    panel.innerHTML = 'ðŸ’¡ <strong>Tipp:</strong> ' + msg; panel.classList.add('show');
   }
-  btn.disabled=false; btn.innerHTML='🤖 KI-Feedback';
+  btn.disabled=false; btn.innerHTML='ðŸ¤– KI-Feedback';
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LOCAL FALLBACK HINTS
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function getLocalHint(correct, topic) {
   var c=(correct||'').toLowerCase(), t=(topic||'').toLowerCase();
   // PP
-  if (t.includes('for vs since')||t.includes('for or since')) return 'Startpunkt → <strong>since</strong>. Zeitspanne → <strong>for</strong>.';
+  if (t.includes('for vs since')||t.includes('for or since')) return 'Startpunkt â†’ <strong>since</strong>. Zeitspanne â†’ <strong>for</strong>.';
   if (t.includes('present perfect')||PAGE==='pp') {
-    if (c.includes('has')&&!c.includes('have')) return 'he/she/it → <strong>has</strong> + Partizip.';
+    if (c.includes('has')&&!c.includes('have')) return 'he/she/it â†’ <strong>has</strong> + Partizip.';
     if (c.includes("haven't")||c.includes("hasn't")) return 'Verneinung: <strong>haven\'t/hasn\'t</strong> + Partizip.';
-    if (c.includes('sung')) return 'sing–sang–<strong>sung</strong>.';
-    if (c.includes('been')) return 'be–was/were–<strong>been</strong>.';
-    if (c.includes('met'))  return 'meet–met–<strong>met</strong>.';
-    if (c.includes('seen')) return 'see–saw–<strong>seen</strong>.';
+    if (c.includes('sung')) return 'singâ€“sangâ€“<strong>sung</strong>.';
+    if (c.includes('been')) return 'beâ€“was/wereâ€“<strong>been</strong>.';
+    if (c.includes('met'))  return 'meetâ€“metâ€“<strong>met</strong>.';
+    if (c.includes('seen')) return 'seeâ€“sawâ€“<strong>seen</strong>.';
     return '<strong>have/has + Partizip (3. Form)</strong>.';
   }
   // PG
   if (t.includes('past progressive')||PAGE==='pg') {
-    if (c.startsWith('was '))  return 'I/he/she/it → <strong>was</strong> + Verb-ing.';
-    if (c.startsWith('were ')) return 'you/we/they → <strong>were</strong> + Verb-ing.';
+    if (c.startsWith('was '))  return 'I/he/she/it â†’ <strong>was</strong> + Verb-ing.';
+    if (c.startsWith('were ')) return 'you/we/they â†’ <strong>were</strong> + Verb-ing.';
     if (c.includes("wasn't")) return '<strong>wasn\'t</strong> + Verb-ing.';
     if (c.includes("weren't"))return '<strong>weren\'t</strong> + Verb-ing.';
-    if (t.includes('while'))  return '<strong>while</strong> → beide Past Progressive.';
+    if (t.includes('while'))  return '<strong>while</strong> â†’ beide Past Progressive.';
     return '<strong>was/were + Verb-ing</strong>.';
   }
   // AW
-  if (PAGE==='aw') return 'Denke an die Struktur: Name → Geburtsdatum → Ankunftszeit → Unfallbeschreibung mit <strong>First, Then, After that</strong> → beteiligte Fahrzeuge/Personen.';
-  return 'Überprüfe die Regeln in der Infobox.';
+  if (PAGE==='aw') return 'Denke an die Struktur: Name â†’ Geburtsdatum â†’ Ankunftszeit â†’ Unfallbeschreibung mit <strong>First, Then, After that</strong> â†’ beteiligte Fahrzeuge/Personen.';
+  return 'ÃœberprÃ¼fe die Regeln in der Infobox.';
 }
 var localHint = getLocalHint;
 
-/* ═══════════════════════════════════════════════════════════════
-   CHECK FUNCTIONS – PP & PG
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   CHECK FUNCTIONS â€“ PP & PG
    Supports both ID conventions: id+'g'/id+'f' AND id+'-g'/id+'-fb'
-   ═══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function _fb(id, ok) {
   var fb = $(id+'f') || $(id+'-fb');
   if (!fb) return null;
@@ -410,7 +410,7 @@ function checkGap(id, correct, lvl, extra) {
   inp.classList.remove('correct','wrong'); inp.classList.add(ok?'correct':'wrong');
   if (ok) inp.disabled = true;
   var fb = _fb(id, ok);
-  if (fb) fb.textContent = ok ? '✅ Correct!' : '❌ Nochmal versuchen!';
+  if (fb) fb.textContent = ok ? 'âœ… Correct!' : 'âŒ Nochmal versuchen!';
   if (!answered[id] && ok) { answered[id]=true; scores[lvl].r++; updScore(lvl); }
 }
 
@@ -419,7 +419,7 @@ function showGap(id, correct, lvl) {
   inp.value=correct; inp.classList.remove('correct','wrong'); inp.classList.add('correct'); inp.disabled=true;
   var fb = $(id+'f') || $(id+'-fb');
   fb.className = $(id+'-fb') ? 'fb-msg good' : 'fb good';
-  fb.textContent = '→ ' + correct;
+  fb.textContent = 'â†’ ' + correct;
   if (!answered[id]) { answered[id]=true; scores[lvl].w++; updScore(lvl); }
 }
 var showAns = showGap;
@@ -430,7 +430,7 @@ function checkGap2(id, c1, c2, lvl) {
   [i1,i2].forEach(function(i){ i.classList.remove('correct','wrong'); i.classList.add(ok?'correct':'wrong'); });
   if (ok) [i1,i2].forEach(function(i){ i.disabled=true; });
   var fb=_fb(id,ok);
-  if(fb) fb.textContent = ok ? '✅ Correct!' : '❌ Nochmal versuchen!';
+  if(fb) fb.textContent = ok ? 'âœ… Correct!' : 'âŒ Nochmal versuchen!';
   if (!answered[id] && ok) { answered[id]=true; scores[lvl].r++; updScore(lvl); }
 }
 
@@ -440,11 +440,11 @@ function showGap2(id, c1, c2, lvl) {
   [i1,i2].forEach(function(i){ i.classList.remove('correct','wrong'); i.classList.add('correct'); i.disabled=true; });
   var fb=$(id+'f')||$(id+'-fb');
   fb.className = $(id+'-fb') ? 'fb-msg good' : 'fb good';
-  fb.textContent = '→ ' + c1 + ' … ' + c2;
+  fb.textContent = 'â†’ ' + c1 + ' â€¦ ' + c2;
   if (!answered[id]) { answered[id]=true; scores[lvl].w++; updScore(lvl); }
 }
 
-/* MC – PP & PG */
+/* MC â€“ PP & PG */
 function checkMC(id, btn, correct, lvl) {
   if (answered[id]) return;
   var clicked = btn.textContent.trim();
@@ -459,21 +459,21 @@ function checkMC(id, btn, correct, lvl) {
   var fb = $(id+'f') || $(id+'-fb');
   if (fb) {
     fb.className = $(id+'-fb') ? 'fb-msg '+(ok?'good':'bad') : 'fb '+(ok?'good':'bad');
-    fb.textContent = ok ? '✅ Correct!' : '❌ → ' + correct;
+    fb.textContent = ok ? 'âœ… Correct!' : 'âŒ â†’ ' + correct;
   }
   var l = lvl || (id.charAt(0)==='b'?'b':'a');
   if (ok) scores[l].r++; else scores[l].w++;
   updScore(l);
 }
 
-/* Transform / Input – PP & PG */
+/* Transform / Input â€“ PP & PG */
 function checkTr(id, accepted, lvl) {
   var inp = $(id+'i') || $(id+'-i');
   var ok = accepted.map(norm).includes(norm(inp.value));
   inp.classList.remove('correct','wrong'); inp.classList.add(ok?'correct':'wrong');
   if (ok) inp.disabled=true;
   var fb = _fb(id, ok);
-  if (fb) fb.textContent = ok ? '✅ Correct!' : '❌ Nochmal versuchen – nutze 💡 oder 🤖';
+  if (fb) fb.textContent = ok ? 'âœ… Correct!' : 'âŒ Nochmal versuchen â€“ nutze ðŸ’¡ oder ðŸ¤–';
   if (!answered[id] && ok) { answered[id]=true; scores[lvl].r++; updScore(lvl); }
 }
 var checkTransform = checkTr;
@@ -483,12 +483,12 @@ function showTr(id, answer, lvl) {
   inp.value=answer; inp.classList.remove('correct','wrong'); inp.classList.add('correct'); inp.disabled=true;
   var fb=$(id+'f')||$(id+'-fb');
   fb.className = $(id+'-fb') ? 'fb-msg good' : 'fb good';
-  fb.textContent = '✅ Lösung: ' + answer;
+  fb.textContent = 'âœ… LÃ¶sung: ' + answer;
   if (!answered[id]) { answered[id]=true; scores[lvl].w++; updScore(lvl); }
 }
 var showTransform = showTr;
 
-/* Free writing – PP & PG */
+/* Free writing â€“ PP & PG */
 function checkFree(id) {
   if (answered[id]) return;
   var inp=$(id+'i')||$(id+'-i');
@@ -502,22 +502,22 @@ function checkFree(id) {
   inp.classList.remove('correct','wrong'); inp.classList.add(ok?'correct':'wrong');
   var fb=$(id+'f')||$(id+'-fb');
   fb.className = $(id+'-fb') ? 'fb-msg '+(ok?'good':'bad') : 'fb '+(ok?'good':'bad');
-  fb.textContent = ok ? '✅ Sehr gut!' : (PAGE==='pg' ? '💡 Nutze was/were + Verb-ing + while/when' : '💡 Nutze have/has + Partizip + for/since');
+  fb.textContent = ok ? 'âœ… Sehr gut!' : (PAGE==='pg' ? 'ðŸ’¡ Nutze was/were + Verb-ing + while/when' : 'ðŸ’¡ Nutze have/has + Partizip + for/since');
   answered[id]=true;
   if (ok) scores.c.r++; else scores.c.w++;
   updScore('c');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ACCIDENT WORDBANK – Specific Functions
-   ═══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ACCIDENT WORDBANK â€“ Specific Functions
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 var MODEL = {
   c1:'What is your date of birth?',
   c2:'I arrived at 5 p.m. I think the accident happened ten minutes before I arrived.',
   c3:'First, the van ran the red light. Then, it hit the cyclist. After that, both stopped.',
   c4:'Can you explain that in more detail, please?',
   c5:'Thank you for your help. We will get in touch if we have any more questions.',
-  c6:'My name is … My date of birth is … I arrived at 3:30 p.m. I think the accident happened five minutes before I arrived. First, the van was going too fast. Then, it hit the cyclist. There was a car and two people in the accident.'
+  c6:'My name is â€¦ My date of birth is â€¦ I arrived at 3:30 p.m. I think the accident happened five minutes before I arrived. First, the van was going too fast. Then, it hit the cyclist. There was a car and two people in the accident.'
 };
 
 /* AW MC */
@@ -531,7 +531,7 @@ function chkMC(id, btn, correct, lvl) {
   if(!ok) btn.classList.add('err');
   var fb=$(id+'f');
   fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Correct!':'❌ Answer: '+correct;
+  fb.textContent=ok?'âœ… Correct!':'âŒ Answer: '+correct;
   if(ok) scores[lvl].r++; else scores[lvl].w++;
   updScore(lvl);
 }
@@ -543,13 +543,13 @@ function chkGap(id, correct, lvl, extra) {
   var ok=[correct].concat(extra||[]).map(norm).indexOf(norm(inp.value))>=0;
   inp.classList.add(ok?'ok':'err'); inp.disabled=true;
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Correct!':'❌ Answer: '+correct;
+  fb.textContent=ok?'âœ… Correct!':'âŒ Answer: '+correct;
   answered[id]=true; if(ok) scores[lvl].r++; else scores[lvl].w++; updScore(lvl);
 }
 function shwGap(id, correct, lvl) {
   if(answered[id]) return;
   var inp=$(id+'g'); inp.value=correct; inp.classList.add('ok'); inp.disabled=true;
-  var fb=$(id+'f'); fb.className='fb g'; fb.textContent='→ '+correct;
+  var fb=$(id+'f'); fb.className='fb g'; fb.textContent='â†’ '+correct;
   answered[id]=true; scores[lvl].w++; updScore(lvl);
 }
 function chkDouble(id, c1, c2, lvl) {
@@ -559,13 +559,13 @@ function chkDouble(id, c1, c2, lvl) {
   i1.classList.add(ok1?'ok':'err'); i1.disabled=true;
   i2.classList.add(ok2?'ok':'err'); i2.disabled=true;
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Both correct!':'❌ Answer: "'+c1+'" and "'+c2+'"';
+  fb.textContent=ok?'âœ… Both correct!':'âŒ Answer: "'+c1+'" and "'+c2+'"';
   answered[id]=true; if(ok) scores[lvl].r++; else scores[lvl].w++; updScore(lvl);
 }
 function shwB(id, words) {
   if(answered[id]) return;
   ['g','g2','g3'].forEach(function(s,i){ var el=$(id+s); if(el&&words[i]){el.value=words[i];el.classList.add('ok');el.disabled=true;} });
-  var fb=$(id+'f'); fb.className='fb g'; fb.textContent='→ '+words.join(' / ');
+  var fb=$(id+'f'); fb.className='fb g'; fb.textContent='â†’ '+words.join(' / ');
   answered[id]=true; scores.b.w++; updScore('b');
 }
 function chkB1(){chkDouble('b1','name','phone','b');}
@@ -576,7 +576,7 @@ function chkB3(){
   var ok=ok1&&ok2&&ok3;
   [i1,i2,i3].forEach(function(i,x){i.classList.add([ok1,ok2,ok3][x]?'ok':'err');i.disabled=true;});
   var fb=$('b3f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Correct!':'❌ First / Then / After that';
+  fb.textContent=ok?'âœ… Correct!':'âŒ First / Then / After that';
   answered.b3=true; if(ok)scores.b.r++;else scores.b.w++; updScore('b');
 }
 function chkB4(){chkDouble('b4','explain','detail','b');}
@@ -587,7 +587,7 @@ function chkB5(){
   i1.classList.add(ok1?'ok':'err');i1.disabled=true;
   i2.classList.add(ok2?'ok':'err');i2.disabled=true;
   var fb=$('b5f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Correct!':'❌ was / three';
+  fb.textContent=ok?'âœ… Correct!':'âŒ was / three';
   answered.b5=true; if(ok)scores.b.r++;else scores.b.w++; updScore('b');
 }
 function chkB6(){chkDouble('b6','touch','questions','b');}
@@ -598,14 +598,14 @@ function chkTr(id, accepted, lvl) {
   var inp=$(id+'i'), ok=accepted.map(norm).includes(norm(inp.value));
   inp.classList.add(ok?'ok':'err'); inp.disabled=true;
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Correct!':'❌ Musterlösung: '+MODEL[id];
+  fb.textContent=ok?'âœ… Correct!':'âŒ MusterlÃ¶sung: '+MODEL[id];
   answered[id]=true; if(ok)scores[lvl].r++;else scores[lvl].w++; updScore(lvl);
   var tp=$(id+'-aipanel'); if(tp) tp.classList.remove('show');
 }
 function shwTr(id, model, lvl) {
   if(answered[id])return;
   var inp=$(id+'i'); inp.value=model; inp.classList.add('ok'); inp.disabled=true;
-  var fb=$(id+'f'); fb.className='fb g'; fb.textContent='→ '+model;
+  var fb=$(id+'f'); fb.className='fb g'; fb.textContent='â†’ '+model;
   answered[id]=true; scores[lvl].w++; updScore(lvl);
   var tp=$(id+'-aipanel'); if(tp) tp.classList.remove('show');
 }
@@ -616,7 +616,7 @@ function chkFree(id) {
   var ok=kw.every(function(k){return val.includes(k);})&&val.length>10;
   inp.classList.add(ok?'ok':'err'); inp.disabled=true;
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Great!':'❌ Musterlösung: '+MODEL[id];
+  fb.textContent=ok?'âœ… Great!':'âŒ MusterlÃ¶sung: '+MODEL[id];
   answered[id]=true; if(ok)scores.c.r++;else scores.c.w++; updScore('c');
 }
 function chkReport(id) {
@@ -625,7 +625,7 @@ function chkReport(id) {
   var ok=(val.includes('first')||val.includes('then')||val.includes('after'))&&val.trim().length>40;
   inp.classList.add(ok?'ok':'err');
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Great witness report!':'❌ Musterlösung: '+MODEL[id];
+  fb.textContent=ok?'âœ… Great witness report!':'âŒ MusterlÃ¶sung: '+MODEL[id];
   answered[id]=true; if(ok)scores.c.r++;else scores.c.w++; updScore('c');
 }
 function chkClosing(id) {
@@ -634,7 +634,7 @@ function chkClosing(id) {
   var ok=(val.includes('thank')&&(val.includes('touch')||val.includes('question')))&&val.length>20;
   inp.classList.add(ok?'ok':'err');
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Perfect closing!':'❌ Musterlösung: '+MODEL[id];
+  fb.textContent=ok?'âœ… Perfect closing!':'âŒ MusterlÃ¶sung: '+MODEL[id];
   answered[id]=true; if(ok)scores.c.r++;else scores.c.w++; updScore('c');
 }
 function chkStatement(id) {
@@ -662,71 +662,71 @@ function chkStatement(id) {
   inp.classList.add(ok?'ok':'err');
   var fb=$(id+'f'); fb.className='fb '+(ok?'g':'b');
   if (ok) {
-    fb.textContent = '✅ Excellent statement!';
+    fb.textContent = 'âœ… Excellent statement!';
   } else if (score >= 3) {
-    fb.textContent = '⚠️ Guter Anfang, aber es fehlen noch Teile. Nutze die KI-Hilfe!';
+    fb.textContent = 'âš ï¸ Guter Anfang, aber es fehlen noch Teile. Nutze die KI-Hilfe!';
   } else {
-    fb.textContent = '❌ Musterlösung: ' + MODEL[id];
+    fb.textContent = 'âŒ MusterlÃ¶sung: ' + MODEL[id];
   }
   answered[id]=true; if(ok)scores.c.r++;else scores.c.w++; updScore('c');
 }
 
-/* ── AW Live German Tips – detailliert & eingabeabhängig ── */
+/* â”€â”€ AW Live German Tips â€“ detailliert & eingabeabhÃ¤ngig â”€â”€ */
 var C_TIPS={
   c1:function(v){
     if(!v) return null;
     var l=v.toLowerCase();
-    if(v.length<3) return '💡 Tipp: Du sollst nach dem Geburtsdatum fragen. Beginne mit „What is your …"';
-    if(!l.includes('what')) return '💡 Tipp: Eine Frage auf Englisch – beginne mit „What …"';
-    if(l.includes('what')&&!l.includes('date')&&!l.includes('birth')) return '💡 Tipp: Du fragst nach dem Geburtsdatum. „Geburtsdatum" heißt auf Englisch „date of birth".';
-    if(l.includes('what')&&l.includes('date')&&!l.includes('birth')) return '💡 Tipp: Fast! „date" alleine reicht nicht – es heißt „date of birth".';
-    if(l.includes('date of birth')&&!l.includes('your')) return '💡 Tipp: Vergiss nicht „your" – „What is your date of birth?"';
-    if(l.includes('date of birth')) return '👍 Sieht gut aus! Drücke „Check ✓".';
+    if(v.length<3) return 'ðŸ’¡ Tipp: Du sollst nach dem Geburtsdatum fragen. Beginne mit â€žWhat is your â€¦"';
+    if(!l.includes('what')) return 'ðŸ’¡ Tipp: Eine Frage auf Englisch â€“ beginne mit â€žWhat â€¦"';
+    if(l.includes('what')&&!l.includes('date')&&!l.includes('birth')) return 'ðŸ’¡ Tipp: Du fragst nach dem Geburtsdatum. â€žGeburtsdatum" heiÃŸt auf Englisch â€ždate of birth".';
+    if(l.includes('what')&&l.includes('date')&&!l.includes('birth')) return 'ðŸ’¡ Tipp: Fast! â€ždate" alleine reicht nicht â€“ es heiÃŸt â€ždate of birth".';
+    if(l.includes('date of birth')&&!l.includes('your')) return 'ðŸ’¡ Tipp: Vergiss nicht â€žyour" â€“ â€žWhat is your date of birth?"';
+    if(l.includes('date of birth')) return 'ðŸ‘ Sieht gut aus! DrÃ¼cke â€žCheck âœ“".';
     return null;
   },
   c2:function(v){
     if(!v) return null;
     var l=v.toLowerCase();
-    if(v.length<3) return '💡 Tipp: Sage, wann du angekommen bist: „I arrived at …" + Uhrzeit.';
-    if(!l.includes('arrived')&&!l.includes('i arrived')) return '💡 Tipp: Beginne mit „I arrived at …" und nenne eine Uhrzeit (z.B. 5 p.m.).';
-    if(l.includes('arrived')&&!l.includes('accident')&&!l.includes('before')) return '💡 Tipp: Gut! Jetzt sage, wann der Unfall war: „I think the accident happened … minutes before I arrived."';
-    if(l.includes('accident')&&!l.includes('before')) return '💡 Tipp: Benutze „before" um die Zeitfolge zu beschreiben: „… minutes before I arrived."';
-    if(l.includes('before')&&!l.includes('minutes')&&!l.includes('ten')&&!l.includes('five')) return '💡 Tipp: Nenne eine Zeitangabe: „ten minutes before" oder „five minutes before".';
-    if(l.includes('arrived')&&l.includes('before')) return '👍 Guter Ansatz! Drücke „Check ✓".';
+    if(v.length<3) return 'ðŸ’¡ Tipp: Sage, wann du angekommen bist: â€žI arrived at â€¦" + Uhrzeit.';
+    if(!l.includes('arrived')&&!l.includes('i arrived')) return 'ðŸ’¡ Tipp: Beginne mit â€žI arrived at â€¦" und nenne eine Uhrzeit (z.B. 5 p.m.).';
+    if(l.includes('arrived')&&!l.includes('accident')&&!l.includes('before')) return 'ðŸ’¡ Tipp: Gut! Jetzt sage, wann der Unfall war: â€žI think the accident happened â€¦ minutes before I arrived."';
+    if(l.includes('accident')&&!l.includes('before')) return 'ðŸ’¡ Tipp: Benutze â€žbefore" um die Zeitfolge zu beschreiben: â€žâ€¦ minutes before I arrived."';
+    if(l.includes('before')&&!l.includes('minutes')&&!l.includes('ten')&&!l.includes('five')) return 'ðŸ’¡ Tipp: Nenne eine Zeitangabe: â€žten minutes before" oder â€žfive minutes before".';
+    if(l.includes('arrived')&&l.includes('before')) return 'ðŸ‘ Guter Ansatz! DrÃ¼cke â€žCheck âœ“".';
     return null;
   },
   c3:function(v){
     if(!v) return null;
     var l=v.toLowerCase();
-    if(v.length<5) return '💡 Tipp: Beschreibe den Unfall in 3 Schritten: „First, … Then, … After that, …"';
-    if(!l.includes('first')) return '💡 Tipp: Beginne mit „First, …" – was ist als erstes passiert? (z.B. „First, the van ran the red light.")';
-    if(l.includes('first')&&!l.includes('then')) return '💡 Tipp: Was passierte danach? Füge „Then, …" hinzu. (z.B. „Then, it hit the cyclist.")';
-    if(l.includes('then')&&!l.includes('after')) return '💡 Tipp: Und am Ende? Schreibe „After that, …" (z.B. „After that, both stopped.")';
-    if(l.includes('first')&&l.includes('then')&&l.includes('after')&&v.length<40) return '💡 Tipp: Super Struktur! Schreibe die Sätze aber noch etwas ausführlicher aus.';
-    if(l.includes('first')&&l.includes('then')&&l.includes('after')) return '👍 Gut strukturiert! Drücke „Check ✓".';
+    if(v.length<5) return 'ðŸ’¡ Tipp: Beschreibe den Unfall in 3 Schritten: â€žFirst, â€¦ Then, â€¦ After that, â€¦"';
+    if(!l.includes('first')) return 'ðŸ’¡ Tipp: Beginne mit â€žFirst, â€¦" â€“ was ist als erstes passiert? (z.B. â€žFirst, the van ran the red light.")';
+    if(l.includes('first')&&!l.includes('then')) return 'ðŸ’¡ Tipp: Was passierte danach? FÃ¼ge â€žThen, â€¦" hinzu. (z.B. â€žThen, it hit the cyclist.")';
+    if(l.includes('then')&&!l.includes('after')) return 'ðŸ’¡ Tipp: Und am Ende? Schreibe â€žAfter that, â€¦" (z.B. â€žAfter that, both stopped.")';
+    if(l.includes('first')&&l.includes('then')&&l.includes('after')&&v.length<40) return 'ðŸ’¡ Tipp: Super Struktur! Schreibe die SÃ¤tze aber noch etwas ausfÃ¼hrlicher aus.';
+    if(l.includes('first')&&l.includes('then')&&l.includes('after')) return 'ðŸ‘ Gut strukturiert! DrÃ¼cke â€žCheck âœ“".';
     return null;
   },
   c4:function(v){
     if(!v) return null;
     var l=v.toLowerCase();
-    if(v.length<3) return '💡 Tipp: Du bist der Polizist und willst mehr Details. Beginne höflich: „Can you …"';
-    if(!l.includes('can')) return '💡 Tipp: Eine höfliche Bitte beginnt mit „Can you …?"';
-    if(l.includes('can')&&!l.includes('explain')&&!l.includes('tell')) return '💡 Tipp: Was soll der Zeuge tun? Du willst, dass er es erklärt → „Can you explain …"';
-    if(l.includes('explain')&&!l.includes('detail')) return '💡 Tipp: Du willst MEHR Details → „… in more detail"';
-    if(l.includes('detail')&&!l.includes('please')) return '💡 Tipp: Sei höflich! Füge „please" am Ende hinzu.';
-    if(l.includes('explain')&&l.includes('detail')&&l.includes('please')) return '👍 Perfekt höflich! Drücke „Check ✓".';
-    if(l.includes('explain')&&l.includes('detail')) return '👍 Fast perfekt! Drücke „Check ✓".';
+    if(v.length<3) return 'ðŸ’¡ Tipp: Du bist der Polizist und willst mehr Details. Beginne hÃ¶flich: â€žCan you â€¦"';
+    if(!l.includes('can')) return 'ðŸ’¡ Tipp: Eine hÃ¶fliche Bitte beginnt mit â€žCan you â€¦?"';
+    if(l.includes('can')&&!l.includes('explain')&&!l.includes('tell')) return 'ðŸ’¡ Tipp: Was soll der Zeuge tun? Du willst, dass er es erklÃ¤rt â†’ â€žCan you explain â€¦"';
+    if(l.includes('explain')&&!l.includes('detail')) return 'ðŸ’¡ Tipp: Du willst MEHR Details â†’ â€žâ€¦ in more detail"';
+    if(l.includes('detail')&&!l.includes('please')) return 'ðŸ’¡ Tipp: Sei hÃ¶flich! FÃ¼ge â€žplease" am Ende hinzu.';
+    if(l.includes('explain')&&l.includes('detail')&&l.includes('please')) return 'ðŸ‘ Perfekt hÃ¶flich! DrÃ¼cke â€žCheck âœ“".';
+    if(l.includes('explain')&&l.includes('detail')) return 'ðŸ‘ Fast perfekt! DrÃ¼cke â€žCheck âœ“".';
     return null;
   },
   c5:function(v){
     if(!v) return null;
     var l=v.toLowerCase();
-    if(v.length<3) return '💡 Tipp: Du beendest das Gespräch. Bedanke dich zuerst: „Thank you for your help."';
-    if(!l.includes('thank')) return '💡 Tipp: Du hast dich noch nicht bedankt! Schreibe „Thank you for your help."';
-    if(l.includes('thank')&&!l.includes('help')&&!l.includes('your')) return '💡 Tipp: Bedanke dich für die Hilfe: „Thank you for your help."';
-    if(l.includes('thank')&&!l.includes('get in touch')&&!l.includes('touch')&&!l.includes('contact')&&!l.includes('question')) return '💡 Tipp: Gut, der Dank ist da! Jetzt noch sagen, dass ihr euch meldet: „We will get in touch if we have any more questions."';
-    if(l.includes('thank')&&(l.includes('touch')||l.includes('question'))&&v.length<25) return '💡 Tipp: Schreibe die beiden Sätze etwas vollständiger aus.';
-    if(l.includes('thank')&&(l.includes('touch')||l.includes('question'))) return '👍 Gute Verabschiedung! Drücke „Check ✓".';
+    if(v.length<3) return 'ðŸ’¡ Tipp: Du beendest das GesprÃ¤ch. Bedanke dich zuerst: â€žThank you for your help."';
+    if(!l.includes('thank')) return 'ðŸ’¡ Tipp: Du hast dich noch nicht bedankt! Schreibe â€žThank you for your help."';
+    if(l.includes('thank')&&!l.includes('help')&&!l.includes('your')) return 'ðŸ’¡ Tipp: Bedanke dich fÃ¼r die Hilfe: â€žThank you for your help."';
+    if(l.includes('thank')&&!l.includes('get in touch')&&!l.includes('touch')&&!l.includes('contact')&&!l.includes('question')) return 'ðŸ’¡ Tipp: Gut, der Dank ist da! Jetzt noch sagen, dass ihr euch meldet: â€žWe will get in touch if we have any more questions."';
+    if(l.includes('thank')&&(l.includes('touch')||l.includes('question'))&&v.length<25) return 'ðŸ’¡ Tipp: Schreibe die beiden SÃ¤tze etwas vollstÃ¤ndiger aus.';
+    if(l.includes('thank')&&(l.includes('touch')||l.includes('question'))) return 'ðŸ‘ Gute Verabschiedung! DrÃ¼cke â€žCheck âœ“".';
     return null;
   },
   c6:function(v){
@@ -746,22 +746,22 @@ var C_TIPS={
 
     // Fehlendes identifizieren
     var missing = [];
-    if(!hasName) missing.push('deinen Namen („My name is …")');
-    if(!hasDOB) missing.push('dein Geburtsdatum („My date of birth is …")');
-    if(!hasTime) missing.push('wann du angekommen bist („I arrived at 3:30 p.m.")');
-    if(!hasAccident && hasTime) missing.push('wann der Unfall war („I think the accident happened … minutes before I arrived.")');
-    if(!hasSequence) missing.push('den Unfallhergang mit „First, … Then, … After that, …"');
-    if(hasFirst && !hasThen) missing.push('„Then, …" als zweiten Schritt');
-    if(hasThen && !hasAfter) missing.push('„After that, …" als dritten Schritt');
+    if(!hasName) missing.push('deinen Namen (â€žMy name is â€¦")');
+    if(!hasDOB) missing.push('dein Geburtsdatum (â€žMy date of birth is â€¦")');
+    if(!hasTime) missing.push('wann du angekommen bist (â€žI arrived at 3:30 p.m.")');
+    if(!hasAccident && hasTime) missing.push('wann der Unfall war (â€žI think the accident happened â€¦ minutes before I arrived.")');
+    if(!hasSequence) missing.push('den Unfallhergang mit â€žFirst, â€¦ Then, â€¦ After that, â€¦"');
+    if(hasFirst && !hasThen) missing.push('â€žThen, â€¦" als zweiten Schritt');
+    if(hasThen && !hasAfter) missing.push('â€žAfter that, â€¦" als dritten Schritt');
     if(!hasVehicle && hasSequence) missing.push('welche Fahrzeuge beteiligt waren (car, van, cyclist)');
-    if(!hasPeople && hasSequence && hasVehicle) missing.push('wie viele Personen beteiligt waren („There were 2 people …")');
+    if(!hasPeople && hasSequence && hasVehicle) missing.push('wie viele Personen beteiligt waren (â€žThere were 2 people â€¦")');
 
-    if(v.length<5) return '💡 Tipp: Beginne mit deinem Namen: „My name is …" Dann Geburtsdatum, Uhrzeit, Unfallbeschreibung.';
-    if(missing.length === 0 && v.length > 80) return '👍 Sehr vollständig! Drücke „Check ✓".';
-    if(missing.length === 0) return '💡 Tipp: Sieht schon gut aus, aber schreibe 5-6 Sätze für eine vollständige Aussage.';
-    if(missing.length === 1) return '💡 Tipp: Fast komplett! Dir fehlt noch ' + missing[0] + '.';
-    if(missing.length === 2) return '💡 Tipp: Dir fehlt noch ' + missing[0] + ' und ' + missing[1] + '.';
-    return '💡 Tipp: Dir fehlt noch: ' + missing.slice(0,2).join(', ') + '. Insgesamt brauchst du 5-6 Sätze.';
+    if(v.length<5) return 'ðŸ’¡ Tipp: Beginne mit deinem Namen: â€žMy name is â€¦" Dann Geburtsdatum, Uhrzeit, Unfallbeschreibung.';
+    if(missing.length === 0 && v.length > 80) return 'ðŸ‘ Sehr vollstÃ¤ndig! DrÃ¼cke â€žCheck âœ“".';
+    if(missing.length === 0) return 'ðŸ’¡ Tipp: Sieht schon gut aus, aber schreibe 5-6 SÃ¤tze fÃ¼r eine vollstÃ¤ndige Aussage.';
+    if(missing.length === 1) return 'ðŸ’¡ Tipp: Fast komplett! Dir fehlt noch ' + missing[0] + '.';
+    if(missing.length === 2) return 'ðŸ’¡ Tipp: Dir fehlt noch ' + missing[0] + ' und ' + missing[1] + '.';
+    return 'ðŸ’¡ Tipp: Dir fehlt noch: ' + missing.slice(0,2).join(', ') + '. Insgesamt brauchst du 5-6 SÃ¤tze.';
   }
 };
 
@@ -784,9 +784,9 @@ if (PAGE==='aw') {
   });
 }
 
-/* ═══════════════════════════════════════
-   RESET – All pages
-   ═══════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   RESET â€“ All pages
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function resetLevel(lvl) {
   scores[lvl]={r:0,w:0}; updScore(lvl);
   var sec=$('level-'+lvl); if(!sec) return;
@@ -795,7 +795,7 @@ function resetLevel(lvl) {
   sec.querySelectorAll('.fb,.fb-msg').forEach(function(f){f.textContent='';f.className=f.className.split(' ')[0];});
   sec.querySelectorAll('.ai-panel').forEach(function(p){p.textContent='';p.classList.remove('show');});
   sec.querySelectorAll('.info-tip').forEach(function(t){t.classList.remove('show');});
-  sec.querySelectorAll('.ai-btn').forEach(function(b){b.disabled=false;b.innerHTML='🤖 KI-Hilfe';});
+  sec.querySelectorAll('.ai-btn').forEach(function(b){b.disabled=false;b.innerHTML='ðŸ¤– KI-Hilfe';});
   sec.querySelectorAll('.check-btn,.show-btn,.chk,.shw').forEach(function(b){b.disabled=false;});
   Object.keys(answered).forEach(function(k){if(k.startsWith(lvl)||k.charAt(0)===lvl.charAt(0))delete answered[k];});
   Object.keys(mcLastAnswer).forEach(function(k){if(k.startsWith(lvl)||k.charAt(0)===lvl.charAt(0))delete mcLastAnswer[k];});
@@ -803,3 +803,70 @@ function resetLevel(lvl) {
 function resetA(){resetLevel('a');}
 function resetB(){resetLevel('b');}
 function resetC(){resetLevel('c');}
+
+/* Compatibility additions merged from newer script.js */
+if (typeof updateScore !== 'function') {
+  function updateScore(level) {
+    if (typeof updScore === 'function') return updScore(level);
+  }
+}
+
+if (typeof setFeedback !== 'function') {
+  function setFeedback(id, ok, message) {
+    var fb = (typeof $ === 'function') ? ($(id+'f') || $(id+'-fb')) : null;
+    if (!fb) return;
+    var cls = (ok ? 'good' : 'bad');
+    if (fb.className.indexOf('fb-msg') >= 0) fb.className = 'fb-msg ' + cls;
+    else fb.className = 'fb ' + (ok ? 'g' : 'b');
+    fb.textContent = message || '';
+  }
+}
+
+if (typeof markDone !== 'function') {
+  function markDone(id, ok, level) {
+    if (typeof answered !== 'undefined') answered[id] = true;
+    if (typeof scores !== 'undefined' && scores[level]) {
+      if (ok) scores[level].r++;
+      else scores[level].w++;
+      if (typeof updScore === 'function') updScore(level);
+      else if (typeof updateScore === 'function') updateScore(level);
+    }
+  }
+}
+
+if (typeof collectAnswer !== 'function') {
+  function collectAnswer(id) {
+    var card = (typeof $ === 'function') ? $(id) : null;
+    if (!card) return '';
+    var vals = [];
+    card.querySelectorAll('input.gap, input.wi, textarea.wi, .tr-input, .transform-input').forEach(function(el){
+      var v = (el.value || '').trim();
+      if (v) vals.push(v);
+    });
+    if (typeof mcLastAnswer !== 'undefined' && mcLastAnswer[id]) vals.push(mcLastAnswer[id]);
+    return vals.join(' | ');
+  }
+}
+
+if (typeof showAiPanel !== 'function') {
+  function showAiPanel(id, content) {
+    var panel = (typeof $ === 'function') ? $(id+'-aipanel') : null;
+    if (!panel) return;
+    panel.innerHTML = content || '';
+    panel.classList.add('show');
+  }
+}
+
+if (typeof hideAiPanel !== 'function') {
+  function hideAiPanel(id) {
+    var panel = (typeof $ === 'function') ? $(id+'-aipanel') : null;
+    if (!panel) return;
+    panel.classList.remove('show');
+  }
+}
+
+if (typeof callHintApi !== 'function') {
+  async function callHintApi(id, correct, context) {
+    if (typeof getAIHint === 'function') return getAIHint(id, correct, context, 'accident dialogue');
+  }
+}
