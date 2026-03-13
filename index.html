@@ -23,7 +23,9 @@
       margin: 0;
       font-family: "Trebuchet MS", "Segoe UI", sans-serif;
       color: var(--ink);
-      background: linear-gradient(180deg, #e8f7ff 0%, #dff2ff 100%);
+      background:
+        linear-gradient(140deg, rgba(9, 44, 34, .72), rgba(13, 74, 55, .5)),
+        url("https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1800&q=80") center/cover fixed no-repeat;
       min-height: 100vh;
     }
 
@@ -34,35 +36,37 @@
     }
 
     .hero {
-      background: linear-gradient(135deg, var(--green) 0%, var(--green-2) 70%);
+      background:
+        linear-gradient(180deg, rgba(5, 32, 24, .18), rgba(5, 32, 24, .72)),
+        url("https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1800&q=80") center/cover no-repeat;
       color: #fff;
       border-radius: 24px;
       padding: 1.25rem 1.3rem;
-      box-shadow: 0 14px 35px rgba(15, 41, 31, .22);
+      box-shadow: 0 18px 42px rgba(7, 25, 20, .35);
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
       position: relative;
       overflow: hidden;
+      border: 1px solid rgba(255,255,255,.35);
     }
 
     .hero::before,
     .hero::after {
       content: "";
       position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,.12);
+      inset: 0;
+      pointer-events: none;
     }
 
     .hero::before {
-      width: 220px;
-      height: 220px;
-      right: -70px;
-      top: -100px;
+      background: radial-gradient(circle at 80% 20%, rgba(255,255,255,.28), transparent 40%);
     }
 
     .hero::after {
-      width: 180px;
-      height: 180px;
-      left: -60px;
-      bottom: -85px;
+      background: linear-gradient(120deg, rgba(255,255,255,.14), transparent 55%);
+      mix-blend-mode: screen;
     }
 
     h1 {
@@ -72,6 +76,7 @@
       line-height: 1.18;
       position: relative;
       z-index: 2;
+      text-shadow: 0 5px 20px rgba(0,0,0,.35);
     }
 
     .sub {
@@ -79,6 +84,7 @@
       font-size: 1.04rem;
       position: relative;
       z-index: 2;
+      text-shadow: 0 3px 12px rgba(0,0,0,.35);
     }
 
     .badge {
@@ -90,6 +96,7 @@
       font-size: .88rem;
       position: relative;
       z-index: 2;
+      box-shadow: 0 10px 24px rgba(6, 31, 25, .25);
     }
 
     .main-grid {
@@ -99,14 +106,15 @@
       grid-template-columns: 1fr;
     }
 
-    \.panel {
+    .panel {
       content-visibility: auto;
       contain-intrinsic-size: 420px;
-      background: var(--card);
+      background: rgba(247, 252, 255, .94);
       border: 1px solid var(--line);
       border-radius: 18px;
       padding: 1rem;
-      box-shadow: 0 8px 22px rgba(44, 33, 20, .08);
+      box-shadow: 0 12px 30px rgba(7, 35, 30, .2);
+      backdrop-filter: blur(4px);
     }
 
     h2 {
@@ -134,6 +142,12 @@
       background: #eff9ff;
       margin-bottom: .55rem;
       overflow: hidden;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .branch:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(47, 145, 184, .14);
     }
 
     .branch button {
@@ -182,9 +196,11 @@
       padding: .48rem .6rem;
       font-weight: 600;
       font-size: .92rem;
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
     }
 
     .children a:hover {
+      transform: translateX(3px);
       background: #e8f7ff;
       border-color: #8cc9e6;
     }
@@ -211,6 +227,10 @@
 
     .mini li { margin: .3rem 0; }
 
+    @media (max-width: 720px) {
+      .hero { min-height: 190px; }
+      .badge { line-height: 1.25; }
+    }
   </style>
 </head>
 <body>
@@ -226,10 +246,6 @@
         <h2>Übersicht</h2>
 
         <ul class="tree" id="treeMenu">
-          
-
-         
-
           <li class="branch">
             <button type="button"><span>grammar</span><span class="caret">v</span></button>
             <ul class="children">
@@ -247,7 +263,8 @@
               <li><a href="./unit3/vokabulary/role_model.html">Wordbank: Role Model</a></li>
             </ul>
           </li>
- <li class="branch">
+
+          <li class="branch">
             <button type="button"><span>mediation</span><span class="caret">v</span></button>
             <ul class="children">
               <li><a href="./unit3/mediation/mediation_accident.html">Mediation: Accident</a></li>
@@ -258,6 +275,7 @@
               <li><a href="./unit3/mediation/mediation_restaurant.html">Mediation: Restaurant</a></li>
             </ul>
           </li>
+
           <li class="branch">
             <button type="button"><span>e-mail</span><span class="caret">v</span></button>
             <ul class="children">
@@ -266,24 +284,20 @@
           </li>
         </ul>
       </article>
-
     </section>
   </main>
 
-<script>
-  const treeMenu = document.getElementById("treeMenu");
+  <script>
+    const treeMenu = document.getElementById("treeMenu");
 
-  treeMenu.addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const branch = btn.closest(".branch");
-    if (!branch) return;
-    branch.classList.toggle("open");
-  });
-
-</script>
+    treeMenu.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const branch = btn.closest(".branch");
+      if (!branch) return;
+      branch.classList.toggle("open");
+    });
+  </script>
 </body>
 </html>
-
-
 
