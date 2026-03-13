@@ -1,51 +1,47 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Unit 3 | English 9 | Suedafrika</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <title>Unit 3 | English 9 | South Africa</title>
   <style>
     :root {
-      --bg: #f7f2e8;
-      --bg-soft: #fffaf3;
-      --ink: #1f2d28;
-      --accent: #1f7a4f;
-      --accent-2: #d88a27;
-      --card: #fff;
-      --line: #d7ccb8;
-      --ok: #176d42;
-      --warn: #8e4e10;
-      --bad: #8a2d2d;
+      --sand: #f3ead7;
+      --sand-2: #e9dcc1;
+      --green: #0e7c57;
+      --green-2: #0a5f43;
+      --sun: #f3b14b;
+      --ink: #1d2c28;
+      --card: #fffdf8;
+      --line: #d4c4a6;
+      --blue: #2f91b8;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: "Outfit", sans-serif;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at 12% 10%, #ffe4b7 0, transparent 22%),
-        radial-gradient(circle at 82% 20%, #cdeccf 0, transparent 26%),
-        linear-gradient(180deg, #f7f2e8 0%, #f2e9d8 100%);
+        radial-gradient(circle at 12% 16%, #ffe8be 0, transparent 24%),
+        radial-gradient(circle at 85% 14%, #cdeedb 0, transparent 26%),
+        linear-gradient(180deg, var(--sand) 0%, #f6f0e4 100%);
       min-height: 100vh;
     }
 
     .wrap {
-      max-width: 1120px;
+      max-width: 1150px;
       margin: 0 auto;
-      padding: 1.2rem 1rem 3rem;
+      padding: 1rem 1rem 2.4rem;
     }
 
     .hero {
-      background: linear-gradient(120deg, rgba(31,122,79,.96), rgba(27,96,67,.9));
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-2) 70%);
       color: #fff;
-      border-radius: 22px;
-      padding: 1.5rem 1.2rem;
-      box-shadow: 0 16px 30px rgba(0, 0, 0, .16);
+      border-radius: 24px;
+      padding: 1.25rem 1.3rem;
+      box-shadow: 0 14px 35px rgba(15, 41, 31, .22);
       position: relative;
       overflow: hidden;
     }
@@ -54,50 +50,56 @@
     .hero::after {
       content: "";
       position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+    }
+
+    .hero::before {
       width: 220px;
       height: 220px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.1);
-      filter: blur(2px);
+      right: -70px;
+      top: -100px;
     }
 
-    .hero::before { top: -110px; right: -60px; }
-    .hero::after { bottom: -120px; left: -70px; }
+    .hero::after {
+      width: 180px;
+      height: 180px;
+      left: -60px;
+      bottom: -85px;
+    }
 
-    .hero h1 {
+    h1 {
       margin: 0;
-      font-family: "Fraunces", serif;
-      font-size: clamp(1.4rem, 3vw, 2.2rem);
-      line-height: 1.2;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 3vw, 2.45rem);
+      line-height: 1.18;
       position: relative;
       z-index: 2;
     }
 
-    .hero p {
-      margin: .6rem 0 0;
-      font-size: 1rem;
-      opacity: .95;
+    .sub {
+      margin: .55rem 0 .8rem;
+      font-size: 1.04rem;
       position: relative;
       z-index: 2;
     }
 
-    .credits {
+    .badge {
       display: inline-block;
-      margin-top: .9rem;
       background: rgba(255,255,255,.14);
-      border: 1px solid rgba(255,255,255,.28);
-      padding: .45rem .75rem;
+      border: 1px solid rgba(255,255,255,.35);
+      padding: .4rem .7rem;
       border-radius: 999px;
-      font-size: .86rem;
+      font-size: .88rem;
       position: relative;
       z-index: 2;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
+    .main-grid {
       margin-top: 1rem;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
     }
 
     .panel {
@@ -105,21 +107,20 @@
       border: 1px solid var(--line);
       border-radius: 18px;
       padding: 1rem;
-      box-shadow: 0 10px 24px rgba(41, 35, 24, .08);
+      box-shadow: 0 8px 22px rgba(44, 33, 20, .08);
     }
 
     h2 {
-      margin-top: .1rem;
-      margin-bottom: .5rem;
-      font-family: "Fraunces", serif;
-      color: #17372b;
-      font-size: 1.35rem;
+      margin: .1rem 0 .35rem;
+      font-size: 1.75rem;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #11392d;
     }
 
     .hint {
-      color: #3f4f47;
-      font-size: .94rem;
-      margin: .2rem 0 .9rem;
+      margin: 0 0 .7rem;
+      color: #385247;
+      font-size: .97rem;
     }
 
     .tree {
@@ -128,143 +129,124 @@
       padding: 0;
     }
 
-    .tree-branch {
-      border: 1px solid var(--line);
+    .branch {
+      border: 1px solid #d7c7ab;
       border-radius: 12px;
-      background: var(--bg-soft);
-      margin-bottom: .7rem;
+      background: #fffaf0;
+      margin-bottom: .55rem;
       overflow: hidden;
-      transition: transform .25s ease;
     }
 
-    .tree-branch:hover { transform: translateY(-1px); }
-
-    .tree-button {
+    .branch button {
       width: 100%;
       border: 0;
       background: transparent;
       padding: .72rem .8rem;
+      font-weight: 800;
+      color: #153e31;
       display: flex;
-      gap: .7rem;
       align-items: center;
       justify-content: space-between;
-      color: #1f2d28;
-      font-weight: 600;
       cursor: pointer;
-      text-align: left;
+      font-size: .98rem;
     }
 
-    .tree-left {
-      display: inline-flex;
-      align-items: center;
-      gap: .55rem;
+    .branch .caret {
+      color: #235343;
+      transition: transform .22s ease;
     }
 
-    .folder {
-      display: inline-grid;
-      place-items: center;
-      width: 1.35rem;
-      height: 1.35rem;
-      border-radius: .35rem;
-      background: #ffe2b6;
-      color: #68410f;
-      font-size: .9rem;
-    }
-
-    .caret {
-      font-size: .95rem;
-      transition: transform .25s ease;
-      color: #426451;
-    }
-
-    .tree-branch.open .caret { transform: rotate(180deg); }
+    .branch.open .caret { transform: rotate(180deg); }
 
     .children {
       list-style: none;
       margin: 0;
-      padding: 0 .7rem .7rem 2rem;
+      padding: .2rem .7rem .7rem;
+      border-top: 1px dashed #d5c4a7;
       display: none;
-      border-top: 1px dashed #ccbfa8;
-      background: #fffdf7;
+      background: #fffef9;
     }
 
-    .tree-branch.open .children { display: block; }
+    .branch.open .children { display: block; }
 
     .children li {
-      margin-top: .5rem;
-      position: relative;
-      padding-left: 1rem;
-    }
-
-    .children li::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: .55rem;
-      width: .6rem;
-      height: 1px;
-      background: #b7aa94;
+      margin-top: .45rem;
     }
 
     .children a {
-      color: #1f5340;
+      display: block;
       text-decoration: none;
-      font-weight: 500;
-      border-bottom: 1px solid transparent;
+      color: #174c3b;
+      border: 1px solid #d9ccb3;
+      background: #fff;
+      border-radius: 9px;
+      padding: .48rem .6rem;
+      font-weight: 600;
+      font-size: .92rem;
     }
 
-    .children a:hover { border-bottom-color: currentColor; }
+    .children a:hover {
+      background: #f4fff8;
+      border-color: #97d1b8;
+    }
 
-    .gallery {
+    .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: .65rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .7rem;
     }
 
-    .pic {
-      margin: 0;
+    .scene {
+      border: 1px solid #d6c4a5;
       border-radius: 14px;
       overflow: hidden;
-      border: 1px solid #d9cab0;
-      background: #f0e6d4;
+      background: #fff;
     }
 
-    .pic img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
+    .scene img {
       display: block;
-      transition: transform .55s ease;
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      background: #f2e8d5;
     }
 
-    .pic:hover img { transform: scale(1.06); }
-
-    .pic figcaption {
-      padding: .45rem .55rem;
-      font-size: .82rem;
-      color: #31433a;
+    .scene figcaption {
+      padding: .5rem .62rem;
+      font-weight: 700;
+      color: #213c34;
       background: #fffaf0;
     }
 
-    .ok { color: var(--ok); }
-    .warn { color: var(--warn); }
-    .bad { color: var(--bad); }
-
-    @media (min-width: 920px) {
-      .grid {
-        grid-template-columns: 1.15fr 1fr;
-      }
-      .gallery {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .pic img { height: 180px; }
+    .mini {
+      margin-top: .9rem;
+      border: 1px solid #d3c6b1;
+      border-radius: 12px;
+      padding: .7rem;
+      background: #fffaf2;
     }
 
-    @media (max-width: 540px) {
-      .gallery { grid-template-columns: 1fr; }
-      .pic img { height: 200px; }
-      .hero { border-radius: 16px; }
-      .panel { border-radius: 14px; }
+    .mini h3 {
+      margin: 0 0 .4rem;
+      font-size: 1rem;
+      color: #1d4337;
+    }
+
+    .mini ul {
+      margin: 0;
+      padding-left: 1.05rem;
+      color: #2f4b41;
+    }
+
+    .mini li { margin: .3rem 0; }
+
+    @media (min-width: 960px) {
+      .main-grid { grid-template-columns: 1.1fr 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+      .scene img { height: 190px; }
     }
   </style>
 </head>
@@ -272,106 +254,104 @@
   <main class="wrap">
     <section class="hero">
       <h1>English Unit 3: South Africa Explorer</h1>
-      <p>Interaktive Aufgaben, Mediation, Grammar und Vocabulary in einer klaren Baum-Struktur.</p>
-      <span class="credits">Mittelschule am Sportpark Unterhaching | von Johannes Moessner | 9. Klasse</span>
+      <p class="sub">Lerne mit klaren Lernpfaden, schnellen Einstiegen und spannenden Themen.</p>
+      <span class="badge">Mittelschule am Sportpark Unterhaching | von Johannes Moessner | 9. Klasse</span>
     </section>
 
-    <section class="grid">
+    <section class="main-grid">
       <article class="panel">
-        <h2>Materialien (Baum-Menue)</h2>
-        <p class="hint">Die Ordner oeffnen und schliessen sich automatisch. Du kannst sie auch anklicken.</p>
+        <h2>Datei-Baum</h2>
+        <p class="hint">Die Menues oeffnen und schliessen sich automatisch. Tippe auf den Bereich, den du brauchst.</p>
+
         <ul class="tree" id="treeMenu">
-          <li class="tree-branch open">
-            <button class="tree-button" type="button">
-              <span class="tree-left"><span class="folder">DIR</span>email</span>
-              <span class="caret">v</span>
-            </button>
+          <li class="branch open">
+            <button type="button"><span>email</span><span class="caret">v</span></button>
             <ul class="children">
-              <li><a href="./email/email.html">email.html</a></li>
+              <li><a href="./email/email.html">Email Aufgabe</a></li>
             </ul>
           </li>
 
-          <li class="tree-branch">
-            <button class="tree-button" type="button">
-              <span class="tree-left"><span class="folder">DIR</span>mediation</span>
-              <span class="caret">v</span>
-            </button>
+          <li class="branch">
+            <button type="button"><span>mediation</span><span class="caret">v</span></button>
             <ul class="children">
-              <li><a href="./mediation/mediation_accident.html">mediation_accident.html</a></li>
-              <li><a href="./mediation/mediation_doctor.html">mediation_doctor.html</a></li>
-              <li><a href="./mediation/mediation_hostel.html">mediation_hostel.html</a></li>
-              <li><a href="./mediation/mediation_market.html">mediation_market.html</a></li>
-              <li><a href="./mediation/mediation_park_improved.html">mediation_park_improved.html</a></li>
-              <li><a href="./mediation/mediation_restaurant.html">mediation_restaurant.html</a></li>
+              <li><a href="./mediation/mediation_accident.html">Mediation: Accident</a></li>
+              <li><a href="./mediation/mediation_doctor.html">Mediation: Doctor</a></li>
+              <li><a href="./mediation/mediation_hostel.html">Mediation: Hostel</a></li>
+              <li><a href="./mediation/mediation_market.html">Mediation: Market</a></li>
+              <li><a href="./mediation/mediation_park_improved.html">Mediation: Park</a></li>
+              <li><a href="./mediation/mediation_restaurant.html">Mediation: Restaurant</a></li>
             </ul>
           </li>
 
-          <li class="tree-branch">
-            <button class="tree-button" type="button">
-              <span class="tree-left"><span class="folder">DIR</span>tense</span>
-              <span class="caret">v</span>
-            </button>
+          <li class="branch">
+            <button type="button"><span>tense</span><span class="caret">v</span></button>
             <ul class="children">
-              <li><a href="./tense/irregular_verbs.html">irregular_verbs.html</a></li>
-              <li><a href="./tense/past_progressive.html">past_progressive.html</a></li>
+              <li><a href="./tense/irregular_verbs.html">Irregular Verbs</a></li>
+              <li><a href="./tense/past_progressive.html">Past Progressive</a></li>
             </ul>
           </li>
 
-          <li class="tree-branch">
-            <button class="tree-button" type="button">
-              <span class="tree-left"><span class="folder">DIR</span>vokabulary</span>
-              <span class="caret">v</span>
-            </button>
+          <li class="branch">
+            <button type="button"><span>vokabulary</span><span class="caret">v</span></button>
             <ul class="children">
-              <li><a href="./vokabulary/accident_wordbank.html">accident_wordbank.html</a></li>
-              <li><a href="./vokabulary/irregular_verbs.html">irregular_verbs.html</a></li>
-              <li><a href="./vokabulary/role_model.html">role_model.html</a></li>
-              <li><a href="./vokabulary/vokabeltrainer.html">vokabeltrainer.html</a></li>
+              <li><a href="./vokabulary/accident_wordbank.html">Accident Wordbank</a></li>
+              <li><a href="./vokabulary/irregular_verbs.html">Irregular Verbs Vocab</a></li>
+              <li><a href="./vokabulary/role_model.html">Role Model</a></li>
+              <li><a href="./vokabulary/vokabeltrainer.html">Vokabeltrainer</a></li>
             </ul>
           </li>
         </ul>
       </article>
 
       <article class="panel">
-        <h2>South Africa Bilder</h2>
-        <p class="hint">Bildquellen laden direkt online und funktionieren ohne Zusatzdateien im Projekt.</p>
-        <div class="gallery">
-          <figure class="pic">
-            <img src="https://source.unsplash.com/900x600/?cape-town,south-africa" alt="Kapstadt und Meer">
-            <figcaption>Kapstadt</figcaption>
+        <h2>South Africa Gallery</h2>
+        <p class="hint">Echte Fotos aus Suedafrika: Landschaften und Menschen.</p>
+
+        <div class="gallery-grid">
+          <figure class="scene">
+            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_2821.jpg" alt="Landschaft in Kapstadt mit Table Mountain">
+            <figcaption>Cape Town</figcaption>
           </figure>
-          <figure class="pic">
-            <img src="https://source.unsplash.com/900x600/?table-mountain,south-africa" alt="Table Mountain in Suedafrika">
-            <figcaption>Table Mountain</figcaption>
+
+          <figure class="scene">
+            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Cape_Town_%28ZA%29%2C_Table_Mountain_--_2024_--_3437.jpg" alt="Table Mountain und Natur in Suedafrika">
+            <figcaption>Table Mountain Landscape</figcaption>
           </figure>
-          <figure class="pic">
-            <img src="https://source.unsplash.com/900x600/?kruger-national-park,south-africa" alt="Safari im Kruger National Park">
-            <figcaption>Kruger National Park</figcaption>
+
+          <figure class="scene">
+            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Ko_Modendeng_Market_-_Winterveldt%2C_South_Africa_01.jpg" alt="Menschen auf einem Markt in Suedafrika">
+            <figcaption>People at Market (Winterveldt)</figcaption>
           </figure>
-          <figure class="pic">
-            <img src="https://source.unsplash.com/900x600/?soweto,johannesburg" alt="Strassenszene in Soweto">
-            <figcaption>Soweto / Johannesburg</figcaption>
+
+          <figure class="scene">
+            <img loading="lazy" src="https://commons.wikimedia.org/wiki/Special:FilePath/Soweto_%284612445598%29.jpg" alt="Menschen in Soweto, Johannesburg">
+            <figcaption>People in Soweto</figcaption>
           </figure>
+        </div>
+
+        <div class="mini">
+          <h3>Quick Mission fuer die Klasse</h3>
+          <ul>
+            <li>Waehle einen Lernpfad links und starte mit "Jetzt starten".</li>
+            <li>Bearbeite eine Aufgabe und notiere 3 neue Woerter.</li>
+            <li>Beschreibe danach ein Bild aus der Gallery auf Englisch.</li>
+          </ul>
         </div>
       </article>
     </section>
-
   </main>
 
   <script>
-    const branches = Array.from(document.querySelectorAll(".tree-branch"));
+    const branches = Array.from(document.querySelectorAll(".branch"));
     let activeIndex = 0;
 
     function openBranch(index) {
-      branches.forEach((branch, i) => {
-        branch.classList.toggle("open", i === index);
-      });
+      branches.forEach((branch, i) => branch.classList.toggle("open", i === index));
       activeIndex = index;
     }
 
     branches.forEach((branch, index) => {
-      const button = branch.querySelector(".tree-button");
-      button.addEventListener("click", () => {
+      branch.querySelector("button").addEventListener("click", () => {
         const isOpen = branch.classList.contains("open");
         branches.forEach(b => b.classList.remove("open"));
         if (!isOpen) {
@@ -381,12 +361,10 @@
       });
     });
 
-    // Auto-Open/Close: rotiert durch die Ordner alle 4 Sekunden.
     setInterval(() => {
       const next = (activeIndex + 1) % branches.length;
       openBranch(next);
-    }, 4000);
-
+    }, 4200);
   </script>
 </body>
 </html>
