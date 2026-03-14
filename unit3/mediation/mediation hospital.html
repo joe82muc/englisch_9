@@ -326,7 +326,7 @@ const task3HintRules = {
 const task1SemanticRules = {
   't1-1': [
     ['eines der','einer der','eins der'],
-    ['groß','größt'],
+    ['groß','größt','groesst','grosst','gros'],
     ['krankenhaus','hospital']
   ],
   't1-2': [
@@ -355,9 +355,9 @@ function matchAnyGroup(text, groups) {
 
 function normalizeLoose(s){
   return norm(s)
-    .replace(/ä/g,'ae')
-    .replace(/ö/g,'oe')
-    .replace(/ü/g,'ue')
+    .replace(/ä/g,'a')
+    .replace(/ö/g,'o')
+    .replace(/ü/g,'u')
     .replace(/ß/g,'ss');
 }
 
@@ -516,6 +516,15 @@ function keywordCheck(value, model){
 function buildTask1Hint(id, text){
   const v = normalizeLoose(text);
   if (!v) return 'Schritt 1: Schreibe zuerst eine kurze Antwort mit den Schlüsselwörtern aus der Broschüre.';
+
+  if (id === 't1-1' && includesLoose(v, 'eines der') && includesLoose(v, 'gegend')) {
+    if (!includesLoose(v, 'krankenhaus')) {
+      return 'Inhalt stimmt. Grammatik-Feinschliff: Ergänze das Nomen "Krankenhäuser".';
+    }
+    if (!includesLoose(v, 'gro')) {
+      return 'Inhalt stimmt fast. Ergänze ein passendes Adjektiv wie "größten".';
+    }
+  }
 
   if (isTask1SemanticallyCorrect(id, text)) {
     return 'Inhaltlich richtig. Genau so ist die Aussage korrekt.';
@@ -689,6 +698,8 @@ function localGrammarFix(text){
   t = t.replace(/\s+/g, ' ');
   t = t.replace(/\bi\b/g, 'I');
   // Common German mediation fixes
+  t = t.replace(/\beine?s?\s+der\s+g[r]?[oö]?[sß]te[n]?\s+in\s+(der\s+)?gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
+  t = t.replace(/\beines\s+der\s+g[oö]ssen\s+in\s+der\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
   t = t.replace(/\beine\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
   t = t.replace(/\bein\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
   t = t.replace(/\bin\s+gegend\b/gi, 'in der Gegend');
@@ -696,6 +707,14 @@ function localGrammarFix(text){
   t = t.charAt(0).toUpperCase() + t.slice(1);
   if (!/[.!?]$/.test(t)) t += '.';
   return t;
+}
+
+function looksEnglish(text){
+  const t = norm(text);
+  const markers = [' the ', ' and ', ' is ', ' are ', 'one of', 'biggest', 'area', 'hospital', 'please', 'you '];
+  let score = 0;
+  markers.forEach(m => { if ((' ' + t + ' ').includes(m)) score++; });
+  return score >= 2;
 }
 
 async function askGrammar(id){
@@ -715,7 +734,7 @@ async function askGrammar(id){
   try {
     // Primary: dedicated correction endpoint
     const corrected = await callCorrectApi(text);
-    const out = corrected || localGrammarFix(text);
+    const out = (!corrected || looksEnglish(corrected)) ? localGrammarFix(text) : corrected;
     box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
     return;
   } catch (e1) {
@@ -726,13 +745,13 @@ async function askGrammar(id){
         language: 'de',
         model: 'gpt-4.1-mini',
         exerciseId: id + '-grammar',
-        task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht ändern.',
+        task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht ändern. Sprache MUSS Deutsch bleiben.',
         studentAnswer: text,
         correctAnswer: '',
-        instruction: 'Gib nur die korrigierte Version des Textes zurück, ohne Erklärung.'
+        instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erklärung.'
       });
       const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
-      const out = cleaned || localGrammarFix(text);
+      const out = (!cleaned || looksEnglish(cleaned)) ? localGrammarFix(text) : cleaned;
       box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
       return;
     } catch (e2) {
@@ -745,7 +764,7 @@ async function askGrammar(id){
 function gatherAllAnswers(){
   const lines = [];
   task1Items.forEach(it => {
-    lines.push(`Task1 ${it.id}: ${document.getElementById(it.id).value.trim() || '(leer)'}`);
+    lines.push(`Task1 ${it.id}: ${getTask1Value(it) || '(leer)'}`);
   });
   lines.push('Task2:');
   lines.push(document.getElementById('t2-text').value.trim() || '(leer)');
