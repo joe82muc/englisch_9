@@ -157,8 +157,8 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
     <div class="actions">
       <button class="btn btn-check" onclick="checkTask2()">Task 2 prüfen</button>
       <button class="btn btn-secondary btn-model" id="task2-model-btn" onclick="toggleModel('task2')">Musterlösung anzeigen</button>
-      <button class="btn btn-hint" onclick="askHint('task2')">KI-Hilfe Task 2</button>
-      <button class="btn btn-hint" onclick="askGrammar('task2')">KI-Grammatik (LLM)</button>
+      <button class="btn btn-hint" onclick="askHint('task2', this)">KI-Hilfe Task 2</button>
+      <button class="btn btn-hint" onclick="askGrammar('task2', this)">KI-Grammatik (LLM)</button>
     </div>
     <div class="model" id="task2-model"><strong>Musterlösung:</strong><br>Das City General Hospital hat eine Notaufnahme, die 24 Stunden am Tag geöffnet ist. Der Eingang der Notaufnahme liegt an der südwestlichen Ecke des Krankenhauses. Der Informationsschalter befindet sich am Haupteingang und beantwortet allgemeine Fragen von Patienten und Besuchern. Besuchszeiten sind täglich von 15:00 bis 17:00 Uhr und von 19:00 bis 20:00 Uhr, auch am Wochenende; morgens sind keine Besucher erlaubt und Besuche dürfen höchstens 30 Minuten dauern. Das Café und der Shop sind von Montag bis Samstag von 9:00 bis 18:00 Uhr geöffnet. Geparkt werden soll auf dem Parkplatz gegenüber dem Haupteingang, damit die Ambulanzzufahrten frei bleiben.</div>
     <div class="feedback" id="t2-feedback"></div>
@@ -401,8 +401,8 @@ function initTask1(){
       ${inputHtml}
       <div class="actions">
         <button class="btn btn-secondary btn-model" id="${item.id}-model-btn" onclick="toggleModel('${item.id}')">Musterlösung anzeigen</button>
-        <button class="btn btn-hint" onclick="askHint('${item.id}')">KI-Hilfe</button>
-        <button class="btn btn-hint" onclick="askGrammar('${item.id}')">KI-Grammatik (LLM)</button>
+        <button class="btn btn-hint" onclick="askHint('${item.id}', this)">KI-Hilfe</button>
+        <button class="btn btn-hint" onclick="askGrammar('${item.id}', this)">KI-Grammatik (LLM)</button>
       </div>
       <div class="model" id="${item.id}-model"><strong>Musterlösung:</strong> ${esc(item.model)}</div>
       <div class="feedback" id="${item.id}-fb"></div>
@@ -434,8 +434,8 @@ function initTask3(){
       <textarea class="textarea" id="${item.id}" placeholder="Rebecca sagt..."></textarea>
       <div class="actions">
         <button class="btn btn-secondary btn-model" id="${item.id}-model-btn" onclick="toggleModel('${item.id}')">Musterlösung anzeigen</button>
-        <button class="btn btn-hint" onclick="askHint('${item.id}')">KI-Hilfe</button>
-        <button class="btn btn-hint" onclick="askGrammar('${item.id}')">KI-Grammatik (LLM)</button>
+        <button class="btn btn-hint" onclick="askHint('${item.id}', this)">KI-Hilfe</button>
+        <button class="btn btn-hint" onclick="askGrammar('${item.id}', this)">KI-Grammatik (LLM)</button>
       </div>
       <div class="model" id="${item.id}-model"><strong>Musterlösung:</strong> ${esc(item.model)}</div>
       <div class="feedback" id="${item.id}-fb"></div>
@@ -635,60 +635,56 @@ async function callCorrectApi(studentAnswer){
   throw lastErr || new Error('No correction endpoint reachable');
 }
 
-async function askHint(id){
-  const hintBox = document.getElementById(id === 'task2' ? 'task2-hint' : id + '-hint');
-  const t1item = task1Items.find(x => x.id === id);
-  const input = document.getElementById(id === 'task2' ? 't2-text' : id);
-  const text = id === 'task2'
-    ? (input ? input.value.trim() : '')
-    : (t1item ? getTask1Value(t1item) : (input ? input.value.trim() : ''));
+async function askHint(id, btn){
+  setBtnBusy(btn, true, 'KI läuft...', 'KI-Hilfe');
+  try {
+    const hintBox = document.getElementById(id === 'task2' ? 'task2-hint' : id + '-hint');
+    if (!hintBox) return;
+    const t1item = task1Items.find(x => x.id === id);
+    const input = document.getElementById(id === 'task2' ? 't2-text' : id);
+    const text = id === 'task2'
+      ? (input ? input.value.trim() : '')
+      : (t1item ? getTask1Value(t1item) : (input ? input.value.trim() : ''));
 
-  let model = '';
-  let context = '';
+    const t1 = t1item;
+    const t3 = task3Items.find(x => x.id === id);
 
-  const t1 = t1item;
-  const t3 = task3Items.find(x => x.id === id);
+    hintBox.classList.add('show');
+    hintBox.textContent = 'KI denkt nach...';
 
-  if (id === 'task2') {
-    model = 'Zusammenfassung mit: Notaufnahme, Informationsschalter, Besuchszeiten, Cafe/Shop, Parken.';
-    context = 'Task 2 Mediation Zusammenfassung auf Deutsch';
-  } else if (t1) {
-    model = t1.model;
-    context = 'Task 1 Lückensatz zur Krankenhausbroschüre';
-  } else if (t3) {
-    model = t3.model;
-    context = 'Task 3 Dialogvermittlung Rebecca';
-  }
-
-  hintBox.classList.add('show');
-  hintBox.textContent = 'KI denkt nach...';
-
-  if (id === 'task2') {
-    const t = norm(text);
-    const steps = [];
-    if (text.length < 50) {
-      steps.push('Schritt 1: Starte mit 1 Satz zur Notaufnahme (24 Stunden + Lage des Eingangs).');
-    } else {
-      if (!t.includes('notaufnahme')) steps.push('Nächster Schritt: Notaufnahme ergänzen.');
-      if (!t.includes('informationsschalter') && !t.includes('info')) steps.push('Nächster Schritt: Informationsschalter am Haupteingang ergänzen.');
-      if (!t.includes('besuch') && !t.includes('15') && !t.includes('17')) steps.push('Nächster Schritt: Besuchszeiten ergänzen (nachmittags + abends, nicht morgens).');
-      if (!t.includes('cafe') && !t.includes('shop')) steps.push('Nächster Schritt: Café und Shop mit Öffnungszeit ergänzen.');
-      if (!t.includes('park') && !t.includes('parkplatz')) steps.push('Nächster Schritt: Parken gegenüber Haupteingang + Zufahrten frei halten ergänzen.');
-      if (steps.length === 0) steps.push('Feinschliff: Kürzere, klare Sätze und alle 5 Bereiche in eigener Reihenfolge.');
+    if (id === 'task2') {
+      const t = norm(text);
+      const steps = [];
+      if (text.length < 50) {
+        steps.push('Schritt 1: Starte mit 1 Satz zur Notaufnahme (24 Stunden + Lage des Eingangs).');
+      } else {
+        if (!t.includes('notaufnahme')) steps.push('Nächster Schritt: Notaufnahme ergänzen.');
+        if (!t.includes('informationsschalter') && !t.includes('info')) steps.push('Nächster Schritt: Informationsschalter am Haupteingang ergänzen.');
+        if (!t.includes('besuch') && !t.includes('15') && !t.includes('17')) steps.push('Nächster Schritt: Besuchszeiten ergänzen (nachmittags + abends, nicht morgens).');
+        if (!t.includes('cafe') && !t.includes('shop')) steps.push('Nächster Schritt: Café und Shop mit Öffnungszeit ergänzen.');
+        if (!t.includes('park') && !t.includes('parkplatz')) steps.push('Nächster Schritt: Parken gegenüber Haupteingang + Zufahrten frei halten ergänzen.');
+        if (steps.length === 0) steps.push('Feinschliff: Kürzere, klare Sätze und alle 5 Bereiche in eigener Reihenfolge.');
+      }
+      hintBox.innerHTML = '<strong>KI-Hilfe (kleinschrittig):</strong> ' + esc(steps[0]);
+      return;
     }
 
-    hintBox.innerHTML = '<strong>KI-Hilfe (kleinschrittig):</strong> ' + esc(steps[0]);
-    return;
-  }
-
-  if (t1) {
-    hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(buildTask1Hint(id, text));
-    return;
-  }
-
-  if (t3) {
-    hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(buildTask3Hint(id, text));
-    return;
+    if (t1) {
+      hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(buildTask1Hint(id, text));
+      return;
+    }
+    if (t3) {
+      hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(buildTask3Hint(id, text));
+      return;
+    }
+  } catch (e) {
+    const hintBox = document.getElementById(id === 'task2' ? 'task2-hint' : id + '-hint');
+    if (hintBox) {
+      hintBox.classList.add('show');
+      hintBox.innerHTML = '<strong>KI-Hilfe:</strong> Temporärer Fehler. Bitte nochmal klicken.';
+    }
+  } finally {
+    setBtnBusy(btn, false, '', 'KI-Hilfe');
   }
 }
 
@@ -751,6 +747,15 @@ function looksGerman(text){
   return score >= 1;
 }
 
+function translateKnownEnglishToGerman(s){
+  const t = norm(s);
+  if (t.includes('fifty percent')) return '50 Prozent.';
+  if (t.includes('one of the largest') || t.includes('one of the biggest')) return 'Eines der größten Krankenhäuser in der Gegend.';
+  if (t.includes('teaching hospital')) return 'Ein Lehrkrankenhaus.';
+  if (t.includes('no smoking')) return 'Rauchen ist verboten.';
+  return '';
+}
+
 function canonicalGermanById(id){
   const map = {
     't1-1': 'Eines der größten Krankenhäuser in der Gegend.',
@@ -777,6 +782,8 @@ function finalizeGrammarOutput(id, originalText, candidateText){
   if (!original) return '';
 
   let out = candidate;
+  const translated = translateKnownEnglishToGerman(out);
+  if (translated) out = translated;
   if (!out || looksEnglish(out) || !looksGerman(out)) {
     const canonical = canonicalGermanById(id);
     out = canonical || original;
@@ -784,50 +791,66 @@ function finalizeGrammarOutput(id, originalText, candidateText){
 
   out = localGrammarFix(out);
   out = postFixGermanSuggestion(id, out);
+  if (looksEnglish(out)) out = postFixGermanSuggestion(id, localGrammarFix(canonicalGermanById(id) || original));
   return out;
 }
 
-async function askGrammar(id){
-  const boxId = id === 'task2' ? 'task2-grammar' : (id + '-grammar');
-  const box = document.getElementById(boxId);
-  if (!box) return;
-
-  const text = getAnswerById(id);
-  box.classList.add('show');
-  if (!text) {
-    box.innerHTML = '<strong>KI-Grammatik:</strong> Bitte zuerst eine Antwort eingeben.';
-    return;
+function setBtnBusy(btn, busy, busyLabel, idleLabel){
+  if (!btn) return;
+  if (busy) {
+    btn.dataset.prev = btn.textContent;
+    btn.textContent = busyLabel || 'Lädt...';
+    btn.disabled = true;
+  } else {
+    btn.disabled = false;
+    btn.textContent = idleLabel || btn.dataset.prev || btn.textContent;
   }
+}
 
-  box.innerHTML = '<strong>KI-Grammatik:</strong> LLM prüft Grammatik...';
-
+async function askGrammar(id, btn){
+  setBtnBusy(btn, true, 'LLM läuft...', 'KI-Grammatik (LLM)');
   try {
-    // Primary: dedicated correction endpoint
-    const corrected = await callCorrectApi(text);
-    const out = finalizeGrammarOutput(id, text, corrected);
-    box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
-    return;
-  } catch (e1) {
+    const boxId = id === 'task2' ? 'task2-grammar' : (id + '-grammar');
+    const box = document.getElementById(boxId);
+    if (!box) return;
+
+    const text = getAnswerById(id);
+    box.classList.add('show');
+    if (!text) {
+      box.innerHTML = '<strong>KI-Grammatik:</strong> Bitte zuerst eine Antwort eingeben.';
+      return;
+    }
+
+    box.innerHTML = '<strong>KI-Grammatik:</strong> LLM prüft Grammatik...';
+
     try {
-      // Secondary: hint endpoint with strict grammar-only prompt
-      const corrected = await callHintApi({
-        topic: 'grammar correction mediation',
-        language: 'de',
-        model: 'gpt-4.1-mini',
-        exerciseId: id + '-grammar',
-        task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht ändern. Sprache MUSS Deutsch bleiben.',
-        studentAnswer: text,
-        correctAnswer: '',
-        instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erklärung.'
-      });
-      const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
-      const out = finalizeGrammarOutput(id, text, cleaned);
+      const corrected = await callCorrectApi(text);
+      const out = finalizeGrammarOutput(id, text, corrected);
       box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
       return;
-    } catch (e2) {
-      const out = finalizeGrammarOutput(id, text, '');
-      box.innerHTML = '<strong>KI-Grammatik (Fallback) - Vorschlag:</strong><br>' + esc(out);
+    } catch (e1) {
+      try {
+        const corrected = await callHintApi({
+          topic: 'grammar correction mediation',
+          language: 'de',
+          model: 'gpt-4.1-mini',
+          exerciseId: id + '-grammar',
+          task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht ändern. Sprache MUSS Deutsch bleiben.',
+          studentAnswer: text,
+          correctAnswer: '',
+          instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erklärung.'
+        });
+        const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
+        const out = finalizeGrammarOutput(id, text, cleaned);
+        box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
+        return;
+      } catch (e2) {
+        const out = finalizeGrammarOutput(id, text, '');
+        box.innerHTML = '<strong>KI-Grammatik (Fallback) - Vorschlag:</strong><br>' + esc(out);
+      }
     }
+  } finally {
+    setBtnBusy(btn, false, '', 'KI-Grammatik (LLM)');
   }
 }
 
