@@ -706,6 +706,12 @@ function localGrammarFix(text){
   t = t.replace(/\beine\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
   t = t.replace(/\bein\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
   t = t.replace(/\bin\s+gegend\b/gi, 'in der Gegend');
+  t = t.replace(/\b50\s*prozent\b/gi, '50 Prozent');
+  t = t.replace(/\bfunfzig\s*prozent\b/gi, '50 Prozent');
+  t = t.replace(/\bnotfallaufnahme\b/gi, 'Notaufnahme');
+  t = t.replace(/\bhelicopter\b/gi, 'Hubschrauber');
+  t = t.replace(/\bteaching hospital\b/gi, 'Lehrkrankenhaus');
+  t = t.replace(/\bno smoking\b/gi, 'Rauchen ist verboten');
   t = t.replace(/\bkrankenhaus\b/gi, function(m){ return m === 'Krankenhaus' ? m : 'Krankenhaus'; });
   t = t.charAt(0).toUpperCase() + t.slice(1);
   if (!/[.!?]$/.test(t)) t += '.';
@@ -721,15 +727,64 @@ function postFixGermanSuggestion(id, out){
       return 'Eines der größten Krankenhäuser in der Gegend.';
     }
   }
+  if (id === 't1-2') {
+    const v = normalizeLoose(t);
+    if (includesLoose(v, 'fifty') || includesLoose(v, 'percent') || includesLoose(v, '50')) return '50 Prozent.';
+    if (includesLoose(v, 'half') || includesLoose(v, 'halfte') || includesLoose(v, 'haelfte')) return 'Die Hälfte.';
+  }
   return t;
 }
 
 function looksEnglish(text){
   const t = norm(text);
-  const markers = [' the ', ' and ', ' is ', ' are ', 'one of', 'biggest', 'area', 'hospital', 'please', 'you '];
+  const markers = [' the ', ' and ', ' is ', ' are ', 'one of', 'biggest', 'area', 'hospital', 'please', 'you ', 'fifty', 'percent', 'largest', 'half'];
   let score = 0;
   markers.forEach(m => { if ((' ' + t + ' ').includes(m)) score++; });
   return score >= 2;
+}
+
+function looksGerman(text){
+  const t = ' ' + norm(text) + ' ';
+  const markers = [' der ', ' die ', ' das ', ' den ', ' dem ', ' ein ', ' eine ', ' in ', ' und ', ' prozent ', ' hälfte ', ' notaufnahme ', ' krankenhaus '];
+  let score = 0;
+  markers.forEach(m => { if (t.includes(m)) score++; });
+  return score >= 1;
+}
+
+function canonicalGermanById(id){
+  const map = {
+    't1-1': 'Eines der größten Krankenhäuser in der Gegend.',
+    't1-2': '50 Prozent.',
+    't1-3': 'In die Notaufnahme und mit der Ambulanz oder dem Hubschrauber.',
+    't1-4': 'Ein Lehrkrankenhaus.',
+    't1-5': '200 apprentice nurses und assistant doctors.',
+    't1-6': 'In allen Krankenhausgebäuden verboten.',
+    't3-1': 'Die Arzthelferin fragt, wie sie helfen kann.',
+    't3-2': 'Mein Vater hat seit Mittwoch starke Kopfschmerzen und ihm ist heiß.',
+    't3-3': 'Sie sagt, dass das heiße Wetter meinem Vater vielleicht nicht gutgetan hat.',
+    't3-4': 'Wir waren am Mittwoch auf Safari, er hatte keinen Hut und war lange in der Sonne.',
+    't3-5': 'Sie fragt, ob mein Vater Medikamente nimmt oder Allergien hat.',
+    't3-6': 'Mein Vater nimmt keine Medikamente und hat keine Allergien.',
+    't3-7': 'Sie sagt, wir sollen das Formular ausfüllen, unterschreiben und warten; der Arzt kommt gleich.',
+    't3-8': 'Mein Vater bedankt sich für die Hilfe.'
+  };
+  return map[id] || '';
+}
+
+function finalizeGrammarOutput(id, originalText, candidateText){
+  const original = String(originalText || '').trim();
+  const candidate = String(candidateText || '').trim();
+  if (!original) return '';
+
+  let out = candidate;
+  if (!out || looksEnglish(out) || !looksGerman(out)) {
+    const canonical = canonicalGermanById(id);
+    out = canonical || original;
+  }
+
+  out = localGrammarFix(out);
+  out = postFixGermanSuggestion(id, out);
+  return out;
 }
 
 async function askGrammar(id){
@@ -749,8 +804,7 @@ async function askGrammar(id){
   try {
     // Primary: dedicated correction endpoint
     const corrected = await callCorrectApi(text);
-    const outRaw = (!corrected || looksEnglish(corrected)) ? localGrammarFix(text) : corrected;
-    const out = postFixGermanSuggestion(id, outRaw);
+    const out = finalizeGrammarOutput(id, text, corrected);
     box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
     return;
   } catch (e1) {
@@ -767,12 +821,11 @@ async function askGrammar(id){
         instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erklärung.'
       });
       const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
-      const outRaw = (!cleaned || looksEnglish(cleaned)) ? localGrammarFix(text) : cleaned;
-      const out = postFixGermanSuggestion(id, outRaw);
+      const out = finalizeGrammarOutput(id, text, cleaned);
       box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
       return;
     } catch (e2) {
-      const out = postFixGermanSuggestion(id, localGrammarFix(text));
+      const out = finalizeGrammarOutput(id, text, '');
       box.innerHTML = '<strong>KI-Grammatik (Fallback) - Vorschlag:</strong><br>' + esc(out);
     }
   }
