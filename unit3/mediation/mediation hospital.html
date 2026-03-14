@@ -698,6 +698,9 @@ function localGrammarFix(text){
   t = t.replace(/\s+/g, ' ');
   t = t.replace(/\bi\b/g, 'I');
   // Common German mediation fixes
+  t = t.replace(/\beines\s+der\s+gr[oö]?[sß]t\w*\s+in\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
+  t = t.replace(/\beines\s+der\s+gr[oö]?[sß]t\w*\s+in\s+der\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
+  t = t.replace(/\beines\s+der\s+gr[oö]?[sß]t\w*\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
   t = t.replace(/\beine?s?\s+der\s+g[r]?[oö]?[sß]te[n]?\s+in\s+(der\s+)?gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
   t = t.replace(/\beines\s+der\s+g[oö]ssen\s+in\s+der\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
   t = t.replace(/\beine\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
@@ -706,6 +709,18 @@ function localGrammarFix(text){
   t = t.replace(/\bkrankenhaus\b/gi, function(m){ return m === 'Krankenhaus' ? m : 'Krankenhaus'; });
   t = t.charAt(0).toUpperCase() + t.slice(1);
   if (!/[.!?]$/.test(t)) t += '.';
+  return t;
+}
+
+function postFixGermanSuggestion(id, out){
+  let t = String(out || '').trim();
+  if (!t) return t;
+  if (id === 't1-1') {
+    const v = normalizeLoose(t);
+    if (includesLoose(v, 'eines der') && includesLoose(v, 'gegend') && !includesLoose(v, 'krankenh')) {
+      return 'Eines der größten Krankenhäuser in der Gegend.';
+    }
+  }
   return t;
 }
 
@@ -734,7 +749,8 @@ async function askGrammar(id){
   try {
     // Primary: dedicated correction endpoint
     const corrected = await callCorrectApi(text);
-    const out = (!corrected || looksEnglish(corrected)) ? localGrammarFix(text) : corrected;
+    const outRaw = (!corrected || looksEnglish(corrected)) ? localGrammarFix(text) : corrected;
+    const out = postFixGermanSuggestion(id, outRaw);
     box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
     return;
   } catch (e1) {
@@ -751,11 +767,12 @@ async function askGrammar(id){
         instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erklärung.'
       });
       const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
-      const out = (!cleaned || looksEnglish(cleaned)) ? localGrammarFix(text) : cleaned;
+      const outRaw = (!cleaned || looksEnglish(cleaned)) ? localGrammarFix(text) : cleaned;
+      const out = postFixGermanSuggestion(id, outRaw);
       box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
       return;
     } catch (e2) {
-      const out = localGrammarFix(text);
+      const out = postFixGermanSuggestion(id, localGrammarFix(text));
       box.innerHTML = '<strong>KI-Grammatik (Fallback) - Vorschlag:</strong><br>' + esc(out);
     }
   }
