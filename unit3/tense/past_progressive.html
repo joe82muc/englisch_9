@@ -4,50 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#166534">
+<meta name="theme-color" content="#0e7c57">
 <title>Past Progressive – Unit 3</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --green:  #166534;
-  --green2: #15803d;
-  --lime:   #4ade80;
-  --bg:     #f0fdf4;
-  --card:   #ffffff;
-  --text:   #0f172a;
-  --muted:  #64748b;
-  --border: #d1fae5;
+  --green:  #0e7c57;
+  --green2: #0a5f43;
+  --lime:   #a8e4ff;
+  --bg:     #e8f7ff;
+  --card:   #f7fcff;
+  --text:   #1d2c28;
+  --muted:  #3d6576;
+  --border: #b7dff3;
   --yellow: #fef9c3;
-  --yellowb:#ca8a04;
+  --yellowb:#b45309;
   --red:    #dc2626;
   --redbg:  #fef2f2;
-  --greenbg:#f0fdf4;
+  --greenbg:#dcfce7;
 }
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 body {
-  font-family:'DM Sans',sans-serif;
-  background:var(--bg);
+  font-family:"Trebuchet MS","Segoe UI",sans-serif;
+  background:linear-gradient(180deg,#e8f7ff 0%,#dff2ff 100%);
   color:var(--text);
   min-height:100vh;
-  padding-bottom:3rem;
+  padding-bottom:4rem;
 }
 
 /* ── HEADER ── */
 .header {
-  background:var(--green);
-  padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 1.4rem;
-  position:relative; overflow:hidden;
+  background:linear-gradient(135deg,var(--green) 0%,var(--green2) 70%);
+  padding:calc(env(safe-area-inset-top)+1.1rem) 1.2rem 3.6rem;
+  position:relative;
+  overflow:hidden;
+  min-height:220px;
+}
+.header::before{
+  content:'';
+  position:absolute;
+  top:-60px;
+  right:-40px;
+  width:200px;
+  height:200px;
+  border-radius:50%;
+  background:rgba(37,99,235,.18);
+  pointer-events:none;
 }
 .header::after {
-  content:'';
-  position:absolute; bottom:-1px; left:0; right:0; height:24px;
-  background:var(--bg);
-  clip-path: ellipse(55% 100% at 50% 100%);
+  content:none;
+}
+.header-inner {
+  max-width:720px;
+  margin:0 auto;
+  position:relative;
+  z-index:2;
 }
 .back-btn {
   display:inline-flex; align-items:center; gap:.4rem;
-  color:rgba(255,255,255,.7); font-size:.78rem; font-weight:600;
-  background:none; border:none; cursor:pointer; margin-bottom:.8rem;
+  color:rgba(255,255,255,.88); font-size:.82rem; font-weight:700;
+  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.28);
+  border-radius:999px; padding:.35rem .62rem;
+  cursor:pointer; margin-bottom:.85rem;
   text-decoration:none;
 }
 .back-btn:hover { color:#fff; }
@@ -57,8 +75,8 @@ body {
   margin-bottom:.3rem;
 }
 h1 {
-  font-family:'Fraunces',serif;
-  font-size:clamp(1.6rem,5vw,2.4rem);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(1.75rem,4.6vw,2.5rem);
   font-weight:900; color:#fff; line-height:1.1;
 }
 h1 em { font-style:italic; opacity:.8; }
@@ -72,7 +90,7 @@ h1 em { font-style:italic; opacity:.8; }
   border:2px solid var(--border);
   border-radius:18px;
   overflow:hidden;
-  box-shadow:0 4px 20px rgba(22,101,52,.08);
+  box-shadow:0 8px 22px rgba(44,33,20,.08);
   margin-bottom:1.5rem;
 }
 .info-header {
@@ -95,23 +113,23 @@ h1 em { font-style:italic; opacity:.8; }
 
 /* Formula */
 .formula {
-  background:var(--greenbg);
-  border-left:4px solid var(--green2);
+  background:#eff9ff;
+  border-left:4px solid #2f91b8;
   border-radius:0 12px 12px 0;
   padding:.85rem 1rem; margin-bottom:1rem;
-  font-size:.95rem; font-weight:600; color:var(--green);
-  font-family:'Fraunces',serif;
+  font-size:.95rem; font-weight:700; color:var(--green);
+  font-family:Georgia,"Times New Roman",serif;
 }
 .formula span { color:var(--text); font-weight:400; font-family:'DM Sans',sans-serif; font-size:.82rem; }
 
 /* Table */
 .gram-table { width:100%; border-collapse:collapse; font-size:.82rem; margin-bottom:1rem; }
 .gram-table th {
-  background:#f0fdf4; color:var(--green);
+  background:#eff9ff; color:var(--green);
   padding:.5rem .75rem; text-align:left; font-weight:700;
   border-bottom:2px solid var(--border);
 }
-.gram-table td { padding:.5rem .75rem; border-bottom:1px solid #f0f9f0; vertical-align:top; }
+.gram-table td { padding:.5rem .75rem; border-bottom:1px solid #e7f4fc; vertical-align:top; }
 .gram-table tr:last-child td { border-bottom:none; }
 .gram-table .ex { color:var(--muted); font-style:italic; }
 .gram-table b { color:var(--green2); }
@@ -127,17 +145,17 @@ h1 em { font-style:italic; opacity:.8; }
 /* ── LEVEL TABS ── */
 .tabs-wrap { padding:0 1.2rem; max-width:720px; margin:0 auto 1.2rem; }
 .level-tabs {
-  display:flex; background:#dcfce7;
+  display:flex; background:#d8effc;
   border-radius:12px; padding:3px; gap:0;
 }
 .ltab {
   flex:1; padding:.5rem .5rem; border:none;
   border-radius:10px; font-family:'DM Sans',sans-serif;
   font-size:.8rem; font-weight:700; cursor:pointer;
-  background:transparent; color:var(--green2);
+  background:transparent; color:#2f91b8;
   transition:all .2s; text-align:center; line-height:1.2;
 }
-.ltab.active { background:var(--green); color:#fff; box-shadow:0 2px 8px rgba(22,101,52,.25); }
+.ltab.active { background:var(--green); color:#fff; box-shadow:0 2px 8px rgba(30,58,95,.25); }
 
 /* ── EXERCISES ── */
 .ex-wrap { padding:0 1.2rem; max-width:720px; margin:0 auto; }
@@ -155,7 +173,7 @@ h1 em { font-style:italic; opacity:.8; }
   background:var(--card); border:1.5px solid var(--border);
   border-radius:14px; padding:1.1rem;
   margin-bottom:.85rem;
-  box-shadow:0 2px 8px rgba(22,101,52,.05);
+  box-shadow:0 8px 22px rgba(44,33,20,.06);
 }
 .ex-num {
   font-size:.62rem; font-weight:700; letter-spacing:2px;
@@ -187,7 +205,7 @@ h1 em { font-style:italic; opacity:.8; }
   padding:.45rem 1rem; border:1.5px solid var(--border);
   border-radius:50px; font-family:'DM Sans',sans-serif;
   font-size:.82rem; font-weight:600; cursor:pointer;
-  background:#f8fffe; color:var(--text);
+  background:#f4fbff; color:var(--text);
   transition:all .15s; -webkit-appearance:none;
 }
 .mc-btn:hover { border-color:var(--green2); color:var(--green2); }
@@ -200,7 +218,7 @@ h1 em { font-style:italic; opacity:.8; }
   width:100%; padding:.6rem .85rem;
   border:1.5px solid var(--border); border-radius:10px;
   font-family:'DM Sans',sans-serif; font-size:.9rem;
-  background:#fafffe; color:var(--text); outline:none;
+  background:#f4fbff; color:var(--text); outline:none;
   transition:border .2s; margin-bottom:.6rem;
   -webkit-appearance:none;
 }
@@ -234,6 +252,7 @@ h1 em { font-style:italic; opacity:.8; }
   border-radius:14px; padding:.9rem 1.1rem;
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:1rem; gap:1rem; flex-wrap:wrap;
+  box-shadow:0 8px 22px rgba(44,33,20,.06);
 }
 .score-nums { display:flex; gap:1.2rem; }
 .sn { text-align:center; }
@@ -243,13 +262,18 @@ h1 em { font-style:italic; opacity:.8; }
   padding:.42rem 1rem; background:#f1f5f9; color:var(--muted);
   border:none; border-radius:50px;
   font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
-  cursor:pointer;
+  cursor:pointer; transition:all .15s;
 }
+.reset-btn:hover{background:#e2e8f0;color:var(--green);}
 
 .section-heading {
   font-family:'Fraunces',serif;
   font-size:1rem; font-weight:700; color:var(--green);
   margin:.6rem 0 .7rem; display:flex; align-items:center; gap:.5rem;
+}
+@media (max-width:640px){
+  .header{padding:calc(env(safe-area-inset-top)+1rem) .9rem 1.4rem;}
+  .back-btn{font-size:.78rem;padding:.3rem .56rem;}
 }
 </style>
 </head>
@@ -257,10 +281,12 @@ h1 em { font-style:italic; opacity:.8; }
 
 <!-- HEADER -->
 <div class="header">
-  <a href="unit3.html" class="back-btn">← Back to Unit 3</a>
-  <div class="unit-tag">Unit 3 · Grammar G7</div>
-  <h1>The Past<br><em>Progressive</em></h1>
-  <p class="header-sub">Die Verlaufsform der Vergangenheit · A2+</p>
+  <div class="header-inner">
+    <a href="https://joe82muc.github.io/englisch_9/index.html" class="back-btn">← Back</a>
+    <div class="unit-tag">Unit 3 · Grammar</div>
+    <h1>The Past<br><em>Progressive</em></h1>
+    <p class="header-sub">Die Verlaufsform der Vergangenheit · A2+</p>
+  </div>
 </div>
 
 <!-- INFO BOX -->
