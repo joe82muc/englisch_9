@@ -80,12 +80,17 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
 .btn-hint{background:var(--hint-bg);border:1.5px solid var(--hint-border);color:#0e7490;}
 .btn-secondary{background:#eef2f7;color:#334155;}
 
-.model{margin-top:.45rem;font-size:.84rem;line-height:1.5;color:#27485e;background:#edf6fc;border:1px solid #cfe5f3;border-radius:9px;padding:.42rem .55rem;}
+.model{display:none;margin-top:.45rem;font-size:.84rem;line-height:1.5;color:#27485e;background:#edf6fc;border:1px solid #cfe5f3;border-radius:9px;padding:.42rem .55rem;}
+.model.show{display:block;}
+.btn-model{display:none;}
+.btn-model.show{display:inline-block;}
 .feedback{margin-top:.42rem;font-size:.84rem;font-weight:700;min-height:1.1rem;}
 .feedback.ok{color:var(--ok);}
 .feedback.bad{color:var(--bad);}
 .hint-box{display:none;margin-top:.45rem;background:var(--hint-bg);border:1.5px solid var(--hint-border);border-radius:10px;padding:.58rem .72rem;font-size:.84rem;line-height:1.55;color:#155e75;}
 .hint-box.show{display:block;}
+.grammar-box{display:none;margin-top:.45rem;background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:.58rem .72rem;font-size:.84rem;line-height:1.55;color:#4c1d95;}
+.grammar-box.show{display:block;}
 
 .grid-2{display:grid;grid-template-columns:1fr;gap:1rem;}
 @media (min-width:900px){
@@ -114,7 +119,7 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
     <a class="back-btn" href="https://joe82muc.github.io/englisch_9/index.html">← Back</a>
     <div class="h-top">Mediation · Unit 3</div>
     <h1>Mediation 3 - At the Hospital</h1>
-    <p class="h-sub">Aufgabenstellung wie im Arbeitsblatt, mit KI-Hilfe, Musterlösungen und korrigierter Endversion.</p>
+    <p class="h-sub">Aufgabenstellung wie im Arbeitsblatt, mit KI-Hilfe, einblendbaren Musterlösungen und korrigierter Endversion.</p>
   </div>
 </div>
 
@@ -137,7 +142,7 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
 
   <section class="card" id="task1">
     <div class="task-title">1) Lies die Broschüre und ergänze die Sätze mit den richtigen Informationen.</div>
-    <p class="task-sub">Schreibe die fehlenden Informationen. Musterlösung wird immer angezeigt.</p>
+    <p class="task-sub">Schreibe die fehlenden Informationen. Musterlösung kann bei Bedarf eingeblendet werden.</p>
     <div class="q-list" id="t1-list"></div>
     <div class="actions">
       <button class="btn btn-check" onclick="checkTask1()">Task 1 prüfen</button>
@@ -149,13 +154,16 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
     <div class="task-title">2) Fasse die wichtigsten Informationen aus der Broschüre auf Deutsch zusammen. Schreibe ganze Sätze.</div>
     <p class="task-sub">Rebecca und ihre Familie sind im Urlaub in Südafrika. Rebeccas Vater fühlt sich nicht wohl. Im Hotel haben sie die Broschüre eines Krankenhauses entdeckt. Übernimm Rebeccas Rolle und fasse für ihren Vater, der nicht so gut Englisch spricht, das Wichtigste auf Deutsch zusammen. Gehe dabei auf diese Bereiche ein: 1. Notaufnahme; 2. Informationsschalter; 3. Besuchszeiten; 4. Café und Shop; 5. Parken.</p>
     <textarea id="t2-text" class="textarea" placeholder="Schreibe deine Zusammenfassung auf Deutsch..."></textarea>
-    <div class="model"><strong>Musterlösung (immer sichtbar):</strong><br>Das City General Hospital hat eine Notaufnahme, die 24 Stunden am Tag geöffnet ist. Der Eingang der Notaufnahme liegt an der südwestlichen Ecke des Krankenhauses. Der Informationsschalter befindet sich am Haupteingang und beantwortet allgemeine Fragen von Patienten und Besuchern. Besuchszeiten sind täglich von 15:00 bis 17:00 Uhr und von 19:00 bis 20:00 Uhr, auch am Wochenende; morgens sind keine Besucher erlaubt und Besuche dürfen höchstens 30 Minuten dauern. Das Café und der Shop sind von Montag bis Samstag von 9:00 bis 18:00 Uhr geöffnet. Geparkt werden soll auf dem Parkplatz gegenüber dem Haupteingang, damit die Ambulanzzufahrten frei bleiben.</div>
     <div class="actions">
       <button class="btn btn-check" onclick="checkTask2()">Task 2 prüfen</button>
+      <button class="btn btn-secondary btn-model" id="task2-model-btn" onclick="toggleModel('task2')">Musterlösung anzeigen</button>
       <button class="btn btn-hint" onclick="askHint('task2')">KI-Hilfe Task 2</button>
+      <button class="btn btn-hint" onclick="askGrammar('task2')">KI-Grammatik (LLM)</button>
     </div>
+    <div class="model" id="task2-model"><strong>Musterlösung:</strong><br>Das City General Hospital hat eine Notaufnahme, die 24 Stunden am Tag geöffnet ist. Der Eingang der Notaufnahme liegt an der südwestlichen Ecke des Krankenhauses. Der Informationsschalter befindet sich am Haupteingang und beantwortet allgemeine Fragen von Patienten und Besuchern. Besuchszeiten sind täglich von 15:00 bis 17:00 Uhr und von 19:00 bis 20:00 Uhr, auch am Wochenende; morgens sind keine Besucher erlaubt und Besuche dürfen höchstens 30 Minuten dauern. Das Café und der Shop sind von Montag bis Samstag von 9:00 bis 18:00 Uhr geöffnet. Geparkt werden soll auf dem Parkplatz gegenüber dem Haupteingang, damit die Ambulanzzufahrten frei bleiben.</div>
     <div class="feedback" id="t2-feedback"></div>
     <div class="hint-box" id="task2-hint"></div>
+    <div class="grammar-box" id="task2-grammar"></div>
   </section>
 
   <section class="card" id="task3">
@@ -223,7 +231,9 @@ const task1Items = [
   {
     id:'t1-3',
     prompt:'3. Sie kommen ... oder werden mit ... eingeliefert.',
-    model:'... in die Notaufnahme / Accident and Emergency Department ... und ... mit Ambulanz oder Hubschrauber.'
+    model:'... in die Notaufnahme / Accident and Emergency Department ... und ... mit Ambulanz oder Hubschrauber.',
+    multi:true,
+    placeholders:['1. Lücke (wohin?)','2. Lücke (womit?)']
   },
   {
     id:'t1-4',
@@ -293,6 +303,80 @@ const task3Items = [
   }
 ];
 
+const task1HintRules = {
+  't1-1': ['eines der', 'größ', 'krankenh', 'gegend'],
+  't1-2': ['50'],
+  't1-3': ['notaufnahme', 'ambulanz'],
+  't1-4': ['lehrkrankenhaus'],
+  't1-5': ['200', 'nurses'],
+  't1-6': ['rauchen', 'verbot']
+};
+
+const task3HintRules = {
+  't3-1': ['fragt', 'helfen'],
+  't3-2': ['kopfschmerzen', 'heiß'],
+  't3-3': ['wetter', 'vater'],
+  't3-4': ['safari', 'hut', 'sonne'],
+  't3-5': ['medikamente', 'allergien'],
+  't3-6': ['keine', 'medikamente', 'allergien'],
+  't3-7': ['formular', 'unterschreiben', 'warten', 'arzt'],
+  't3-8': ['bedankt', 'hilfe']
+};
+
+const task1SemanticRules = {
+  't1-1': [
+    ['eines der','einer der','eins der'],
+    ['groß','größt'],
+    ['krankenhaus','hospital']
+  ],
+  't1-2': [
+    ['50','hälfte','haelfte','die hälfte']
+  ],
+  't1-3': [
+    ['notauf','emergency','accident and emergency','aed'],
+    ['ambulanz','krankenwagen','hubschrauber','helicopter']
+  ],
+  't1-4': [
+    ['lehrkrankenhaus','teaching hospital','ausbildungskrankenhaus']
+  ],
+  't1-5': [
+    ['200','zweihundert'],
+    ['nurses','krankenschwestern','pfleger','assistant doctors','assistenzärzte','assistenzaerzte']
+  ],
+  't1-6': [
+    ['rauchen','smoking'],
+    ['verbot','nicht erlaubt','no smoking']
+  ]
+};
+
+function matchAnyGroup(text, groups) {
+  return groups.filter(group => group.some(token => includesLoose(text, token))).length;
+}
+
+function normalizeLoose(s){
+  return norm(s)
+    .replace(/ä/g,'ae')
+    .replace(/ö/g,'oe')
+    .replace(/ü/g,'ue')
+    .replace(/ß/g,'ss');
+}
+
+function includesLoose(text, token){
+  const t = normalizeLoose(text);
+  const k = normalizeLoose(token);
+  return t.includes(k);
+}
+
+function isTask1SemanticallyCorrect(id, text) {
+  const rules = task1SemanticRules[id];
+  if (!rules) return false;
+  const v = normalizeLoose(text);
+  if (!v) return false;
+  const hits = matchAnyGroup(v, rules);
+  const needed = Math.max(1, Math.ceil(rules.length * 0.66));
+  return hits >= needed;
+}
+
 function esc(s){
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -306,17 +390,35 @@ function initTask1(){
   task1Items.forEach(item => {
     const row = document.createElement('div');
     row.className = 'q-item';
+    const inputHtml = item.multi
+      ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem">
+          <input class="input" id="${item.id}-a" type="text" placeholder="${esc(item.placeholders[0])}">
+          <input class="input" id="${item.id}-b" type="text" placeholder="${esc(item.placeholders[1])}">
+        </div>`
+      : `<input class="input" id="${item.id}" type="text" placeholder="Antwort...">`;
     row.innerHTML = `
       <label for="${item.id}">${esc(item.prompt)}</label>
-      <input class="input" id="${item.id}" type="text" placeholder="Antwort...">
+      ${inputHtml}
       <div class="actions">
+        <button class="btn btn-secondary btn-model" id="${item.id}-model-btn" onclick="toggleModel('${item.id}')">Musterlösung anzeigen</button>
         <button class="btn btn-hint" onclick="askHint('${item.id}')">KI-Hilfe</button>
+        <button class="btn btn-hint" onclick="askGrammar('${item.id}')">KI-Grammatik (LLM)</button>
       </div>
-      <div class="model"><strong>Musterlösung:</strong> ${esc(item.model)}</div>
+      <div class="model" id="${item.id}-model"><strong>Musterlösung:</strong> ${esc(item.model)}</div>
       <div class="feedback" id="${item.id}-fb"></div>
       <div class="hint-box" id="${item.id}-hint"></div>
+      <div class="grammar-box" id="${item.id}-grammar"></div>
     `;
     host.appendChild(row);
+    if (item.multi) {
+      const inputA = row.querySelector(`#${item.id}-a`);
+      const inputB = row.querySelector(`#${item.id}-b`);
+      inputA.addEventListener('input', () => updateModelButton(item.id));
+      inputB.addEventListener('input', () => updateModelButton(item.id));
+    } else {
+      const input = row.querySelector(`#${item.id}`);
+      input.addEventListener('input', () => updateModelButton(item.id));
+    }
   });
 }
 
@@ -331,14 +433,68 @@ function initTask3(){
       <div class="small" style="margin-bottom:.4rem"><strong>Vorgabe:</strong> ${esc(item.source)}</div>
       <textarea class="textarea" id="${item.id}" placeholder="Rebecca sagt..."></textarea>
       <div class="actions">
+        <button class="btn btn-secondary btn-model" id="${item.id}-model-btn" onclick="toggleModel('${item.id}')">Musterlösung anzeigen</button>
         <button class="btn btn-hint" onclick="askHint('${item.id}')">KI-Hilfe</button>
+        <button class="btn btn-hint" onclick="askGrammar('${item.id}')">KI-Grammatik (LLM)</button>
       </div>
-      <div class="model"><strong>Musterlösung:</strong> ${esc(item.model)}</div>
+      <div class="model" id="${item.id}-model"><strong>Musterlösung:</strong> ${esc(item.model)}</div>
       <div class="feedback" id="${item.id}-fb"></div>
       <div class="hint-box" id="${item.id}-hint"></div>
+      <div class="grammar-box" id="${item.id}-grammar"></div>
     `;
     host.appendChild(row);
+    const input = row.querySelector(`#${item.id}`);
+    input.addEventListener('input', () => updateModelButton(item.id));
   });
+}
+
+function toggleModel(id){
+  const modelId = id === 'task2' ? 'task2-model' : (id + '-model');
+  const btnId = id === 'task2' ? 'task2-model-btn' : (id + '-model-btn');
+  const box = document.getElementById(modelId);
+  const btn = document.getElementById(btnId);
+  if (!box || !btn) return;
+  box.classList.toggle('show');
+  btn.textContent = box.classList.contains('show') ? 'Musterlösung ausblenden' : 'Musterlösung anzeigen';
+}
+
+function updateModelButton(id){
+  const inputId = id === 'task2' ? 't2-text' : id;
+  const btnId = id === 'task2' ? 'task2-model-btn' : (id + '-model-btn');
+  const modelId = id === 'task2' ? 'task2-model' : (id + '-model');
+  const input = document.getElementById(inputId);
+  const inputA = document.getElementById(id + '-a');
+  const inputB = document.getElementById(id + '-b');
+  const btn = document.getElementById(btnId);
+  const box = document.getElementById(modelId);
+  if (!btn || !box) return;
+
+  const hasText = input
+    ? input.value.trim().length > 0
+    : ((inputA && inputA.value.trim().length > 0) || (inputB && inputB.value.trim().length > 0));
+  btn.classList.toggle('show', hasText);
+  if (!hasText) {
+    box.classList.remove('show');
+    btn.textContent = 'Musterlösung anzeigen';
+  }
+}
+
+function getTask1Value(item){
+  if (item.multi) {
+    const a = (document.getElementById(item.id + '-a')?.value || '').trim();
+    const b = (document.getElementById(item.id + '-b')?.value || '').trim();
+    return (a + ' | ' + b).trim();
+  }
+  return (document.getElementById(item.id)?.value || '').trim();
+}
+
+function getAnswerById(id){
+  if (id === 'task2') return (document.getElementById('t2-text')?.value || '').trim();
+  const t1 = task1Items.find(x => x.id === id);
+  if (t1) return getTask1Value(t1);
+  const t3 = task3Items.find(x => x.id === id);
+  if (t3) return (document.getElementById(id)?.value || '').trim();
+  return '';
 }
 
 function setFeedback(id, ok, msg){
@@ -357,13 +513,45 @@ function keywordCheck(value, model){
   return hits >= Math.max(2, Math.floor(mWords.length * 0.2));
 }
 
+function buildTask1Hint(id, text){
+  const v = normalizeLoose(text);
+  if (!v) return 'Schritt 1: Schreibe zuerst eine kurze Antwort mit den Schlüsselwörtern aus der Broschüre.';
+
+  if (isTask1SemanticallyCorrect(id, text)) {
+    return 'Inhaltlich richtig. Genau so ist die Aussage korrekt.';
+  }
+
+  const semantic = task1SemanticRules[id] || [];
+  const missingGroup = semantic.find(group => !group.some(token => includesLoose(v, token)));
+  if (missingGroup && missingGroup.length > 0) {
+    return 'Nächster Schritt: Ergänze noch "' + missingGroup[0] + '".';
+  }
+
+  const rule = task1HintRules[id] || [];
+  const missing = rule.filter(k => !v.includes(k));
+  if (missing.length > 0) return 'Nächster Schritt: Ergänze noch "' + missing[0] + '".';
+  return 'Fast richtig. Prüfe noch einmal die Kerninformation aus der Broschüre.';
+}
+
+function buildTask3Hint(id, text){
+  const v = norm(text);
+  if (!v) return 'Schritt 1: Starte mit einem Vermittlungssatz, z. B. "Sie fragt ..." oder "Mein Vater sagt ...".';
+  const rule = task3HintRules[id] || [];
+  const hits = rule.filter(k => v.includes(k)).length;
+  if (hits >= Math.max(2, Math.floor(rule.length / 2))) {
+    return 'Inhalt passt schon gut. Feinschliff: einfacher und klarer Satzbau.';
+  }
+  const missing = rule.find(k => !v.includes(k));
+  return 'Nächster Schritt: Baue das Schlüsselwort "' + (missing || rule[0] || 'Kernaussage') + '" ein.';
+}
+
 function checkTask1(){
   let okCount = 0;
   task1Items.forEach(it => {
-    const val = document.getElementById(it.id).value;
-    const ok = keywordCheck(val, it.model);
+    const val = getTask1Value(it);
+    const ok = isTask1SemanticallyCorrect(it.id, val) || keywordCheck(val, it.model);
     if (ok) okCount++;
-    setFeedback(it.id, ok, ok ? 'Plausibel.' : 'Bitte genauer an der Broschüre orientieren.');
+    setFeedback(it.id, ok, ok ? 'Sinngemäß richtig.' : 'Inhaltlich noch unvollständig. Ergänze die Kerninformation.');
   });
   const fb = document.getElementById('t1-feedback');
   fb.className = 'feedback ' + (okCount >= 4 ? 'ok' : 'bad');
@@ -385,9 +573,12 @@ function checkTask3(){
   let okCount = 0;
   task3Items.forEach(it => {
     const val = document.getElementById(it.id).value;
-    const ok = keywordCheck(val, it.model);
+    const v = norm(val);
+    const rule = task3HintRules[it.id] || [];
+    const hasRelevantWord = rule.some(k => v.includes(k));
+    const ok = keywordCheck(val, it.model) || (v.length > 18 && hasRelevantWord);
     if (ok) okCount++;
-    setFeedback(it.id, ok, ok ? 'Sinn passt.' : 'Noch nicht eindeutig genug vermittelt.');
+    setFeedback(it.id, ok, ok ? 'Sinngemäß passend.' : 'Noch nicht eindeutig genug vermittelt.');
   });
   const fb = document.getElementById('t3-feedback');
   fb.className = 'feedback ' + (okCount >= 6 ? 'ok' : 'bad');
@@ -436,14 +627,17 @@ async function callCorrectApi(studentAnswer){
 }
 
 async function askHint(id){
-  const hintBox = document.getElementById(id + '-hint');
-  const input = document.getElementById(id) || document.getElementById('t2-text');
-  const text = input ? input.value.trim() : '';
+  const hintBox = document.getElementById(id === 'task2' ? 'task2-hint' : id + '-hint');
+  const t1item = task1Items.find(x => x.id === id);
+  const input = document.getElementById(id === 'task2' ? 't2-text' : id);
+  const text = id === 'task2'
+    ? (input ? input.value.trim() : '')
+    : (t1item ? getTask1Value(t1item) : (input ? input.value.trim() : ''));
 
   let model = '';
   let context = '';
 
-  const t1 = task1Items.find(x => x.id === id);
+  const t1 = t1item;
   const t3 = task3Items.find(x => x.id === id);
 
   if (id === 'task2') {
@@ -460,19 +654,91 @@ async function askHint(id){
   hintBox.classList.add('show');
   hintBox.textContent = 'KI denkt nach...';
 
+  if (id === 'task2') {
+    const t = norm(text);
+    const steps = [];
+    if (text.length < 50) {
+      steps.push('Schritt 1: Starte mit 1 Satz zur Notaufnahme (24 Stunden + Lage des Eingangs).');
+    } else {
+      if (!t.includes('notaufnahme')) steps.push('Nächster Schritt: Notaufnahme ergänzen.');
+      if (!t.includes('informationsschalter') && !t.includes('info')) steps.push('Nächster Schritt: Informationsschalter am Haupteingang ergänzen.');
+      if (!t.includes('besuch') && !t.includes('15') && !t.includes('17')) steps.push('Nächster Schritt: Besuchszeiten ergänzen (nachmittags + abends, nicht morgens).');
+      if (!t.includes('cafe') && !t.includes('shop')) steps.push('Nächster Schritt: Café und Shop mit Öffnungszeit ergänzen.');
+      if (!t.includes('park') && !t.includes('parkplatz')) steps.push('Nächster Schritt: Parken gegenüber Haupteingang + Zufahrten frei halten ergänzen.');
+      if (steps.length === 0) steps.push('Feinschliff: Kürzere, klare Sätze und alle 5 Bereiche in eigener Reihenfolge.');
+    }
+
+    hintBox.innerHTML = '<strong>KI-Hilfe (kleinschrittig):</strong> ' + esc(steps[0]);
+    return;
+  }
+
+  if (t1) {
+    hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(buildTask1Hint(id, text));
+    return;
+  }
+
+  if (t3) {
+    hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(buildTask3Hint(id, text));
+    return;
+  }
+}
+
+function localGrammarFix(text){
+  let t = String(text || '').trim();
+  if (!t) return '';
+  t = t.replace(/\s+/g, ' ');
+  t = t.replace(/\bi\b/g, 'I');
+  // Common German mediation fixes
+  t = t.replace(/\beine\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
+  t = t.replace(/\bein\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
+  t = t.replace(/\bin\s+gegend\b/gi, 'in der Gegend');
+  t = t.replace(/\bkrankenhaus\b/gi, function(m){ return m === 'Krankenhaus' ? m : 'Krankenhaus'; });
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  if (!/[.!?]$/.test(t)) t += '.';
+  return t;
+}
+
+async function askGrammar(id){
+  const boxId = id === 'task2' ? 'task2-grammar' : (id + '-grammar');
+  const box = document.getElementById(boxId);
+  if (!box) return;
+
+  const text = getAnswerById(id);
+  box.classList.add('show');
+  if (!text) {
+    box.innerHTML = '<strong>KI-Grammatik:</strong> Bitte zuerst eine Antwort eingeben.';
+    return;
+  }
+
+  box.innerHTML = '<strong>KI-Grammatik:</strong> LLM prüft Grammatik...';
+
   try {
-    const hint = await callHintApi({
-      topic:'Mediation hospital',
-      language:'de',
-      exerciseId:id,
-      task:context,
-      studentAnswer:text,
-      correctAnswer:model,
-      instruction:'Gib nur einen kurzen Lernhinweis, keine komplette Neulösung.'
-    });
-    hintBox.innerHTML = '<strong>KI-Hilfe:</strong> ' + esc(hint);
-  } catch (e) {
-    hintBox.innerHTML = '<strong>Fallback-Hinweis:</strong> Arbeite mit den Schlüsselinfos aus der Broschüre und vergleiche mit der sichtbaren Musterlösung.';
+    // Primary: dedicated correction endpoint
+    const corrected = await callCorrectApi(text);
+    const out = corrected || localGrammarFix(text);
+    box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
+    return;
+  } catch (e1) {
+    try {
+      // Secondary: hint endpoint with strict grammar-only prompt
+      const corrected = await callHintApi({
+        topic: 'grammar correction mediation',
+        language: 'de',
+        model: 'gpt-4.1-mini',
+        exerciseId: id + '-grammar',
+        task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht ändern.',
+        studentAnswer: text,
+        correctAnswer: '',
+        instruction: 'Gib nur die korrigierte Version des Textes zurück, ohne Erklärung.'
+      });
+      const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
+      const out = cleaned || localGrammarFix(text);
+      box.innerHTML = '<strong>KI-Grammatik (LLM) - Vorschlag:</strong><br>' + esc(out);
+      return;
+    } catch (e2) {
+      const out = localGrammarFix(text);
+      box.innerHTML = '<strong>KI-Grammatik (Fallback) - Vorschlag:</strong><br>' + esc(out);
+    }
   }
 }
 
@@ -570,6 +836,7 @@ document.getElementById('chat-input').addEventListener('keydown', (e) => {
 
 initTask1();
 initTask3();
+document.getElementById('t2-text').addEventListener('input', () => updateModelButton('task2'));
 </script>
 </body>
 </html>
