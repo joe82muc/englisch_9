@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1e3a5f">
+<title>Mediation – At the Restaurant</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1e3a5f;--green2:#1e3a5f;--lime:#dcfce7;--limeb:#86efac;
+  --orange:#c2410c;--orangebg:#fff7ed;--orangeb:#fdba74;
+  --blue:#1d4ed8;--bluebg:#eff6ff;--blueb:#93c5fd;
+  #eff6ff;--card:#fff;--border:#d1fae5;
+  --text:#0f172a;--muted:#64748b;
+  --red:#dc2626;--redbg:#fef2f2;
+  --gbg:#dcfce7;--gb:#16a34a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
+.back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
+.utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#86efac;margin-bottom:.3rem;}
+h1{font-family:'Fraunces',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#fff;line-height:1.1;}
+h1 em{font-style:italic;opacity:.85;}
+.hsub{font-size:.8rem;color:rgba(255,255,255,.6);margin-top:.3rem;}
+
+/* SCENARIO */
+.scenario{max-width:680px;margin:1.2rem auto;padding:0 1rem;}
+.scene-card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:1rem 1.2rem;box-shadow:0 2px 12px rgba(6,95,70,.08);margin-bottom:1rem;}
+.scene-card h2{font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;color:var(--green);margin-bottom:.5rem;}
+.scene-card p{font-size:.82rem;line-height:1.6;color:var(--muted);}
+
+/* CHAT */
+.chat-wrap{max-width:680px;margin:0 auto;padding:0 1rem 8rem;}
+.chat{display:flex;flex-direction:column;gap:.6rem;}
+
+.msg{max-width:85%;border-radius:16px;padding:.7rem 1rem;font-size:.85rem;line-height:1.55;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Uncle (left, orange) */
+.msg.uncle{align-self:flex-start;background:var(--orangebg);border:1.5px solid var(--orangeb);border-bottom-left-radius:4px;}
+.msg.uncle .sender{color:var(--orange);font-weight:700;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:.3rem;}
+
+/* Ranger (left, blue) */
+.msg.ranger{align-self:flex-start;background:var(--bluebg);border:1.5px solid var(--blueb);border-bottom-left-radius:4px;}
+.msg.ranger .sender{color:var(--blue);font-weight:700;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:.3rem;}
+
+/* Student (right, green) */
+.msg.student{align-self:flex-end;background:var(--lime);border:1.5px solid var(--limeb);border-bottom-right-radius:4px;}
+.msg.student .sender{color:var(--green);font-weight:700;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:.3rem;}
+
+/* AI tip */
+.msg.tip{align-self:center;background:#ecfeff;border:1.5px solid #a5f3fc;border-radius:12px;max-width:90%;text-align:center;font-size:.8rem;color:#155e75;}
+.msg.tip .sender{color:#0e7490;font-weight:700;font-size:.68rem;}
+
+/* Error */
+.msg.err{align-self:flex-end;background:var(--redbg);border:1.5px solid #fca5a5;border-bottom-right-radius:4px;}
+.msg.err .sender{color:var(--red);font-weight:700;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:.3rem;}
+
+/* Success */
+.msg.ok{align-self:flex-end;background:var(--gbg);border:1.5px solid var(--gb);border-bottom-right-radius:4px;}
+.msg.ok .sender{color:var(--gb);font-weight:700;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:.3rem;}
+
+/* Typing indicator */
+.typing{display:flex;gap:4px;padding:4px 0;}
+.typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce .6s infinite alternate;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{to{transform:translateY(-6px);opacity:.4;}}
+
+/* INPUT BAR */
+.input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1.5px solid var(--border);padding:.7rem 1rem calc(env(safe-area-inset-bottom) + .7rem);display:flex;gap:.5rem;align-items:flex-end;z-index:10;}
+.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fdf9;}
+.input-bar textarea:focus{border-color:var(--green2);}
+.input-bar textarea:disabled{background:#f1f5f9;color:#94a3b8;}
+.send-btn{background:var(--green);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.send-btn:hover{background:var(--green2);}
+.send-btn:disabled{background:#94a3b8;cursor:default;}
+
+/* Progress */
+.progress{max-width:680px;margin:.5rem auto;padding:0 1rem;}
+.progress-bar{background:#d1fae5;border-radius:20px;height:8px;overflow:hidden;}
+.progress-fill{background:var(--green);height:100%;border-radius:20px;transition:width .5s ease;}
+.progress-label{font-size:.7rem;color:var(--muted);text-align:center;margin-top:.3rem;}
+
+/* Instruction hint */
+.instr{font-size:.78rem;color:var(--muted);text-align:center;padding:.3rem;font-style:italic;}
+
+/* Complete */
+.complete{text-align:center;padding:2rem 1rem;}
+.complete h2{font-family:'Fraunces',serif;color:var(--green);font-size:1.3rem;margin-bottom:.5rem;}
+.complete p{color:var(--muted);font-size:.88rem;}
+.restart-btn{margin-top:1rem;padding:.6rem 1.5rem;background:var(--green);color:#fff;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" class="back">← Back</a>
+  <div class="utag">Unit 3 · Mediation · Food</div>
+  <h1>At the<br><em>Restaurant</em> 🍽️</h1>
+  <p class="hsub">Du vermittelst zwischen deinem Vater und dem Kellner</p>
+</div>
+
+<div class="scenario">
+  <div class="scene-card">
+    <h2>🎭 Situation</h2>
+    <p>Du bist mit deinem Vater in einem Restaurant in Durban, Südafrika. Euer Kellner spricht nur Englisch. Dein Vater hat Fragen zum Essen und braucht deine Hilfe beim Bestellen!</p>
+  </div>
+</div>
+
+<div class="progress">
+  <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+  <div class="progress-label" id="progLabel">Schritt 0 / 5</div>
+</div>
+
+<div class="chat-wrap">
+  <div class="chat" id="chat"></div>
+</div>
+
+<div class="input-bar" id="inputBar">
+  <textarea id="userInput" rows="1" placeholder="Übersetze für den Kellner…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
+</div>
+
+<script>
+var API_BASE = 'https://englisch-9.onrender.com';
+
+/* ═══════════════════════════════════════
+   DIALOG SCRIPT
+   ═══════════════════════════════════════ */
+var STEPS = [
+  {
+    uncle: "Frag den Kellner, ob er ein Gericht ohne Fleisch empfehlen kann.",
+    instruction: "🇩🇪→🇬🇧 Frag nach einer vegetarischen Empfehlung.",
+    direction: "de-en",
+    keywords: ['vegetarian','without meat','recommend','suggest','no meat','dish'],
+    minWords: 4,
+    ranger: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice."
+  },
+  {
+    uncle: "",
+    rangerSays: "Of course! I'd recommend our butternut soup as a starter. For the main course, we have a wonderful vegetable curry with rice.",
+    instruction: "🇬🇧→🇩🇪 Der Kellner empfiehlt Suppe und Gemüse-Curry. Übersetze!",
+    direction: "en-de",
+    keywords: ['suppe','curry','gemüse','reis','vorspeise','hauptgericht','empf'],
+    minWords: 4,
+    ranger: ""
+  },
+  {
+    uncle: "Das klingt gut. Ist das Curry scharf? Ich vertrage kein scharfes Essen.",
+    instruction: "🇩🇪→🇬🇧 Frag, ob das Curry scharf ist.",
+    direction: "de-en",
+    keywords: ['spicy','hot','curry','mild','not spicy'],
+    minWords: 4,
+    ranger: "It's medium spicy, but we can make it mild for you."
+  },
+  {
+    uncle: "Dann bitte mild. Und frag, was für Getränke sie haben.",
+    instruction: "🇩🇪→🇬🇧 Bestelle mild und frag nach Getränken.",
+    direction: "de-en",
+    keywords: ['mild','juice','fresh','drink','please','order','beverage'],
+    minWords: 4,
+    ranger: "We have fresh orange juice, mango juice, and a special South African rooibos iced tea."
+  },
+  {
+    uncle: "",
+    rangerSays: "We have fresh orange juice, mango juice, and a special South African rooibos iced tea.",
+    instruction: "🇬🇧→🇩🇪 Orangensaft, Mangosaft und Rooibos-Eistee. Übersetze!",
+    direction: "en-de",
+    keywords: ['orangensaft','mangosaft','rooibos','eistee','saft','frisch'],
+    minWords: 3,
+    ranger: ""
+  },
+  {
+    uncle: "Ich nehme den Mangosaft. Frag, ob das Essen lange dauert – wir haben um 3 eine Führung.",
+    instruction: "🇩🇪→🇬🇧 Bestelle Mangosaft und frag wie lange es dauert.",
+    direction: "de-en",
+    keywords: ['mango','how long','wait','time','tour','three'],
+    minWords: 4,
+    ranger: "The food usually takes about 20 minutes. You should have plenty of time!"
+  },
+  {
+    uncle: "Das Essen war fantastisch. Sag dem Kellner, dass es uns sehr gut geschmeckt hat.",
+    instruction: "🇩🇪→🇬🇧 Sag, dass das Essen fantastisch war.",
+    direction: "de-en",
+    keywords: ['food','great','delicious','fantastic','wonderful','enjoyed','amazing','thank'],
+    minWords: 3,
+    ranger: "Thank you so much! I'm really glad you enjoyed it!"
+  }
+];
+
+var currentStep = 0;
+var attempts = 0;
+var chatEl = document.getElementById('chat');
+var inputEl = document.getElementById('userInput');
+var sendBtn = document.getElementById('sendBtn');
+
+/* ═══════════════════════════════════════
+   CHAT HELPERS
+   ═══════════════════════════════════════ */
+function addMsg(type, sender, text) {
+  var div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.innerHTML = '<div class="sender">' + sender + '</div>' + text;
+  chatEl.appendChild(div);
+  div.scrollIntoView({behavior:'smooth', block:'end'});
+  return div;
+}
+
+function addInstruction(text) {
+  var div = document.createElement('div');
+  div.className = 'instr';
+  div.textContent = '👉 ' + text;
+  chatEl.appendChild(div);
+  div.scrollIntoView({behavior:'smooth', block:'end'});
+}
+
+function addTyping() {
+  var div = document.createElement('div');
+  div.className = 'msg ranger';
+  div.id = 'typing';
+  div.innerHTML = '<div class="sender">🍽️ Kellner</div><div class="typing"><span></span><span></span><span></span></div>';
+  chatEl.appendChild(div);
+  div.scrollIntoView({behavior:'smooth', block:'end'});
+  return div;
+}
+
+function removeTyping() {
+  var el = document.getElementById('typing');
+  if (el) el.remove();
+}
+
+function updateProgress() {
+  var pct = Math.round((currentStep / STEPS.length) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = 'Schritt ' + currentStep + ' / ' + STEPS.length;
+}
+
+/* ═══════════════════════════════════════
+   START
+   ═══════════════════════════════════════ */
+function startStep() {
+  if (currentStep >= STEPS.length) {
+    showComplete();
+    return;
+  }
+  var step = STEPS[currentStep];
+  attempts = 0;
+  
+  if (step.direction === 'en-de') {
+    addMsg('ranger', '🍽️ Kellner', step.rangerSays);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Papa…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  } else {
+    addMsg('uncle', '👨 Papa (Deutsch)', step.uncle);
+    setTimeout(function() {
+      addInstruction(step.instruction);
+      inputEl.placeholder = 'Übersetze auf Englisch für den Kellner…';
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 600);
+  }
+}
+
+
+/* ═══════════════════════════════════════
+   HANDLE SEND
+   ═══════════════════════════════════════ */
+async function handleSend() {
+  var val = inputEl.value.trim();
+  if (!val || val.length < 2) return;
+  
+  inputEl.disabled = true;
+  sendBtn.disabled = true;
+  inputEl.value = '';
+  
+  var step = STEPS[currentStep];
+  
+  // Show student message
+  addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
+  attempts++;
+  
+  // Try AI evaluation first, fallback to local
+  var result = await evaluateWithAI(val, step);
+  
+  if (result.pass) {
+    // Success!
+    addMsg('ok', '✅ Gut gemacht!', result.feedback);
+    
+    currentStep++;
+    updateProgress();
+    
+    if (step.direction === 'en-de' || !step.ranger) {
+      // en-de: no ranger response, go to next step
+      setTimeout(function() { startStep(); }, 800);
+    } else {
+      // de-en: check if next step shows same ranger text
+      var nextStep = STEPS[currentStep];
+      if (nextStep && nextStep.direction === 'en-de' && nextStep.rangerSays === step.ranger) {
+        // Next step will show this ranger text, so skip it here
+        setTimeout(function() { startStep(); }, 800);
+      } else {
+        // Show ranger response
+        setTimeout(function() {
+          var typing = addTyping();
+          setTimeout(function() {
+            removeTyping();
+            addMsg('ranger', '🍽️ Kellner', step.ranger);
+            setTimeout(function() { startStep(); }, 1000);
+          }, 1200);
+        }, 600);
+      }
+    }
+    
+  } else {
+    // Not good enough
+    if (attempts >= 3) {
+      addMsg('tip', '🤖 KI-Tipp', result.feedback + '<br><br><strong>Beispiel:</strong> <em>' + result.example + '</em>');
+    } else {
+      addMsg('tip', '🤖 KI-Tipp', result.feedback);
+    }
+    
+    // Re-enable input
+    setTimeout(function() {
+      inputEl.disabled = false;
+      inputEl.focus();
+      sendBtn.disabled = false;
+    }, 500);
+  }
+}
+
+/* ═══════════════════════════════════════
+   AI EVALUATION
+   ═══════════════════════════════════════ */
+async function evaluateWithAI(studentText, step) {
+  try {
+    var res = await fetch(API_BASE + '/api/hint-accident', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        studentAnswer: studentText,
+        correctAnswer: step.ranger,
+        exerciseContext: 'MEDIATION (9. Klasse). Richtung: ' + step.direction + '. Original: "' + (step.uncle || step.rangerSays || '') + '" Schüler: "' + studentText + '" REGELN: Schüler spricht DIREKT mit Gesprächspartner (NICHT Tell him/Say to her). 1. Person UND 3. Person beide OK. SINN muss stimmen, nicht exakte Worte. Sei NICHT zu streng - wenn Sinn passt = pass:true. Antworte NUR JSON: {"pass":true,"feedback":"Kurzes Lob","example":""} oder {"pass":false,"feedback":"Was fehlt","example":"Beispiel"}'
+      })
+    });
+    if (!res.ok) throw new Error('err');
+    var data = await res.json();
+    var hint = data.hint || '';
+    
+    // Robust JSON extraction
+    // Remove markdown fences
+    var clean = hint.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    // Try to find JSON object with pass field
+    var m = clean.match(/\{[^{}]*"pass"\s*:\s*(true|false)[^{}]*\}/);
+    if (m) {
+      try {
+        var p = JSON.parse(m[0]);
+        return { pass: p.pass === true, feedback: p.feedback || '', example: p.example || '' };
+      } catch(e) {}
+    }
+    
+    // Try parsing the whole thing
+    try {
+      var p2 = JSON.parse(clean);
+      if (typeof p2.pass !== 'undefined') {
+        return { pass: p2.pass === true, feedback: p2.feedback || '', example: p2.example || '' };
+      }
+    } catch(e) {}
+    
+    // Extract feedback from text if JSON fails
+    var feedbackMatch = clean.match(/"feedback"\s*:\s*"([^"]+)"/);
+    var passMatch = clean.match(/"pass"\s*:\s*(true|false)/);
+    if (feedbackMatch) {
+      return {
+        pass: passMatch ? passMatch[1] === 'true' : false,
+        feedback: feedbackMatch[1],
+        example: ''
+      };
+    }
+    
+    // Last resort: use keywords
+    var lower = hint.toLowerCase();
+    if (lower.includes('sehr gut') || lower.includes('korrekt') || lower.includes('richtig übertragen') || lower.includes('pass": true') || lower.includes('pass":true')) {
+      return { pass: true, feedback: 'Gut gemacht!', example: '' };
+    }
+    
+    // Strip JSON artifacts and show as tip
+    var cleanFeedback = hint.replace(/[{}"]/g, '').replace(/pass\s*:\s*(true|false),?/gi, '').replace(/feedback\s*:/gi, '').replace(/example\s*:/gi, '').replace(/```json/gi, '').replace(/```/g, '').trim();
+    return { pass: false, feedback: cleanFeedback.substring(0, 250) || 'Versuche es nochmal!', example: '' };
+    
+  } catch(e) {
+    return evaluateLocal(studentText, step);
+  }
+}
+
+/* ═══════════════════════════════════════
+   LOCAL EVALUATION (Fallback)
+   ═══════════════════════════════════════ */
+function evaluateLocal(text, step) {
+  var low = text.toLowerCase();
+  var words = text.trim().split(/\s+/).length;
+  
+  if (words < step.minWords) {
+    return {pass: false, feedback: 'Dein Satz ist zu kurz. Versuche eine vollständige Übersetzung.', example: ''};
+  }
+  
+  if (step.direction === 'en-de') {
+    // Student should write GERMAN
+    var engWords = ['the','you','your','they','have','can','will','would','should','could','what','please'];
+    var engCount = engWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
+    if (engCount >= 2) {
+      return {pass: false, feedback: 'Du sollst auf DEUTSCH übersetzen! Es sind noch englische Wörter im Satz.', example: ''};
+    }
+  } else {
+    // Student should write ENGLISH
+    var deWords = ['und','kann','darf','wir','bitte','fragen','ob','auch','nicht','mein','haben','gibt'];
+    var deCount = deWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
+    if (deCount >= 2) {
+      return {pass: false, feedback: 'Du sollst auf ENGLISCH übersetzen! Es sind noch deutsche Wörter im Satz.', example: ''};
+    }
+  }
+  
+  var matchCount = step.keywords.filter(function(kw) { return low.includes(kw); }).length;
+  
+  if (matchCount >= 2) {
+    if (step.direction === 'de-en') {
+      var isQuestion = step.instruction.toLowerCase().includes('frag');
+      if (isQuestion && !text.includes('?')) {
+        return {pass: false, feedback: 'Fast richtig! Vergiss das Fragezeichen nicht – du stellst eine Frage.', example: ''};
+      }
+    }
+    return {pass: true, feedback: step.direction === 'en-de' ? 'Gut übersetzt!' : 'Sehr gut!', example: ''};
+  } else if (matchCount === 1) {
+    return {pass: false, feedback: 'Du bist auf dem richtigen Weg, aber es fehlt noch etwas. Lies nochmal genau.', example: ''};
+  } else {
+    return {pass: false, feedback: 'Das trifft noch nicht ganz. Lies nochmal den Originaltext und übersetze den Sinn.', example: ''};
+  }
+}
+
+/* ═══════════════════════════════════════
+   COMPLETE
+   ═══════════════════════════════════════ */
+function showComplete() {
+  inputEl.disabled = true;
+  sendBtn.disabled = true;
+  document.getElementById('inputBar').style.display = 'none';
+  
+  var div = document.createElement('div');
+  div.className = 'complete';
+  div.innerHTML = '<h2>🎉 Mediation geschafft!</h2><p>Du hast alle 5 Situationen erfolgreich vermittelt.<br>Dein Onkel ist begeistert!</p><button class="restart-btn" onclick="location.reload()">🔄 Nochmal spielen</button>';
+  chatEl.appendChild(div);
+  div.scrollIntoView({behavior:'smooth'});
+}
+
+/* ═══════════════════════════════════════
+   TEXTAREA AUTO-RESIZE + ENTER
+   ═══════════════════════════════════════ */
+inputEl.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+inputEl.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+/* START */
+updateProgress();
+startStep();
+</script>
+</body>
+</html>
