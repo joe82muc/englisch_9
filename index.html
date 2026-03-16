@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>English 9 - Learning Hub</title>
   <style>
     :root {
@@ -25,6 +25,7 @@
       min-height: 100vh;
       font-family: "Trebuchet MS", "Segoe UI", sans-serif;
       color: var(--ink);
+      -webkit-text-size-adjust: 100%;
       background:
         radial-gradient(circle at 10% 8%, #dce9ff 0%, transparent 42%),
         radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),
@@ -158,6 +159,7 @@
       border: 1px solid #b9d4ff;
       background: #eef5ff;
       min-height: 185px;
+      aspect-ratio: 4 / 5;
     }
 
     .slide img {
@@ -167,6 +169,7 @@
       object-fit: cover;
       display: block;
       transition: opacity 0.45s ease;
+      background: #dfeeff;
     }
 
     .tag {
@@ -182,12 +185,20 @@
       letter-spacing: 0.02em;
     }
 
+    @media (max-width: 1120px) {
+      .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     @media (max-width: 980px) {
       .btn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 620px) {
       .btn-grid { grid-template-columns: 1fr; }
+      .gallery-grid { grid-template-columns: 1fr; }
+      .wrap { padding: 0.85rem 0.8rem 1.8rem; }
+      .hero { border-radius: 18px; padding: 1rem; }
+      h1 { font-size: clamp(1.35rem, 7vw, 2rem); }
       .slide,
       .slide img { min-height: 140px; }
     }
@@ -248,10 +259,10 @@
         <h2 class="gallery-title">Galerie: South Africa, India, Australia, New Zealand</h2>
       </div>
       <div class="gallery-grid" id="galleryGrid">
-        <figure class="slide"><img alt="Gallery image 1"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 2"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 3"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 4"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="./gallery/world/south-africa-01.jpg"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="./gallery/world/india-01.jpg"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="./gallery/world/australia-01.jpg"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="./gallery/world/new-zealand-01.jpg"><span class="tag"></span></figure>
       </div>
     </section>
 
@@ -302,16 +313,32 @@
 
     const randomIndex = () => Math.floor(Math.random() * images.length);
 
+    function ensureImage(src) {
+      return images.includes(src) ? src : images[0];
+    }
+
     function applyImage(slide, src) {
       const img = slide.querySelector("img");
       const tag = slide.querySelector(".tag");
-      const key = src.split("/").pop().split("-").slice(0, -1).join("-");
+      const safeSrc = ensureImage(src);
+      const key = safeSrc.split("/").pop().split("-").slice(0, -1).join("-");
       tag.textContent = labels[key] || "Travel";
       img.style.opacity = "0.25";
       setTimeout(() => {
-        img.src = src;
+        img.src = safeSrc;
         img.style.opacity = "1";
       }, 130);
+    }
+
+    function bindImageFallbacks() {
+      slides.forEach((slide, idx) => {
+        const img = slide.querySelector("img");
+        if (!img) return;
+        img.onerror = () => {
+          const fallback = images[(idx + 1) % images.length];
+          img.src = fallback;
+        };
+      });
     }
 
     function fillInitial() {
@@ -331,6 +358,7 @@
       pointer += 1;
     }
 
+    bindImageFallbacks();
     fillInitial();
     setInterval(rotateOne, 2300);
   </script>
