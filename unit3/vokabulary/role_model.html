@@ -1,567 +1,289 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Describing a Role Model - Word Bank</title>
-  <style>
-    :root {
-      --bg: #f4f1ff;
-      --card: #ffffff;
-      --ink: #1f1b2d;
-      --muted: #6a6380;
-      --brand: #5a2bbf;
-      --brand-2: #7b4cff;
-      --line: #ddd3ff;
-      --ok: #127a45;
-      --ok-bg: #e6f7ee;
-      --bad: #be1e2d;
-      --bad-bg: #fdecef;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-      background: radial-gradient(circle at 15% 15%, #efe8ff, transparent 35%), var(--bg);
-      color: var(--ink);
-    }
-
-    .wrap {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, var(--brand), var(--brand-2));
-      color: #fff;
-      border-radius: 18px;
-      padding: 1rem 1.2rem;
-      box-shadow: 0 10px 24px rgba(65, 33, 140, .25);
-      margin-bottom: 1rem;
-    }
-
-    .back {
-      color: rgba(255,255,255,.9);
-      text-decoration: none;
-      font-weight: 700;
-      font-size: .9rem;
-    }
-
-    h1 {
-      margin: .5rem 0 .2rem;
-      font-size: clamp(1.4rem, 3vw, 2rem);
-    }
-
-    .sub { margin: 0; opacity: .95; }
-
-    .tabs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: .5rem;
-      margin-bottom: 1rem;
-    }
-
-    .tab {
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 12px;
-      padding: .6rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .tab.active {
-      background: var(--brand);
-      color: #fff;
-      border-color: var(--brand);
-    }
-
-    .level { display: none; }
-    .level.show { display: block; }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: .8rem;
-      gap: .6rem;
-      flex-wrap: wrap;
-    }
-
-    .score {
-      display: flex;
-      gap: .6rem;
-    }
-
-    .pill {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: .4rem .65rem;
-      font-weight: 700;
-      min-width: 48px;
-      text-align: center;
-    }
-
-    .btn {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--ink);
-      padding: .42rem .85rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn.primary {
-      background: var(--brand);
-      border-color: var(--brand);
-      color: #fff;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: .9rem;
-      margin-bottom: .7rem;
-      box-shadow: 0 3px 10px rgba(48, 24, 102, .06);
-    }
-
-    .label {
-      font-size: .7rem;
-      font-weight: 700;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-      color: var(--brand);
-      margin-bottom: .4rem;
-    }
-
-    .q { margin: 0 0 .7rem; line-height: 1.5; }
-
-    .choices {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .45rem;
-      margin-bottom: .45rem;
-    }
-
-    .choice {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: #faf8ff;
-      padding: .4rem .85rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .choice.ok { background: var(--ok-bg); border-color: #98dbb7; color: var(--ok); }
-    .choice.bad { background: var(--bad-bg); border-color: #f4a9b3; color: var(--bad); }
-
-    .gap, .write {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #faf8ff;
-      padding: .6rem .7rem;
-      font-size: .95rem;
-      margin-bottom: .55rem;
-    }
-
-    .gap.ok, .write.ok { border-color: #98dbb7; background: var(--ok-bg); }
-    .gap.bad, .write.bad { border-color: #f4a9b3; background: var(--bad-bg); }
-
-    .row {
-      display: flex;
-      gap: .45rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .fb {
-      font-weight: 700;
-      font-size: .88rem;
-      margin-top: .35rem;
-    }
-
-    .fb.ok { color: var(--ok); }
-    .fb.bad { color: var(--bad); }
-
-    .small { font-size: .84rem; color: var(--muted); }
-
-    @media (max-width: 680px) {
-      .tabs { grid-template-columns: 1fr; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Describing a Role Model - Word Bank</title>
+<style>
+:root{
+  --purple:#4c1d95;--violet:#7c3aed;--lavender:#ede9fe;--lavb:#c4b5fd;
+  --bg:#f5f3ff;--card:#fff;--border:#ddd6fe;
+  --text:#0f172a;--muted:#64748b;
+  --green:#15803d;--gbg:#dcfce7;--gb:#16a34a;
+  --red:#dc2626;--rbg:#fef2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:3rem}
+.hdr{background:var(--purple);padding:1.2rem 1.1rem 1.7rem;position:relative;overflow:hidden}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:22px;background:var(--bg);clip-path:ellipse(56% 100% at 50% 100%)}
+.back{display:inline-flex;align-items:center;gap:.35rem;color:#d9cbff;font-size:.8rem;font-weight:700;text-decoration:none}
+.utag{font-size:.64rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c7b3ff;margin-top:.5rem}
+h1{font-family:Georgia,serif;font-size:clamp(1.5rem,5vw,2.2rem);font-weight:900;color:#fff;line-height:1.12;margin-top:.2rem}
+.hsub{font-size:.82rem;color:#d8cbff;margin-top:.3rem}
+.wrap{padding:1.1rem;max-width:760px;margin:0 auto}
+.ibox{background:var(--card);border:2px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 4px 16px rgba(76,29,149,.08);margin-bottom:1.1rem}
+.ihdr{background:linear-gradient(135deg,var(--purple),var(--violet));padding:.9rem 1rem;display:flex;align-items:center;gap:.6rem;cursor:pointer}
+.ihdr h2{font-family:Georgia,serif;font-size:1rem;color:#fff;flex:1}
+.iarr{color:#ece4ff;transition:transform .25s}
+.ihdr.open .iarr{transform:rotate(180deg)}
+.ibody{display:none;padding:1rem}
+.ibody.open{display:block}
+.qual-grid{display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;margin-bottom:.9rem}
+@media(max-width:560px){.qual-grid{grid-template-columns:1fr}}
+.qual-row{display:flex;gap:.5rem;font-size:.84rem;line-height:1.45}
+.qual-word{font-weight:700;color:var(--violet);min-width:102px}
+.qual-ex{color:var(--muted)}
+.phrase-box{background:var(--lavender);border:1.5px solid var(--lavb);border-radius:12px;padding:.8rem}
+.phrase-box h3{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:.5rem}
+.phrases{display:grid;grid-template-columns:1fr 1fr;gap:.3rem .7rem;font-size:.82rem;color:#3e216f}
+@media(max-width:560px){.phrases{grid-template-columns:1fr}}
+.ltabs{display:flex;background:#ede9fe;border-radius:12px;padding:3px;margin-bottom:.9rem}
+.ltab{flex:1;border:none;border-radius:10px;padding:.55rem .3rem;background:transparent;color:#5a31a5;font-weight:700;cursor:pointer;font-size:.76rem}
+.ltab.active{background:var(--purple);color:#fff;box-shadow:0 2px 8px rgba(76,29,149,.25)}
+.lsec{display:none}.lsec.show{display:block}
+.topbar{display:flex;justify-content:space-between;gap:.7rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem}
+.score-nums{display:flex;gap:.55rem}
+.sn{text-align:center;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:.35rem .65rem}
+.sn strong{display:block;font-family:Georgia,serif;font-size:1.15rem;color:var(--purple)}
+.sn span{font-size:.65rem;color:var(--muted);font-weight:700}
+.rst{padding:.42rem .85rem;background:#f1f0f9;color:var(--muted);border:none;border-radius:50px;font-size:.76rem;font-weight:700;cursor:pointer}
+.section-hdr{font-family:Georgia,serif;font-size:1rem;color:#3c216f;margin:.2rem 0 .65rem}
+.ex-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.75rem;box-shadow:0 2px 8px rgba(76,29,149,.05)}
+.ex-num{font-size:.63rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:.45rem}
+.ex-q{font-size:.92rem;line-height:1.65;margin-bottom:.65rem}
+.mc-choices{display:flex;flex-wrap:wrap;gap:.42rem;margin-bottom:.55rem}
+.mc{padding:.42rem .82rem;border:1.5px solid var(--border);border-radius:999px;background:#faf8ff;color:#1a1330;font-size:.82rem;font-weight:600;cursor:pointer}
+.mc.ok{background:var(--gbg);border-color:var(--gb);color:var(--green)}
+.mc.err{background:var(--rbg);border-color:var(--red);color:var(--red)}
+.gap,.wi{width:100%;padding:.58rem .78rem;border:1.5px solid var(--border);border-radius:10px;background:#faf8ff;font-size:.9rem;margin-bottom:.6rem;outline:none}
+.gap.ok,.wi.ok{border-color:var(--gb);background:var(--gbg)}
+.gap.err,.wi.err{border-color:var(--red);background:var(--rbg)}
+.fbrow{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.fb{font-size:.8rem;font-weight:700}.fb.g{color:var(--green)}.fb.b{color:var(--red)}
+.chk{padding:.42rem .85rem;background:var(--purple);color:#fff;border:none;border-radius:999px;font-size:.76rem;font-weight:700;cursor:pointer}
+.shw{padding:.42rem .82rem;background:transparent;color:var(--muted);border:1.5px solid #e2e8f0;border-radius:999px;font-size:.76rem;cursor:pointer}
+</style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="hero">
-      <a class="back" href="../index.html">&larr; Back</a>
-      <h1>Describing a Role Model</h1>
-      <p class="sub">Word bank practice with 3 levels and KI help for all Level 3 tasks.</p>
-    </section>
+<div class="hdr">
+  <a href="../index.html" class="back">&larr; Back</a>
+  <div class="utag">Unit 3 | Word Bank | Speaking</div>
+  <h1>Describing a <em>Role Model</em></h1>
+  <p class="hsub">Persoenliche Eigenschaften, useful phrases, 3 Niveaustufen</p>
+</div>
 
-    <section class="tabs">
-      <button class="tab active" data-tab="a">Level A - Multiple Choice</button>
-      <button class="tab" data-tab="b">Level B - Gap Fill</button>
-      <button class="tab" data-tab="c">Level C - Writing + KI</button>
-    </section>
-
-    <section id="level-a" class="level show">
-      <div class="topbar">
-        <div class="score">
-          <div class="pill">OK: <span id="ar">0</span></div>
-          <div class="pill">X: <span id="aw">0</span></div>
-        </div>
-        <button class="btn" onclick="resetLevel('a')">Reset</button>
+<div class="wrap">
+  <div class="ibox">
+    <div class="ihdr open" onclick="toggleInfo()">
+      <h2>Word Bank - Personal Qualities and Phrases</h2>
+      <span class="iarr">v</span>
+    </div>
+    <div class="ibody open" id="ibody">
+      <div class="qual-grid">
+        <div class="qual-row"><span class="qual-word">confident</span><span class="qual-ex">confident in front of others</span></div>
+        <div class="qual-row"><span class="qual-word">considerate</span><span class="qual-ex">puts others first</span></div>
+        <div class="qual-row"><span class="qual-word">determined</span><span class="qual-ex">gets what they want</span></div>
+        <div class="qual-row"><span class="qual-word">enthusiastic</span><span class="qual-ex">gets others to help</span></div>
+        <div class="qual-row"><span class="qual-word">generous</span><span class="qual-ex">helps charities</span></div>
+        <div class="qual-row"><span class="qual-word">helpful</span><span class="qual-ex">always helps you</span></div>
+        <div class="qual-row"><span class="qual-word">honest</span><span class="qual-ex">tells the truth</span></div>
+        <div class="qual-row"><span class="qual-word">kind</span><span class="qual-ex">has time for others</span></div>
+        <div class="qual-row"><span class="qual-word">polite</span><span class="qual-ex">says please and thank you</span></div>
+        <div class="qual-row"><span class="qual-word">proud</span><span class="qual-ex">proud of who she is</span></div>
+        <div class="qual-row"><span class="qual-word">reliable</span><span class="qual-ex">there when you need them</span></div>
+        <div class="qual-row"><span class="qual-word">respectful</span><span class="qual-ex">respectful to everyone</span></div>
+        <div class="qual-row"><span class="qual-word">tolerant</span><span class="qual-ex">accepts differences</span></div>
+        <div class="qual-row"><span class="qual-word">strong</span><span class="qual-ex">strong in hard situations</span></div>
       </div>
-
-      <div class="card" data-id="a1">
-        <div class="label">Exercise 1</div>
-        <p class="q">She always tells the truth. She is ...</p>
-        <div class="choices">
-          <button class="choice" data-correct="honest" onclick="checkMC('a1', this)">honest</button>
-          <button class="choice" data-correct="honest" onclick="checkMC('a1', this)">nervous</button>
-          <button class="choice" data-correct="honest" onclick="checkMC('a1', this)">proud</button>
+      <div class="phrase-box">
+        <h3>Useful Phrases</h3>
+        <div class="phrases">
+          <div>I admire ... because he/she ...</div>
+          <div>... is known for ...</div>
+          <div>I follow ... because he/she ...</div>
+          <div>... helps homeless/sick people.</div>
+          <div>I read that ...</div>
+          <div>... raised lots of money for charities.</div>
+          <div>I saw pictures of ...</div>
+          <div>... always has time for ...</div>
         </div>
-        <div id="a1f" class="fb"></div>
       </div>
+    </div>
+  </div>
 
-      <div class="card" data-id="a2">
-        <div class="label">Exercise 2</div>
-        <p class="q">He is always there when you need him. He is ...</p>
-        <div class="choices">
-          <button class="choice" data-correct="reliable" onclick="checkMC('a2', this)">reliable</button>
-          <button class="choice" data-correct="reliable" onclick="checkMC('a2', this)">happy</button>
-          <button class="choice" data-correct="reliable" onclick="checkMC('a2', this)">polite</button>
-        </div>
-        <div id="a2f" class="fb"></div>
-      </div>
+  <div class="ltabs">
+    <button class="ltab active" onclick="setLevel('a',this)">Level A<br><small>Zuordnen</small></button>
+    <button class="ltab" onclick="setLevel('b',this)">Level B<br><small>Lueckentext</small></button>
+    <button class="ltab" onclick="setLevel('c',this)">Level C<br><small>Schreiben</small></button>
+  </div>
 
-      <div class="card" data-id="a3">
-        <div class="label">Exercise 3</div>
-        <p class="q">She puts others first. She is ...</p>
-        <div class="choices">
-          <button class="choice" data-correct="considerate" onclick="checkMC('a3', this)">considerate</button>
-          <button class="choice" data-correct="considerate" onclick="checkMC('a3', this)">strong</button>
-          <button class="choice" data-correct="considerate" onclick="checkMC('a3', this)">enthusiastic</button>
-        </div>
-        <div id="a3f" class="fb"></div>
-      </div>
-    </section>
+  <div class="lsec show" id="level-a">
+    <div class="topbar"><div class="score-nums"><div class="sn"><strong id="ar">0</strong><span>OK</span></div><div class="sn"><strong id="aw">0</strong><span>X</span></div></div><button class="rst" onclick="resetA()">Reset</button></div>
+    <div class="section-hdr">Choose the correct quality</div>
 
-    <section id="level-b" class="level">
-      <div class="topbar">
-        <div class="score">
-          <div class="pill">OK: <span id="br">0</span></div>
-          <div class="pill">X: <span id="bw">0</span></div>
-        </div>
-        <button class="btn" onclick="resetLevel('b')">Reset</button>
-      </div>
+    <div class="ex-card" id="a1"><div class="ex-num">Exercise 1</div><div class="ex-q">She always tells the truth. She is ...</div><div class="mc-choices"><button class="mc" onclick="chkMC('a1',this,'honest','honest')">honest</button><button class="mc" onclick="chkMC('a1',this,'nervous','honest')">nervous</button><button class="mc" onclick="chkMC('a1',this,'proud','honest')">proud</button></div><div class="fbrow"><span class="fb" id="a1f"></span></div></div>
+    <div class="ex-card" id="a2"><div class="ex-num">Exercise 2</div><div class="ex-q">He always has time for other people. He is ...</div><div class="mc-choices"><button class="mc" onclick="chkMC('a2',this,'kind','kind')">kind</button><button class="mc" onclick="chkMC('a2',this,'strong','kind')">strong</button><button class="mc" onclick="chkMC('a2',this,'determined','kind')">determined</button></div><div class="fbrow"><span class="fb" id="a2f"></span></div></div>
+    <div class="ex-card" id="a3"><div class="ex-num">Exercise 3</div><div class="ex-q">She raised a lot of money for charities. She is ...</div><div class="mc-choices"><button class="mc" onclick="chkMC('a3',this,'generous','generous')">generous</button><button class="mc" onclick="chkMC('a3',this,'reliable','generous')">reliable</button><button class="mc" onclick="chkMC('a3',this,'nervous','generous')">nervous</button></div><div class="fbrow"><span class="fb" id="a3f"></span></div></div>
+    <div class="ex-card" id="a4"><div class="ex-num">Exercise 4</div><div class="ex-q">He is always there when you need him. He is ...</div><div class="mc-choices"><button class="mc" onclick="chkMC('a4',this,'reliable','reliable')">reliable</button><button class="mc" onclick="chkMC('a4',this,'happy','reliable')">happy</button><button class="mc" onclick="chkMC('a4',this,'confident','reliable')">confident</button></div><div class="fbrow"><span class="fb" id="a4f"></span></div></div>
+    <div class="ex-card" id="a5"><div class="ex-num">Exercise 5</div><div class="ex-q">She puts others first. She is ...</div><div class="mc-choices"><button class="mc" onclick="chkMC('a5',this,'considerate','considerate')">considerate</button><button class="mc" onclick="chkMC('a5',this,'strong','considerate')">strong</button><button class="mc" onclick="chkMC('a5',this,'proud','considerate')">proud</button></div><div class="fbrow"><span class="fb" id="a5f"></span></div></div>
+    <div class="ex-card" id="a6"><div class="ex-num">Exercise 6</div><div class="ex-q">In hard situations, he stays calm and does not give up. He is ...</div><div class="mc-choices"><button class="mc" onclick="chkMC('a6',this,'strong','strong')">strong</button><button class="mc" onclick="chkMC('a6',this,'nervous','strong')">nervous</button><button class="mc" onclick="chkMC('a6',this,'helpful','strong')">helpful</button></div><div class="fbrow"><span class="fb" id="a6f"></span></div></div>
+  </div>
 
-      <div class="card" data-id="b1">
-        <div class="label">Exercise 1</div>
-        <p class="q">I admire people who are ... in front of others.</p>
-        <input id="b1g" class="gap" placeholder="Type one word">
-        <div class="row">
-          <button class="btn primary" onclick="checkGap('b1', 'confident', 'b')">Check</button>
-          <button class="btn" onclick="showGap('b1', 'confident', 'b')">Show</button>
-        </div>
-        <div id="b1f" class="fb"></div>
-      </div>
+  <div class="lsec" id="level-b">
+    <div class="topbar"><div class="score-nums"><div class="sn"><strong id="br">0</strong><span>OK</span></div><div class="sn"><strong id="bw">0</strong><span>X</span></div></div><button class="rst" onclick="resetB()">Reset</button></div>
+    <div class="section-hdr">Fill in the correct quality or phrase</div>
 
-      <div class="card" data-id="b2">
-        <div class="label">Exercise 2</div>
-        <p class="q">... people do a lot to help charities.</p>
-        <input id="b2g" class="gap" placeholder="Type one word">
-        <div class="row">
-          <button class="btn primary" onclick="checkGap('b2', 'generous', 'b')">Check</button>
-          <button class="btn" onclick="showGap('b2', 'generous', 'b')">Show</button>
-        </div>
-        <div id="b2f" class="fb"></div>
-      </div>
-    </section>
+    <div class="ex-card" id="b1"><div class="ex-num">Exercise 1</div><div class="ex-q">I admire people who are <input class="gap" id="b1g" placeholder="..."> in front of others.</div><div class="fbrow"><button class="chk" onclick="chkGap('b1','confident','b')">Check</button><button class="shw" onclick="shwGap('b1','confident','b')">Show</button><span class="fb" id="b1f"></span></div></div>
+    <div class="ex-card" id="b2"><div class="ex-num">Exercise 2</div><div class="ex-q"><input class="gap" id="b2g" placeholder="..."> people do a lot to help charities.</div><div class="fbrow"><button class="chk" onclick="chkGap('b2','generous','b')">Check</button><button class="shw" onclick="shwGap('b2','generous','b')">Show</button><span class="fb" id="b2f"></span></div></div>
+    <div class="ex-card" id="b3"><div class="ex-num">Exercise 3</div><div class="ex-q">You are <input class="gap" id="b3g" placeholder="..."> if you say please and thank you.</div><div class="fbrow"><button class="chk" onclick="chkGap('b3','polite','b')">Check</button><button class="shw" onclick="shwGap('b3','polite','b')">Show</button><span class="fb" id="b3f"></span></div></div>
+    <div class="ex-card" id="b4"><div class="ex-num">Exercise 4</div><div class="ex-q"><input class="gap" id="b4g" placeholder="..."> people are there when you need them.</div><div class="fbrow"><button class="chk" onclick="chkGap('b4','reliable','b')">Check</button><button class="shw" onclick="shwGap('b4','reliable','b')">Show</button><span class="fb" id="b4f"></span></div></div>
+    <div class="ex-card" id="b5"><div class="ex-num">Exercise 5</div><div class="ex-q">Someone who gets what they want is <input class="gap" id="b5g" placeholder="...">.</div><div class="fbrow"><button class="chk" onclick="chkGap('b5','determined','b')">Check</button><button class="shw" onclick="shwGap('b5','determined','b')">Show</button><span class="fb" id="b5f"></span></div></div>
+    <div class="ex-card" id="b6"><div class="ex-num">Exercise 6</div><div class="ex-q">I <input class="gap" id="b6g" placeholder="..."> Malala because she is very <input class="gap" id="b6g2" placeholder="...">.</div><div class="fbrow"><button class="chk" onclick="chkDouble('b6','admire','determined','b')">Check</button><button class="shw" onclick="shwDouble('b6',['admire','determined'])">Show</button><span class="fb" id="b6f"></span></div></div>
+    <div class="ex-card" id="b7"><div class="ex-num">Exercise 7</div><div class="ex-q">She is <input class="gap" id="b7g" placeholder="..."> for helping children and she has <input class="gap" id="b7g2" placeholder="..."> money for charities.</div><div class="fbrow"><button class="chk" onclick="chkDouble('b7','known','raised','b')">Check</button><button class="shw" onclick="shwDouble('b7',['known','raised'])">Show</button><span class="fb" id="b7f"></span></div></div>
+    <div class="ex-card" id="b8"><div class="ex-num">Exercise 8</div><div class="ex-q">I <input class="gap" id="b8g" placeholder="..."> pictures of him helping homeless people.</div><div class="fbrow"><button class="chk" onclick="chkGap('b8','saw','b')">Check</button><button class="shw" onclick="shwGap('b8','saw','b')">Show</button><span class="fb" id="b8f"></span></div></div>
+  </div>
 
-    <section id="level-c" class="level">
-      <div class="topbar">
-        <div class="score">
-          <div class="pill">OK: <span id="cr">0</span></div>
-          <div class="pill">X: <span id="cw">0</span></div>
-        </div>
-        <button class="btn" onclick="resetLevel('c')">Reset</button>
-      </div>
+  <div class="lsec" id="level-c">
+    <div class="topbar"><div class="score-nums"><div class="sn"><strong id="cr">0</strong><span>OK</span></div><div class="sn"><strong id="cw">0</strong><span>X</span></div></div><button class="rst" onclick="resetC()">Reset</button></div>
+    <div class="section-hdr">Write sentences about a role model</div>
 
-      <p class="small">KI-Hilfe uses your Render backend: <code>https://englisch-9.onrender.com/api/role-model/help</code></p>
+    <div class="ex-card" id="c1"><div class="ex-num">Exercise 1</div><div class="ex-q">Describe someone honest. Use: honest / tells the truth.</div><input class="wi" id="c1i" type="text" placeholder="... is honest because ..."><div class="fbrow"><button class="chk" onclick="chkFree('c1',['honest','truth'],'c')">Check</button><button class="shw" onclick="aiHelp('c1')">KI-Hilfe</button><button class="shw" onclick="shwTr('c1','My role model is honest because she always tells the truth.','c')">Show</button><span class="fb" id="c1f"></span></div><div class="fbrow"><span class="fb" id="c1ai"></span></div></div>
+    <div class="ex-card" id="c2"><div class="ex-num">Exercise 2</div><div class="ex-q">Use: I admire ... because he/she ... and one quality.</div><input class="wi" id="c2i" type="text" placeholder="I admire ... because ..."><div class="fbrow"><button class="chk" onclick="chkPhrase('c2','c')">Check</button><button class="shw" onclick="aiHelp('c2')">KI-Hilfe</button><button class="shw" onclick="shwTr('c2','I admire Nelson Mandela because he was very determined and brave.','c')">Show</button><span class="fb" id="c2f"></span></div><div class="fbrow"><span class="fb" id="c2ai"></span></div></div>
+    <div class="ex-card" id="c3"><div class="ex-num">Exercise 3</div><div class="ex-q">Write a sentence with: ... is known for ...</div><input class="wi" id="c3i" type="text" placeholder="... is known for ..."><div class="fbrow"><button class="chk" onclick="chkFree('c3',['is known for'],'c')">Check</button><button class="shw" onclick="aiHelp('c3')">KI-Hilfe</button><button class="shw" onclick="shwTr('c3','Malala Yousafzai is known for fighting for girls education.','c')">Show</button><span class="fb" id="c3f"></span></div><div class="fbrow"><span class="fb" id="c3ai"></span></div></div>
+    <div class="ex-card" id="c4"><div class="ex-num">Exercise 4</div><div class="ex-q">Use: I read that ... OR I saw pictures of ...</div><input class="wi" id="c4i" type="text" placeholder="I read that ... / I saw pictures of ..."><div class="fbrow"><button class="chk" onclick="chkFree('c4',['i read that','i saw pictures of'],'c')">Check</button><button class="shw" onclick="aiHelp('c4')">KI-Hilfe</button><button class="shw" onclick="shwTr('c4','I read that she raised lots of money for children.','c')">Show</button><span class="fb" id="c4f"></span></div><div class="fbrow"><span class="fb" id="c4ai"></span></div></div>
+    <div class="ex-card" id="c5"><div class="ex-num">Exercise 5</div><div class="ex-q">Write 4-5 sentences about your own role model. Use 2 qualities and 1 phrase.</div><textarea class="wi" id="c5i" rows="5" placeholder="My role model is ..."></textarea><div class="fbrow"><button class="chk" onclick="chkEssay('c5')">Check</button><button class="shw" onclick="aiHelp('c5')">KI-Hilfe</button><button class="shw" onclick="shwTr('c5','My role model is Malala. She is brave and determined. I admire her because she fights for education. She is known for helping many girls.','c')">Show</button><span class="fb" id="c5f"></span></div><div class="fbrow"><span class="fb" id="c5ai"></span></div></div>
+  </div>
+</div>
 
-      <div class="card" data-id="c1">
-        <div class="label">Exercise 1</div>
-        <p class="q">Describe someone honest. Use: <b>honest</b> and <b>tells the truth</b>.</p>
-        <input id="c1i" class="write" placeholder="Write one full sentence">
-        <div class="row">
-          <button class="btn primary" onclick="checkFree('c1', ['honest', 'truth'])">Check</button>
-          <button class="btn" onclick="aiHelp('c1')">KI-Hilfe</button>
-          <button class="btn" onclick="showText('c1', 'My role model is honest because she always tells the truth.')">Show</button>
-        </div>
-        <div id="c1f" class="fb"></div>
-        <div id="c1ai" class="fb"></div>
-      </div>
+<script>
+const ans={};
+const sc={a:{r:0,w:0},b:{r:0,w:0},c:{r:0,w:0}};
+const QUALITIES=['confident','considerate','determined','enthusiastic','generous','helpful','honest','kind','polite','proud','reliable','respectful','tolerant','strong','brave'];
 
-      <div class="card" data-id="c2">
-        <div class="label">Exercise 2</div>
-        <p class="q">Use the phrase: <b>I admire ... because ...</b> and include one quality.</p>
-        <input id="c2i" class="write" placeholder="Write one full sentence">
-        <div class="row">
-          <button class="btn primary" onclick="checkPhrase('c2')">Check</button>
-          <button class="btn" onclick="aiHelp('c2')">KI-Hilfe</button>
-          <button class="btn" onclick="showText('c2', 'I admire Malala because she is determined and brave.')">Show</button>
-        </div>
-        <div id="c2f" class="fb"></div>
-        <div id="c2ai" class="fb"></div>
-      </div>
+function toggleInfo(){
+  document.getElementById('ibody').classList.toggle('open');
+  document.querySelector('.ihdr').classList.toggle('open');
+}
+function setLevel(l,btn){
+  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('.lsec').forEach(s=>s.classList.remove('show'));
+  document.getElementById('level-'+l).classList.add('show');
+}
+function updSc(l){document.getElementById(l+'r').textContent=sc[l].r;document.getElementById(l+'w').textContent=sc[l].w}
+const nrm=s=>String(s||'').toLowerCase().replace(/[?.!,']/g,'').replace(/\s+/g,' ').trim();
 
-      <div class="card" data-id="c3">
-        <div class="label">Exercise 3</div>
-        <p class="q">Write a sentence with: <b>... is known for ...</b></p>
-        <input id="c3i" class="write" placeholder="Write one full sentence">
-        <div class="row">
-          <button class="btn primary" onclick="checkFree('c3', ['is known for'])">Check</button>
-          <button class="btn" onclick="aiHelp('c3')">KI-Hilfe</button>
-          <button class="btn" onclick="showText('c3', 'Nelson Mandela is known for fighting for equal rights.')">Show</button>
-        </div>
-        <div id="c3f" class="fb"></div>
-        <div id="c3ai" class="fb"></div>
-      </div>
+function chkMC(id,btn,selected,correct){
+  if(ans[id])return;ans[id]=true;
+  btn.closest('.mc-choices').querySelectorAll('.mc').forEach(b=>{b.disabled=true;if(nrm(b.textContent)===nrm(correct))b.classList.add('ok')});
+  const ok=nrm(selected)===nrm(correct);
+  if(!ok)btn.classList.add('err');
+  const fb=document.getElementById(id+'f');fb.className='fb '+(ok?'g':'b');
+  fb.textContent=ok?'Correct.':'Answer: '+correct;
+  if(ok)sc.a.r++;else sc.a.w++;updSc('a');
+}
+function resetA(){
+  sc.a={r:0,w:0};updSc('a');
+  document.querySelectorAll('#level-a .mc').forEach(b=>{b.className='mc';b.disabled=false});
+  document.querySelectorAll('#level-a .fb').forEach(f=>{f.textContent='';f.className='fb'});
+  'a1 a2 a3 a4 a5 a6'.split(' ').forEach(k=>delete ans[k]);
+}
 
-      <div class="card" data-id="c4">
-        <div class="label">Exercise 4</div>
-        <p class="q">Use: <b>I read that ...</b> or <b>I saw pictures of ...</b></p>
-        <input id="c4i" class="write" placeholder="Write one full sentence">
-        <div class="row">
-          <button class="btn primary" onclick="checkFree('c4', ['i read that', 'i saw pictures of'])">Check</button>
-          <button class="btn" onclick="aiHelp('c4')">KI-Hilfe</button>
-          <button class="btn" onclick="showText('c4', 'I read that she raised money for children in need.')">Show</button>
-        </div>
-        <div id="c4f" class="fb"></div>
-        <div id="c4ai" class="fb"></div>
-      </div>
+function chkGap(id,correct,lvl){
+  if(ans[id])return;
+  const inp=document.getElementById(id+'g');
+  const ok=nrm(inp.value)===nrm(correct);
+  inp.classList.add(ok?'ok':'err');inp.disabled=true;
+  const fb=document.getElementById(id+'f');fb.className='fb '+(ok?'g':'b');
+  fb.textContent=ok?'Correct.':'Loesung: '+correct;
+  ans[id]=true;if(ok)sc[lvl].r++;else sc[lvl].w++;updSc(lvl);
+}
+function shwGap(id,correct,lvl){
+  if(ans[id])return;
+  const inp=document.getElementById(id+'g');inp.value=correct;inp.classList.add('ok');inp.disabled=true;
+  const fb=document.getElementById(id+'f');fb.className='fb g';fb.textContent='-> '+correct;
+  ans[id]=true;sc[lvl].w++;updSc(lvl);
+}
+function chkDouble(id,c1,c2,lvl){
+  if(ans[id])return;
+  const i1=document.getElementById(id+'g'),i2=document.getElementById(id+'g2');
+  const ok1=nrm(i1.value)===nrm(c1),ok2=nrm(i2.value)===nrm(c2),ok=ok1&&ok2;
+  i1.classList.add(ok1?'ok':'err');i1.disabled=true;i2.classList.add(ok2?'ok':'err');i2.disabled=true;
+  const fb=document.getElementById(id+'f');fb.className='fb '+(ok?'g':'b');
+  fb.textContent=ok?'Correct.':'Loesung: '+c1+' / '+c2;
+  ans[id]=true;if(ok)sc[lvl].r++;else sc[lvl].w++;updSc(lvl);
+}
+function shwDouble(id,words){
+  if(ans[id])return;
+  ['g','g2'].forEach((s,i)=>{const el=document.getElementById(id+s);if(el){el.value=words[i];el.classList.add('ok');el.disabled=true}});
+  const fb=document.getElementById(id+'f');fb.className='fb g';fb.textContent='-> '+words.join(' / ');
+  ans[id]=true;sc.b.w++;updSc('b');
+}
+function resetB(){
+  sc.b={r:0,w:0};updSc('b');
+  document.querySelectorAll('#level-b .gap').forEach(i=>{i.value='';i.className='gap';i.disabled=false});
+  document.querySelectorAll('#level-b .fb').forEach(f=>{f.textContent='';f.className='fb'});
+  'b1 b2 b3 b4 b5 b6 b7 b8'.split(' ').forEach(k=>delete ans[k]);
+}
 
-      <div class="card" data-id="c5">
-        <div class="label">Exercise 5</div>
-        <p class="q">Write 4-5 sentences about your role model. Include 2 qualities and 1 phrase.</p>
-        <textarea id="c5i" class="write" rows="5" placeholder="My role model is ..."></textarea>
-        <div class="row">
-          <button class="btn primary" onclick="checkEssay('c5')">Check</button>
-          <button class="btn" onclick="aiHelp('c5')">KI-Hilfe</button>
-          <button class="btn" onclick="showText('c5', 'My role model is Malala. She is brave and determined. I admire her because she fights for education. She is known for helping many girls.')">Show</button>
-        </div>
-        <div id="c5f" class="fb"></div>
-        <div id="c5ai" class="fb"></div>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    const API_BASE = "https://englisch-9.onrender.com";
-    const score = { a: { ok: 0, bad: 0 }, b: { ok: 0, bad: 0 }, c: { ok: 0, bad: 0 } };
-    const solved = {};
-    const qualities = ["confident","considerate","determined","enthusiastic","generous","helpful","honest","kind","polite","reliable","respectful","strong","brave"];
-
-    document.querySelectorAll('.tab').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        const id = btn.dataset.tab;
-        document.querySelectorAll('.level').forEach((s) => s.classList.remove('show'));
-        document.getElementById('level-' + id).classList.add('show');
-      });
-    });
-
-    function norm(s) {
-      return String(s || "").toLowerCase().replace(/[.,!?']/g, "").replace(/\s+/g, " ").trim();
-    }
-
-    function setFeedback(id, text, ok) {
-      const el = document.getElementById(id + 'f');
-      el.textContent = text;
-      el.className = 'fb ' + (ok ? 'ok' : 'bad');
-    }
-
-    function updateScore(level, ok) {
-      if (ok) score[level].ok += 1;
-      else score[level].bad += 1;
-      document.getElementById(level + 'r').textContent = score[level].ok;
-      document.getElementById(level + 'w').textContent = score[level].bad;
-    }
-
-    function checkMC(id, btn) {
-      if (solved[id]) return;
-      solved[id] = true;
-
-      const card = btn.closest('.card');
-      const correct = norm(btn.dataset.correct);
-      const selected = norm(btn.textContent);
-      const ok = selected === correct;
-
-      card.querySelectorAll('.choice').forEach((b) => {
-        b.disabled = true;
-        if (norm(b.textContent) === correct) b.classList.add('ok');
-      });
-      if (!ok) btn.classList.add('bad');
-
-      setFeedback(id, ok ? 'Correct.' : 'Not correct. Right answer: ' + correct, ok);
-      updateScore('a', ok);
-    }
-
-    function checkGap(id, expected, level) {
-      if (solved[id]) return;
-      solved[id] = true;
-
-      const input = document.getElementById(id + 'g');
-      const ok = norm(input.value) === norm(expected);
-      input.disabled = true;
-      input.classList.add(ok ? 'ok' : 'bad');
-
-      setFeedback(id, ok ? 'Correct.' : 'Not correct. Example: ' + expected, ok);
-      updateScore(level, ok);
-    }
-
-    function showGap(id, expected, level) {
-      if (solved[id]) return;
-      solved[id] = true;
-      const input = document.getElementById(id + 'g');
-      input.value = expected;
-      input.disabled = true;
-      input.classList.add('ok');
-      setFeedback(id, 'Shown: ' + expected, true);
-      updateScore(level, false);
-    }
-
-    function checkFree(id, required) {
-      if (solved[id]) return;
-      solved[id] = true;
-
-      const input = document.getElementById(id + 'i');
-      const value = norm(input.value);
-      const needed = required.some((r) => value.includes(norm(r)));
-      const ok = needed && value.length > 12;
-
-      input.disabled = true;
-      input.classList.add(ok ? 'ok' : 'bad');
-      setFeedback(id, ok ? 'Good sentence.' : 'Please include the phrase from the task.', ok);
-      updateScore('c', ok);
-    }
-
-    function checkPhrase(id) {
-      if (solved[id]) return;
-      solved[id] = true;
-
-      const input = document.getElementById(id + 'i');
-      const value = norm(input.value);
-      const hasPhrase = value.includes('i admire') && value.includes('because');
-      const hasQuality = qualities.some((q) => value.includes(q));
-      const ok = hasPhrase && hasQuality && value.length > 20;
-
-      input.disabled = true;
-      input.classList.add(ok ? 'ok' : 'bad');
-      setFeedback(id, ok ? 'Good sentence.' : 'Use "I admire ... because ..." and one quality.', ok);
-      updateScore('c', ok);
-    }
-
-    function checkEssay(id) {
-      if (solved[id]) return;
-      solved[id] = true;
-
-      const input = document.getElementById(id + 'i');
-      const value = norm(input.value);
-      const countQualities = qualities.filter((q) => value.includes(q)).length;
-      const hasPhrase = value.includes('i admire') || value.includes('is known for') || value.includes('because');
-      const ok = countQualities >= 2 && hasPhrase && value.length > 80;
-
-      input.disabled = true;
-      input.classList.add(ok ? 'ok' : 'bad');
-      setFeedback(id, ok ? 'Great text.' : 'Need 2 qualities and one clear phrase.', ok);
-      updateScore('c', ok);
-    }
-
-    function showText(id, text) {
-      if (solved[id]) return;
-      solved[id] = true;
-      const input = document.getElementById(id + 'i');
-      input.value = text;
-      input.disabled = true;
-      input.classList.add('ok');
-      setFeedback(id, 'Example shown.', true);
-      updateScore('c', false);
-    }
-
-    async function aiHelp(id) {
-      const input = document.getElementById(id + 'i');
-      const out = document.getElementById(id + 'ai');
-      const value = String(input.value || '').trim();
-
-      if (!value) {
-        out.textContent = 'Please write your answer first.';
-        out.className = 'fb bad';
-        return;
-      }
-
-      out.textContent = 'KI denkt...';
-      out.className = 'fb';
-
-      try {
-        const res = await fetch(API_BASE + '/api/role-model/help', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userText: value })
-        });
-
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        out.textContent = 'KI-Hilfe: ' + (data.hint || 'No hint available.');
-        out.className = 'fb ok';
-      } catch (_err) {
-        out.textContent = 'KI nicht erreichbar. Bitte spaeter erneut probieren.';
-        out.className = 'fb bad';
-      }
-    }
-
-    function resetLevel(level) {
-      score[level] = { ok: 0, bad: 0 };
-      document.getElementById(level + 'r').textContent = '0';
-      document.getElementById(level + 'w').textContent = '0';
-
-      document.querySelectorAll('#level-' + level + ' .card').forEach((card) => {
-        const id = card.dataset.id;
-        delete solved[id];
-
-        card.querySelectorAll('.choice').forEach((b) => {
-          b.disabled = false;
-          b.classList.remove('ok', 'bad');
-        });
-
-        card.querySelectorAll('.gap').forEach((el) => {
-          el.disabled = false;
-          el.value = '';
-          el.classList.remove('ok', 'bad');
-        });
-
-        card.querySelectorAll('.write').forEach((el) => {
-          el.disabled = false;
-          el.value = '';
-          el.classList.remove('ok', 'bad');
-        });
-
-        const fb = card.querySelector('#' + id + 'f');
-        if (fb) { fb.textContent = ''; fb.className = 'fb'; }
-
-        const ai = card.querySelector('#' + id + 'ai');
-        if (ai) { ai.textContent = ''; ai.className = 'fb'; }
-      });
-    }
-  </script>
+function chkFree(id,required,lvl){
+  if(ans[id])return;
+  const inp=document.getElementById(id+'i');
+  const val=nrm(inp.value);
+  const ok=required.some(r=>val.includes(nrm(r)))&&val.length>10;
+  inp.classList.add(ok?'ok':'err');inp.disabled=true;
+  const fb=document.getElementById(id+'f');fb.className='fb '+(ok?'g':'b');
+  fb.textContent=ok?'Good sentence.':'Bitte Phrase aus der Aufgabe nutzen.';
+  ans[id]=true;if(ok)sc[lvl].r++;else sc[lvl].w++;updSc(lvl);
+}
+function chkPhrase(id,lvl){
+  if(ans[id])return;
+  const inp=document.getElementById(id+'i');
+  const val=nrm(inp.value);
+  const hasPhrase=val.includes('i admire')&&val.includes('because');
+  const hasQuality=QUALITIES.some(q=>val.includes(q));
+  const ok=hasPhrase&&hasQuality&&val.length>20;
+  inp.classList.add(ok?'ok':'err');inp.disabled=true;
+  const fb=document.getElementById(id+'f');fb.className='fb '+(ok?'g':'b');
+  fb.textContent=ok?'Great.':'Bitte "I admire ... because ..." + quality verwenden.';
+  ans[id]=true;if(ok)sc[lvl].r++;else sc[lvl].w++;updSc(lvl);
+}
+function chkEssay(id){
+  if(ans[id])return;
+  const inp=document.getElementById(id+'i');
+  const val=nrm(inp.value);
+  const qualCount=QUALITIES.filter(q=>val.includes(q)).length;
+  const hasPhrase=(val.includes('i admire')||val.includes('is known for')||val.includes('because'));
+  const ok=qualCount>=2&&hasPhrase&&val.length>80;
+  inp.classList.add(ok?'ok':'err');
+  const fb=document.getElementById(id+'f');fb.className='fb '+(ok?'g':'b');
+  fb.textContent=ok?'Excellent text.':'Noch 2 qualities und 1 klare phrase ergaenzen.';
+  ans[id]=true;if(ok)sc.c.r++;else sc.c.w++;updSc('c');
+}
+async function aiHelp(id){
+  const input=document.getElementById(id+'i');
+  const out=document.getElementById(id+'ai');
+  const value=(input&&input.value?input.value:'').trim();
+  if(!value){out.className='fb b';out.textContent='Bitte erst einen Text schreiben.';return}
+  out.className='fb';out.textContent='KI denkt...';
+  try{
+    const res=await fetch('https://englisch-9.onrender.com/api/role-model/help',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userText:value})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    out.className='fb g';out.textContent='KI-Hilfe: '+(data.hint||'Kein Tipp verfuegbar.');
+  }catch(_e){out.className='fb b';out.textContent='KI nicht erreichbar. Bitte spaeter erneut probieren.'}
+}
+function shwTr(id,model,lvl){
+  if(ans[id])return;
+  const inp=document.getElementById(id+'i');inp.value=model;inp.classList.add('ok');inp.disabled=true;
+  const fb=document.getElementById(id+'f');fb.className='fb g';fb.textContent='-> Beispiel angezeigt';
+  ans[id]=true;sc[lvl].w++;updSc(lvl);
+}
+function resetC(){
+  sc.c={r:0,w:0};updSc('c');
+  document.querySelectorAll('#level-c .wi').forEach(i=>{i.value='';i.className='wi';i.disabled=false});
+  document.querySelectorAll('#level-c .fb').forEach(f=>{f.textContent='';f.className='fb'});
+  'c1 c2 c3 c4 c5'.split(' ').forEach(k=>delete ans[k]);
+}
+</script>
 </body>
 </html>
