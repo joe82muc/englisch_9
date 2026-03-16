@@ -1,0 +1,505 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accident Talk Studio - Word Bank</title>
+  <style>
+    :root {
+      --bg1: #eaf4ff;
+      --bg2: #ffe8d9;
+      --ink: #1d2a3a;
+      --muted: #5b6d82;
+      --card: #ffffff;
+      --line: #d8e6f8;
+      --brand: #1265d8;
+      --brand2: #1fa0ff;
+      --orange: #ff8a3d;
+      --ok: #157347;
+      --okbg: #e9fbf1;
+      --bad: #bf1e2e;
+      --badbg: #ffedf0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 10%, #dff0ff 0, transparent 33%),
+        radial-gradient(circle at 90% 12%, #ffe3cf 0, transparent 34%),
+        linear-gradient(150deg, var(--bg1), var(--bg2));
+      min-height: 100vh;
+    }
+
+    .wrap { max-width: 1020px; margin: 0 auto; padding: 1rem; }
+
+    .hero {
+      border-radius: 24px;
+      padding: 1rem;
+      color: #fff;
+      background:
+        linear-gradient(125deg, rgba(0,0,0,.16), rgba(0,0,0,.08)),
+        linear-gradient(125deg, var(--brand), var(--brand2));
+      box-shadow: 0 14px 30px rgba(15, 48, 95, .25);
+      margin-bottom: 1rem;
+    }
+
+    .back {
+      display: inline-block;
+      text-decoration: none;
+      color: #e9f4ff;
+      font-size: .88rem;
+      font-weight: 800;
+      margin-bottom: .45rem;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.4rem, 4vw, 2.2rem); line-height: 1.1; }
+    .sub { margin-top: .42rem; color: #e6f5ff; font-size: .94rem; }
+
+    .hero-grid {
+      margin-top: .8rem;
+      display: grid;
+      gap: .55rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .shot {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.2);
+    }
+
+    .shot img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      object-position: center 35%;
+      display: block;
+    }
+
+    .shot span {
+      display: block;
+      padding: .4rem .55rem;
+      font-size: .76rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .ibox {
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--card);
+      box-shadow: 0 6px 16px rgba(34, 68, 122, .1);
+      margin-bottom: .9rem;
+    }
+
+    .ihdr {
+      padding: .86rem 1rem;
+      cursor: pointer;
+      background: linear-gradient(125deg, #225fd4, #4f8efe);
+      color: #fff;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ibody { display: none; padding: 1rem; background: #fff; }
+    .ibody.open { display: block; }
+
+    .wb-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .8rem;
+      margin-bottom: .8rem;
+    }
+
+    .wb-col h3 {
+      margin: 0 0 .5rem;
+      font-size: .75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 10px;
+      padding: .36rem .55rem;
+      text-align: center;
+    }
+
+    .wb-col.pol h3 { background: #e7f1ff; color: #1256ae; }
+    .wb-col.wit h3 { background: #fff0e3; color: #b35e0d; }
+
+    .wb-item {
+      border: 1px solid;
+      border-radius: 10px;
+      padding: .42rem .56rem;
+      margin-bottom: .38rem;
+      font-size: .84rem;
+      line-height: 1.45;
+    }
+
+    .wb-col.pol .wb-item { border-color: #bfd8ff; background: #f3f8ff; color: #1b4d89; }
+    .wb-col.wit .wb-item { border-color: #ffd7b6; background: #fff8ef; color: #8f4d10; }
+
+    .tip {
+      border-left: 4px solid var(--orange);
+      background: #fff6ef;
+      border-radius: 0 10px 10px 0;
+      padding: .5rem .7rem;
+      font-size: .86rem;
+      color: #7a4310;
+    }
+
+    .tabs { display: flex; gap: .45rem; margin-bottom: .8rem; }
+    .tab {
+      flex: 1;
+      border: 1px solid #d8e6fb;
+      border-radius: 12px;
+      background: #fff;
+      color: #35547b;
+      font-weight: 800;
+      padding: .56rem .35rem;
+      cursor: pointer;
+    }
+    .tab.active { background: linear-gradient(125deg, #225fd4, #4f8efe); color: #fff; }
+
+    .lsec { display: none; }
+    .lsec.show { display: block; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: .6rem;
+      align-items: center;
+      margin-bottom: .7rem;
+      flex-wrap: wrap;
+    }
+
+    .score { display: flex; gap: .45rem; }
+
+    .sn {
+      border: 1px solid #d8e6fb;
+      border-radius: 10px;
+      background: #fff;
+      padding: .35rem .6rem;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .btn {
+      border: 1px solid #d5e2f8;
+      border-radius: 999px;
+      background: #fff;
+      color: #4f6481;
+      padding: .4rem .8rem;
+      font-size: .78rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.chk {
+      background: linear-gradient(125deg, #1f5ece, #4e8bfd);
+      color: #fff;
+      border-color: #1f5ece;
+    }
+
+    .card {
+      border: 1.5px solid #dce9fb;
+      border-radius: 14px;
+      background: #fff;
+      padding: .9rem;
+      margin-bottom: .7rem;
+      box-shadow: 0 3px 10px rgba(35, 65, 109, .08);
+    }
+
+    .exnum {
+      font-size: .66rem;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #2a66d7;
+      font-weight: 800;
+      margin-bottom: .35rem;
+    }
+
+    .q { font-size: .92rem; line-height: 1.56; margin-bottom: .56rem; }
+
+    .mc-wrap { display: flex; flex-wrap: wrap; gap: .42rem; margin-bottom: .45rem; }
+
+    .mc {
+      border: 1.5px solid #d8e6fb;
+      border-radius: 999px;
+      background: #f7fbff;
+      padding: .4rem .74rem;
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .mc.ok { background: var(--okbg); border-color: #90e0b2; color: var(--ok); }
+    .mc.err { background: var(--badbg); border-color: #ffb0bb; color: var(--bad); }
+
+    .gap, .wi {
+      width: 100%;
+      border: 1.5px solid #d8e6fb;
+      border-radius: 10px;
+      background: #f9fcff;
+      padding: .55rem .7rem;
+      margin-bottom: .55rem;
+      font-size: .9rem;
+    }
+
+    .gap.ok, .wi.ok { border-color: #90e0b2; background: var(--okbg); }
+    .gap.err, .wi.err { border-color: #ffb0bb; background: var(--badbg); }
+
+    .fbrow { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+    .fb { font-size: .8rem; font-weight: 800; }
+    .fb.g { color: var(--ok); }
+    .fb.b { color: var(--bad); }
+
+    @media (max-width: 780px) {
+      .hero-grid, .wb-grid { grid-template-columns: 1fr; }
+      .shot img { height: 190px; }
+      .tabs { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <a class="back" href="https://joe82muc.github.io/englisch_9/index.html">&larr; Back to Home</a>
+      <h1>Accident Talk Studio</h1>
+      <p class="sub">Train for police and witness dialogues. Same KI setup as Role Model 2.</p>
+
+      <div class="hero-grid">
+        <figure class="shot">
+          <img loading="lazy" style="object-position:center 42%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Polizei%20in%20Berlin.jpg" alt="Police car in city">
+          <span>Police Scene</span>
+        </figure>
+        <figure class="shot">
+          <img loading="lazy" style="object-position:center 36%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Ambulance_in_London.jpg" alt="Ambulance on street">
+          <span>Emergency Team</span>
+        </figure>
+        <figure class="shot">
+          <img loading="lazy" style="object-position:center 35%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Traffic_accident.jpg" alt="Traffic accident">
+          <span>Accident Spot</span>
+        </figure>
+      </div>
+    </section>
+
+    <section class="ibox">
+      <div class="ihdr" onclick="toggleInfo()">
+        <span>Word Bank - Police and Witness Language</span>
+        <span id="iarr">v</span>
+      </div>
+      <div class="ibody open" id="ibody">
+        <div class="wb-grid">
+          <div class="wb-col pol">
+            <h3>Police Questions</h3>
+            <div class="wb-item">What is your name / date of birth / phone number?</div>
+            <div class="wb-item">Can you explain in more detail, please?</div>
+            <div class="wb-item">Where exactly did the accident happen?</div>
+            <div class="wb-item">What time did it happen?</div>
+            <div class="wb-item">Did anyone call an ambulance?</div>
+            <div class="wb-item">We will get in touch.</div>
+          </div>
+          <div class="wb-col wit">
+            <h3>Witness Phrases</h3>
+            <div class="wb-item">I arrived at ...</div>
+            <div class="wb-item">I think the accident happened ... minutes before I arrived.</div>
+            <div class="wb-item">There was / There were ...</div>
+            <div class="wb-item">First ..., then ..., after that ...</div>
+            <div class="wb-item">Before / after / when / at the time ...</div>
+            <div class="wb-item">The driver was ... and the road was ...</div>
+          </div>
+        </div>
+        <div class="tip"><strong>Tipp:</strong> In Level C, write short clear sentences first, then improve with KI-Hilfe.</div>
+      </div>
+    </section>
+
+    <section class="tabs">
+      <button class="tab active" onclick="setLevel('a',this)">Level A</button>
+      <button class="tab" onclick="setLevel('b',this)">Level B</button>
+      <button class="tab" onclick="setLevel('c',this)">Level C</button>
+    </section>
+
+    <section id="level-a" class="lsec show">
+      <div class="topbar"><div class="score"><div class="sn">OK: <span id="ar">0</span></div><div class="sn">X: <span id="aw">0</span></div></div><button class="btn" onclick="resetA()">Reset</button></div>
+
+      <div class="card" id="a1"><div class="exnum">Exercise 1</div><div class="q">Which phrase asks for contact details?</div><div class="mc-wrap"><button class="mc" onclick="chkMC('a1',this,'what is your phone number','what is your phone number')">What is your phone number?</button><button class="mc" onclick="chkMC('a1',this,'there was a red car','what is your phone number')">There was a red car.</button><button class="mc" onclick="chkMC('a1',this,'first then after that','what is your phone number')">First, then, after that.</button></div><div class="fbrow"><span class="fb" id="a1f"></span></div></div>
+      <div class="card" id="a2"><div class="exnum">Exercise 2</div><div class="q">Best sequence starter for an accident report:</div><div class="mc-wrap"><button class="mc" onclick="chkMC('a2',this,'first','first')">First</button><button class="mc" onclick="chkMC('a2',this,'always','first')">Always</button><button class="mc" onclick="chkMC('a2',this,'tomorrow','first')">Tomorrow</button></div><div class="fbrow"><span class="fb" id="a2f"></span></div></div>
+      <div class="card" id="a3"><div class="exnum">Exercise 3</div><div class="q">Which phrase is a witness time reference?</div><div class="mc-wrap"><button class="mc" onclick="chkMC('a3',this,'at the time','at the time')">at the time</button><button class="mc" onclick="chkMC('a3',this,'my birthday','at the time')">my birthday</button><button class="mc" onclick="chkMC('a3',this,'in class','at the time')">in class</button></div><div class="fbrow"><span class="fb" id="a3f"></span></div></div>
+      <div class="card" id="a4"><div class="exnum">Exercise 4</div><div class="q">Which sentence sounds like police feedback?</div><div class="mc-wrap"><button class="mc" onclick="chkMC('a4',this,'we will get in touch','we will get in touch')">We will get in touch.</button><button class="mc" onclick="chkMC('a4',this,'i arrived at five','we will get in touch')">I arrived at five.</button><button class="mc" onclick="chkMC('a4',this,'there were two bikes','we will get in touch')">There were two bikes.</button></div><div class="fbrow"><span class="fb" id="a4f"></span></div></div>
+      <div class="card" id="a5"><div class="exnum">Exercise 5</div><div class="q">Good witness starter:</div><div class="mc-wrap"><button class="mc" onclick="chkMC('a5',this,'i arrived at','i arrived at')">I arrived at ...</button><button class="mc" onclick="chkMC('a5',this,'how are you','i arrived at')">How are you?</button><button class="mc" onclick="chkMC('a5',this,'nice weather','i arrived at')">Nice weather.</button></div><div class="fbrow"><span class="fb" id="a5f"></span></div></div>
+      <div class="card" id="a6"><div class="exnum">Exercise 6</div><div class="q">Which phrase asks for more details?</div><div class="mc-wrap"><button class="mc" onclick="chkMC('a6',this,'can you explain in more detail','can you explain in more detail')">Can you explain in more detail?</button><button class="mc" onclick="chkMC('a6',this,'i saw pictures of','can you explain in more detail')">I saw pictures of ...</button><button class="mc" onclick="chkMC('a6',this,'my role model','can you explain in more detail')">My role model ...</button></div><div class="fbrow"><span class="fb" id="a6f"></span></div></div>
+    </section>
+
+    <section id="level-b" class="lsec">
+      <div class="topbar"><div class="score"><div class="sn">OK: <span id="br">0</span></div><div class="sn">X: <span id="bw">0</span></div></div><button class="btn" onclick="resetB()">Reset</button></div>
+
+      <div class="card" id="b1"><div class="exnum">Exercise 1</div><div class="q">I <input class="gap" id="b1g" placeholder="..."> at 5:30 pm.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b1','arrived','b')">Check</button><button class="btn" onclick="shwGap('b1','arrived','b')">Show</button><span class="fb" id="b1f"></span></div></div>
+      <div class="card" id="b2"><div class="exnum">Exercise 2</div><div class="q">The accident happened <input class="gap" id="b2g" placeholder="..."> I arrived.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b2','before','b')">Check</button><button class="btn" onclick="shwGap('b2','before','b')">Show</button><span class="fb" id="b2f"></span></div></div>
+      <div class="card" id="b3"><div class="exnum">Exercise 3</div><div class="q"><input class="gap" id="b3g" placeholder="...">, a car hit a bike.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b3','first','b')">Check</button><button class="btn" onclick="shwGap('b3','first','b')">Show</button><span class="fb" id="b3f"></span></div></div>
+      <div class="card" id="b4"><div class="exnum">Exercise 4</div><div class="q"><input class="gap" id="b4g" placeholder="..."> that, people called an ambulance.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b4','after','b')">Check</button><button class="btn" onclick="shwGap('b4','after','b')">Show</button><span class="fb" id="b4f"></span></div></div>
+      <div class="card" id="b5"><div class="exnum">Exercise 5</div><div class="q">Can you explain in more <input class="gap" id="b5g" placeholder="...">?</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b5','detail','b')">Check</button><button class="btn" onclick="shwGap('b5','detail','b')">Show</button><span class="fb" id="b5f"></span></div></div>
+      <div class="card" id="b6"><div class="exnum">Exercise 6</div><div class="q">What is your <input class="gap" id="b6g" placeholder="..."> number?</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b6','phone','b')">Check</button><button class="btn" onclick="shwGap('b6','phone','b')">Show</button><span class="fb" id="b6f"></span></div></div>
+      <div class="card" id="b7"><div class="exnum">Exercise 7</div><div class="q">There <input class="gap" id="b7g" placeholder="..."> two injured people.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b7','were','b')">Check</button><button class="btn" onclick="shwGap('b7','were','b')">Show</button><span class="fb" id="b7f"></span></div></div>
+      <div class="card" id="b8"><div class="exnum">Exercise 8</div><div class="q">We will get in <input class="gap" id="b8g" placeholder="...">.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b8','touch','b')">Check</button><button class="btn" onclick="shwGap('b8','touch','b')">Show</button><span class="fb" id="b8f"></span></div></div>
+    </section>
+
+    <section id="level-c" class="lsec">
+      <div class="topbar"><div class="score"><div class="sn">OK: <span id="cr">0</span></div><div class="sn">X: <span id="cw">0</span></div></div><button class="btn" onclick="resetC()">Reset</button></div>
+
+      <div class="card" id="c1"><div class="exnum">Exercise 1</div><div class="q">Write one witness sentence with: <b>I arrived at ...</b></div><input class="wi" id="c1i" type="text" placeholder="I arrived at ..."><div class="fbrow"><button class="btn chk" onclick="chkFree('c1',['i arrived at'],'c')">Check</button><button class="btn" onclick="aiHelp('c1')">KI-Hilfe</button><button class="btn" onclick="shwTr('c1','I arrived at 5:30 pm and saw two damaged cars.','c')">Show</button><span class="fb" id="c1f"></span></div><div class="fbrow"><span class="fb" id="c1ai"></span></div></div>
+      <div class="card" id="c2"><div class="exnum">Exercise 2</div><div class="q">Use sequence words: <b>First ... then ... after that ...</b></div><input class="wi" id="c2i" type="text" placeholder="First ..., then ..., after that ..."><div class="fbrow"><button class="btn chk" onclick="chkFree('c2',['first','then','after'],'c')">Check</button><button class="btn" onclick="aiHelp('c2')">KI-Hilfe</button><button class="btn" onclick="shwTr('c2','First a bike stopped, then a car turned, after that they crashed.','c')">Show</button><span class="fb" id="c2f"></span></div><div class="fbrow"><span class="fb" id="c2ai"></span></div></div>
+      <div class="card" id="c3"><div class="exnum">Exercise 3</div><div class="q">Write one police question about details.</div><input class="wi" id="c3i" type="text" placeholder="Can you explain ... ?"><div class="fbrow"><button class="btn chk" onclick="chkFree('c3',['can you explain'],'c')">Check</button><button class="btn" onclick="aiHelp('c3')">KI-Hilfe</button><button class="btn" onclick="shwTr('c3','Can you explain in more detail what happened at the crossing?','c')">Show</button><span class="fb" id="c3f"></span></div><div class="fbrow"><span class="fb" id="c3ai"></span></div></div>
+      <div class="card" id="c4"><div class="exnum">Exercise 4</div><div class="q">Use a time reference: <b>before / after / when / at the time</b>.</div><input class="wi" id="c4i" type="text" placeholder="The accident happened ..."><div class="fbrow"><button class="btn chk" onclick="chkFree('c4',['before','after','when','at the time'],'c')">Check</button><button class="btn" onclick="aiHelp('c4')">KI-Hilfe</button><button class="btn" onclick="shwTr('c4','The accident happened before the traffic lights changed.','c')">Show</button><span class="fb" id="c4f"></span></div><div class="fbrow"><span class="fb" id="c4ai"></span></div></div>
+      <div class="card" id="c5"><div class="exnum">Exercise 5</div><div class="q">Write 4-5 sentences of a full witness statement.</div><textarea class="wi" id="c5i" rows="5" placeholder="I arrived at ... First ..."></textarea><div class="fbrow"><button class="btn chk" onclick="chkEssay('c5')">Check</button><button class="btn" onclick="aiHelp('c5')">KI-Hilfe</button><button class="btn" onclick="shwTr('c5','I arrived at 5:30 pm near the crossing. First a bike stopped at the red light. Then a car turned too fast. After that the bike fell and two people called an ambulance. The police asked for names and phone numbers.','c')">Show</button><span class="fb" id="c5f"></span></div><div class="fbrow"><span class="fb" id="c5ai"></span></div></div>
+    </section>
+  </main>
+
+  <script>
+    const ans={};
+    const sc={a:{r:0,w:0},b:{r:0,w:0},c:{r:0,w:0}};
+
+    function toggleInfo(){
+      document.getElementById('ibody').classList.toggle('open');
+      document.querySelector('.ihdr').classList.toggle('open');
+    }
+
+    function setLevel(l,btn){
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.lsec').forEach(s=>s.classList.remove('show'));
+      document.getElementById('level-'+l).classList.add('show');
+    }
+
+    function updSc(l){
+      document.getElementById(l+'r').textContent=sc[l].r;
+      document.getElementById(l+'w').textContent=sc[l].w;
+    }
+
+    const nrm=s=>String(s||'').toLowerCase().replace(/[?.!,']/g,'').replace(/\s+/g,' ').trim();
+
+    function chkMC(id,btn,selected,correct){
+      if(ans[id])return; ans[id]=true;
+      btn.closest('.mc-wrap').querySelectorAll('.mc').forEach(b=>{b.disabled=true;if(nrm(b.textContent)===nrm(correct))b.classList.add('ok')});
+      const ok=nrm(selected)===nrm(correct);
+      if(!ok)btn.classList.add('err');
+      const fb=document.getElementById(id+'f');
+      fb.className='fb '+(ok?'g':'b');
+      fb.textContent=ok?'Correct.':'Answer: '+correct;
+      if(ok)sc.a.r++;else sc.a.w++;updSc('a');
+    }
+
+    function resetA(){
+      sc.a={r:0,w:0};updSc('a');
+      document.querySelectorAll('#level-a .mc').forEach(b=>{b.className='mc';b.disabled=false});
+      document.querySelectorAll('#level-a .fb').forEach(f=>{f.textContent='';f.className='fb'});
+      'a1 a2 a3 a4 a5 a6'.split(' ').forEach(k=>delete ans[k]);
+    }
+
+    function chkGap(id,correct,lvl){
+      if(ans[id])return;
+      const inp=document.getElementById(id+'g');
+      const ok=nrm(inp.value)===nrm(correct);
+      inp.classList.add(ok?'ok':'err'); inp.disabled=true;
+      const fb=document.getElementById(id+'f');
+      fb.className='fb '+(ok?'g':'b');
+      fb.textContent=ok?'Correct.':'Solution: '+correct;
+      ans[id]=true; if(ok)sc[lvl].r++; else sc[lvl].w++; updSc(lvl);
+    }
+
+    function shwGap(id,correct,lvl){
+      if(ans[id])return;
+      const inp=document.getElementById(id+'g'); inp.value=correct; inp.classList.add('ok'); inp.disabled=true;
+      const fb=document.getElementById(id+'f'); fb.className='fb g'; fb.textContent='-> '+correct;
+      ans[id]=true; sc[lvl].w++; updSc(lvl);
+    }
+
+    function chkDouble(id,c1,c2,lvl){
+      if(ans[id])return;
+      const i1=document.getElementById(id+'g'), i2=document.getElementById(id+'g2');
+      const ok1=nrm(i1.value)===nrm(c1), ok2=nrm(i2.value)===nrm(c2), ok=ok1&&ok2;
+      i1.classList.add(ok1?'ok':'err'); i1.disabled=true;
+      i2.classList.add(ok2?'ok':'err'); i2.disabled=true;
+      const fb=document.getElementById(id+'f'); fb.className='fb '+(ok?'g':'b'); fb.textContent=ok?'Correct.':'Solution: '+c1+' / '+c2;
+      ans[id]=true; if(ok)sc[lvl].r++; else sc[lvl].w++; updSc(lvl);
+    }
+
+    function shwDouble(id,words){
+      if(ans[id])return;
+      ['g','g2'].forEach((s,i)=>{const el=document.getElementById(id+s);if(el){el.value=words[i];el.classList.add('ok');el.disabled=true}});
+      const fb=document.getElementById(id+'f'); fb.className='fb g'; fb.textContent='-> '+words.join(' / ');
+      ans[id]=true; sc.b.w++; updSc('b');
+    }
+
+    function resetB(){
+      sc.b={r:0,w:0}; updSc('b');
+      document.querySelectorAll('#level-b .gap').forEach(i=>{i.value='';i.className='gap';i.disabled=false});
+      document.querySelectorAll('#level-b .fb').forEach(f=>{f.textContent='';f.className='fb'});
+      'b1 b2 b3 b4 b5 b6 b7 b8'.split(' ').forEach(k=>delete ans[k]);
+    }
+
+    function chkFree(id,required,lvl){
+      if(ans[id])return;
+      const inp=document.getElementById(id+'i');
+      const val=nrm(inp.value);
+      const ok=required.some(r=>val.includes(nrm(r)))&&val.length>10;
+      inp.classList.add(ok?'ok':'err'); inp.disabled=true;
+      const fb=document.getElementById(id+'f'); fb.className='fb '+(ok?'g':'b'); fb.textContent=ok?'Good sentence.':'Please include the phrase from task.';
+      ans[id]=true; if(ok)sc[lvl].r++; else sc[lvl].w++; updSc(lvl);
+    }
+
+    function chkEssay(id){
+      if(ans[id])return;
+      const inp=document.getElementById(id+'i');
+      const val=nrm(inp.value);
+      const hasSeq=(val.includes('first')||val.includes('then')||val.includes('after'));
+      const hasTime=(val.includes('before')||val.includes('after')||val.includes('when')||val.includes('at the time'));
+      const ok=hasSeq&&hasTime&&val.length>90;
+      inp.classList.add(ok?'ok':'err');
+      const fb=document.getElementById(id+'f'); fb.className='fb '+(ok?'g':'b'); fb.textContent=ok?'Excellent text.':'Need sequence words + one time reference.';
+      ans[id]=true; if(ok)sc.c.r++; else sc.c.w++; updSc('c');
+    }
+
+    async function aiHelp(id){
+      const input=document.getElementById(id+'i');
+      const out=document.getElementById(id+'ai');
+      const value=(input&&input.value?input.value:'').trim();
+      if(!value){ out.className='fb b'; out.textContent='Bitte erst einen Text schreiben.'; return; }
+      out.className='fb'; out.textContent='KI denkt...';
+      try{
+        const res=await fetch('https://englisch-9.onrender.com/api/role-model/help',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({userText:'Accident task: '+value})
+        });
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        const data=await res.json();
+        out.className='fb g';
+        out.textContent='KI-Hilfe: '+(data.hint||'No hint available.');
+      }catch(_err){
+        out.className='fb b';
+        out.textContent='KI nicht erreichbar. Bitte spaeter erneut probieren.';
+      }
+    }
+
+    function shwTr(id,model,lvl){
+      if(ans[id])return;
+      const inp=document.getElementById(id+'i'); inp.value=model; inp.classList.add('ok'); inp.disabled=true;
+      const fb=document.getElementById(id+'f'); fb.className='fb g'; fb.textContent='-> Example shown';
+      ans[id]=true; sc[lvl].w++; updSc(lvl);
+    }
+
+    function resetC(){
+      sc.c={r:0,w:0}; updSc('c');
+      document.querySelectorAll('#level-c .wi').forEach(i=>{i.value='';i.className='wi';i.disabled=false});
+      document.querySelectorAll('#level-c .fb').forEach(f=>{f.textContent='';f.className='fb'});
+      'c1 c2 c3 c4 c5'.split(' ').forEach(k=>delete ans[k]);
+    }
+  </script>
+</body>
+</html>
