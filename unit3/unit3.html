@@ -1,0 +1,303 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unit 3 | English 9 | South Africa</title>
+  <style>
+    :root {
+      --sand: #dff3ff;
+      --sand-2: #cfeaff;
+      --green: #0e7c57;
+      --green-2: #0a5f43;
+      --sun: #f3b14b;
+      --ink: #1d2c28;
+      --card: #f7fcff;
+      --line: #b7dff3;
+      --blue: #2f91b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(140deg, rgba(9, 44, 34, .72), rgba(13, 74, 55, .5)),
+        url("https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1800&q=80") center/cover fixed no-repeat;
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 1rem 1rem 2.4rem;
+    }
+
+    .hero {
+      background:
+        linear-gradient(180deg, rgba(5, 32, 24, .18), rgba(5, 32, 24, .72)),
+        url("https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1800&q=80") center/cover no-repeat;
+      color: #fff;
+      border-radius: 24px;
+      padding: 1.25rem 1.3rem;
+      box-shadow: 0 18px 42px rgba(7, 25, 20, .35);
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.35);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      background: radial-gradient(circle at 80% 20%, rgba(255,255,255,.28), transparent 40%);
+    }
+
+    .hero::after {
+      background: linear-gradient(120deg, rgba(255,255,255,.14), transparent 55%);
+      mix-blend-mode: screen;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 3vw, 2.45rem);
+      line-height: 1.18;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 5px 20px rgba(0,0,0,.35);
+    }
+
+    .sub {
+      margin: .55rem 0 .8rem;
+      font-size: 1.04rem;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 3px 12px rgba(0,0,0,.35);
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.35);
+      padding: .4rem .7rem;
+      border-radius: 999px;
+      font-size: .88rem;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 10px 24px rgba(6, 31, 25, .25);
+    }
+
+    .main-grid {
+      margin-top: 1rem;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    .panel {
+      content-visibility: auto;
+      contain-intrinsic-size: 420px;
+      background: rgba(247, 252, 255, .94);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1rem;
+      box-shadow: 0 12px 30px rgba(7, 35, 30, .2);
+      backdrop-filter: blur(4px);
+    }
+
+    h2 {
+      margin: .1rem 0 .35rem;
+      font-size: 1.75rem;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #11392d;
+    }
+
+    .hint {
+      margin: 0 0 .7rem;
+      color: #385247;
+      font-size: .97rem;
+    }
+
+    .tree {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .branch {
+      border: 1px solid #b7dff3;
+      border-radius: 12px;
+      background: #eff9ff;
+      margin-bottom: .55rem;
+      overflow: hidden;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .branch:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(47, 145, 184, .14);
+    }
+
+    .branch button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: .72rem .8rem;
+      font-weight: 800;
+      color: #153e31;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: .98rem;
+    }
+
+    .branch .caret {
+      color: #235343;
+      transition: transform .22s ease;
+    }
+
+    .branch.open .caret { transform: rotate(180deg); }
+
+    .children {
+      list-style: none;
+      margin: 0;
+      padding: .2rem .7rem .7rem;
+      border-top: 1px dashed #b7dff3;
+      display: none;
+      background: #f4fbff;
+    }
+
+    .branch.open .children { display: block; }
+
+    .children li {
+      margin-top: .45rem;
+    }
+
+    .children a {
+      display: block;
+      text-decoration: none;
+      color: #174c3b;
+      border: 1px solid #b7dff3;
+      background: #fff;
+      border-radius: 9px;
+      padding: .48rem .6rem;
+      font-weight: 600;
+      font-size: .92rem;
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
+    }
+
+    .children a:hover {
+      transform: translateX(3px);
+      background: #e8f7ff;
+      border-color: #8cc9e6;
+    }
+
+    .mini {
+      margin-top: .9rem;
+      border: 1px solid #b7dff3;
+      border-radius: 12px;
+      padding: .7rem;
+      background: #f2faff;
+    }
+
+    .mini h3 {
+      margin: 0 0 .4rem;
+      font-size: 1rem;
+      color: #1d4337;
+    }
+
+    .mini ul {
+      margin: 0;
+      padding-left: 1.05rem;
+      color: #2f4b41;
+    }
+
+    .mini li { margin: .3rem 0; }
+
+    @media (max-width: 720px) {
+      .hero { min-height: 190px; }
+      .badge { line-height: 1.25; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>English Unit 3: South Africa</h1>
+      <p class="sub">Interaktive Übungen mit KI-Unterstützung.</p>
+      <span class="badge">Mittelschule am Sportpark Unterhaching | von Johannes Mössner | 9. Klasse</span>
+    </section>
+
+    <section class="main-grid">
+      <article class="panel">
+        <h2>Übersicht</h2>
+
+        <ul class="tree" id="treeMenu">
+          <li class="branch">
+            <button type="button"><span>grammar</span><span class="caret">v</span></button>
+            <ul class="children">
+              <li><a href="./unit3/tense/present_perfect.html">Present Perfect</a></li>
+              <li><a href="./unit3/tense/past_progressive.html">Past Progressive</a></li>
+            </ul>
+          </li>
+
+          <li class="branch">
+            <button type="button"><span>vokabulary</span><span class="caret">v</span></button>
+            <ul class="children">
+              <li><a href="./unit3/vokabulary/vokabeltrainer.html">Vokabeltrainer Unit 3</a></li>
+              <li><a href="./unit3/vokabulary/irregular_verbs.html">Irregular Verbs</a></li>
+              <li><a href="./unit3/vokabulary/accident_wordbank2.html">Wordbank: Accident </a></li>
+              <li><a href="./unit3/vokabulary/role_model2.html">Wordbank: Role Model</a></li>
+            </ul>
+          </li>
+
+          <li class="branch">
+            <button type="button"><span>mediation</span><span class="caret">v</span></button>
+            <ul class="children">
+              <li><a href="./unit3/mediation/mediation_accident.html">Mediation: Accident</a></li>
+              <li><a href="./unit3/mediation/mediation_doctor.html">Mediation: Doctor</a></li>
+              <li><a href="./unit3/mediation/mediation_hostel.html">Mediation: Hostel</a></li>
+              <li><a href="./unit3/mediation/mediation_market.html">Mediation: Market</a></li>
+              <li><a href="./unit3/mediation/mediation_park_improved.html">Mediation: Park</a></li>
+              <li><a href="./unit3/mediation/mediation_restaurant.html">Mediation: Restaurant</a></li>
+            </ul>
+          </li>
+
+          <li class="branch">
+            <button type="button"><span>e-mail</span><span class="caret">v</span></button>
+            <ul class="children">
+              <li><a href="./unit3/email/email.html">Write an e-Mail</a></li>
+            </ul>
+          </li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const treeMenu = document.getElementById("treeMenu");
+
+    treeMenu.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const branch = btn.closest(".branch");
+      if (!branch) return;
+      branch.classList.toggle("open");
+    });
+  </script>
+</body>
+</html>
+
