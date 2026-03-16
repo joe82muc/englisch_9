@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -101,8 +101,8 @@ h1 em{font-style:normal;opacity:1}
 <body>
 
 <div class="hdr">
-  <a href="../unit3.html" class="back">&larr; Zurueck</a>
-  <div class="utag">Grammar Reference · All Units</div>
+  <a href="../../index.html" class="back">&larr; Zur Startseite</a>
+  <div class="utag">Grammar Reference Â· All Units</div>
   <h1>Irregular<br><em>Verbs</em></h1>
   <p class="hsub">64 unregelmaessige Verben - mit Aussprache - 3 Niveaustufen</p>
 </div>
@@ -111,25 +111,25 @@ h1 em{font-style:normal;opacity:1}
 
 <div class="ibox">
   <div class="ihdr open" onclick="toggleInfo()">
-    <h2>📘 Die 3 Formen – How to use them</h2>
-    <span class="iarrow" id="iarr">▼</span>
+    <h2>ðŸ“˜ Die 3 Formen â€“ How to use them</h2>
+    <span class="iarrow" id="iarr">â–¼</span>
   </div>
   <div class="ibody open" id="ibody">
     <table class="itable">
-      <tr><th>Form</th><th>Wofür</th><th>Beispiel</th></tr>
+      <tr><th>Form</th><th>WofÃ¼r</th><th>Beispiel</th></tr>
       <tr><td><b>Infinitive</b></td><td>Grundform / to-Infinitiv</td><td class="ex">to write, to go</td></tr>
       <tr><td><b>Simple Past</b></td><td>Abgeschlossene Handlung in der Vergangenheit</td><td class="ex">She <b>wrote</b> a letter.</td></tr>
-      <tr><td><b>Past Participle</b></td><td>Present Perfect: have/has + …</td><td class="ex">She has <b>written</b> a letter.</td></tr>
+      <tr><td><b>Past Participle</b></td><td>Present Perfect: have/has + â€¦</td><td class="ex">She has <b>written</b> a letter.</td></tr>
     </table>
-    <div class="tip">💡 <b>Tipp:</b> Lerne alle 3 Formen zusammen: <b>write – wrote – written</b>. Am besten laut sprechen!</div>
+    <div class="tip">ðŸ’¡ <b>Tipp:</b> Lerne alle 3 Formen zusammen: <b>write â€“ wrote â€“ written</b>. Am besten laut sprechen!</div>
   </div>
 </div>
 
 <div class="ltabs">
-  <button class="ltab active" onclick="setLevel('a',this)">⭐ Level A<br><small>Multiple Choice</small></button>
-  <button class="ltab" onclick="setLevel('b',this)">⭐⭐ Level B<br><small>Eintippen</small></button>
-  <button class="ltab" onclick="setLevel('c',this)">⭐⭐⭐ Level C<br><small>Alle 3 Formen</small></button>
-  <button class="ltab" onclick="setLevel('list',this)">📋 Liste<br><small>Alle Verben</small></button>
+  <button class="ltab active" onclick="setLevel('a',this)">â­ Level A<br><small>Multiple Choice</small></button>
+  <button class="ltab" onclick="setLevel('b',this)">â­â­ Level B<br><small>Eintippen</small></button>
+  <button class="ltab" onclick="setLevel('c',this)">â­â­â­ Level C<br><small>Alle 3 Formen</small></button>
+  <button class="ltab" onclick="setLevel('list',this)">ðŸ“‹ Liste<br><small>Alle Verben</small></button>
 </div>
 
 <!-- LEVEL A -->
@@ -143,7 +143,7 @@ h1 em{font-style:normal;opacity:1}
       <button class="flt-btn active" onclick="setFilter('a','all',this)">Alle</button>
       <button class="flt-btn" onclick="setFilter('a','sp',this)">Simple Past</button>
       <button class="flt-btn" onclick="setFilter('a','pp',this)">Past Participle</button>
-      <button class="rst-btn" onclick="resetQ('a')">🔄</button>
+      <button class="rst-btn" onclick="resetQ('a')">ðŸ”„</button>
     </div>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="a-prog" style="width:0%"></div></div>
@@ -165,7 +165,7 @@ h1 em{font-style:normal;opacity:1}
       <button class="flt-btn active" onclick="setFilter('b','all',this)">Alle</button>
       <button class="flt-btn" onclick="setFilter('b','sp',this)">Simple Past</button>
       <button class="flt-btn" onclick="setFilter('b','pp',this)">Past Participle</button>
-      <button class="rst-btn" onclick="resetQ('b')">🔄</button>
+      <button class="rst-btn" onclick="resetQ('b')">ðŸ”„</button>
     </div>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="b-prog" style="width:0%"></div></div>
@@ -183,7 +183,7 @@ h1 em{font-style:normal;opacity:1}
       <div class="sn"><strong id="cr">0</strong><span>R</span></div>
       <div class="sn"><strong id="cw">0</strong><span>F</span></div>
     </div>
-    <button class="rst-btn" onclick="resetQ('c')">🔄 Reset</button>
+    <button class="rst-btn" onclick="resetQ('c')">ðŸ”„ Reset</button>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="c-prog" style="width:0%"></div></div>
   <div id="c-quiz"></div>
@@ -202,78 +202,78 @@ h1 em{font-style:normal;opacity:1}
 
 <script>
 const V=[
-  {i:"be",        s:"was/were",    p:"been",         d:"sein",                       pi:"biː",    ps:"wɒz/wɜː",   pp:"biːn"},
-  {i:"become",    s:"became",      p:"become",        d:"werden",                     pi:"bɪˈkʌm", ps:"bɪˈkeɪm",   pp:"bɪˈkʌm"},
-  {i:"begin",     s:"began",       p:"begun",         d:"beginnen; anfangen",         pi:"bɪˈɡɪn", ps:"bɪˈɡæn",    pp:"bɪˈɡʌn"},
-  {i:"break",     s:"broke",       p:"broken",        d:"brechen",                    pi:"breɪk",  ps:"brəʊk",     pp:"ˈbrəʊkən"},
-  {i:"bring",     s:"brought",     p:"brought",       d:"bringen; mitbringen",        pi:"brɪŋ",   ps:"brɔːt",     pp:"brɔːt"},
-  {i:"build",     s:"built",       p:"built",         d:"bauen",                      pi:"bɪld",   ps:"bɪlt",      pp:"bɪlt"},
-  {i:"buy",       s:"bought",      p:"bought",        d:"kaufen",                     pi:"baɪ",    ps:"bɔːt",      pp:"bɔːt"},
-  {i:"catch",     s:"caught",      p:"caught",        d:"fangen",                     pi:"kætʃ",   ps:"kɔːt",      pp:"kɔːt"},
-  {i:"choose",    s:"chose",       p:"chosen",        d:"wählen; auswählen",          pi:"tʃuːz",  ps:"tʃəʊz",     pp:"ˈtʃəʊzən"},
-  {i:"come",      s:"came",        p:"come",          d:"kommen",                     pi:"kʌm",    ps:"keɪm",      pp:"kʌm"},
-  {i:"cost",      s:"cost",        p:"cost",          d:"kosten",                     pi:"kɒst",   ps:"kɒst",      pp:"kɒst"},
-  {i:"cut",       s:"cut",         p:"cut",           d:"schneiden",                  pi:"kʌt",    ps:"kʌt",       pp:"kʌt"},
-  {i:"deal",      s:"dealt",       p:"dealt",         d:"umgehen mit; befassen",      pi:"diːl",   ps:"delt",      pp:"delt"},
-  {i:"do",        s:"did",         p:"done",          d:"machen; tun",                pi:"duː",    ps:"dɪd",       pp:"dʌn"},
-  {i:"drink",     s:"drank",       p:"drunk",         d:"trinken",                    pi:"drɪŋk",  ps:"dræŋk",     pp:"drʌŋk"},
-  {i:"drive",     s:"drove",       p:"driven",        d:"fahren; treiben",            pi:"draɪv",  ps:"drəʊv",     pp:"ˈdrɪvən"},
-  {i:"eat",       s:"ate",         p:"eaten",         d:"essen",                      pi:"iːt",    ps:"eɪt",       pp:"ˈiːtən"},
-  {i:"fall",      s:"fell",        p:"fallen",        d:"fallen",                     pi:"fɔːl",   ps:"fel",       pp:"ˈfɔːlən"},
-  {i:"feed",      s:"fed",         p:"fed",           d:"füttern",                    pi:"fiːd",   ps:"fed",       pp:"fed"},
-  {i:"feel",      s:"felt",        p:"felt",          d:"fühlen; sich fühlen",        pi:"fiːl",   ps:"felt",      pp:"felt"},
-  {i:"fight",     s:"fought",      p:"fought",        d:"kämpfen",                    pi:"faɪt",   ps:"fɔːt",      pp:"fɔːt"},
-  {i:"find",      s:"found",       p:"found",         d:"finden",                     pi:"faɪnd",  ps:"faʊnd",     pp:"faʊnd"},
-  {i:"fly",       s:"flew",        p:"flown",         d:"fliegen",                    pi:"flaɪ",   ps:"fluː",      pp:"fləʊn"},
-  {i:"forget",    s:"forgot",      p:"forgotten",     d:"vergessen",                  pi:"fəˈɡet", ps:"fəˈɡɒt",    pp:"fəˈɡɒtən"},
-  {i:"get",       s:"got",         p:"got",           d:"bekommen; werden",           pi:"ɡet",    ps:"ɡɒt",       pp:"ɡɒt"},
-  {i:"give",      s:"gave",        p:"given",         d:"geben; schenken",            pi:"ɡɪv",    ps:"ɡeɪv",      pp:"ˈɡɪvən"},
-  {i:"go",        s:"went",        p:"gone",          d:"gehen; fahren",              pi:"ɡəʊ",    ps:"went",      pp:"ɡɒn"},
-  {i:"grow",      s:"grew",        p:"grown",         d:"wachsen",                    pi:"ɡrəʊ",   ps:"ɡruː",      pp:"ɡrəʊn"},
-  {i:"have",      s:"had",         p:"had",           d:"haben; besitzen",            pi:"hæv",    ps:"hæd",       pp:"hæd"},
-  {i:"hear",      s:"heard",       p:"heard",         d:"hören",                      pi:"hɪə",    ps:"hɜːd",      pp:"hɜːd"},
-  {i:"hit",       s:"hit",         p:"hit",           d:"treffen; schlagen",          pi:"hɪt",    ps:"hɪt",       pp:"hɪt"},
-  {i:"hold",      s:"held",        p:"held",          d:"halten; festhalten",         pi:"həʊld",  ps:"held",      pp:"held"},
-  {i:"hurt",      s:"hurt",        p:"hurt",          d:"verletzen; wehtun",          pi:"hɜːt",   ps:"hɜːt",      pp:"hɜːt"},
-  {i:"keep",      s:"kept",        p:"kept",          d:"halten; behalten",           pi:"kiːp",   ps:"kept",      pp:"kept"},
-  {i:"know",      s:"knew",        p:"known",         d:"kennen; wissen",             pi:"nəʊ",    ps:"njuː",      pp:"nəʊn"},
-  {i:"lay",       s:"laid",        p:"laid",          d:"legen",                      pi:"leɪ",    ps:"leɪd",      pp:"leɪd"},
-  {i:"lead",      s:"led",         p:"led",           d:"anführen; führen; leiten",   pi:"liːd",   ps:"led",       pp:"led"},
-  {i:"leave",     s:"left",        p:"left",          d:"lassen; verlassen",          pi:"liːv",   ps:"left",      pp:"left"},
-  {i:"lose",      s:"lost",        p:"lost",          d:"verlieren",                  pi:"luːz",   ps:"lɒst",      pp:"lɒst"},
-  {i:"make",      s:"made",        p:"made",          d:"machen; erstellen",          pi:"meɪk",   ps:"meɪd",      pp:"meɪd"},
-  {i:"mean",      s:"meant",       p:"meant",         d:"bedeuten; meinen",           pi:"miːn",   ps:"ment",      pp:"ment"},
-  {i:"meet",      s:"met",         p:"met",           d:"kennenlernen; treffen",      pi:"miːt",   ps:"met",       pp:"met"},
-  {i:"pay",       s:"paid",        p:"paid",          d:"bezahlen",                   pi:"peɪ",    ps:"peɪd",      pp:"peɪd"},
-  {i:"put",       s:"put",         p:"put",           d:"setzen; legen; stellen",     pi:"pʊt",    ps:"pʊt",       pp:"pʊt"},
-  {i:"read",      s:"read",        p:"read",          d:"lesen; vorlesen",            pi:"riːd",   ps:"red",       pp:"red"},
-  {i:"ride",      s:"rode",        p:"ridden",        d:"fahren; reiten",             pi:"raɪd",   ps:"rəʊd",      pp:"ˈrɪdən"},
-  {i:"ring",      s:"rang",        p:"rung",          d:"klingeln; läuten",           pi:"rɪŋ",    ps:"ræŋ",       pp:"rʌŋ"},
-  {i:"run",       s:"ran",         p:"run",           d:"laufen; rennen",             pi:"rʌn",    ps:"ræn",       pp:"rʌn"},
-  {i:"say",       s:"said",        p:"said",          d:"sagen; sprechen",            pi:"seɪ",    ps:"sed",       pp:"sed"},
-  {i:"see",       s:"saw",         p:"seen",          d:"sehen",                      pi:"siː",    ps:"sɔː",       pp:"siːn"},
-  {i:"sell",      s:"sold",        p:"sold",          d:"verkaufen",                  pi:"sel",    ps:"səʊld",     pp:"səʊld"},
+  {i:"be",        s:"was/were",    p:"been",         d:"sein",                       pi:"biË",    ps:"wÉ’z/wÉœË",   pp:"biËn"},
+  {i:"become",    s:"became",      p:"become",        d:"werden",                     pi:"bÉªËˆkÊŒm", ps:"bÉªËˆkeÉªm",   pp:"bÉªËˆkÊŒm"},
+  {i:"begin",     s:"began",       p:"begun",         d:"beginnen; anfangen",         pi:"bÉªËˆÉ¡Éªn", ps:"bÉªËˆÉ¡Ã¦n",    pp:"bÉªËˆÉ¡ÊŒn"},
+  {i:"break",     s:"broke",       p:"broken",        d:"brechen",                    pi:"breÉªk",  ps:"brÉ™ÊŠk",     pp:"ËˆbrÉ™ÊŠkÉ™n"},
+  {i:"bring",     s:"brought",     p:"brought",       d:"bringen; mitbringen",        pi:"brÉªÅ‹",   ps:"brÉ”Ët",     pp:"brÉ”Ët"},
+  {i:"build",     s:"built",       p:"built",         d:"bauen",                      pi:"bÉªld",   ps:"bÉªlt",      pp:"bÉªlt"},
+  {i:"buy",       s:"bought",      p:"bought",        d:"kaufen",                     pi:"baÉª",    ps:"bÉ”Ët",      pp:"bÉ”Ët"},
+  {i:"catch",     s:"caught",      p:"caught",        d:"fangen",                     pi:"kÃ¦tÊƒ",   ps:"kÉ”Ët",      pp:"kÉ”Ët"},
+  {i:"choose",    s:"chose",       p:"chosen",        d:"wÃ¤hlen; auswÃ¤hlen",          pi:"tÊƒuËz",  ps:"tÊƒÉ™ÊŠz",     pp:"ËˆtÊƒÉ™ÊŠzÉ™n"},
+  {i:"come",      s:"came",        p:"come",          d:"kommen",                     pi:"kÊŒm",    ps:"keÉªm",      pp:"kÊŒm"},
+  {i:"cost",      s:"cost",        p:"cost",          d:"kosten",                     pi:"kÉ’st",   ps:"kÉ’st",      pp:"kÉ’st"},
+  {i:"cut",       s:"cut",         p:"cut",           d:"schneiden",                  pi:"kÊŒt",    ps:"kÊŒt",       pp:"kÊŒt"},
+  {i:"deal",      s:"dealt",       p:"dealt",         d:"umgehen mit; befassen",      pi:"diËl",   ps:"delt",      pp:"delt"},
+  {i:"do",        s:"did",         p:"done",          d:"machen; tun",                pi:"duË",    ps:"dÉªd",       pp:"dÊŒn"},
+  {i:"drink",     s:"drank",       p:"drunk",         d:"trinken",                    pi:"drÉªÅ‹k",  ps:"drÃ¦Å‹k",     pp:"drÊŒÅ‹k"},
+  {i:"drive",     s:"drove",       p:"driven",        d:"fahren; treiben",            pi:"draÉªv",  ps:"drÉ™ÊŠv",     pp:"ËˆdrÉªvÉ™n"},
+  {i:"eat",       s:"ate",         p:"eaten",         d:"essen",                      pi:"iËt",    ps:"eÉªt",       pp:"ËˆiËtÉ™n"},
+  {i:"fall",      s:"fell",        p:"fallen",        d:"fallen",                     pi:"fÉ”Ël",   ps:"fel",       pp:"ËˆfÉ”ËlÉ™n"},
+  {i:"feed",      s:"fed",         p:"fed",           d:"fÃ¼ttern",                    pi:"fiËd",   ps:"fed",       pp:"fed"},
+  {i:"feel",      s:"felt",        p:"felt",          d:"fÃ¼hlen; sich fÃ¼hlen",        pi:"fiËl",   ps:"felt",      pp:"felt"},
+  {i:"fight",     s:"fought",      p:"fought",        d:"kÃ¤mpfen",                    pi:"faÉªt",   ps:"fÉ”Ët",      pp:"fÉ”Ët"},
+  {i:"find",      s:"found",       p:"found",         d:"finden",                     pi:"faÉªnd",  ps:"faÊŠnd",     pp:"faÊŠnd"},
+  {i:"fly",       s:"flew",        p:"flown",         d:"fliegen",                    pi:"flaÉª",   ps:"fluË",      pp:"flÉ™ÊŠn"},
+  {i:"forget",    s:"forgot",      p:"forgotten",     d:"vergessen",                  pi:"fÉ™ËˆÉ¡et", ps:"fÉ™ËˆÉ¡É’t",    pp:"fÉ™ËˆÉ¡É’tÉ™n"},
+  {i:"get",       s:"got",         p:"got",           d:"bekommen; werden",           pi:"É¡et",    ps:"É¡É’t",       pp:"É¡É’t"},
+  {i:"give",      s:"gave",        p:"given",         d:"geben; schenken",            pi:"É¡Éªv",    ps:"É¡eÉªv",      pp:"ËˆÉ¡ÉªvÉ™n"},
+  {i:"go",        s:"went",        p:"gone",          d:"gehen; fahren",              pi:"É¡É™ÊŠ",    ps:"went",      pp:"É¡É’n"},
+  {i:"grow",      s:"grew",        p:"grown",         d:"wachsen",                    pi:"É¡rÉ™ÊŠ",   ps:"É¡ruË",      pp:"É¡rÉ™ÊŠn"},
+  {i:"have",      s:"had",         p:"had",           d:"haben; besitzen",            pi:"hÃ¦v",    ps:"hÃ¦d",       pp:"hÃ¦d"},
+  {i:"hear",      s:"heard",       p:"heard",         d:"hÃ¶ren",                      pi:"hÉªÉ™",    ps:"hÉœËd",      pp:"hÉœËd"},
+  {i:"hit",       s:"hit",         p:"hit",           d:"treffen; schlagen",          pi:"hÉªt",    ps:"hÉªt",       pp:"hÉªt"},
+  {i:"hold",      s:"held",        p:"held",          d:"halten; festhalten",         pi:"hÉ™ÊŠld",  ps:"held",      pp:"held"},
+  {i:"hurt",      s:"hurt",        p:"hurt",          d:"verletzen; wehtun",          pi:"hÉœËt",   ps:"hÉœËt",      pp:"hÉœËt"},
+  {i:"keep",      s:"kept",        p:"kept",          d:"halten; behalten",           pi:"kiËp",   ps:"kept",      pp:"kept"},
+  {i:"know",      s:"knew",        p:"known",         d:"kennen; wissen",             pi:"nÉ™ÊŠ",    ps:"njuË",      pp:"nÉ™ÊŠn"},
+  {i:"lay",       s:"laid",        p:"laid",          d:"legen",                      pi:"leÉª",    ps:"leÉªd",      pp:"leÉªd"},
+  {i:"lead",      s:"led",         p:"led",           d:"anfÃ¼hren; fÃ¼hren; leiten",   pi:"liËd",   ps:"led",       pp:"led"},
+  {i:"leave",     s:"left",        p:"left",          d:"lassen; verlassen",          pi:"liËv",   ps:"left",      pp:"left"},
+  {i:"lose",      s:"lost",        p:"lost",          d:"verlieren",                  pi:"luËz",   ps:"lÉ’st",      pp:"lÉ’st"},
+  {i:"make",      s:"made",        p:"made",          d:"machen; erstellen",          pi:"meÉªk",   ps:"meÉªd",      pp:"meÉªd"},
+  {i:"mean",      s:"meant",       p:"meant",         d:"bedeuten; meinen",           pi:"miËn",   ps:"ment",      pp:"ment"},
+  {i:"meet",      s:"met",         p:"met",           d:"kennenlernen; treffen",      pi:"miËt",   ps:"met",       pp:"met"},
+  {i:"pay",       s:"paid",        p:"paid",          d:"bezahlen",                   pi:"peÉª",    ps:"peÉªd",      pp:"peÉªd"},
+  {i:"put",       s:"put",         p:"put",           d:"setzen; legen; stellen",     pi:"pÊŠt",    ps:"pÊŠt",       pp:"pÊŠt"},
+  {i:"read",      s:"read",        p:"read",          d:"lesen; vorlesen",            pi:"riËd",   ps:"red",       pp:"red"},
+  {i:"ride",      s:"rode",        p:"ridden",        d:"fahren; reiten",             pi:"raÉªd",   ps:"rÉ™ÊŠd",      pp:"ËˆrÉªdÉ™n"},
+  {i:"ring",      s:"rang",        p:"rung",          d:"klingeln; lÃ¤uten",           pi:"rÉªÅ‹",    ps:"rÃ¦Å‹",       pp:"rÊŒÅ‹"},
+  {i:"run",       s:"ran",         p:"run",           d:"laufen; rennen",             pi:"rÊŒn",    ps:"rÃ¦n",       pp:"rÊŒn"},
+  {i:"say",       s:"said",        p:"said",          d:"sagen; sprechen",            pi:"seÉª",    ps:"sed",       pp:"sed"},
+  {i:"see",       s:"saw",         p:"seen",          d:"sehen",                      pi:"siË",    ps:"sÉ”Ë",       pp:"siËn"},
+  {i:"sell",      s:"sold",        p:"sold",          d:"verkaufen",                  pi:"sel",    ps:"sÉ™ÊŠld",     pp:"sÉ™ÊŠld"},
   {i:"send",      s:"sent",        p:"sent",          d:"schicken; senden",           pi:"send",   ps:"sent",      pp:"sent"},
-  {i:"shake",     s:"shook",       p:"shaken",        d:"beben; schütteln",           pi:"ʃeɪk",   ps:"ʃʊk",      pp:"ˈʃeɪkən"},
-  {i:"shoot",     s:"shot",        p:"shot",          d:"erschießen; schießen",       pi:"ʃuːt",   ps:"ʃɒt",      pp:"ʃɒt"},
-  {i:"sing",      s:"sang",        p:"sung",          d:"singen",                     pi:"sɪŋ",    ps:"sæŋ",      pp:"sʌŋ"},
-  {i:"sink",      s:"sank",        p:"sunk",          d:"untergehen; sinken",         pi:"sɪŋk",   ps:"sæŋk",     pp:"sʌŋk"},
-  {i:"sit",       s:"sat",         p:"sat",           d:"sitzen",                     pi:"sɪt",    ps:"sæt",      pp:"sæt"},
-  {i:"sleep",     s:"slept",       p:"slept",         d:"schlafen",                   pi:"sliːp",  ps:"slept",    pp:"slept"},
-  {i:"speak",     s:"spoke",       p:"spoken",        d:"sprechen",                   pi:"spiːk",  ps:"spəʊk",    pp:"ˈspəʊkən"},
+  {i:"shake",     s:"shook",       p:"shaken",        d:"beben; schÃ¼tteln",           pi:"ÊƒeÉªk",   ps:"ÊƒÊŠk",      pp:"ËˆÊƒeÉªkÉ™n"},
+  {i:"shoot",     s:"shot",        p:"shot",          d:"erschieÃŸen; schieÃŸen",       pi:"ÊƒuËt",   ps:"ÊƒÉ’t",      pp:"ÊƒÉ’t"},
+  {i:"sing",      s:"sang",        p:"sung",          d:"singen",                     pi:"sÉªÅ‹",    ps:"sÃ¦Å‹",      pp:"sÊŒÅ‹"},
+  {i:"sink",      s:"sank",        p:"sunk",          d:"untergehen; sinken",         pi:"sÉªÅ‹k",   ps:"sÃ¦Å‹k",     pp:"sÊŒÅ‹k"},
+  {i:"sit",       s:"sat",         p:"sat",           d:"sitzen",                     pi:"sÉªt",    ps:"sÃ¦t",      pp:"sÃ¦t"},
+  {i:"sleep",     s:"slept",       p:"slept",         d:"schlafen",                   pi:"sliËp",  ps:"slept",    pp:"slept"},
+  {i:"speak",     s:"spoke",       p:"spoken",        d:"sprechen",                   pi:"spiËk",  ps:"spÉ™ÊŠk",    pp:"ËˆspÉ™ÊŠkÉ™n"},
   {i:"spend",     s:"spent",       p:"spent",         d:"verbringen; ausgeben",       pi:"spend",  ps:"spent",    pp:"spent"},
-  {i:"stand",     s:"stood",       p:"stood",         d:"stehen",                     pi:"stænd",  ps:"stʊd",     pp:"stʊd"},
-  {i:"swim",      s:"swam",        p:"swum",          d:"schwimmen",                  pi:"swɪm",   ps:"swæm",     pp:"swʌm"},
-  {i:"take",      s:"took",        p:"taken",         d:"nehmen; dauern; brauchen",   pi:"teɪk",   ps:"tʊk",      pp:"ˈteɪkən"},
-  {i:"teach",     s:"taught",      p:"taught",        d:"unterrichten",               pi:"tiːtʃ",  ps:"tɔːt",     pp:"tɔːt"},
-  {i:"tell",      s:"told",        p:"told",          d:"erzählen; sagen",            pi:"tel",    ps:"təʊld",    pp:"təʊld"},
-  {i:"think",     s:"thought",     p:"thought",       d:"denken; glauben",            pi:"θɪŋk",   ps:"θɔːt",     pp:"θɔːt"},
-  {i:"throw",     s:"threw",       p:"thrown",        d:"werfen",                     pi:"θrəʊ",   ps:"θruː",     pp:"θrəʊn"},
-  {i:"understand",s:"understood",  p:"understood",    d:"verstehen",                  pi:"ˌʌndəˈstænd",ps:"ˌʌndəˈstʊd",pp:"ˌʌndəˈstʊd"},
-  {i:"wake up",   s:"woke up",     p:"woken up",      d:"aufwachen; aufwecken",       pi:"weɪk ʌp",ps:"wəʊk ʌp", pp:"ˈwəʊkən ʌp"},
-  {i:"wear",      s:"wore",        p:"worn",          d:"anhaben; tragen",            pi:"weə",    ps:"wɔː",      pp:"wɔːn"},
-  {i:"win",       s:"won",         p:"won",           d:"gewinnen",                   pi:"wɪn",    ps:"wʌn",      pp:"wʌn"},
-  {i:"write",     s:"wrote",       p:"written",       d:"schreiben",                  pi:"raɪt",   ps:"rəʊt",     pp:"ˈrɪtən"},
+  {i:"stand",     s:"stood",       p:"stood",         d:"stehen",                     pi:"stÃ¦nd",  ps:"stÊŠd",     pp:"stÊŠd"},
+  {i:"swim",      s:"swam",        p:"swum",          d:"schwimmen",                  pi:"swÉªm",   ps:"swÃ¦m",     pp:"swÊŒm"},
+  {i:"take",      s:"took",        p:"taken",         d:"nehmen; dauern; brauchen",   pi:"teÉªk",   ps:"tÊŠk",      pp:"ËˆteÉªkÉ™n"},
+  {i:"teach",     s:"taught",      p:"taught",        d:"unterrichten",               pi:"tiËtÊƒ",  ps:"tÉ”Ët",     pp:"tÉ”Ët"},
+  {i:"tell",      s:"told",        p:"told",          d:"erzÃ¤hlen; sagen",            pi:"tel",    ps:"tÉ™ÊŠld",    pp:"tÉ™ÊŠld"},
+  {i:"think",     s:"thought",     p:"thought",       d:"denken; glauben",            pi:"Î¸ÉªÅ‹k",   ps:"Î¸É”Ët",     pp:"Î¸É”Ët"},
+  {i:"throw",     s:"threw",       p:"thrown",        d:"werfen",                     pi:"Î¸rÉ™ÊŠ",   ps:"Î¸ruË",     pp:"Î¸rÉ™ÊŠn"},
+  {i:"understand",s:"understood",  p:"understood",    d:"verstehen",                  pi:"ËŒÊŒndÉ™ËˆstÃ¦nd",ps:"ËŒÊŒndÉ™ËˆstÊŠd",pp:"ËŒÊŒndÉ™ËˆstÊŠd"},
+  {i:"wake up",   s:"woke up",     p:"woken up",      d:"aufwachen; aufwecken",       pi:"weÉªk ÊŒp",ps:"wÉ™ÊŠk ÊŒp", pp:"ËˆwÉ™ÊŠkÉ™n ÊŒp"},
+  {i:"wear",      s:"wore",        p:"worn",          d:"anhaben; tragen",            pi:"weÉ™",    ps:"wÉ”Ë",      pp:"wÉ”Ën"},
+  {i:"win",       s:"won",         p:"won",           d:"gewinnen",                   pi:"wÉªn",    ps:"wÊŒn",      pp:"wÊŒn"},
+  {i:"write",     s:"wrote",       p:"written",       d:"schreiben",                  pi:"raÉªt",   ps:"rÉ™ÊŠt",     pp:"ËˆrÉªtÉ™n"},
 ];
 
 const ST = {
@@ -567,3 +567,4 @@ resetQ('c');
 </script>
 </body>
 </html>
+
