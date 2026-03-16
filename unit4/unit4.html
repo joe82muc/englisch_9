@@ -121,12 +121,12 @@
     <section class="panel">
       <p class="label">Vokabeln</p>
       <div class="btn-grid">
-        <a class="btn" href="./vokabeltrainer.html">Vokabeltrainer</a>
+        <a class="btn" href="./vokabeltrainer.html">vokabeltrainer.html</a>
       </div>
     </section>
 
     <section class="panel">
-      <h2 class="gallery-title">New Zealand Galerie (Menschen, Tiere, Landschaft)</h2>
+      <h2 class="gallery-title">New Zealand Galerie (echte Neuseeland-Bilder)</h2>
       <div class="gallery-grid" id="galleryGrid">
         <figure class="slide"><img alt="Gallery image 1"><span class="tag"></span></figure>
         <figure class="slide"><img alt="Gallery image 2"><span class="tag"></span></figure>
@@ -139,10 +139,33 @@
   <script>
     const images = Array.from({ length: 25 }, (_, i) => `./gallery_nz/nz-${String(i + 1).padStart(2, "0")}.jpg`);
 
-    const tags = {};
-    for (let i = 1; i <= 13; i += 1) tags[`nz-${String(i).padStart(2, "0")}`] = "Landscape";
-    for (let i = 14; i <= 21; i += 1) tags[`nz-${String(i).padStart(2, "0")}`] = "Animals";
-    for (let i = 22; i <= 25; i += 1) tags[`nz-${String(i).padStart(2, "0")}`] = "People";
+    const tags = {
+      "nz-01": "Landscape",
+      "nz-02": "Landscape",
+      "nz-03": "Landscape",
+      "nz-04": "Landscape",
+      "nz-05": "Landscape",
+      "nz-06": "Landscape",
+      "nz-07": "Landscape",
+      "nz-08": "Landscape",
+      "nz-09": "Landscape",
+      "nz-10": "Landscape",
+      "nz-11": "Landscape",
+      "nz-12": "Landscape",
+      "nz-13": "Landscape",
+      "nz-14": "Landscape",
+      "nz-15": "Landscape",
+      "nz-16": "Animals",
+      "nz-17": "Animals",
+      "nz-18": "Animals",
+      "nz-19": "People / Culture",
+      "nz-20": "People / Culture",
+      "nz-21": "People / Culture",
+      "nz-22": "People / Culture",
+      "nz-23": "Landscape",
+      "nz-24": "Landscape",
+      "nz-25": "Landscape"
+    };
 
     const slides = Array.from(document.querySelectorAll(".slide"));
     let queue = [];
