@@ -3,301 +3,310 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Unit 3 | English 9 | South Africa</title>
+  <title>English 9 - Learning Hub</title>
   <style>
     :root {
-      --sand: #dff3ff;
-      --sand-2: #cfeaff;
-      --green: #0e7c57;
-      --green-2: #0a5f43;
-      --sun: #f3b14b;
-      --ink: #1d2c28;
-      --card: #f7fcff;
-      --line: #b7dff3;
-      --blue: #2f91b8;
+      --bg-1: #f4f8ff;
+      --bg-2: #fff1de;
+      --ink: #10203a;
+      --soft: #5c6d8a;
+      --card: #ffffff;
+      --line: #d7e3ff;
+      --primary: #0b67d1;
+      --primary-2: #2f8ef6;
+      --accent: #ff8c42;
+      --shadow: 0 14px 36px rgba(20, 49, 96, 0.14);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: "Trebuchet MS", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
-        linear-gradient(140deg, rgba(9, 44, 34, .72), rgba(13, 74, 55, .5)),
-        url("https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1800&q=80") center/cover fixed no-repeat;
-      min-height: 100vh;
+        radial-gradient(circle at 10% 8%, #dce9ff 0%, transparent 42%),
+        radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),
+        linear-gradient(130deg, var(--bg-1), var(--bg-2));
     }
 
     .wrap {
-      max-width: 1150px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 1rem 1rem 2.4rem;
+      padding: 1.1rem 1rem 2.2rem;
     }
 
     .hero {
-      background:
-        linear-gradient(180deg, rgba(5, 32, 24, .18), rgba(5, 32, 24, .72)),
-        url("https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1800&q=80") center/cover no-repeat;
+      background: linear-gradient(130deg, #0556b6, #1f7de2 52%, #ff8c42);
       color: #fff;
       border-radius: 24px;
-      padding: 1.25rem 1.3rem;
-      box-shadow: 0 18px 42px rgba(7, 25, 20, .35);
-      min-height: 230px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      padding: 1.3rem;
+      box-shadow: var(--shadow);
       position: relative;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,.35);
-    }
-
-    .hero::before,
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
     }
 
     .hero::before {
-      background: radial-gradient(circle at 80% 20%, rgba(255,255,255,.28), transparent 40%);
-    }
-
-    .hero::after {
-      background: linear-gradient(120deg, rgba(255,255,255,.14), transparent 55%);
-      mix-blend-mode: screen;
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.28), transparent 30%);
+      pointer-events: none;
     }
 
     h1 {
       margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(1.45rem, 3vw, 2.45rem);
-      line-height: 1.18;
+      font-size: clamp(1.55rem, 2.9vw, 2.6rem);
+      line-height: 1.2;
       position: relative;
-      z-index: 2;
-      text-shadow: 0 5px 20px rgba(0,0,0,.35);
+      z-index: 1;
     }
 
-    .sub {
-      margin: .55rem 0 .8rem;
-      font-size: 1.04rem;
+    .meta,
+    .author {
+      margin: 0.45rem 0 0;
       position: relative;
-      z-index: 2;
-      text-shadow: 0 3px 12px rgba(0,0,0,.35);
+      z-index: 1;
     }
 
-    .badge {
-      display: inline-block;
-      background: rgba(255,255,255,.14);
-      border: 1px solid rgba(255,255,255,.35);
-      padding: .4rem .7rem;
-      border-radius: 999px;
-      font-size: .88rem;
-      position: relative;
-      z-index: 2;
-      box-shadow: 0 10px 24px rgba(6, 31, 25, .25);
-    }
-
-    .main-grid {
-      margin-top: 1rem;
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: 1fr;
-    }
+    .meta { font-size: 1.03rem; }
+    .author { font-size: 0.96rem; opacity: 0.95; }
 
     .panel {
-      content-visibility: auto;
-      contain-intrinsic-size: 420px;
-      background: rgba(247, 252, 255, .94);
+      margin-top: 1rem;
+      background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 1rem;
-      box-shadow: 0 12px 30px rgba(7, 35, 30, .2);
-      backdrop-filter: blur(4px);
+      box-shadow: var(--shadow);
     }
 
-    h2 {
-      margin: .1rem 0 .35rem;
-      font-size: 1.75rem;
-      font-family: Georgia, "Times New Roman", serif;
-      color: #11392d;
+    .label {
+      margin: 0 0 0.7rem;
+      font-size: 0.87rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3a5b93;
+      font-weight: 700;
     }
 
-    .hint {
-      margin: 0 0 .7rem;
-      color: #385247;
-      font-size: .97rem;
+    .btn-grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .tree {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .branch {
-      border: 1px solid #b7dff3;
-      border-radius: 12px;
-      background: #eff9ff;
-      margin-bottom: .55rem;
-      overflow: hidden;
-      transition: transform .2s ease, box-shadow .2s ease;
-    }
-
-    .branch:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(47, 145, 184, .14);
-    }
-
-    .branch button {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      padding: .72rem .8rem;
-      font-weight: 800;
-      color: #153e31;
-      display: flex;
+    .btn {
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      font-size: .98rem;
-    }
-
-    .branch .caret {
-      color: #235343;
-      transition: transform .22s ease;
-    }
-
-    .branch.open .caret { transform: rotate(180deg); }
-
-    .children {
-      list-style: none;
-      margin: 0;
-      padding: .2rem .7rem .7rem;
-      border-top: 1px dashed #b7dff3;
-      display: none;
-      background: #f4fbff;
-    }
-
-    .branch.open .children { display: block; }
-
-    .children li {
-      margin-top: .45rem;
-    }
-
-    .children a {
-      display: block;
+      justify-content: center;
+      text-align: center;
       text-decoration: none;
-      color: #174c3b;
-      border: 1px solid #b7dff3;
-      background: #fff;
-      border-radius: 9px;
-      padding: .48rem .6rem;
-      font-weight: 600;
-      font-size: .92rem;
-      transition: background .2s ease, border-color .2s ease, transform .2s ease;
+      border-radius: 14px;
+      border: 1px solid #b8cff8;
+      background: linear-gradient(180deg, #ffffff, #f3f8ff);
+      color: #12335f;
+      padding: 0.82rem 0.6rem;
+      font-weight: 700;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      min-height: 52px;
     }
 
-    .children a:hover {
-      transform: translateX(3px);
-      background: #e8f7ff;
-      border-color: #8cc9e6;
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(24, 65, 128, 0.16);
+      border-color: #7fb0f0;
     }
 
-    .mini {
-      margin-top: .9rem;
-      border: 1px solid #b7dff3;
-      border-radius: 12px;
-      padding: .7rem;
-      background: #f2faff;
+    .btn.secondary {
+      background: linear-gradient(180deg, #fff7ef, #ffefd9);
+      border-color: #f1c79e;
+      color: #70350a;
     }
 
-    .mini h3 {
-      margin: 0 0 .4rem;
-      font-size: 1rem;
-      color: #1d4337;
+    .btn.secondary:hover {
+      box-shadow: 0 10px 24px rgba(135, 73, 8, 0.16);
+      border-color: #ecae72;
     }
 
-    .mini ul {
+    .gallery-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.7rem;
+      align-items: baseline;
+      margin-bottom: 0.7rem;
+      flex-wrap: wrap;
+    }
+
+    .gallery-title {
       margin: 0;
-      padding-left: 1.05rem;
-      color: #2f4b41;
+      font-size: 1.25rem;
+      color: #0e3c79;
     }
 
-    .mini li { margin: .3rem 0; }
+    .gallery-grid {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 
-    @media (max-width: 720px) {
-      .hero { min-height: 190px; }
-      .badge { line-height: 1.25; }
+    .slide {
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #b9d4ff;
+      background: #eef5ff;
+      min-height: 185px;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      min-height: 185px;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.45s ease;
+    }
+
+    .tag {
+      position: absolute;
+      left: 0.55rem;
+      bottom: 0.55rem;
+      background: rgba(7, 23, 45, 0.62);
+      color: #fff;
+      padding: 0.32rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 980px) {
+      .btn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .btn-grid { grid-template-columns: 1fr; }
+      .slide,
+      .slide img { min-height: 140px; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="hero">
-      <h1>English Unit 3: South Africa</h1>
-      <p class="sub">Interaktive Übungen mit KI-Unterstützung.</p>
-      <span class="badge">Mittelschule am Sportpark Unterhaching | von Johannes Mössner | 9. Klasse</span>
+      <h1>Englisch 9. Klasse</h1>
+      <p class="meta">Mittelschule am Sportpark, Anton-Troppmann-Weg 1, 82008 Unterhaching</p>
+      <p class="author">Lernplattform von Johannes Mößner</p>
     </section>
 
-    <section class="main-grid">
-      <article class="panel">
-        <h2>Übersicht</h2>
+    <section class="panel">
+      <p class="label">Units</p>
+      <div class="btn-grid">
+        <a class="btn" href="./unit1/">Unit 1</a>
+        <a class="btn" href="./unit2/">Unit 2</a>
+        <a class="btn" href="./unit3/unit3.html">Unit 3</a>
+        <a class="btn" href="./unit4/">Unit 4</a>
+      </div>
+    </section>
 
-        <ul class="tree" id="treeMenu">
-          <li class="branch">
-            <button type="button"><span>grammar</span><span class="caret">v</span></button>
-            <ul class="children">
-              <li><a href="./unit3/tense/present_perfect.html">Present Perfect</a></li>
-              <li><a href="./unit3/tense/past_progressive.html">Past Progressive</a></li>
-            </ul>
-          </li>
+    <section class="panel">
+      <p class="label">Prüfung und Grammatik</p>
+      <div class="btn-grid">
+        <a class="btn secondary" href="./zeiten_wiederholen/tense_overview_a2.html">Wiederholung Zeiten</a>
+        <a class="btn secondary" href="#">Sonstige Grammatik</a>
+        <a class="btn secondary" href="#">Mündliche Prüfung Quali</a>
+        <a class="btn secondary" href="#">Schriftliche Prüfung Quali</a>
+      </div>
+    </section>
 
-          <li class="branch">
-            <button type="button"><span>vokabulary</span><span class="caret">v</span></button>
-            <ul class="children">
-              <li><a href="./unit3/vokabulary/vokabeltrainer.html">Vokabeltrainer Unit 3</a></li>
-              <li><a href="./unit3/vokabulary/irregular_verbs.html">Irregular Verbs</a></li>
-              <li><a href="./unit3/vokabulary/accident_wordbank2.html">Wordbank: Accident </a></li>
-              <li><a href="./unit3/vokabulary/role_model2.html">Wordbank: Role Model</a></li>
-            </ul>
-          </li>
-
-          <li class="branch">
-            <button type="button"><span>mediation</span><span class="caret">v</span></button>
-            <ul class="children">
-              <li><a href="./unit3/mediation/mediation_accident.html">Mediation: Accident</a></li>
-              <li><a href="./unit3/mediation/mediation_doctor.html">Mediation: Doctor</a></li>
-              <li><a href="./unit3/mediation/mediation_hostel.html">Mediation: Hostel</a></li>
-              <li><a href="./unit3/mediation/mediation_market.html">Mediation: Market</a></li>
-              <li><a href="./unit3/mediation/mediation_park_improved.html">Mediation: Park</a></li>
-              <li><a href="./unit3/mediation/mediation_restaurant.html">Mediation: Restaurant</a></li>
-            </ul>
-          </li>
-
-          <li class="branch">
-            <button type="button"><span>e-mail</span><span class="caret">v</span></button>
-            <ul class="children">
-              <li><a href="./unit3/email/email.html">Write an e-Mail</a></li>
-            </ul>
-          </li>
-        </ul>
-      </article>
+    <section class="panel">
+      <div class="gallery-head">
+        <h2 class="gallery-title">Galerie: South Africa, India, Australia, New Zealand</h2>
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+        <figure class="slide"><img alt="Gallery image 1"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 2"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 3"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 4"><span class="tag"></span></figure>
+      </div>
     </section>
   </main>
 
   <script>
-    const treeMenu = document.getElementById("treeMenu");
+    const images = [
+      "./gallery/world/south-africa-01.jpg",
+      "./gallery/world/south-africa-02.jpg",
+      "./gallery/world/south-africa-03.jpg",
+      "./gallery/world/south-africa-04.jpg",
+      "./gallery/world/south-africa-05.jpg",
+      "./gallery/world/india-01.jpg",
+      "./gallery/world/india-02.jpg",
+      "./gallery/world/india-03.jpg",
+      "./gallery/world/india-04.jpg",
+      "./gallery/world/india-05.jpg",
+      "./gallery/world/australia-01.jpg",
+      "./gallery/world/australia-02.jpg",
+      "./gallery/world/australia-03.jpg",
+      "./gallery/world/australia-04.jpg",
+      "./gallery/world/australia-05.jpg",
+      "./gallery/world/new-zealand-01.jpg",
+      "./gallery/world/new-zealand-02.jpg",
+      "./gallery/world/new-zealand-03.jpg",
+      "./gallery/world/new-zealand-04.jpg",
+      "./gallery/world/new-zealand-05.jpg"
+    ];
 
-    treeMenu.addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      const branch = btn.closest(".branch");
-      if (!branch) return;
-      branch.classList.toggle("open");
-    });
+    const labels = {
+      "south-africa": "South Africa",
+      india: "India",
+      australia: "Australia",
+      "new-zealand": "New Zealand"
+    };
+
+    const slides = Array.from(document.querySelectorAll(".slide"));
+
+    const randomIndex = () => Math.floor(Math.random() * images.length);
+
+    function applyImage(slide, src) {
+      const img = slide.querySelector("img");
+      const tag = slide.querySelector(".tag");
+      const key = src.split("/").pop().split("-").slice(0, -1).join("-");
+      tag.textContent = labels[key] || "Travel";
+      img.style.opacity = "0.25";
+      setTimeout(() => {
+        img.src = src;
+        img.style.opacity = "1";
+      }, 130);
+    }
+
+    function fillInitial() {
+      const used = new Set();
+      slides.forEach((slide) => {
+        let src = images[randomIndex()];
+        while (used.has(src)) src = images[randomIndex()];
+        used.add(src);
+        applyImage(slide, src);
+      });
+    }
+
+    let pointer = 0;
+    function rotateOne() {
+      const slide = slides[pointer % slides.length];
+      applyImage(slide, images[randomIndex()]);
+      pointer += 1;
+    }
+
+    fillInitial();
+    setInterval(rotateOne, 2300);
   </script>
 </body>
 </html>
+
+
+
+
+
+
 
