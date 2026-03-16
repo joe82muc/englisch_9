@@ -1,0 +1,24 @@
+﻿South Africa gallery images (Pexels, free for educational use)
+License: https://www.pexels.com/license/
+
+Sources (sa-11 .. sa-30):
+sa-11.jpg: https://www.pexels.com/photo/majestic-zebra-and-elephant-in-south-african-safari-33837667/
+sa-12.jpg: https://www.pexels.com/photo/a-black-and-white-animal-in-safari-4740807/
+sa-13.jpg: https://www.pexels.com/photo/close-up-of-a-zebra-in-south-african-safari-35931965/
+sa-14.jpg: https://www.pexels.com/photo/african-elephant-in-south-african-safari-33625373/
+sa-15.jpg: https://www.pexels.com/photo/elephants-walking-in-the-safari-8960513/
+sa-16.jpg: https://www.pexels.com/photo/a-zebra-in-the-wild-19765974/
+sa-17.jpg: https://www.pexels.com/photo/head-of-zebra-on-savannah-22857897/
+sa-18.jpg: https://www.pexels.com/photo/zebra-on-savanna-6818811/
+sa-19.jpg: https://www.pexels.com/photo/majestic-african-elephant-in-south-african-wilderness-33461788/
+sa-20.jpg: https://www.pexels.com/photo/african-elephant-in-south-african-wildlife-reserve-34035480/
+sa-21.jpg: https://www.pexels.com/photo/traditional-attire-in-south-african-culture-36419398/
+sa-22.jpg: https://www.pexels.com/photo/woman-in-traditional-clothing-20510951/
+sa-23.jpg: https://www.pexels.com/photo/traditional-zulu-dance-ceremony-in-south-africa-30333020/
+sa-24.jpg: https://www.pexels.com/photo/traditional-cooking-indoors-with-open-fire-28451362/
+sa-25.jpg: https://www.pexels.com/photo/colorful-knitted-hats-on-street-display-33044119/
+sa-26.jpg: https://www.pexels.com/photo/vibrant-johannesburg-street-scene-with-red-minibus-27745895/
+sa-27.jpg: https://www.pexels.com/photo/bo-kaap-colourful-houses-27438904/
+sa-28.jpg: https://www.pexels.com/photo/scenic-south-african-countryside-landscape-33702624/
+sa-29.jpg: https://www.pexels.com/photo/scenic-road-through-south-african-desert-landscape-32430539/
+sa-30.jpg: https://www.pexels.com/photo/serene-river-landscape-in-south-africa-33399763/
