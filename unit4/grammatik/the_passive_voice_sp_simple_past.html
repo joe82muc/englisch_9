@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Passive Voice - Unit 4</title>
+  <style>
+    :root { --bg-1:#f4f8ff; --bg-2:#fff1de; --ink:#10203a; --line:#d7e3ff; --card:#fff; --ok:#157a4a; --bad:#b5382f; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Trebuchet MS","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(130deg,var(--bg-1),var(--bg-2)); }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+    .hero { background:linear-gradient(130deg,#0a5ebf,#1d80df 52%,#f39d5f); color:#fff; border-radius:20px; padding:1rem 1.1rem; }
+    .back { display:inline-block; margin-top:.6rem; color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.65); border-radius:999px; padding:.3rem .7rem; font-weight:700; }
+    .panel { margin-top:1rem; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:1rem; }
+    .tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.6rem; margin-bottom:.8rem; }
+    .tab { border:1px solid #b8cff8; background:#fff; color:#1a4179; border-radius:12px; padding:.55rem .4rem; font-weight:700; cursor:pointer; }
+    .tab.active { background:#0b67d1; color:#fff; border-color:#0b67d1; }
+    .level { display:none; }
+    .level.show { display:block; }
+    .ex { border:1px solid var(--line); border-radius:12px; padding:.8rem; margin-top:.7rem; }
+    .q { font-weight:700; margin-bottom:.45rem; }
+    input { width:100%; padding:.6rem .75rem; border:1px solid #c6d8f7; border-radius:10px; font-size:1rem; }
+    .row { display:flex; gap:.5rem; margin-top:.55rem; flex-wrap:wrap; }
+    button { border:none; border-radius:999px; padding:.45rem .8rem; font-weight:700; cursor:pointer; }
+    .check { background:#0b67d1; color:#fff; }
+    .hint { background:#eef4ff; color:#1b4b8d; border:1px solid #c6d8f7; }
+    .fb { margin-top:.4rem; min-height:1.2rem; font-weight:700; }
+    .ok { color:var(--ok); } .bad { color:var(--bad); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>The Passive Voice</h1>
+      <p>Simple Present und Simple Past - Unit 4</p>
+      <a class="back" href="../unit4.html">&larr; Zurueck zu Unit 4</a>
+    </section>
+
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" onclick="showLevel('a',this)">Level A</button>
+        <button class="tab" onclick="showLevel('b',this)">Level B</button>
+        <button class="tab" onclick="showLevel('c',this)">Level C</button>
+      </div>
+
+      <div class="level show" id="level-a">
+        <div class="ex">
+          <div class="q">1) Active: "People speak English in New Zealand."</div>
+          <input id="a1" placeholder="Passive sentence ...">
+          <div class="row"><button class="check" onclick="check('a1','English is spoken in New Zealand.','a1fb')">Check</button><button class="hint" onclick="hint('a1fb','Denke an: is/are + past participle.')">KI-Hilfe</button></div>
+          <div id="a1fb" class="fb"></div>
+        </div>
+        <div class="ex">
+          <div class="q">2) Active: "The police checked the car."</div>
+          <input id="a2" placeholder="Passive sentence ...">
+          <div class="row"><button class="check" onclick="check('a2','The car was checked by the police.','a2fb')">Check</button><button class="hint" onclick="hint('a2fb','Simple Past passive: was/were + past participle.')">KI-Hilfe</button></div>
+          <div id="a2fb" class="fb"></div>
+        </div>
+      </div>
+
+      <div class="level" id="level-b">
+        <div class="ex">
+          <div class="q">1) Complete: "The report ___ (write) every day."</div>
+          <input id="b1" placeholder="is written">
+          <div class="row"><button class="check" onclick="check('b1','is written','b1fb')">Check</button><button class="hint" onclick="hint('b1fb','Present passive: am/is/are + past participle.')">KI-Hilfe</button></div>
+          <div id="b1fb" class="fb"></div>
+        </div>
+        <div class="ex">
+          <div class="q">2) Complete: "The road ___ (close) yesterday."</div>
+          <input id="b2" placeholder="was closed">
+          <div class="row"><button class="check" onclick="check('b2','was closed','b2fb')">Check</button><button class="hint" onclick="hint('b2fb','Yesterday = Simple Past passive.')">KI-Hilfe</button></div>
+          <div id="b2fb" class="fb"></div>
+        </div>
+      </div>
+
+      <div class="level" id="level-c">
+        <div class="ex">
+          <div class="q">Rewrite in Passive: "They build houses in this town."</div>
+          <input id="c1" placeholder="...">
+          <div class="row"><button class="check" onclick="check('c1','Houses are built in this town.','c1fb')">Check</button><button class="hint" onclick="hint('c1fb','Objekt wird zum neuen Subjekt: houses.')">KI-Hilfe</button></div>
+          <div id="c1fb" class="fb"></div>
+        </div>
+        <div class="ex">
+          <div class="q">Rewrite in Passive: "Someone found the wallet."</div>
+          <input id="c2" placeholder="...">
+          <div class="row"><button class="check" onclick="check('c2','The wallet was found.','c2fb')">Check</button><button class="hint" onclick="hint('c2fb','Agent kann weggelassen werden: by someone ist nicht noetig.')">KI-Hilfe</button></div>
+          <div id="c2fb" class="fb"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function norm(s){ return s.trim().toLowerCase().replace(/\s+/g,' '); }
+    function showLevel(id, btn){
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.level').forEach(x=>x.classList.remove('show'));
+      document.getElementById('level-' + id).classList.add('show');
+    }
+    function check(inputId, correct, fbId){
+      const val = norm(document.getElementById(inputId).value);
+      const ok = val === norm(correct);
+      const fb = document.getElementById(fbId);
+      fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+      fb.textContent = ok ? 'Richtig!' : 'Noch nicht ganz. Richtig waere: ' + correct;
+    }
+    function hint(fbId, text){
+      const fb = document.getElementById(fbId);
+      fb.className = 'fb';
+      fb.textContent = 'KI-Hilfe: ' + text;
+    }
+  </script>
+</body>
+</html>
+
