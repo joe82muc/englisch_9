@@ -5,123 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1e3a5f">
-<title>Irregular Verbs – Klett Bridge</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Irregular Verbs - Unit 3</title>
+<link href="https://fonts.googleapis.com/css2family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#1e3a5f;--blue:#2563eb;--sky:#bfdbfe;
-  --bg:#f0f6ff;--card:#fff;--border:#dbeafe;
-  --text:#0f172a;--muted:#64748b;
-  --green:#15803d;--gbg:#dcfce7;--gb:#16a34a;
-  --red:#dc2626;--rbg:#fef2f2;
+  --bg-1:#f4f8ff; --bg-2:#fff1de; --card:#ffffff; --line:#d7e3ff;
+  --blue:#0b67d1; --blue-2:#2f8ef6; --orange:#ff8c42;
+  --text:#10203a; --muted:#5c6d8a;
+  --green:#24a46d; --gbg:#e8f8f0; --gb:#9be3c0;
+  --red:#cf3b2d; --rbg:#fdeeee;
+  --shadow:0 12px 30px rgba(20,49,96,.14);
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:4rem;}
-
-.hdr{background:var(--navy);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 1.8rem;position:relative;overflow:hidden;}
-.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
-.back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
-.utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sky);margin-bottom:.3rem;}
-h1{font-family:'Fraunces',serif;font-size:clamp(1.6rem,5vw,2.4rem);font-weight:900;color:#fff;line-height:1.1;}
-h1 em{font-style:italic;opacity:.8;}
-.hsub{font-size:.82rem;color:rgba(255,255,255,.55);margin-top:.3rem;}
-
-.wrap{padding:1.4rem 1.2rem 0;max-width:740px;margin:0 auto;}
-
-.ibox{background:var(--card);border:2px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 4px 16px rgba(30,58,95,.08);margin-bottom:1.3rem;}
-.ihdr{background:linear-gradient(135deg,var(--navy),#1a4a8a);padding:.9rem 1.2rem;display:flex;align-items:center;gap:.6rem;cursor:pointer;user-select:none;}
-.ihdr h2{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;color:#fff;flex:1;}
-.iarrow{color:rgba(255,255,255,.8);font-size:1rem;transition:transform .3s;}
-.ihdr.open .iarrow{transform:rotate(180deg);}
-.ibody{padding:1.2rem;display:none;}
-.ibody.open{display:block;}
-.itable{width:100%;border-collapse:collapse;font-size:.82rem;}
-.itable th{background:#eff6ff;color:var(--navy);padding:.45rem .7rem;text-align:left;font-weight:700;border-bottom:2px solid var(--border);}
-.itable td{padding:.45rem .7rem;border-bottom:1px solid #f0f7ff;}
-.itable tr:last-child td{border-bottom:none;}
-.itable .ex{color:var(--muted);font-style:italic;font-size:.78rem;}
-.itable b{color:var(--blue);}
-.tip{background:#eff6ff;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:.7rem 1rem;font-size:.82rem;margin-top:.8rem;color:var(--navy);}
-
-.ltabs{display:flex;background:#dbeafe;border-radius:12px;padding:3px;gap:0;margin-bottom:1.1rem;}
-.ltab{flex:1;padding:.5rem .3rem;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.73rem;font-weight:700;cursor:pointer;background:transparent;color:var(--blue);transition:all .2s;text-align:center;line-height:1.3;}
-.ltab.active{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(30,58,95,.22);}
-
-.lsec{display:none;}
-.lsec.show{display:block;}
-
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin-bottom:.9rem;}
-.score-nums{display:flex;gap:.7rem;}
-.sn{text-align:center;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.4rem .7rem;}
-.sn strong{display:block;font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:var(--navy);}
-.sn span{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
-.ctrl-row{display:flex;gap:.45rem;flex-wrap:wrap;}
-.rst-btn{padding:.42rem .9rem;background:#f1f5f9;color:var(--muted);border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;}
-.flt-btn{padding:.38rem .8rem;background:transparent;color:var(--blue);border:1.5px solid var(--border);border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;}
-.flt-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
-
-.prog-wrap{background:#e2e8f0;border-radius:4px;height:5px;margin-bottom:1rem;overflow:hidden;}
-.prog-bar{height:100%;background:var(--blue);border-radius:4px;transition:width .4s;}
-
-.qcard{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:1.4rem;box-shadow:0 4px 16px rgba(30,58,95,.07);margin-bottom:.9rem;}
-.qtag{font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:.6rem;}
-.qde{font-size:.84rem;color:var(--muted);margin-bottom:.25rem;}
-.qword{font-family:'Fraunces',serif;font-size:clamp(1.5rem,5vw,2.1rem);font-weight:900;color:var(--navy);line-height:1.1;margin-bottom:.2rem;}
-.qpron{font-size:.8rem;color:var(--muted);font-style:italic;margin-bottom:.7rem;}
-
-.spk{display:inline-flex;align-items:center;gap:.4rem;background:none;border:1.5px solid var(--border);border-radius:50px;padding:.3rem .85rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.73rem;color:var(--muted);transition:all .2s;margin-bottom:.9rem;-webkit-appearance:none;}
-.spk:hover{border-color:var(--blue);color:var(--blue);}
-.spk.hi{border-color:var(--gb);color:var(--green);background:var(--gbg);animation:spkpop .25s ease;}
-@keyframes spkpop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.7rem;}
-.ch{padding:.7rem .5rem;background:#f5f9ff;border:2px solid transparent;border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;line-height:1.3;-webkit-appearance:none;}
-.ch:hover:not(:disabled){background:#dbeafe;border-color:var(--blue);}
-.ch.correct{border-color:var(--gb);background:var(--gbg);color:var(--green);}
-.ch.wrong{border-color:var(--red);background:var(--rbg);color:var(--red);}
-.ch:disabled{cursor:default;}
-
-.gap{border:none;border-bottom:2px solid var(--blue);background:transparent;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;color:var(--navy);width:120px;text-align:center;padding:.1rem .3rem;outline:none;-webkit-appearance:none;}
-.gap.correct{border-color:var(--gb);background:var(--gbg);border-radius:6px;color:var(--green);}
-.gap.wrong{border-color:var(--red);background:var(--rbg);border-radius:6px;color:var(--red);}
-
-.write-input{width:100%;padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;background:#f8fbff;color:var(--text);outline:none;transition:border .2s;margin-bottom:.6rem;-webkit-appearance:none;}
-.write-input:focus{border-color:var(--blue);}
-.write-input.correct{border-color:var(--gb);background:var(--gbg);}
-.write-input.wrong{border-color:var(--red);background:var(--rbg);}
-
-.fbrow{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;}
-.fb{font-size:.8rem;font-weight:700;min-height:1rem;}
-.fb.g{color:var(--green);}
-.fb.b{color:var(--red);}
-.chkbtn{padding:.4rem .9rem;background:var(--navy);color:#fff;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;-webkit-appearance:none;transition:all .18s;}
-.chkbtn:active{transform:scale(.96);}
-.chkbtn:disabled{background:#94a3b8;cursor:default;}
-.shwbtn{padding:.4rem .85rem;background:transparent;color:var(--muted);border:1.5px solid #e2e8f0;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;}
-.nxtbtn{padding:.4rem .9rem;background:var(--blue);color:#fff;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;display:none;margin-top:.6rem;}
-
-.result{text-align:center;padding:2rem 1rem;background:var(--card);border:2px solid var(--border);border-radius:18px;margin-bottom:1rem;display:none;}
-.result h2{font-family:'Fraunces',serif;font-size:1.8rem;color:var(--navy);margin-bottom:.3rem;}
-.bigpct{font-family:'Fraunces',serif;font-size:4rem;font-weight:900;color:var(--blue);}
-.result p{color:var(--muted);font-size:.85rem;margin:.5rem 0 1.2rem;}
-
-.verb-table-wrap{overflow-x:auto;}
-.verb-table{width:100%;border-collapse:collapse;font-size:.78rem;}
-.verb-table th{background:#eff6ff;color:var(--navy);padding:.5rem .6rem;text-align:left;font-weight:700;border-bottom:2px solid var(--border);white-space:nowrap;}
-.verb-table td{padding:.42rem .6rem;border-bottom:1px solid #f0f7ff;vertical-align:middle;}
-.verb-table tr:hover td{background:#f8fbff;}
-.spk-mini{background:none;border:none;cursor:pointer;font-size:.9rem;padding:0 .25rem;}
-.pron-c{color:var(--muted);font-style:italic;font-size:.72rem;}
-.de-c{color:var(--green);font-size:.75rem;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:"Trebuchet MS","Segoe UI",sans-serif;
+  min-height:100vh;color:var(--text);padding:1rem 1rem 3rem;
+  background:
+    radial-gradient(circle at 10% 8%, #dce9ff 0%, transparent 42%),
+    radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),
+    linear-gradient(130deg,var(--bg-1),var(--bg-2));
+}
+.hdr{max-width:940px;margin:0 auto;background:linear-gradient(130deg,var(--blue),var(--blue-2) 52%,var(--orange));color:#fff;border-radius:20px;padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.hdr::after{display:none}
+.back{display:inline-block;margin-top:.2rem;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.6);padding:.3rem .65rem;border-radius:999px;font-weight:700;font-size:.85rem}
+.utag{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#dbe9ff;margin:.65rem 0 .35rem}
+h1{font-size:clamp(1.5rem,4.8vw,2.3rem);line-height:1.15;font-weight:800}
+h1 em{font-style:normal;opacity:1}
+.hsub{opacity:.95;margin-top:.35rem;font-size:.95rem}
+.wrap{max-width:940px;margin:.85rem auto 0}
+.ibox,.qcard,.result{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.ibox{overflow:hidden;margin-bottom:1rem}
+.ihdr{background:linear-gradient(130deg,var(--blue),var(--blue-2));padding:.9rem 1rem;display:flex;align-items:center;gap:.55rem;cursor:pointer}
+.ihdr h2{font-size:1.03rem;color:#fff;font-weight:800;flex:1}
+.iarrow{color:#e9f2ff;transition:transform .25s}
+.ihdr.open .iarrow{transform:rotate(180deg)}
+.ibody{padding:1rem;display:none}.ibody.open{display:block}
+.itable,.verb-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.itable th,.verb-table th{background:#eff6ff;color:#12335f;padding:.5rem .65rem;text-align:left;font-weight:800;border-bottom:1px solid #cfe0ff;white-space:nowrap}
+.itable td,.verb-table td{padding:.48rem .65rem;border-bottom:1px solid #edf4ff;vertical-align:middle}
+.itable tr:last-child td,.verb-table tr:last-child td{border-bottom:none}
+.itable .ex,.pron-c{color:var(--muted);font-style:italic;font-size:.77rem}
+.tip{background:#edf4ff;border:1px solid #cfe0ff;border-left:4px solid var(--blue);border-radius:10px;padding:.75rem .9rem;font-size:.85rem;margin-top:.8rem;color:#1d3f72}
+.ltabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem;margin-bottom:1rem}
+.ltab{padding:.52rem .35rem;border:1px solid #b8cff8;border-radius:12px;background:#fff;color:#234b84;font-size:.76rem;font-weight:800;cursor:pointer;line-height:1.25}
+.ltab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.lsec{display:none}.lsec.show{display:block}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin-bottom:.75rem}
+.score-nums{display:flex;gap:.55rem}
+.sn{min-width:52px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:.32rem .55rem}
+.sn strong{display:block;font-size:1.25rem;color:#123f82;font-weight:900}
+.sn span{font-size:.7rem;color:var(--muted);font-weight:700}
+.ctrl-row{display:flex;gap:.4rem;flex-wrap:wrap}
+.flt-btn,.rst-btn,.chkbtn,.shwbtn,.nxtbtn{border-radius:999px;cursor:pointer;font-weight:700;font-family:inherit}
+.flt-btn{padding:.36rem .75rem;background:#fff;color:#234b84;border:1px solid #b8cff8;font-size:.76rem}
+.flt-btn.active{background:#edf4ff;border-color:var(--blue);color:var(--blue)}
+.rst-btn{padding:.38rem .82rem;background:#fff;border:1px solid #c6d8f7;color:#355f95;font-size:.76rem}
+.prog-wrap{background:#d6e3fb;border-radius:4px;height:7px;margin-bottom:.85rem;overflow:hidden}
+.prog-bar{height:100%;background:var(--blue);border-radius:4px;transition:width .35s}
+.qcard{padding:1rem;margin-bottom:.85rem}
+.qtag{display:inline-block;background:#ffe6d5;color:#8f3f07;font-size:.7rem;padding:.18rem .5rem;border-radius:999px;font-weight:800;margin-bottom:.5rem}
+.qde{font-size:.84rem;color:var(--muted);margin-bottom:.2rem}
+.qword{font-size:clamp(1.5rem,5vw,2.1rem);font-weight:900;line-height:1.1;margin-bottom:.2rem;color:#123f82}
+.qpron{font-size:.83rem;color:var(--muted);font-style:italic;margin-bottom:.65rem}
+.spk{display:inline-block;margin-bottom:.85rem;padding:.33rem .9rem;border:1px solid #b8cff8;background:#fff;border-radius:999px;color:#355f95;font-weight:700;cursor:pointer}
+.spk.hi{border-color:var(--gb);color:var(--green);background:var(--gbg)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-bottom:.7rem}
+.ch{padding:.72rem .5rem;background:#f4f8ff;border:1.5px solid #d1e1ff;border-radius:10px;text-align:center;cursor:pointer;font-weight:700;color:#20426f}
+.ch.correct{background:var(--gbg);border-color:var(--gb);color:var(--green)}
+.ch.wrong{background:var(--rbg);border-color:#f3b5ae;color:var(--red)}
+.gap{border:none;border-bottom:2px solid var(--blue);background:transparent;font-size:.9rem;font-weight:700;color:#123f82;width:120px;text-align:center;padding:.1rem .3rem;outline:none}
+.gap.correct{border-color:var(--gb);background:var(--gbg);border-radius:6px;color:var(--green)}
+.gap.wrong{border-color:#f3b5ae;background:var(--rbg);border-radius:6px;color:var(--red)}
+.write-input{width:100%;padding:.6rem .85rem;border:1.5px solid #c6d8f7;border-radius:10px;font-size:.88rem;background:#fff;color:var(--text);outline:none;transition:border .2s;margin-bottom:.6rem}
+.write-input:focus{border-color:var(--blue)}
+.write-input.correct{border-color:var(--gb);background:var(--gbg)}
+.write-input.wrong{border-color:#f3b5ae;background:var(--rbg)}
+.fbrow{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
+.fb{font-size:.8rem;font-weight:700;min-height:1rem}.fb.g{color:var(--green)}.fb.b{color:var(--red)}
+.chkbtn{padding:.4rem .9rem;background:var(--blue);color:#fff;border:none;font-size:.76rem}
+.chkbtn:disabled{background:#94a3b8;cursor:default}
+.shwbtn{padding:.4rem .85rem;background:#fff;color:#355f95;border:1.5px solid #e2e8f0;font-size:.76rem}
+.nxtbtn{padding:.4rem .9rem;background:var(--blue-2);color:#fff;border:none;font-size:.76rem;display:none;margin-top:.6rem}
+.result{text-align:center;padding:1.2rem 1rem;background:#fff;border-radius:16px;margin-bottom:1rem;display:none}
+.result h2{font-size:1.8rem;color:#123f82;margin-bottom:.3rem}
+.bigpct{font-size:4rem;font-weight:900;color:var(--orange)}
+.result p{color:var(--muted);font-size:.85rem;margin:.5rem 0 1.2rem}
+.verb-table-wrap{overflow-x:auto}
+.verb-table tr:hover td{background:#f8fbff}
+.spk-mini{background:none;border:none;cursor:pointer;font-size:.9rem;padding:0 .25rem}
+.de-c{color:#1d6f4a;font-size:.75rem}
+@media (max-width:760px){.ltabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.choices{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <div class="hdr">
-  <a href="index.html" class="back">← Back</a>
+  <a href="index.html" class="back">&larr; Zurueck</a>
   <div class="utag">Grammar Reference · All Units</div>
   <h1>Irregular<br><em>Verbs</em></h1>
-  <p class="hsub">64 unregelmäßige Verben · mit Aussprache · 3 Niveaustufen</p>
+  <p class="hsub">64 unregelmaessige Verben - mit Aussprache - 3 Niveaustufen</p>
 </div>
 
 <div class="wrap">
@@ -133,7 +116,7 @@ h1 em{font-style:italic;opacity:.8;}
   </div>
   <div class="ibody open" id="ibody">
     <table class="itable">
-      <tr><th>Form</th><th>Wofür?</th><th>Beispiel</th></tr>
+      <tr><th>Form</th><th>Wofür</th><th>Beispiel</th></tr>
       <tr><td><b>Infinitive</b></td><td>Grundform / to-Infinitiv</td><td class="ex">to write, to go</td></tr>
       <tr><td><b>Simple Past</b></td><td>Abgeschlossene Handlung in der Vergangenheit</td><td class="ex">She <b>wrote</b> a letter.</td></tr>
       <tr><td><b>Past Participle</b></td><td>Present Perfect: have/has + …</td><td class="ex">She has <b>written</b> a letter.</td></tr>
@@ -153,8 +136,8 @@ h1 em{font-style:italic;opacity:.8;}
 <div class="lsec show" id="level-a">
   <div class="topbar">
     <div class="score-nums">
-      <div class="sn"><strong id="ar">0</strong><span>✅</span></div>
-      <div class="sn"><strong id="aw">0</strong><span>❌</span></div>
+      <div class="sn"><strong id="ar">0</strong><span>R</span></div>
+      <div class="sn"><strong id="aw">0</strong><span>F</span></div>
     </div>
     <div class="ctrl-row">
       <button class="flt-btn active" onclick="setFilter('a','all',this)">Alle</button>
@@ -166,8 +149,8 @@ h1 em{font-style:italic;opacity:.8;}
   <div class="prog-wrap"><div class="prog-bar" id="a-prog" style="width:0%"></div></div>
   <div id="a-quiz"></div>
   <div class="result" id="a-result">
-    <h2>🎉 Done!</h2><div class="bigpct" id="a-pct"></div>
-    <p id="a-rt"></p><button class="chkbtn" onclick="resetQ('a')">Nochmal 🔄</button>
+    <h2>Done!</h2><div class="bigpct" id="a-pct"></div>
+    <p id="a-rt"></p><button class="chkbtn" onclick="resetQ('a')">Nochmal</button>
   </div>
 </div>
 
@@ -175,8 +158,8 @@ h1 em{font-style:italic;opacity:.8;}
 <div class="lsec" id="level-b">
   <div class="topbar">
     <div class="score-nums">
-      <div class="sn"><strong id="br">0</strong><span>✅</span></div>
-      <div class="sn"><strong id="bw">0</strong><span>❌</span></div>
+      <div class="sn"><strong id="br">0</strong><span>R</span></div>
+      <div class="sn"><strong id="bw">0</strong><span>F</span></div>
     </div>
     <div class="ctrl-row">
       <button class="flt-btn active" onclick="setFilter('b','all',this)">Alle</button>
@@ -188,8 +171,8 @@ h1 em{font-style:italic;opacity:.8;}
   <div class="prog-wrap"><div class="prog-bar" id="b-prog" style="width:0%"></div></div>
   <div id="b-quiz"></div>
   <div class="result" id="b-result">
-    <h2>🎉 Done!</h2><div class="bigpct" id="b-pct"></div>
-    <p id="b-rt"></p><button class="chkbtn" onclick="resetQ('b')">Nochmal 🔄</button>
+    <h2>Done!</h2><div class="bigpct" id="b-pct"></div>
+    <p id="b-rt"></p><button class="chkbtn" onclick="resetQ('b')">Nochmal</button>
   </div>
 </div>
 
@@ -197,16 +180,16 @@ h1 em{font-style:italic;opacity:.8;}
 <div class="lsec" id="level-c">
   <div class="topbar">
     <div class="score-nums">
-      <div class="sn"><strong id="cr">0</strong><span>✅</span></div>
-      <div class="sn"><strong id="cw">0</strong><span>❌</span></div>
+      <div class="sn"><strong id="cr">0</strong><span>R</span></div>
+      <div class="sn"><strong id="cw">0</strong><span>F</span></div>
     </div>
     <button class="rst-btn" onclick="resetQ('c')">🔄 Reset</button>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="c-prog" style="width:0%"></div></div>
   <div id="c-quiz"></div>
   <div class="result" id="c-result">
-    <h2>🎉 Done!</h2><div class="bigpct" id="c-pct"></div>
-    <p id="c-rt"></p><button class="chkbtn" onclick="resetQ('c')">Nochmal 🔄</button>
+    <h2>Done!</h2><div class="bigpct" id="c-pct"></div>
+    <p id="c-rt"></p><button class="chkbtn" onclick="resetQ('c')">Nochmal</button>
   </div>
 </div>
 
@@ -293,212 +276,294 @@ const V=[
   {i:"write",     s:"wrote",       p:"written",       d:"schreiben",                  pi:"raɪt",   ps:"rəʊt",     pp:"ˈrɪtən"},
 ];
 
-const ST={
-  a:{q:[],cur:null,ans:false,r:0,w:0,done:0,flt:'all'},
-  b:{q:[],cur:null,ans:false,r:0,w:0,done:0,flt:'all',anss:[]},
-  c:{q:[],cur:null,ans:false,r:0,w:0,done:0},
+const ST = {
+  a: { q: [], cur: null, ans: false, r: 0, w: 0, done: 0, flt: 'all' },
+  b: { q: [], cur: null, ans: false, r: 0, w: 0, done: 0, flt: 'all', anss: [] },
+  c: { q: [], cur: null, ans: false, r: 0, w: 0, done: 0 }
 };
 
-const sh=a=>[...a].sort(()=>Math.random()-.5);
-const nrm=s=>s.toLowerCase().replace(/[?.!,\-]/g,'').replace(/\s+/g,' ').trim();
-const spk=w=>{const u=new SpeechSynthesisUtterance(w);u.lang='en-GB';u.rate=0.82;speechSynthesis.cancel();speechSynthesis.speak(u);};
+const sh = (a) => [...a].sort(() => Math.random() - 0.5);
+const nrm = (s) => (s || '').toLowerCase().replace(/[?.!,\-]/g, '').replace(/\s+/g, ' ').trim();
+const esc = (s) => String(s).replace(/'/g, "\\'");
 
-function toggleInfo(){
-  document.getElementById('ibody').classList.toggle('open');
-  document.querySelector('.ihdr').classList.toggle('open');
+function spk(w) {
+  try {
+    const u = new SpeechSynthesisUtterance(w);
+    u.lang = 'en-GB';
+    u.rate = 0.85;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  } catch (e) {}
 }
 
-function setLevel(l,btn){
-  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  document.querySelectorAll('.lsec').forEach(s=>s.classList.remove('show'));
-  document.getElementById('level-'+l).classList.add('show');
-  if(l==='list')buildList();
+function toggleInfo() {
+  const body = document.getElementById('ibody');
+  const head = document.querySelector('.ihdr');
+  const arr = document.getElementById('iarr');
+  body.classList.toggle('open');
+  head.classList.toggle('open');
+  arr.textContent = body.classList.contains('open') ? 'v' : '>';
 }
 
-function setFilter(lvl,f,btn){
-  ST[lvl].flt=f;
-  document.querySelectorAll('#level-'+lvl+' .flt-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');resetQ(lvl);
+function setLevel(l, btn) {
+  document.querySelectorAll('.ltab').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.lsec').forEach((s) => s.classList.remove('show'));
+  document.getElementById('level-' + l).classList.add('show');
+  if (l === 'list') buildList();
 }
 
-function resetQ(lvl){
-  const s=ST[lvl];s.q=sh([...V]);s.r=0;s.w=0;s.done=0;s.ans=false;
-  document.getElementById(lvl[0]+'r').textContent=0;
-  document.getElementById(lvl[0]+'w').textContent=0;
-  document.getElementById(lvl+'-prog').style.width='0%';
-  document.getElementById(lvl+'-result').style.display='none';
-  if(lvl==='a')nextA();else if(lvl==='b')nextB();else nextC();
+function setFilter(lvl, f, btn) {
+  ST[lvl].flt = f;
+  document.querySelectorAll('#level-' + lvl + ' .flt-btn').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  resetQ(lvl);
 }
 
-function updProg(lvl){document.getElementById(lvl+'-prog').style.width=(ST[lvl].done/V.length*100)+'%';}
-function updSc(lvl){document.getElementById(lvl[0]+'r').textContent=ST[lvl].r;document.getElementById(lvl[0]+'w').textContent=ST[lvl].w;}
+function getPool() { return [...V]; }
+function poolSize() { return getPool().length || 1; }
 
-/* ─── LEVEL A ─── */
-function nextA(){
-  const s=ST.a;if(!s.q.length){showRes('a');return;}
-  s.cur=s.q.pop();s.ans=false;s.done++;updProg('a');
-  const v=s.cur,flt=s.flt;
-  const askPP=flt==='pp'||(flt==='all'&&Math.random()>.5);
-  const label=askPP?'Past Participle':'Simple Past';
-  const ans=askPP?v.p:v.s;
-  const wrongs=sh(V.filter(x=>x!==v)).slice(0,3).map(x=>askPP?x.p:x.s);
-  const opts=sh([ans,...wrongs]);
-  const e=`<span style="font-size:.78rem;color:var(--muted)">What is the <b>${label}</b> of:</span>`;
-  document.getElementById('a-quiz').innerHTML=`
+function resetQ(lvl) {
+  const s = ST[lvl];
+  s.q = sh(getPool());
+  s.r = 0; s.w = 0; s.done = 0; s.ans = false;
+  if (document.getElementById(lvl[0] + 'r')) document.getElementById(lvl[0] + 'r').textContent = '0';
+  if (document.getElementById(lvl[0] + 'w')) document.getElementById(lvl[0] + 'w').textContent = '0';
+  document.getElementById(lvl + '-prog').style.width = '0%';
+  document.getElementById(lvl + '-result').style.display = 'none';
+  if (lvl === 'a') nextA();
+  else if (lvl === 'b') nextB();
+  else nextC();
+}
+
+function updProg(lvl) {
+  const total = poolSize();
+  document.getElementById(lvl + '-prog').style.width = ((ST[lvl].done / total) * 100) + '%';
+}
+
+function updSc(lvl) {
+  document.getElementById(lvl[0] + 'r').textContent = ST[lvl].r;
+  document.getElementById(lvl[0] + 'w').textContent = ST[lvl].w;
+}
+
+function nextA() {
+  const s = ST.a;
+  if (!s.q.length) { showRes('a'); return; }
+  s.cur = s.q.pop(); s.ans = false; s.done++; updProg('a');
+
+  const v = s.cur;
+  const flt = s.flt;
+  const askPP = flt === 'pp' || (flt === 'all' && Math.random() > 0.5);
+  const label = askPP ? 'Past Participle' : 'Simple Past';
+  const ans = askPP ? v.p : v.s;
+  const wrongs = sh(V.filter((x) => x !== v)).slice(0, 3).map((x) => askPP ? x.p : x.s);
+  const opts = sh([ans, ...wrongs]);
+
+  document.getElementById('a-quiz').innerHTML = `
     <div class="qcard">
-      <div class="qtag">${s.done} / ${V.length}</div>
+      <div class="qtag">${s.done} / ${poolSize()}</div>
       <div class="qde">${v.d}</div>
       <div class="qword">to ${v.i}</div>
       <div class="qpron">[${v.pi}]</div>
-      <button class="spk" id="a-spk" onclick="spk('${v.i}')">🔊 to ${v.i}</button>
-      <p style="margin-bottom:.7rem">${e}</p>
-      <div class="choices">${opts.map(o=>`<button class="ch" onclick="chkA(this,'${o.replace(/'/g,"\\'")}','${ans.replace(/'/g,"\\'")}','${ans.replace(/'/g,"\\'")}')"> ${o}</button>`).join('')}</div>
+      <button class="spk" id="a-spk" onclick="spk('${esc(v.i)}')">Speak: to ${v.i}</button>
+      <p style="margin-bottom:.7rem"><span style="font-size:.78rem;color:var(--muted)">What is the <b>${label}</b> of:</span></p>
+      <div class="choices">${opts.map((o) => `<button class="ch" onclick="chkA(this,'${esc(o)}','${esc(ans)}','${esc(ans)}')">${o}</button>`).join('')}</div>
       <div class="fbrow"><span class="fb" id="a-fb"></span></div>
-      <button class="nxtbtn" id="a-nxt" onclick="nextA()">Weiter →</button>
+      <button class="nxtbtn" id="a-nxt" onclick="nextA()">Weiter -></button>
     </div>`;
 }
-function chkA(btn,chosen,correct,sayWord){
-  if(ST.a.ans)return;ST.a.ans=true;
-  btn.closest('.choices').querySelectorAll('.ch').forEach(b=>{b.disabled=true;if(b.textContent.trim()===correct)b.classList.add('correct');});
-  const ok=chosen===correct;
-  if(!ok)btn.classList.add('wrong');
-  const fb=document.getElementById('a-fb');fb.className='fb '+(ok?'g':'b');fb.textContent=ok?'✅ Correct!':'❌ Answer: '+correct;
-  const sp=document.getElementById('a-spk');sp.textContent='🔊 '+sayWord;sp.className='spk hi';sp.onclick=()=>spk(sayWord);
-  if(ok){spk(sayWord);ST.a.r++;}else ST.a.w++;updSc('a');
-  document.getElementById('a-nxt').style.display='inline-block';
+
+function chkA(btn, chosen, correct, sayWord) {
+  if (ST.a.ans) return;
+  ST.a.ans = true;
+  btn.closest('.choices').querySelectorAll('.ch').forEach((b) => {
+    b.disabled = true;
+    if (b.textContent.trim() === correct) b.classList.add('correct');
+  });
+  const ok = chosen === correct;
+  if (!ok) btn.classList.add('wrong');
+  const fb = document.getElementById('a-fb');
+  fb.className = 'fb ' + (ok ? 'g' : 'b');
+  fb.textContent = ok ? 'Correct!' : 'Answer: ' + correct;
+  const sp = document.getElementById('a-spk');
+  sp.textContent = 'Speak: ' + sayWord;
+  sp.className = 'spk hi';
+  sp.onclick = () => spk(sayWord);
+  if (ok) { spk(sayWord); ST.a.r++; } else ST.a.w++;
+  updSc('a');
+  document.getElementById('a-nxt').style.display = 'inline-block';
 }
 
-/* ─── LEVEL B ─── */
-function nextB(){
-  const s=ST.b;if(!s.q.length){showRes('b');return;}
-  s.cur=s.q.pop();s.ans=false;s.done++;updProg('b');
-  const v=s.cur,flt=s.flt;
-  const askPP=flt==='pp'||(flt==='all'&&Math.random()>.5);
-  const hint=askPP?`<b>to ${v.i}</b> → Simple Past: <b>${v.s}</b> → Past Participle:`
-                  :`<b>to ${v.i}</b> → Simple Past:`;
-  const ans=askPP?v.p:v.s;s.anss=[ans];
-  document.getElementById('b-quiz').innerHTML=`
+function nextB() {
+  const s = ST.b;
+  if (!s.q.length) { showRes('b'); return; }
+  s.cur = s.q.pop(); s.ans = false; s.done++; updProg('b');
+
+  const v = s.cur;
+  const flt = s.flt;
+  const askPP = flt === 'pp' || (flt === 'all' && Math.random() > 0.5);
+  const hint = askPP ? `<b>to ${v.i}</b> -> Simple Past: <b>${v.s}</b> -> Past Participle:` : `<b>to ${v.i}</b> -> Simple Past:`;
+  const ans = askPP ? v.p : v.s;
+  s.anss = [ans];
+
+  document.getElementById('b-quiz').innerHTML = `
     <div class="qcard">
-      <div class="qtag">${s.done} / ${V.length}</div>
+      <div class="qtag">${s.done} / ${poolSize()}</div>
       <div class="qde">${v.d}</div>
       <div class="qword">to ${v.i}</div>
       <div class="qpron">[${v.pi}]</div>
-      <button class="spk" id="b-spk" onclick="spk('${v.i}')">🔊 to ${v.i}</button>
+      <button class="spk" id="b-spk" onclick="spk('${esc(v.i)}')">Speak: to ${v.i}</button>
       <p style="font-size:.88rem;margin-bottom:.7rem;line-height:1.7">${hint}
-        <input class="gap" id="b-gap" placeholder="…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')chkB()">
+        <input class="gap" id="b-gap" placeholder="..." autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')chkB()">
       </p>
       <div class="fbrow">
-        <button class="chkbtn" id="b-chk" onclick="chkB()">Check ✓</button>
+        <button class="chkbtn" id="b-chk" onclick="chkB()">Check</button>
         <button class="shwbtn" onclick="shwB()">Show</button>
         <span class="fb" id="b-fb"></span>
       </div>
-      <button class="nxtbtn" id="b-nxt" onclick="nextB()">Weiter →</button>
+      <button class="nxtbtn" id="b-nxt" onclick="nextB()">Weiter -></button>
     </div>`;
-  setTimeout(()=>document.getElementById('b-gap').focus(),80);
-}
-function chkB(){
-  if(ST.b.ans)return;
-  const inp=document.getElementById('b-gap'),ans=ST.b.anss[0];
-  const ok=nrm(inp.value)===nrm(ans);
-  inp.classList.add(ok?'correct':'wrong');inp.disabled=true;
-  document.getElementById('b-chk').disabled=true;
-  const fb=document.getElementById('b-fb');fb.className='fb '+(ok?'g':'b');fb.textContent=ok?'✅ Correct!':'❌ Answer: '+ans;
-  const sp=document.getElementById('b-spk');sp.textContent='🔊 '+ans;sp.className='spk hi';sp.onclick=()=>spk(ans);
-  if(ok){spk(ans);ST.b.r++;}else ST.b.w++;updSc('b');ST.b.ans=true;
-  document.getElementById('b-nxt').style.display='inline-block';
-}
-function shwB(){
-  if(ST.b.ans)return;
-  const ans=ST.b.anss[0],inp=document.getElementById('b-gap');
-  inp.value=ans;inp.classList.add('correct');inp.disabled=true;
-  document.getElementById('b-chk').disabled=true;
-  const fb=document.getElementById('b-fb');fb.className='fb g';fb.textContent='→ '+ans;
-  ST.b.ans=true;ST.b.w++;updSc('b');
-  document.getElementById('b-nxt').style.display='inline-block';
+  setTimeout(() => document.getElementById('b-gap').focus(), 60);
 }
 
-/* ─── LEVEL C ─── */
-function nextC(){
-  const s=ST.c;if(!s.q.length){showRes('c');return;}
-  s.cur=s.q.pop();s.ans=false;s.done++;updProg('c');
-  const v=s.cur;
-  document.getElementById('c-quiz').innerHTML=`
+function chkB() {
+  if (ST.b.ans) return;
+  const inp = document.getElementById('b-gap');
+  const ans = ST.b.anss[0];
+  const ok = nrm(inp.value) === nrm(ans);
+  inp.classList.add(ok ? 'correct' : 'wrong'); inp.disabled = true;
+  document.getElementById('b-chk').disabled = true;
+  const fb = document.getElementById('b-fb');
+  fb.className = 'fb ' + (ok ? 'g' : 'b');
+  fb.textContent = ok ? 'Correct!' : 'Answer: ' + ans;
+  const sp = document.getElementById('b-spk');
+  sp.textContent = 'Speak: ' + ans;
+  sp.className = 'spk hi';
+  sp.onclick = () => spk(ans);
+  if (ok) { spk(ans); ST.b.r++; } else ST.b.w++;
+  updSc('b');
+  ST.b.ans = true;
+  document.getElementById('b-nxt').style.display = 'inline-block';
+}
+
+function shwB() {
+  if (ST.b.ans) return;
+  const ans = ST.b.anss[0];
+  const inp = document.getElementById('b-gap');
+  inp.value = ans; inp.classList.add('correct'); inp.disabled = true;
+  document.getElementById('b-chk').disabled = true;
+  const fb = document.getElementById('b-fb');
+  fb.className = 'fb g';
+  fb.textContent = '-> ' + ans;
+  ST.b.ans = true; ST.b.w++; updSc('b');
+  document.getElementById('b-nxt').style.display = 'inline-block';
+}
+
+function nextC() {
+  const s = ST.c;
+  if (!s.q.length) { showRes('c'); return; }
+  s.cur = s.q.pop(); s.ans = false; s.done++; updProg('c');
+
+  const v = s.cur;
+  document.getElementById('c-quiz').innerHTML = `
     <div class="qcard">
-      <div class="qtag">${s.done} / ${V.length}</div>
+      <div class="qtag">${s.done} / ${poolSize()}</div>
       <div class="qde">${v.d}</div>
       <div class="qword">to ${v.i}</div>
       <div class="qpron">[${v.pi}]</div>
-      <button class="spk" id="c-spk" onclick="spk('${v.i}')">🔊 to ${v.i}</button>
+      <button class="spk" id="c-spk" onclick="spk('${esc(v.i)}')">Speak: to ${v.i}</button>
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:.7rem">Schreibe <b>Simple Past</b> und <b>Past Participle</b>:</p>
       <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.8rem">
         <div><span style="font-size:.72rem;font-weight:700;color:var(--muted);display:block;margin-bottom:.2rem">Simple Past</span>
-          <input class="write-input" id="c-sp" placeholder="simple past …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <input class="write-input" id="c-sp" placeholder="simple past ..." autocomplete="off" spellcheck="false">
         </div>
         <div><span style="font-size:.72rem;font-weight:700;color:var(--muted);display:block;margin-bottom:.2rem">Past Participle</span>
-          <input class="write-input" id="c-pp" placeholder="past participle …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')chkC()">
+          <input class="write-input" id="c-pp" placeholder="past participle ..." autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')chkC()">
         </div>
       </div>
       <div class="fbrow">
-        <button class="chkbtn" id="c-chk" onclick="chkC()">Check ✓</button>
+        <button class="chkbtn" id="c-chk" onclick="chkC()">Check</button>
         <button class="shwbtn" onclick="shwC()">Show</button>
         <span class="fb" id="c-fb"></span>
       </div>
-      <button class="nxtbtn" id="c-nxt" onclick="nextC()">Weiter →</button>
+      <button class="nxtbtn" id="c-nxt" onclick="nextC()">Weiter -></button>
     </div>`;
-  setTimeout(()=>document.getElementById('c-sp').focus(),80);
-}
-function chkC(){
-  if(ST.c.ans)return;
-  const v=ST.c.cur;
-  const sp=document.getElementById('c-sp'),pp=document.getElementById('c-pp');
-  const okS=nrm(sp.value)===nrm(v.s),okP=nrm(pp.value)===nrm(v.p),ok=okS&&okP;
-  sp.classList.add(okS?'correct':'wrong');sp.disabled=true;
-  pp.classList.add(okP?'correct':'wrong');pp.disabled=true;
-  document.getElementById('c-chk').disabled=true;
-  const fb=document.getElementById('c-fb');fb.className='fb '+(ok?'g':'b');
-  fb.textContent=ok?'✅ Both correct!':'❌ '+v.i+' – '+v.s+' – '+v.p;
-  const spkb=document.getElementById('c-spk');
-  spkb.textContent='🔊 '+v.s+' / '+v.p;spkb.className='spk hi';
-  spkb.onclick=()=>{spk(v.s);setTimeout(()=>spk(v.p),1100);};
-  if(ok){spk(v.s);setTimeout(()=>spk(v.p),1100);ST.c.r++;}else ST.c.w++;
-  updSc('c');ST.c.ans=true;
-  document.getElementById('c-nxt').style.display='inline-block';
-}
-function shwC(){
-  if(ST.c.ans)return;
-  const v=ST.c.cur;
-  document.getElementById('c-sp').value=v.s;document.getElementById('c-sp').classList.add('correct');document.getElementById('c-sp').disabled=true;
-  document.getElementById('c-pp').value=v.p;document.getElementById('c-pp').classList.add('correct');document.getElementById('c-pp').disabled=true;
-  document.getElementById('c-chk').disabled=true;
-  const fb=document.getElementById('c-fb');fb.className='fb g';fb.textContent='→ '+v.s+' – '+v.p;
-  ST.c.ans=true;ST.c.w++;updSc('c');
-  document.getElementById('c-nxt').style.display='inline-block';
+  setTimeout(() => document.getElementById('c-sp').focus(), 60);
 }
 
-/* ─── RESULT ─── */
-function showRes(lvl){
-  document.getElementById(lvl+'-quiz').innerHTML='';
-  const s=ST[lvl],pct=Math.round(s.r/(s.r+s.w)*100)||0;
-  document.getElementById(lvl+'-pct').textContent=pct+'%';
-  document.getElementById(lvl+'-rt').textContent=s.r+' / '+V.length+' correct · '+(pct>=80?'🏆 Excellent!':pct>=60?'👍 Good job!':'📚 Keep going!');
-  document.getElementById(lvl+'-result').style.display='block';
+function chkC() {
+  if (ST.c.ans) return;
+  const v = ST.c.cur;
+  const sp = document.getElementById('c-sp');
+  const pp = document.getElementById('c-pp');
+  const okS = nrm(sp.value) === nrm(v.s);
+  const okP = nrm(pp.value) === nrm(v.p);
+  const ok = okS && okP;
+  sp.classList.add(okS ? 'correct' : 'wrong');
+  pp.classList.add(okP ? 'correct' : 'wrong');
+  sp.disabled = true; pp.disabled = true;
+  document.getElementById('c-chk').disabled = true;
+  const fb = document.getElementById('c-fb');
+  fb.className = 'fb ' + (ok ? 'g' : 'b');
+  fb.textContent = ok ? 'Both correct!' : 'Answer: ' + v.i + ' - ' + v.s + ' - ' + v.p;
+  const spkb = document.getElementById('c-spk');
+  spkb.textContent = 'Speak: ' + v.s + ' / ' + v.p;
+  spkb.className = 'spk hi';
+  spkb.onclick = () => { spk(v.s); setTimeout(() => spk(v.p), 1000); };
+  if (ok) { spk(v.s); setTimeout(() => spk(v.p), 1000); ST.c.r++; } else ST.c.w++;
+  updSc('c');
+  ST.c.ans = true;
+  document.getElementById('c-nxt').style.display = 'inline-block';
 }
 
-/* ─── LIST ─── */
-function buildList(){
-  document.getElementById('vlist').innerHTML=
-    `<tr><th></th><th>Infinitive</th><th>Simple Past</th><th>Past Participle</th><th>Deutsch</th></tr>`+
-    V.map(v=>`<tr>
-      <td><button class="spk-mini" title="Alle 3 Formen vorlesen" onclick="spkAll('${v.i}','${v.s}','${v.p}')">🔊</button></td>
+function shwC() {
+  if (ST.c.ans) return;
+  const v = ST.c.cur;
+  document.getElementById('c-sp').value = v.s;
+  document.getElementById('c-pp').value = v.p;
+  document.getElementById('c-sp').classList.add('correct');
+  document.getElementById('c-pp').classList.add('correct');
+  document.getElementById('c-sp').disabled = true;
+  document.getElementById('c-pp').disabled = true;
+  document.getElementById('c-chk').disabled = true;
+  const fb = document.getElementById('c-fb');
+  fb.className = 'fb g';
+  fb.textContent = '-> ' + v.s + ' - ' + v.p;
+  ST.c.ans = true; ST.c.w++; updSc('c');
+  document.getElementById('c-nxt').style.display = 'inline-block';
+}
+
+function showRes(lvl) {
+  document.getElementById(lvl + '-quiz').innerHTML = '';
+  const s = ST[lvl];
+  const total = poolSize();
+  const pct = Math.round((s.r / ((s.r + s.w) || 1)) * 100);
+  document.getElementById(lvl + '-pct').textContent = pct + '%';
+  document.getElementById(lvl + '-rt').textContent = s.r + ' / ' + total + ' correct - ' + (pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Good job!' : 'Keep going!');
+  document.getElementById(lvl + '-result').style.display = 'block';
+}
+
+function buildList() {
+  document.getElementById('vlist').innerHTML =
+    `<tr><th></th><th>Infinitive</th><th>Simple Past</th><th>Past Participle</th><th>Deutsch</th></tr>` +
+    V.map((v) => `<tr>
+      <td><button class="spk-mini" title="Alle 3 Formen vorlesen" onclick="spkAll('${esc(v.i)}','${esc(v.s)}','${esc(v.p)}')">Speak</button></td>
       <td><b>to ${v.i}</b><br><span class="pron-c">[${v.pi}]</span></td>
       <td>${v.s}<br><span class="pron-c">[${v.ps}]</span></td>
       <td>${v.p}<br><span class="pron-c">[${v.pp}]</span></td>
       <td class="de-c">${v.d}</td>
     </tr>`).join('');
 }
-function spkAll(a,b,c){spk(a);setTimeout(()=>spk(b),1100);setTimeout(()=>spk(c),2200);}
 
-resetQ('a');resetQ('b');resetQ('c');
+function spkAll(a, b, c) {
+  spk(a);
+  setTimeout(() => spk(b), 1000);
+  setTimeout(() => spk(c), 2000);
+}
+
+resetQ('a');
+resetQ('b');
+resetQ('c');
 </script>
 </body>
 </html>
