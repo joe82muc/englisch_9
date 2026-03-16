@@ -212,6 +212,43 @@ REGELN:
 
     }
 });
+app.post("/api/role-model/help", async (req, res) => {
+    try {
+        const { userText } = req.body;
+
+        if (!userText || userText.trim().length < 5) {
+            return res.status(400).json({ hint: "Bitte schreibe zuerst einen kurzen Text." });
+        }
+
+        const message = await client.messages.create({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 180,
+            system: `Du bist ein freundlicher Englischlehrer für die 9. Klasse.
+Gib NUR kurzes Feedback zu einem Role-Model-Text.
+REGELN:
+- Antworte auf Deutsch in 2-3 Sätzen
+- Verrate keine komplette Musterlösung
+- Nenne 1 Stärke und 1 konkreten nächsten Verbesserungsschritt
+- Fokus: Satzbau, because-Satz, Wortschatz (qualities), Verständlichkeit`,
+            messages: [
+                {
+                    role: "user",
+                    content: `Schülertext:\n${userText}\n\nGib mir eine kurze KI-Hilfe.`
+                }
+            ]
+        });
+
+        const hint = message?.content?.[0]?.text?.trim() || "Guter Anfang. Nutze noch einen because-Satz.";
+        res.json({ hint, source: "anthropic" });
+    } catch (error) {
+        console.error("Fehler bei /api/role-model/help:", error);
+        res.status(200).json({
+            hint: "KI gerade nicht erreichbar. Ergänze 2 Eigenschaften und einen because-Satz.",
+            source: "fallback-error"
+        });
+    }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`✅ Server läuft auf Port ${PORT}`);
