@@ -275,7 +275,7 @@
 
       <div class="hero-grid">
         <figure class="shot">
-          <img loading="lazy" style="object-position:center 42%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Polizei%20in%20Berlin.jpg" alt="Police car in city">
+          <img loading="lazy" style="object-position:center 42%" src="https://images.unsplash.com/photo-1619567241046-7f570eee3ce6?auto=format&fit=crop&w=1200&q=80" alt="Police car in city">
           <span>Police Scene</span>
         </figure>
         <figure class="shot">
@@ -283,7 +283,7 @@
           <span>Emergency Team</span>
         </figure>
         <figure class="shot">
-          <img loading="lazy" style="object-position:center 35%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Traffic_accident.jpg" alt="Traffic accident">
+          <img loading="lazy" style="object-position:center 35%" src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80" alt="Traffic accident">
           <span>Accident Spot</span>
         </figure>
       </div>
@@ -347,6 +347,8 @@
       <div class="card" id="b6"><div class="exnum">Exercise 6</div><div class="q">What is your <input class="gap" id="b6g" placeholder="..."> number?</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b6','phone','b')">Check</button><button class="btn" onclick="shwGap('b6','phone','b')">Show</button><span class="fb" id="b6f"></span></div></div>
       <div class="card" id="b7"><div class="exnum">Exercise 7</div><div class="q">There <input class="gap" id="b7g" placeholder="..."> two injured people.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b7','were','b')">Check</button><button class="btn" onclick="shwGap('b7','were','b')">Show</button><span class="fb" id="b7f"></span></div></div>
       <div class="card" id="b8"><div class="exnum">Exercise 8</div><div class="q">We will get in <input class="gap" id="b8g" placeholder="...">.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b8','touch','b')">Check</button><button class="btn" onclick="shwGap('b8','touch','b')">Show</button><span class="fb" id="b8f"></span></div></div>
+      <div class="card" id="b9"><div class="exnum">Exercise 9</div><div class="q">The road was <input class="gap" id="b9g" placeholder="..."> and visibility was poor.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b9','wet','b')">Check</button><button class="btn" onclick="shwGap('b9','wet','b')">Show</button><span class="fb" id="b9f"></span></div></div>
+      <div class="card" id="b10"><div class="exnum">Exercise 10</div><div class="q">I think the accident happened <input class="gap" id="b10g" placeholder="..."> minutes before I arrived.</div><div class="fbrow"><button class="btn chk" onclick="chkGap('b10','ten','b')">Check</button><button class="btn" onclick="shwGap('b10','ten','b')">Show</button><span class="fb" id="b10f"></span></div></div>
     </section>
 
     <section id="level-c" class="lsec">
@@ -399,6 +401,7 @@
       document.querySelectorAll('#level-a .mc').forEach(b=>{b.className='mc';b.disabled=false});
       document.querySelectorAll('#level-a .fb').forEach(f=>{f.textContent='';f.className='fb'});
       'a1 a2 a3 a4 a5 a6'.split(' ').forEach(k=>delete ans[k]);
+      shuffleLevelA();
     }
 
     function chkGap(id,correct,lvl){
@@ -440,7 +443,78 @@
       sc.b={r:0,w:0}; updSc('b');
       document.querySelectorAll('#level-b .gap').forEach(i=>{i.value='';i.className='gap';i.disabled=false});
       document.querySelectorAll('#level-b .fb').forEach(f=>{f.textContent='';f.className='fb'});
-      'b1 b2 b3 b4 b5 b6 b7 b8'.split(' ').forEach(k=>delete ans[k]);
+      'b1 b2 b3 b4 b5 b6 b7 b8 b9 b10'.split(' ').forEach(k=>delete ans[k]);
+    }
+
+    async function aiHintB(id){
+      const out=document.getElementById(id+'ai');
+      const i1=document.getElementById(id+'g');
+      const i2=document.getElementById(id+'g2');
+      const qEl=document.querySelector('#'+id+' .q');
+      const qText=qEl? qEl.textContent.trim() : '';
+      const v1=i1? String(i1.value||'').trim() : '';
+      const v2=i2? String(i2.value||'').trim() : '';
+      const user=(v1 + (v2? ' | ' + v2 : '')).trim();
+      if(!user){
+        out.className='fb b';
+        out.textContent='Bitte erst etwas in die Luecke schreiben.';
+        return;
+      }
+      out.className='fb';
+      out.textContent='KI denkt...';
+      try{
+        const prompt='Gib einen kurzen deutschen Tipp zu dieser Lueckenaufgabe. Frage: '+qText+' Schuelerantwort: '+user;
+        const res=await fetch('https://englisch-9.onrender.com/api/role-model/help',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({userText:prompt})
+        });
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        const data=await res.json();
+        out.className='fb g';
+        out.textContent='KI-Tipp: '+(data.hint||'Kein Tipp verfuegbar.');
+      }catch(_e){
+        out.className='fb b';
+        out.textContent='KI nicht erreichbar. Bitte spaeter erneut probieren.';
+      }
+    }
+
+    function initBHints(){
+      document.querySelectorAll('#level-b .card').forEach(card=>{
+        const id=card.id;
+        if(!/^b\\d+$/.test(id)) return;
+        const row=card.querySelector('.fbrow');
+        if(!row) return;
+        if(!row.querySelector('[data-ai-b]')){
+          const tipBtn=document.createElement('button');
+          tipBtn.className='btn';
+          tipBtn.type='button';
+          tipBtn.dataset.aiB='1';
+          tipBtn.textContent='KI-Tipp (DE)';
+          tipBtn.addEventListener('click', ()=>aiHintB(id));
+          row.insertBefore(tipBtn, row.querySelector('.fb'));
+        }
+        if(!card.querySelector('#'+id+'ai')){
+          const wrap=document.createElement('div');
+          wrap.className='fbrow';
+          const span=document.createElement('span');
+          span.className='fb';
+          span.id=id+'ai';
+          wrap.appendChild(span);
+          row.after(wrap);
+        }
+      });
+    }
+
+    function shuffleLevelA(){
+      document.querySelectorAll('#level-a .mc-wrap').forEach(wrap=>{
+        const items=[...wrap.querySelectorAll('.mc')];
+        for(let i=items.length-1;i>0;i--){
+          const j=Math.floor(Math.random()*(i+1));
+          [items[i],items[j]]=[items[j],items[i]];
+        }
+        items.forEach(el=>wrap.appendChild(el));
+      });
     }
 
     function chkFree(id,required,lvl){
@@ -500,6 +574,9 @@
       document.querySelectorAll('#level-c .fb').forEach(f=>{f.textContent='';f.className='fb'});
       'c1 c2 c3 c4 c5'.split(' ').forEach(k=>delete ans[k]);
     }
+
+    initBHints();
+    shuffleLevelA();
   </script>
 </body>
 </html>
