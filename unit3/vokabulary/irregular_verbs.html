@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1e3a5f">
 <title>Irregular Verbs - Unit 3</title>
-<link href="https://fonts.googleapis.com/css2family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg-1:#f4f8ff; --bg-2:#fff1de; --card:#ffffff; --line:#d7e3ff;
@@ -102,7 +102,7 @@ h1 em{font-style:normal;opacity:1}
 
 <div class="hdr">
   <a href="../../index.html" class="back">&larr; Zur Startseite</a>
-  <div class="utag">Grammar Reference Â· All Units</div>
+  <div class="utag">Grammar Reference - All Units</div>
   <h1>Irregular<br><em>Verbs</em></h1>
   <p class="hsub">64 unregelmaessige Verben - mit Aussprache - 3 Niveaustufen</p>
 </div>
@@ -111,25 +111,25 @@ h1 em{font-style:normal;opacity:1}
 
 <div class="ibox">
   <div class="ihdr open" onclick="toggleInfo()">
-    <h2>ðŸ“˜ Die 3 Formen â€“ How to use them</h2>
-    <span class="iarrow" id="iarr">â–¼</span>
+    <h2>Die 3 Formen - How to use them</h2>
+    <span class="iarrow" id="iarr">▼</span>
   </div>
   <div class="ibody open" id="ibody">
     <table class="itable">
-      <tr><th>Form</th><th>WofÃ¼r</th><th>Beispiel</th></tr>
+      <tr><th>Form</th><th>Wofuer</th><th>Beispiel</th></tr>
       <tr><td><b>Infinitive</b></td><td>Grundform / to-Infinitiv</td><td class="ex">to write, to go</td></tr>
       <tr><td><b>Simple Past</b></td><td>Abgeschlossene Handlung in der Vergangenheit</td><td class="ex">She <b>wrote</b> a letter.</td></tr>
-      <tr><td><b>Past Participle</b></td><td>Present Perfect: have/has + â€¦</td><td class="ex">She has <b>written</b> a letter.</td></tr>
+      <tr><td><b>Past Participle</b></td><td>Present Perfect: have/has + ...</td><td class="ex">She has <b>written</b> a letter.</td></tr>
     </table>
-    <div class="tip">ðŸ’¡ <b>Tipp:</b> Lerne alle 3 Formen zusammen: <b>write â€“ wrote â€“ written</b>. Am besten laut sprechen!</div>
+    <div class="tip"><b>Tipp:</b> Lerne alle 3 Formen zusammen: <b>write - wrote - written</b>. Am besten laut sprechen!</div>
   </div>
 </div>
 
 <div class="ltabs">
-  <button class="ltab active" onclick="setLevel('a',this)">â­ Level A<br><small>Multiple Choice</small></button>
-  <button class="ltab" onclick="setLevel('b',this)">â­â­ Level B<br><small>Eintippen</small></button>
-  <button class="ltab" onclick="setLevel('c',this)">â­â­â­ Level C<br><small>Alle 3 Formen</small></button>
-  <button class="ltab" onclick="setLevel('list',this)">ðŸ“‹ Liste<br><small>Alle Verben</small></button>
+  <button class="ltab active" onclick="setLevel('a',this)">Level A<br><small>Multiple Choice</small></button>
+  <button class="ltab" onclick="setLevel('b',this)">Level B<br><small>Eintippen</small></button>
+  <button class="ltab" onclick="setLevel('c',this)">Level C<br><small>Alle 3 Formen</small></button>
+  <button class="ltab" onclick="setLevel('list',this)">Liste<br><small>Alle Verben</small></button>
 </div>
 
 <!-- LEVEL A -->
@@ -143,7 +143,7 @@ h1 em{font-style:normal;opacity:1}
       <button class="flt-btn active" onclick="setFilter('a','all',this)">Alle</button>
       <button class="flt-btn" onclick="setFilter('a','sp',this)">Simple Past</button>
       <button class="flt-btn" onclick="setFilter('a','pp',this)">Past Participle</button>
-      <button class="rst-btn" onclick="resetQ('a')">ðŸ”„</button>
+      <button class="rst-btn" onclick="resetQ('a')">Reset</button>
     </div>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="a-prog" style="width:0%"></div></div>
@@ -165,7 +165,7 @@ h1 em{font-style:normal;opacity:1}
       <button class="flt-btn active" onclick="setFilter('b','all',this)">Alle</button>
       <button class="flt-btn" onclick="setFilter('b','sp',this)">Simple Past</button>
       <button class="flt-btn" onclick="setFilter('b','pp',this)">Past Participle</button>
-      <button class="rst-btn" onclick="resetQ('b')">ðŸ”„</button>
+      <button class="rst-btn" onclick="resetQ('b')">Reset</button>
     </div>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="b-prog" style="width:0%"></div></div>
@@ -183,7 +183,7 @@ h1 em{font-style:normal;opacity:1}
       <div class="sn"><strong id="cr">0</strong><span>R</span></div>
       <div class="sn"><strong id="cw">0</strong><span>F</span></div>
     </div>
-    <button class="rst-btn" onclick="resetQ('c')">ðŸ”„ Reset</button>
+    <button class="rst-btn" onclick="resetQ('c')">Reset</button>
   </div>
   <div class="prog-wrap"><div class="prog-bar" id="c-prog" style="width:0%"></div></div>
   <div id="c-quiz"></div>
