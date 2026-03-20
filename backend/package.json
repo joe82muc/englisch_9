@@ -1,13 +1,13 @@
-{
-  "name": "englisch-9-backend",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "start": "node api/server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "@anthropic-ai/sdk": "^0.39.0"
-  }
+﻿{
+    "name":  "englisch-9-backend",
+    "version":  "1.0.0",
+    "type":  "commonjs",
+    "scripts":  {
+                    "start":  "node api/server.js"
+                },
+    "dependencies":  {
+                         "express":  "^4.18.2",
+                         "cors":  "^2.8.5",
+                         "@anthropic-ai/sdk":  "^0.39.0"
+                     }
 }
