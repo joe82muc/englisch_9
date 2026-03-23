@@ -408,35 +408,76 @@
       "Robberg-Nature-Reserve-1-Kopie-1024x679.jpg"
     ];
 
-    function friendlyDate(yyyymmdd, hhmmss) {
-      const year = Number(yyyymmdd.slice(0, 4));
-      const month = Number(yyyymmdd.slice(4, 6)) - 1;
-      const day = Number(yyyymmdd.slice(6, 8));
-      const hour = Number(hhmmss.slice(0, 2));
-      const minute = Number(hhmmss.slice(2, 4));
-      const d = new Date(year, month, day, hour, minute);
-      return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    }
+    const captionByFile = {
+      "20251231_161818.jpg": "A rhino crossing open grassland during our safari drive.",
+      "20251231_163700.jpg": "Close-up of a giraffe between the acacia trees.",
+      "20251231_173600.jpg": "An elephant walking through dense bush in soft evening light.",
+      "20251231_180933.jpg": "Elephant family moving along a dusty track.",
+      "20251231_182407.jpg": "A lion resting calmly on the red-earth road.",
+      "20251231_193422.jpg": "Buffalo portrait at dusk on the hillside.",
+      "20260101_064549.jpg": "A giant millipede gently held during a morning stop.",
+      "20260101_071334.jpg": "Secretary bird searching for food in the grasslands.",
+      "20260101_071350.jpg": "Secretary bird standing tall in the early sun.",
+      "20260101_072623.jpg": "Hippos relaxing in a quiet river pool.",
+      "20260101_115519.jpg": "Safari walk near a termite mound in dry scrubland.",
+      "20260101_171743.jpg": "A cheetah feeding after a successful hunt.",
+      "20260101_191732.jpg": "Happy sunset group photo on the safari vehicle.",
+      "20260102_071236.jpg": "A giraffe stepping down the dirt road ahead of us.",
+      "20260102_135105.jpg": "Elephant mother and calf seen from the car window.",
+      "20260102_140408.jpg": "Lone elephant on the hillside beside the safari road.",
+      "20260102_141752.jpg": "A whole elephant herd spreading across the valley.",
+      "20260102_160611.jpg": "Majestic elephant standing on the wide savannah plain.",
+      "20260103_075737.jpg": "Close-up of an ancient tortoise shell and face.",
+      "20260103_105218.jpg": "Red-dust elephant captured at very close range.",
+      "20260103_154000.jpg": "Sandboarding adventure across bright coastal dunes.",
+      "20260103_170140.jpg": "Sunlight reflecting on the ocean at golden hour.",
+      "20260104_081626.jpg": "Antelope grazing in low fynbos vegetation.",
+      "20260104_095206.jpg": "Giraffe encounter right next to our safari passengers.",
+      "20260104_095504.jpg": "Two giraffes interacting on open bushland.",
+      "20260104_101841.jpg": "Elegant giraffe portrait against a green backdrop.",
+      "20260105_054819.jpg": "Morning view over Cape Town with Table Mountain.",
+      "20260105_081337.jpg": "Panoramic bay view with mountains and turquoise sea.",
+      "20260105_082036.jpg": "Family break on sunlit granite rocks by the coast.",
+      "20260105_082327.jpg": "Coastal lookout framed by shrubs and clear blue sky.",
+      "20260105_085715.jpg": "Iconic Cape viewpoint with dramatic ocean backdrop.",
+      "20260105_090056.jpg": "Viewpoint photo above the Atlantic with mountain peaks.",
+      "20260105_094650.jpg": "Watching waves crash over smooth white boulders.",
+      "20260105_094758.jpg": "Penguins waddling up a sandy path to their nests.",
+      "20260105_094946.jpg": "Large penguin colony gathered on coastal rocks.",
+      "20260105_104254.jpg": "Curious baboon exploring a roadside trash bin.",
+      "20260105_104301.jpg": "Baboon checking a bag in the middle of the road.",
+      "20260105_104535.jpg": "Baboon crossing through roadside vegetation.",
+      "20260105_121132(1)(1).jpg": "Signpost at Cape Point showing world distances.",
+      "20260105_121848.jpg": "Steep cliffs and bright water at Cape Point.",
+      "20260105_160228.jpg": "Colorful waterfront architecture in Cape Town.",
+      "20260105_160321(1).jpg": "Harbor yachts with Table Mountain in the background.",
+      "20260105_160734.jpg": "Calm marina water and city skyline panorama.",
+      "20260105_174049.jpg": "Luxury yacht scene at the V and A Waterfront.",
+      "20260105_174422.jpg": "A seal resting peacefully on a wooden dock.",
+      "20260105_192623.jpg": "Seals lounging on a green buoy in open sea.",
+      "GP011705 (3).jpg": "Snorkeling stop in crystal-clear turquoise water.",
+      "IMG-20260103-WA0014.jpg": "Dune portrait after a fun sandboarding run.",
+      "IMG-20260106-WA0022.jpg": "Monkey relaxing high in a tree branch.",
+      "IMG-20260106-WA0023.jpg": "Monkey resting in the shade on forest ground.",
+      "IMG-20260106-WA0026.jpg": "Underwater view of a swimming seal.",
+      "IMG-20260106-WA0032.jpg": "Hillside view over a township and surrounding mountains.",
+      "IMG-20260106-WA0034.jpg": "Snake camouflaged in dry grass.",
+      "IMG-20260106-WA0042.jpg": "Photographing a tiny chameleon in the bushes.",
+      "IMG-20260106-WA0048.jpg": "Antelope with long horns standing alert in the field.",
+      "IMG-20260106-WA0079.jpg": "Elephant encounter seen from inside the safari car.",
+      "IMG-20260106-WA0101.jpg": "Sweeping white dunes above a blue lagoon.",
+      "IMG-20260106-WA0126.jpg": "Coastal mountain panorama above a bright bay.",
+      "IMG-20260106-WA0158.jpg": "Penguins gathering between granite boulders.",
+      "IMG-20260106-WA0176.jpg": "Sunset harbor skyline with the Ferris wheel.",
+      "IMG-20260106-WA0202.jpg": "Night lights over Cape Town harbor.",
+      "Robberg-Nature-Reserve-1-Kopie-1024x679.jpg": "Seals resting on the rocks at Robberg Nature Reserve."
+    };
 
     function subtitleFromName(name) {
-      if (name.startsWith("Robberg-Nature-Reserve")) return "Clifftop views and ocean breeze at Robberg Nature Reserve.";
-      if (name.startsWith("GP")) return "Action-cam memory from the South African coastline.";
-      if (name.startsWith("IMG-")) return "Shared holiday snapshot: everyday moments and local color.";
-
-      const m = name.match(/^(\d{8})_(\d{6})/);
-      if (m) {
-        const hour = Number(m[2].slice(0, 2));
-        let mood = "Quiet evening lights and road-trip memories.";
-        if (hour >= 5 && hour < 9) mood = "Early morning adventure with fresh coastal air.";
-        else if (hour >= 9 && hour < 12) mood = "Late-morning discoveries between towns and beaches.";
-        else if (hour >= 12 && hour < 16) mood = "Sunny afternoon impressions from our holiday route.";
-        else if (hour >= 16 && hour < 19) mood = "Golden-hour colors over South African landscapes.";
-        return mood + " " + friendlyDate(m[1], m[2]);
-      }
-      return "Holiday memory from South Africa, 2026.";
+      return captionByFile[name] || "South Africa holiday memory from 2026.";
     }
 
-        const items = imageFiles.map((file, idx) => {
+    const items = imageFiles.map((file, idx) => {
       const encoded = encodeURIComponent(file);
       return {
         file,
