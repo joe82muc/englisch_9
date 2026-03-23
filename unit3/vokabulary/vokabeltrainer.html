@@ -37,7 +37,10 @@
   .direction-label{text-align:center;color:var(--muted);font-size:.77rem;margin:.5rem 0 .75rem;letter-spacing:.03em}
   .question-word{text-align:center;color:var(--blue);font-size:clamp(1.4rem,5vw,2.2rem);font-weight:800;line-height:1.2}
   .phonetic{text-align:center;color:var(--muted);font-size:.88rem;margin-top:.15rem;font-style:italic;min-height:1.2rem}
-  .speak-btn{display:block;margin:.65rem auto .95rem;padding:.33rem .9rem;border:1px solid #b8cff8;background:#fff;border-radius:999px;color:#355f95;font-weight:700;cursor:pointer}
+  .speak-btn{display:block;margin:.45rem auto .35rem;padding:.33rem .9rem;border:1px solid #b8cff8;background:#fff;border-radius:999px;color:#355f95;font-weight:700;cursor:pointer}
+  .voice-row{display:flex;justify-content:center;align-items:center;gap:.45rem;margin:0 auto .8rem}
+  .voice-row label{font-size:.85rem;color:#355f95;font-weight:700}
+  .voice-select{padding:.28rem .5rem;border:1px solid #c6d8f7;border-radius:10px;background:#fff;color:#24456f;font-weight:700}
   .choices{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
   .choice{padding:.75rem .5rem;background:#f4f8ff;border:1.5px solid #d1e1ff;border-radius:10px;text-align:center;cursor:pointer;font-weight:700;color:#20426f}
   .choice.correct{background:#e8f8f0;border-color:#9be3c0;color:var(--ok)}
@@ -113,6 +116,14 @@
       <div class="question-word" id="qword">-</div>
       <div class="phonetic" id="phonetic"></div>
       <button class="speak-btn" id="speak-btn" onclick="speak()">🔊 anhören</button>
+      <div class="voice-row">
+        <label for="voice-gender">Stimme:</label>
+        <select id="voice-gender" class="voice-select" onchange="setVoiceGender(this.value)">
+          <option value="auto" selected>Auto</option>
+          <option value="female">Weiblich</option>
+          <option value="male">Männlich</option>
+        </select>
+      </div>
 
       <div id="mc-area"><div class="choices" id="choices"></div></div>
       <div id="type-area" style="display:none">
@@ -240,6 +251,7 @@ const vocab = [
 let mode='mc', dirSetting='random', filterTopic='all';
 let queue=[], current=null, right=0, wrong=0, direction='en-de', answered=false;
 let ttsUnlocked = false;
+let selectedVoiceGender = "auto";
 let fallbackAudio = null;
 
 const shuffle = a => [...a].sort(()=>Math.random()-0.5);
@@ -369,19 +381,63 @@ function unlockTTS(){
   }catch(e){}
 }
 
-function getEnglishVoice(){
+function setVoiceGender(v){
+  selectedVoiceGender = (v === "male" || v === "female") ? v : "auto";
+}
+
+function getEnglishVoice(gender = "auto"){
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices() || [];
   if (!voices.length) return null;
+
+  const en = voices.filter(v => /^en/i.test(v.lang));
+  if (!en.length) return null;
+
+  const femaleHint = /female|woman|girl|aria|sara|sonia|libby|jenny|zira|susan|eva|hedda|hazel/i;
+  const maleHint = /male|man|guy|davis|ryan|guy|mark|george|guy24k|daniel|david|tom|liam/i;
+
+  if (gender === "female") {
+    return en.find(v => femaleHint.test(v.name)) ||
+           en.find(v => /en-GB/i.test(v.lang) && femaleHint.test(v.name)) ||
+           en[0];
+  }
+  if (gender === "male") {
+    return en.find(v => maleHint.test(v.name)) ||
+           en.find(v => /en-GB/i.test(v.lang) && maleHint.test(v.name)) ||
+           en[0];
+  }
+
   return (
-    voices.find(v => /en-GB/i.test(v.lang)) ||
-    voices.find(v => /en-US/i.test(v.lang)) ||
-    voices.find(v => /^en/i.test(v.lang)) ||
-    null
+    en.find(v => /en-GB/i.test(v.lang)) ||
+    en.find(v => /en-US/i.test(v.lang)) ||
+    en[0]
   );
 }
 
-function playAudioFallback(text){
+async function playAudioFallback(text, gender = "auto"){
+  const API_BASE = (location.hostname.includes('github.io') || location.protocol === 'file:') ? 'https://englisch-9.onrender.com' : '';
+
+  // 1) Azure TTS via backend
+  try{
+    const azureVoice = gender === 'male' ? 'en-GB-RyanNeural' : 'en-GB-SoniaNeural';
+    const r = await fetch(API_BASE + '/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice: azureVoice })
+    });
+
+    if(r.ok){
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      if(!fallbackAudio) fallbackAudio = new Audio();
+      fallbackAudio.src = url;
+      await fallbackAudio.play();
+      fallbackAudio.onended = () => URL.revokeObjectURL(url);
+      return true;
+    }
+  }catch(_e){ /* try next fallback */ }
+
+  // 2) old Google fallback
   return new Promise((resolve, reject) => {
     try{
       if(!fallbackAudio){
@@ -400,7 +456,6 @@ function playAudioFallback(text){
     }
   });
 }
-
 function speak(){
   if(!current) return;
   const fb = document.getElementById("feedback");
@@ -415,7 +470,7 @@ function speak(){
   unlockTTS();
 
   const u = new SpeechSynthesisUtterance(current.en);
-  const voice = getEnglishVoice();
+  const voice = getEnglishVoice(selectedVoiceGender);
   u.lang = voice ? voice.lang : "en-US";
   if (voice) u.voice = voice;
   u.rate = 0.9;
@@ -436,7 +491,7 @@ function speak(){
     if (fallbackTimer) clearTimeout(fallbackTimer);
     btn.textContent = "🔊 anhören";
     try{
-      await playAudioFallback(current.en);
+      await playAudioFallback(current.en, selectedVoiceGender);
       fb.className = "feedback good";
       fb.textContent = "Audio über Fallback abgespielt.";
     }catch(e){
@@ -451,7 +506,7 @@ function speak(){
     fallbackTimer = setTimeout(async () => {
       if (started) return;
       try{
-        await playAudioFallback(current.en);
+        await playAudioFallback(current.en, selectedVoiceGender);
         fb.className = "feedback good";
         fb.textContent = "Audio über Fallback abgespielt.";
       }catch(e){
@@ -462,7 +517,7 @@ function speak(){
       }
     }, 1000);
   }catch(e){
-    playAudioFallback(current.en)
+    playAudioFallback(current.en, selectedVoiceGender)
       .then(() => {
         fb.className = "feedback good";
         fb.textContent = "Audio über Fallback abgespielt.";
@@ -504,6 +559,9 @@ restart();
 </script>
 </body>
 </html>
+
+
+
 
 
 
