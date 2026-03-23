@@ -73,7 +73,7 @@
 <div class="wrap">
   <section class="hero">
     <h1>Vokabeltrainer Unit 3</h1>
-    <p class="sub">South Africa Â· Englisch 9. Klasse</p>
+    <p class="sub">South Africa · Englisch 9. Klasse</p>
 </section>
 
   <section class="panel">
@@ -93,15 +93,15 @@
         <button class="pill" onclick="setMode('type',this)">Tippen</button>
       </div>
       <div class="pill-group">
-        <button class="pill active" onclick="setDir('random',this)">ZufÃ¤llig</button>
-        <button class="pill" onclick="setDir('en-de',this)">EN â†’ DE</button>
-        <button class="pill" onclick="setDir('de-en',this)">DE â†’ EN</button>
+        <button class="pill active" onclick="setDir('random',this)">Zufällig</button>
+        <button class="pill" onclick="setDir('en-de',this)">EN → DE</button>
+        <button class="pill" onclick="setDir('de-en',this)">DE → EN</button>
       </div>
     </div>
 
     <div class="scorebar">
-      <span><strong id="sc-right">0</strong>âœ… Richtig</span>
-      <span><strong id="sc-wrong">0</strong>âŒ Falsch</span>
+      <span><strong id="sc-right">0</strong>✅ Richtig</span>
+      <span><strong id="sc-wrong">0</strong>❌ Falsch</span>
       <span><strong id="sc-total">0</strong>Gesamt</span>
     </div>
 
@@ -109,25 +109,25 @@
 
     <div class="card" id="quiz-card">
       <div class="unit-tag" id="unit-tag">Unit 3</div>
-      <div class="direction-label" id="dir-label">Englisch â†’ Deutsch</div>
+      <div class="direction-label" id="dir-label">Englisch → Deutsch</div>
       <div class="question-word" id="qword">-</div>
       <div class="phonetic" id="phonetic"></div>
-      <button class="speak-btn" id="speak-btn" onclick="speak()">ðŸ”Š anhÃ¶ren</button>
+      <button class="speak-btn" id="speak-btn" onclick="speak()">🔊 anhören</button>
 
       <div id="mc-area"><div class="choices" id="choices"></div></div>
       <div id="type-area" style="display:none">
         <div class="type-area">
           <input type="text" id="type-input" placeholder="Deine Antwort ..." autocomplete="off" onkeydown="if(event.key==='Enter')checkType()">
           <div style="display:flex;gap:.5rem">
-            <button class="btn-secondary" id="hint-btn" onclick="showHint()">ðŸ’¡ Tipp</button>
-            <button class="btn-primary" onclick="checkType()">PrÃ¼fen</button>
+            <button class="btn-secondary" id="hint-btn" onclick="showHint()">💡 Tipp</button>
+            <button class="btn-primary" onclick="checkType()">Prüfen</button>
           </div>
         </div>
       </div>
 
       <div class="feedback" id="feedback"></div>
       <div class="btn-row">
-        <button class="btn-secondary" id="skip-btn" onclick="skip()">Ãœberspringen</button>
+        <button class="btn-secondary" id="skip-btn" onclick="skip()">Überspringen</button>
         <button class="btn-primary" id="next-btn" onclick="nextCard()" style="display:none">Weiter</button>
       </div>
     </div>
@@ -142,97 +142,97 @@
 
 <script>
 const vocab = [
-  {en:"parliament",de:"Parlament",pron:"pËlmnt",topic:"intro"},
-  {en:"African",de:"afrikanisch; Afrikaner",pron:"Ã¦frÉªkn",topic:"intro"},
-  {en:"apartheid",de:"Apartheid",pron:"pËtaÉªt",topic:"intro"},
-  {en:"system",de:"System",pron:"sÉªstm",topic:"intro"},
-  {en:"to separate",de:"trennen",pron:"sepreÉªt",topic:"intro"},
-  {en:"South African",de:"SÃ¼dafrikaner; sÃ¼dafrikanisch",pron:"saÎ¸ Ã¦frÉªkn",topic:"intro"},
-  {en:"township",de:"Township; Armutsviertel",pron:"tanÉªp",topic:"intro"},
+  {en:"parliament",de:"Parlament",pron:"pːlmnt",topic:"intro"},
+  {en:"African",de:"afrikanisch; Afrikaner",pron:"æfrɪkn",topic:"intro"},
+  {en:"apartheid",de:"Apartheid",pron:"pːtaɪt",topic:"intro"},
+  {en:"system",de:"System",pron:"sɪstm",topic:"intro"},
+  {en:"to separate",de:"trennen",pron:"sepreɪt",topic:"intro"},
+  {en:"South African",de:"Südafrikaner; südafrikanisch",pron:"saθ æfrɪkn",topic:"intro"},
+  {en:"township",de:"Township; Armutsviertel",pron:"tanɪp",topic:"intro"},
   {en:"to end",de:"enden; beenden",pron:"end",topic:"intro"},
-  {en:"because of",de:"wegen",pron:"bÉªkz v",topic:"intro"},
-  {en:"gap",de:"Kluft; LÃ¼cke",pron:"É¡Ã¦p",topic:"intro"},
-  {en:"wide",de:"breit; weit",pron:"waÉªd",topic:"intro"},
-  {en:"electricity",de:"Strom; ElektrizitÃ¤t",pron:"ÉªlektrÉªsÉªti",topic:"intro"},
-  {en:"to aim",de:"zum Ziel haben; beabsichtigen",pron:"eÉªm",topic:"intro"},
-  {en:"safari",de:"Safari",pron:"sfËri",topic:"intro"},
-  {en:"elephant",de:"Elefant",pron:"elÉªfnt",topic:"intro"},
-  {en:"buffalo",de:"BÃ¼ffel",pron:"bfl",topic:"intro"},
-  {en:"common",de:"verbreitet; hÃ¤ufig",pron:"kmn",topic:"intro"},
-  {en:"higher education",de:"Hochschulbildung",pron:"haÉªr edukeÉªn",topic:"intro"},
-  {en:"media",de:"Medien",pron:"miËdi",topic:"intro"},
-  {en:"goddess",de:"GÃ¶ttin",pron:"É¡des",topic:"intro"},
-  {en:"to hit",de:"anfahren; rammen",pron:"hÉªt",topic:"topic1"},
-  {en:"injured",de:"verletzt",pron:"Éªndd",topic:"topic1"},
-  {en:"sergeant",de:"Polizeimeister",pron:"sËdnt",topic:"topic1"},
-  {en:"driving licence",de:"FÃ¼hrerschein",pron:"draÉªvÉª laÉªsns",topic:"topic1"},
-  {en:"to brake",de:"bremsen",pron:"breÉªk",topic:"topic1"},
-  {en:"to skid",de:"schleudern; schlittern",pron:"skÉªd",topic:"topic1"},
+  {en:"because of",de:"wegen",pron:"bɪkz v",topic:"intro"},
+  {en:"gap",de:"Kluft; Lücke",pron:"ɡæp",topic:"intro"},
+  {en:"wide",de:"breit; weit",pron:"waɪd",topic:"intro"},
+  {en:"electricity",de:"Strom; Elektrizität",pron:"ɪlektrɪsɪti",topic:"intro"},
+  {en:"to aim",de:"zum Ziel haben; beabsichtigen",pron:"eɪm",topic:"intro"},
+  {en:"safari",de:"Safari",pron:"sfːri",topic:"intro"},
+  {en:"elephant",de:"Elefant",pron:"elɪfnt",topic:"intro"},
+  {en:"buffalo",de:"Büffel",pron:"bfl",topic:"intro"},
+  {en:"common",de:"verbreitet; häufig",pron:"kmn",topic:"intro"},
+  {en:"higher education",de:"Hochschulbildung",pron:"haɪr edukeɪn",topic:"intro"},
+  {en:"media",de:"Medien",pron:"miːdi",topic:"intro"},
+  {en:"goddess",de:"Göttin",pron:"ɡdes",topic:"intro"},
+  {en:"to hit",de:"anfahren; rammen",pron:"hɪt",topic:"topic1"},
+  {en:"injured",de:"verletzt",pron:"ɪndd",topic:"topic1"},
+  {en:"sergeant",de:"Polizeimeister",pron:"sːdnt",topic:"topic1"},
+  {en:"driving licence",de:"Führerschein",pron:"draɪvɪ laɪsns",topic:"topic1"},
+  {en:"to brake",de:"bremsen",pron:"breɪk",topic:"topic1"},
+  {en:"to skid",de:"schleudern; schlittern",pron:"skɪd",topic:"topic1"},
   {en:"control",de:"Kontrolle; Steuerung",pron:"kntrl",topic:"topic1"},
-  {en:"to crash",de:"krachen",pron:"krÃ¦",topic:"topic1"},
+  {en:"to crash",de:"krachen",pron:"kræ",topic:"topic1"},
   {en:"relevant",de:"relevant; von Bedeutung",pron:"relvnt",topic:"topic1"},
-  {en:"wallet",de:"GeldbÃ¶rse; Geldbeutel",pron:"wlÉªt",topic:"topic1"},
-  {en:"bang",de:"Knall",pron:"bÃ¦",topic:"topic1"},
-  {en:"glass",de:"Glas",pron:"É¡lËs",topic:"topic1"},
-  {en:"police station",de:"Polizeirevier",pron:"pliËs steÉªn",topic:"topic1"},
-  {en:"detail",de:"Detail; Einzelheit",pron:"diËteÉªl",topic:"topic1"},
-  {en:"witness",de:"Zeuge; Zeugin",pron:"wÉªtns",topic:"topic1"},
-  {en:"damage",de:"Schaden; BeschÃ¤digung",pron:"dÃ¦mÉªd",topic:"topic1"},
-  {en:"report",de:"Bericht",pron:"rÉªpËt",topic:"topic1"},
-  {en:"news",de:"Nachricht(en)",pron:"njuËz",topic:"topic1"},
-  {en:"newspaper",de:"Zeitung",pron:"njuËspeÉªp",topic:"topic1"},
+  {en:"wallet",de:"Geldbörse; Geldbeutel",pron:"wlɪt",topic:"topic1"},
+  {en:"bang",de:"Knall",pron:"bæ",topic:"topic1"},
+  {en:"glass",de:"Glas",pron:"ɡlːs",topic:"topic1"},
+  {en:"police station",de:"Polizeirevier",pron:"pliːs steɪn",topic:"topic1"},
+  {en:"detail",de:"Detail; Einzelheit",pron:"diːteɪl",topic:"topic1"},
+  {en:"witness",de:"Zeuge; Zeugin",pron:"wɪtns",topic:"topic1"},
+  {en:"damage",de:"Schaden; Beschädigung",pron:"dæmɪd",topic:"topic1"},
+  {en:"report",de:"Bericht",pron:"rɪpːt",topic:"topic1"},
+  {en:"news",de:"Nachricht(en)",pron:"njuːz",topic:"topic1"},
+  {en:"newspaper",de:"Zeitung",pron:"njuːspeɪp",topic:"topic1"},
   {en:"role model",de:"Vorbild",pron:"rl mdl",topic:"topic2"},
-  {en:"podcast",de:"Podcast",pron:"pdkËst",topic:"topic2"},
-  {en:"inspiring",de:"inspirierend; anregend",pron:"ÉªnspaÉªrÉª",topic:"topic2"},
-  {en:"songwriter",de:"Songschreiber; Liedermacher",pron:"sraÉªt",topic:"topic2"},
-  {en:"isolated",de:"isoliert",pron:"aÉªsleÉªtÉªd",topic:"topic2"},
-  {en:"opposition",de:"Widerstand; Opposition",pron:"pzÉªn",topic:"topic2"},
-  {en:"to overcome",de:"Ã¼berwinden",pron:"vkm",topic:"topic2"},
-  {en:"inspiration",de:"Inspiration; Eingebung",pron:"ÉªnspreÉªn",topic:"topic2"},
-  {en:"to admire",de:"bewundern",pron:"dmaÉª",topic:"topic2"},
-  {en:"to direct",de:"Regie fÃ¼hren; leiten",pron:"dÉªrekt",topic:"topic2"},
-  {en:"politically active",de:"politisch engagiert",pron:"plÉªtÉªkli Ã¦ktÉªv",topic:"topic2"},
-  {en:"active",de:"aktiv",pron:"Ã¦ktÉªv",topic:"topic2"},
-  {en:"gay",de:"homosexuell; schwul",pron:"É¡eÉª",topic:"topic2"},
+  {en:"podcast",de:"Podcast",pron:"pdkːst",topic:"topic2"},
+  {en:"inspiring",de:"inspirierend; anregend",pron:"ɪnspaɪrɪ",topic:"topic2"},
+  {en:"songwriter",de:"Songschreiber; Liedermacher",pron:"sraɪt",topic:"topic2"},
+  {en:"isolated",de:"isoliert",pron:"aɪsleɪtɪd",topic:"topic2"},
+  {en:"opposition",de:"Widerstand; Opposition",pron:"pzɪn",topic:"topic2"},
+  {en:"to overcome",de:"überwinden",pron:"vkm",topic:"topic2"},
+  {en:"inspiration",de:"Inspiration; Eingebung",pron:"ɪnspreɪn",topic:"topic2"},
+  {en:"to admire",de:"bewundern",pron:"dmaɪ",topic:"topic2"},
+  {en:"to direct",de:"Regie führen; leiten",pron:"dɪrekt",topic:"topic2"},
+  {en:"politically active",de:"politisch engagiert",pron:"plɪtɪkli æktɪv",topic:"topic2"},
+  {en:"active",de:"aktiv",pron:"æktɪv",topic:"topic2"},
+  {en:"gay",de:"homosexuell; schwul",pron:"ɡeɪ",topic:"topic2"},
   {en:"lesbian",de:"homosexuell; lesbisch",pron:"lezbin",topic:"topic2"},
-  {en:"medication",de:"Medikament; Arzneimittel",pron:"medÉªkeÉªn",topic:"topic2"},
-  {en:"Zulu",de:"Zulu (Sprache in SÃ¼dafrika)",pron:"zuËluË",topic:"text"},
-  {en:"unemployed",de:"arbeitslos",pron:"nÉªmplÉªd",topic:"text"},
-  {en:"organization",de:"Organisation",pron:"ËÉ¡naÉªzeÉªn",topic:"text"},
-  {en:"original",de:"ursprÃ¼nglich; original",pron:"rÉªdÉªnl",topic:"text"},
-  {en:"furniture",de:"MÃ¶bel",pron:"fËnÉªt",topic:"text"},
-  {en:"guitar",de:"Gitarre",pron:"É¡ÉªtË",topic:"text"},
-  {en:"Afrikaans",de:"Afrikaans (Sprache in SÃ¼dafrika)",pron:"Ã¦frÉªkËns",topic:"text"},
-  {en:"degree",de:"Hochschulabschluss",pron:"dÉªÉ¡riË",topic:"text"},
-  {en:"nursing",de:"Pflege; Krankenpflege",pron:"nËsÉª",topic:"text"},
-  {en:"fortunately",de:"zum GlÃ¼ck",pron:"fËtntli",topic:"text"},
-  {en:"to support",de:"unterstÃ¼tzen",pron:"spËt",topic:"text"},
-  {en:"midwife",de:"Hebamme",pron:"mÉªdwaÉªf",topic:"text"},
-  {en:"Sotho",de:"Sotho (Sprache in SÃ¼dafrika)",pron:"sÎ¸",topic:"text"},
-  {en:"kindergarten",de:"Kindergarten",pron:"kÉªndÉ¡Ëtn",topic:"text"},
-  {en:"preschool",de:"Vorschule",pron:"priËskuËl",topic:"text"},
-  {en:"community",de:"Gemeinde; Gemeinschaft",pron:"kmjuËnti",topic:"text"},
+  {en:"medication",de:"Medikament; Arzneimittel",pron:"medɪkeɪn",topic:"topic2"},
+  {en:"Zulu",de:"Zulu (Sprache in Südafrika)",pron:"zuːluː",topic:"text"},
+  {en:"unemployed",de:"arbeitslos",pron:"nɪmplɪd",topic:"text"},
+  {en:"organization",de:"Organisation",pron:"ːɡnaɪzeɪn",topic:"text"},
+  {en:"original",de:"ursprünglich; original",pron:"rɪdɪnl",topic:"text"},
+  {en:"furniture",de:"Möbel",pron:"fːnɪt",topic:"text"},
+  {en:"guitar",de:"Gitarre",pron:"ɡɪtː",topic:"text"},
+  {en:"Afrikaans",de:"Afrikaans (Sprache in Südafrika)",pron:"æfrɪkːns",topic:"text"},
+  {en:"degree",de:"Hochschulabschluss",pron:"dɪɡriː",topic:"text"},
+  {en:"nursing",de:"Pflege; Krankenpflege",pron:"nːsɪ",topic:"text"},
+  {en:"fortunately",de:"zum Glück",pron:"fːtntli",topic:"text"},
+  {en:"to support",de:"unterstützen",pron:"spːt",topic:"text"},
+  {en:"midwife",de:"Hebamme",pron:"mɪdwaɪf",topic:"text"},
+  {en:"Sotho",de:"Sotho (Sprache in Südafrika)",pron:"sθ",topic:"text"},
+  {en:"kindergarten",de:"Kindergarten",pron:"kɪndɡːtn",topic:"text"},
+  {en:"preschool",de:"Vorschule",pron:"priːskuːl",topic:"text"},
+  {en:"community",de:"Gemeinde; Gemeinschaft",pron:"kmjuːnti",topic:"text"},
   {en:"study",de:"Studium; Untersuchung",pron:"stdi",topic:"text"},
-  {en:"distance",de:"Entfernung; Distanz",pron:"dÉªstns",topic:"mediation"},
-  {en:"gate",de:"Tor",pron:"É¡eÉªt",topic:"mediation"},
-  {en:"emergency",de:"Notfall",pron:"ÉªmËdnsi",topic:"mediation"},
-  {en:"to disturb",de:"stÃ¶ren; belÃ¤stigen",pron:"dÉªstËb",topic:"mediation"},
+  {en:"distance",de:"Entfernung; Distanz",pron:"dɪstns",topic:"mediation"},
+  {en:"gate",de:"Tor",pron:"ɡeɪt",topic:"mediation"},
+  {en:"emergency",de:"Notfall",pron:"ɪmːdnsi",topic:"mediation"},
+  {en:"to disturb",de:"stören; belästigen",pron:"dɪstːb",topic:"mediation"},
   {en:"to follow",de:"folgen",pron:"fl",topic:"mediation"},
-  {en:"to make sure",de:"dafÃ¼r sorgen; sich versichern",pron:"meÉªk Ë",topic:"mediation"},
+  {en:"to make sure",de:"dafür sorgen; sich versichern",pron:"meɪk ː",topic:"mediation"},
   {en:"monkey",de:"Affe",pron:"mki",topic:"mediation"},
-  {en:"state",de:"Landes-; staatlich",pron:"steÉªt",topic:"more"},
+  {en:"state",de:"Landes-; staatlich",pron:"steɪt",topic:"more"},
   {en:"function",de:"Funktion",pron:"fkn",topic:"more"},
-  {en:"to sink",de:"untergehen; sinken",pron:"sÉªk",topic:"more"},
-  {en:"lighthouse",de:"Leuchtturm",pron:"laÉªthas",topic:"more"},
-  {en:"arch",de:"Bogen",pron:"Ët",topic:"more"},
-  {en:"viewing platform",de:"Aussichtsplattform",pron:"vjuËÉª plÃ¦tfËm",topic:"more"},
-  {en:"speech",de:"Rede; Vortrag; Sprache",pron:"spiËt",topic:"more"},
-  {en:"region",de:"Region; Gegend",pron:"riËdn",topic:"more"},
-  {en:"game reserve",de:"Wildreservat; Wildschutzgebiet",pron:"É¡eÉªm rÉªzËv",topic:"more"},
-  {en:"lion",de:"LÃ¶we",pron:"laÉªn",topic:"more"},
+  {en:"to sink",de:"untergehen; sinken",pron:"sɪk",topic:"more"},
+  {en:"lighthouse",de:"Leuchtturm",pron:"laɪthas",topic:"more"},
+  {en:"arch",de:"Bogen",pron:"ːt",topic:"more"},
+  {en:"viewing platform",de:"Aussichtsplattform",pron:"vjuːɪ plætfːm",topic:"more"},
+  {en:"speech",de:"Rede; Vortrag; Sprache",pron:"spiːt",topic:"more"},
+  {en:"region",de:"Region; Gegend",pron:"riːdn",topic:"more"},
+  {en:"game reserve",de:"Wildreservat; Wildschutzgebiet",pron:"ɡeɪm rɪzːv",topic:"more"},
+  {en:"lion",de:"Löwe",pron:"laɪn",topic:"more"},
   {en:"leopard",de:"Leopard",pron:"lepd",topic:"more"},
-  {en:"rhino",de:"Rhinozeros; Nashorn",pron:"raÉªn",topic:"more"},
-  {en:"extinction",de:"Aussterben",pron:"ÉªkstÉªkn",topic:"more"},
+  {en:"rhino",de:"Rhinozeros; Nashorn",pron:"raɪn",topic:"more"},
+  {en:"extinction",de:"Aussterben",pron:"ɪkstɪkn",topic:"more"},
   {en:"bushman",de:"Buschmann",pron:"bmn",topic:"more"},
   {en:"redbush",de:"Roibusch",pron:"redb",topic:"more"},
 ];
@@ -255,7 +255,7 @@ function setMode(m, btn){
 }
 function setDir(d, btn){
   dirSetting=d;
-  document.querySelectorAll('.pill').forEach(b=>{ if(b.textContent.includes('â†’')||b.textContent.includes('ZufÃ¤llig')) b.classList.remove('active');});
+  document.querySelectorAll('.pill').forEach(b=>{ if(b.textContent.includes('→')||b.textContent.includes('Zufällig')) b.classList.remove('active');});
   btn.classList.add('active');
   restart();
 }
@@ -285,7 +285,7 @@ function nextCard(){
   const qWord = isEnDe ? current.en : current.de;
   const aWord = isEnDe ? current.de : current.en;
 
-  document.getElementById('dir-label').textContent = isEnDe ? 'Englisch â†’ Deutsch' : 'Deutsch â†’ Englisch';
+  document.getElementById('dir-label').textContent = isEnDe ? 'Englisch → Deutsch' : 'Deutsch → Englisch';
   document.getElementById('qword').textContent = qWord;
   document.getElementById('phonetic').textContent = isEnDe ? '[' + current.pron + ']' : '';
   document.getElementById('feedback').textContent='';
@@ -297,7 +297,7 @@ function nextCard(){
   document.getElementById('unit-tag').textContent = map[current.topic] || 'Unit 3';
 
   const sBtn=document.getElementById('speak-btn');
-  sBtn.textContent='ðŸ”Š anhÃ¶ren';
+  sBtn.textContent='🔊 anhören';
 
   updateProgress();
   if(mode==='mc') buildChoices(aWord,isEnDe);
@@ -357,7 +357,7 @@ function checkType(){
 
 function showNextBtn(){ document.getElementById('skip-btn').style.display='none'; document.getElementById('next-btn').style.display=''; }
 function skip(){ if(answered) return; answered=true; const c=direction==='en-de'?current.de:current.en; showFeedback(false,c); wrong++; updateScore(); showNextBtn(); }
-function showFeedback(ok,correct){ const el=document.getElementById('feedback'); el.className='feedback '+(ok?'good':'bad'); el.textContent=ok?'âœ… Richtig!':'âŒ Richtig: '+correct; }
+function showFeedback(ok,correct){ const el=document.getElementById('feedback'); el.className='feedback '+(ok?'good':'bad'); el.textContent=ok?'✅ Richtig!':'❌ Richtig: '+correct; }
 function unlockTTS(){
   if (ttsUnlocked || !("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return;
   try{
@@ -408,7 +408,7 @@ function speak(){
 
   if(!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined"){
     fb.className = "feedback bad";
-    fb.textContent = "Audio wird von diesem Browser nicht unterstÃ¼tzt.";
+    fb.textContent = "Audio wird von diesem Browser nicht unterstützt.";
     return;
   }
 
@@ -426,22 +426,22 @@ function speak(){
   u.onstart = () => {
     started = true;
     if (fallbackTimer) clearTimeout(fallbackTimer);
-    btn.textContent = "ðŸ”Š lÃ¤uft ...";
+    btn.textContent = "🔊 läuft ...";
   };
   u.onend = () => {
     if (fallbackTimer) clearTimeout(fallbackTimer);
-    btn.textContent = "ðŸ”Š anhÃ¶ren";
+    btn.textContent = "🔊 anhören";
   };
   u.onerror = async () => {
     if (fallbackTimer) clearTimeout(fallbackTimer);
-    btn.textContent = "ðŸ”Š anhÃ¶ren";
+    btn.textContent = "🔊 anhören";
     try{
       await playAudioFallback(current.en);
       fb.className = "feedback good";
-      fb.textContent = "Audio Ã¼ber Fallback abgespielt.";
+      fb.textContent = "Audio über Fallback abgespielt.";
     }catch(e){
       fb.className = "feedback bad";
-      fb.textContent = "Audio blockiert. Bitte Lautlosmodus aus und LautstÃ¤rke prÃ¼fen.";
+      fb.textContent = "Audio blockiert. Bitte Lautlosmodus aus und Lautstärke prüfen.";
     }
   };
 
@@ -453,26 +453,26 @@ function speak(){
       try{
         await playAudioFallback(current.en);
         fb.className = "feedback good";
-        fb.textContent = "Audio Ã¼ber Fallback abgespielt.";
+        fb.textContent = "Audio über Fallback abgespielt.";
       }catch(e){
         fb.className = "feedback bad";
         fb.textContent = "Kein Audio. Bitte Safari/Chrome nutzen und Lautlosmodus aus.";
       }finally{
-        btn.textContent = "ðŸ”Š anhÃ¶ren";
+        btn.textContent = "🔊 anhören";
       }
     }, 1000);
   }catch(e){
     playAudioFallback(current.en)
       .then(() => {
         fb.className = "feedback good";
-        fb.textContent = "Audio Ã¼ber Fallback abgespielt.";
+        fb.textContent = "Audio über Fallback abgespielt.";
       })
       .catch(() => {
         fb.className = "feedback bad";
         fb.textContent = "Audio konnte nicht gestartet werden.";
       })
       .finally(() => {
-        btn.textContent = "ðŸ”Š anhÃ¶ren";
+        btn.textContent = "🔊 anhören";
       });
   }
 }
@@ -504,6 +504,8 @@ restart();
 </script>
 </body>
 </html>
+
+
 
 
 
