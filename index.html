@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>English 9 - Learning Hub</title>
   <style>
     :root {
@@ -13,13 +13,10 @@
       --card: #ffffff;
       --line: #d7e3ff;
       --primary: #0b67d1;
-      --primary-2: #2f8ef6;
       --accent: #ff8c42;
       --shadow: 0 14px 36px rgba(20, 49, 96, 0.14);
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
@@ -31,13 +28,7 @@
         radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),
         linear-gradient(130deg, var(--bg-1), var(--bg-2));
     }
-
-    .wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1.1rem 1rem 2.2rem;
-    }
-
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 1.1rem 1rem 2.2rem; }
     .hero {
       background: linear-gradient(130deg, #0556b6, #1f7de2 52%, #ff8c42);
       color: #fff;
@@ -47,7 +38,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .hero::before {
       content: "";
       position: absolute;
@@ -55,322 +45,284 @@
       background: radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.28), transparent 30%);
       pointer-events: none;
     }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(1.55rem, 2.9vw, 2.6rem);
-      line-height: 1.2;
-      position: relative;
-      z-index: 1;
-    }
-
-    .meta,
-    .author {
-      margin: 0.45rem 0 0;
-      position: relative;
-      z-index: 1;
-    }
-
+    h1 { margin: 0; font-size: clamp(1.55rem, 2.9vw, 2.6rem); line-height: 1.2; position: relative; z-index: 1; }
+    .meta,.author { margin: 0.45rem 0 0; position: relative; z-index: 1; }
     .meta { font-size: 1.03rem; }
     .author { font-size: 0.96rem; opacity: 0.95; }
-
-    .panel {
-      margin-top: 1rem;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 1rem;
-      box-shadow: var(--shadow);
-    }
-
-    .label {
-      margin: 0 0 0.7rem;
-      font-size: 0.87rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #3a5b93;
-      font-weight: 700;
-    }
-
-    .btn-grid {
-      display: grid;
-      gap: 0.7rem;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
+    .panel { margin-top: 1rem; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 1rem; box-shadow: var(--shadow); }
+    .label { margin: 0 0 0.7rem; font-size: 0.87rem; letter-spacing: 0.08em; text-transform: uppercase; color: #3a5b93; font-weight: 700; }
+    .btn-grid { display: grid; gap: 0.7rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      text-decoration: none;
-      border-radius: 14px;
-      border: 1px solid #b8cff8;
-      background: linear-gradient(180deg, #ffffff, #f3f8ff);
-      color: #12335f;
-      padding: 0.82rem 0.6rem;
-      font-weight: 700;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-      min-height: 52px;
+      display: inline-flex; align-items: center; justify-content: center; text-align: center; text-decoration: none;
+      border-radius: 14px; border: 1px solid #b8cff8; background: linear-gradient(180deg, #ffffff, #f3f8ff);
+      color: #12335f; padding: 0.82rem 0.6rem; font-weight: 700; min-height: 52px;
     }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(24, 65, 128, 0.16);
-      border-color: #7fb0f0;
-    }
-
-    .btn.secondary {
-      background: linear-gradient(180deg, #fff7ef, #ffefd9);
-      border-color: #f1c79e;
-      color: #70350a;
-    }
-
-    .btn.secondary:hover {
-      box-shadow: 0 10px 24px rgba(135, 73, 8, 0.16);
-      border-color: #ecae72;
-    }
-
-    .gallery-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.7rem;
-      align-items: baseline;
-      margin-bottom: 0.7rem;
-      flex-wrap: wrap;
-    }
-
-    .gallery-title {
-      margin: 0;
-      font-size: 1.25rem;
-      color: #0e3c79;
-    }
-
-    .gallery-grid {
-      display: grid;
-      gap: 0.8rem;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .slide {
-      border-radius: 16px;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid #b9d4ff;
-      background: #eef5ff;
-      min-height: 185px;
-      aspect-ratio: 4 / 5;
-    }
-
-    .slide img {
-      width: 100%;
-      height: 100%;
-      min-height: 185px;
-      object-fit: cover;
-      display: block;
-      transition: opacity 0.45s ease;
-      background: #dfeeff;
-    }
-
-    .tag {
-      position: absolute;
-      left: 0.55rem;
-      bottom: 0.55rem;
-      background: rgba(7, 23, 45, 0.62);
-      color: #fff;
-      padding: 0.32rem 0.55rem;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    @media (max-width: 1120px) {
-      .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 980px) {
-      .btn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 620px) {
-      .btn-grid { grid-template-columns: 1fr; }
-      .gallery-grid { grid-template-columns: 1fr; }
-      .wrap { padding: 0.85rem 0.8rem 1.8rem; }
-      .hero { border-radius: 18px; padding: 1rem; }
-      h1 { font-size: clamp(1.35rem, 7vw, 2rem); }
-      .slide,
-      .slide img { min-height: 140px; }
-    }
-
-    .site-footer {
-      margin-top: 1rem;
-      padding-top: 0.9rem;
-      border-top: 1px solid #d7e3ff;
-      color: #345;
-      font-size: 0.9rem;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 0.7rem;
-      flex-wrap: wrap;
-      margin-top: 0.55rem;
-    }
-
-    .footer-links a {
-      text-decoration: none;
-      font-weight: 700;
-      color: #0e3c79;
-    }
+    .btn.secondary { background: linear-gradient(180deg, #fff7ef, #ffefd9); border-color: #f1c79e; color: #70350a; }
+    .btn.holidays { background: linear-gradient(180deg, #fff2b5, #ffd24d); border-color: #e4a400; color: #5b3a00; box-shadow: 0 8px 18px rgba(164, 114, 0, 0.22); }
+    .gallery-head { display: flex; justify-content: space-between; gap: 0.7rem; align-items: baseline; margin-bottom: 0.7rem; flex-wrap: wrap; }
+    .gallery-title { margin: 0; font-size: 1.25rem; color: #0e3c79; }
+    .gallery-grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .slide { border-radius: 16px; overflow: hidden; position: relative; border: 1px solid #b9d4ff; background: #eef5ff; min-height: 185px; aspect-ratio: 4 / 5; }
+    .slide img { width: 100%; height: 100%; min-height: 185px; object-fit: cover; display: block; transition: opacity 0.45s ease; background: #dfeeff; }
+    .tag { position: absolute; left: 0.55rem; bottom: 0.55rem; background: rgba(7, 23, 45, 0.62); color: #fff; padding: 0.32rem 0.55rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+    .site-footer { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid #d7e3ff; color: #345; font-size: 0.9rem; }
+    .footer-links { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 0.55rem; }
+    .footer-links a { text-decoration: none; font-weight: 700; color: #0e3c79; }
+    .global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+    .global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+    .global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+    .global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+    @media (max-width:1120px){.gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:980px){.btn-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:620px){.btn-grid{grid-template-columns:1fr}.gallery-grid{grid-template-columns:1fr}.wrap{padding:0.85rem 0.8rem 1.8rem}.hero{border-radius:18px;padding:1rem}h1{font-size:clamp(1.35rem,7vw,2rem)}.slide,.slide img{min-height:140px}.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
   </style>
+  <script>
+    (function () {
+      var AUTH_KEY = "eng9_authenticated";
+      if (sessionStorage.getItem(AUTH_KEY) !== "1") {
+        window.location.replace("login.html");
+      }
+    })();
+  </script>
 </head>
 <body>
-  <main class="wrap">
-    <section class="hero">
-      <h1>Englisch 9. Klasse</h1>
-      <p class="meta">Mittelschule am Sportpark, Anton-Troppmann-Weg 1, 82008 Unterhaching</p>
-      <p class="author">Lernplattform von Johannes Mößner</p>
-    </section>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
+<main class="wrap">
+  <section class="hero">
+    <h1>Englisch 9. Klasse</h1>
+    <p class="meta">Mittelschule am Sportpark, Anton-Troppmann-Weg 1, 82008 Unterhaching</p>
+    <p class="author">Lernplattform von Johannes Mößner</p>
+  </section>
 
-    <section class="panel">
-      <p class="label">Units</p>
-      <div class="btn-grid">
-        <a class="btn" href="./unit1/">Unit 1</a>
-        <a class="btn" href="./unit2/">Unit 2</a>
-        <a class="btn" href="./unit3/unit3.html">Unit 3</a>
-        <a class="btn" href="./unit4/unit4.html">Unit 4</a>
-      </div>
-    </section>
+  <section class="panel">
+    <p class="label">Units</p>
+    <div class="btn-grid">
+      <a class="btn" href="./unit1/">Unit 1</a>
+      <a class="btn" href="./unit2/">Unit 2</a>
+      <a class="btn" href="./unit3/unit3.html">Unit 3</a>
+      <a class="btn" href="./unit4/unit4.html">Unit 4</a>
+    </div>
+  </section>
 
-    <section class="panel">
-      <p class="label">Prüfung und Grammatik</p>
-      <div class="btn-grid">
-        <a class="btn secondary" href="./zeiten_wiederholen/tense_overview_a2.html">Wiederholung Zeiten</a>
-        <a class="btn secondary" href="#">Sonstige Grammatik</a>
-        <a class="btn secondary" href="./muendliche_pruefung/QA_muendlich.html">Mündliche Prüfung Quali</a>
-        <a class="btn secondary" href="#">Schriftliche Prüfung Quali</a>
-        <a class="btn secondary" href="./mediation/index.html">Mediation</a>
-      </div>
-    </section>
+  <section class="panel">
+    <p class="label">Prüfung und Grammatik</p>
+    <div class="btn-grid">
+      <a class="btn secondary" href="./zeiten_wiederholen/tense_overview_a2.html">Wiederholung Zeiten</a>
+      <a class="btn secondary" href="#">Sonstige Grammatik</a>
+      <a class="btn secondary" href="./muendliche_pruefung/QA_muendlich.html">Mündliche Prüfung Quali</a>
+      <a class="btn secondary" href="#">Schriftliche Prüfung Quali</a>
+      <a class="btn secondary" href="./mediation/index.html">Mediation</a>
+      <a class="btn holidays" href="./unit3/holidays_moessner.html">Holidays Mr. Mössner</a>
+    </div>
+  </section>
 
-    <section class="panel">
-      <div class="gallery-head">
-        <h2 class="gallery-title">Galerie: South Africa, India, Australia, New Zealand</h2>
-      </div>
-      <div class="gallery-grid" id="galleryGrid">
-        <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="./gallery/world/south-africa-01.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="./gallery/world/india-01.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="./gallery/world/australia-01.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="./gallery/world/new-zealand-01.jpg"><span class="tag"></span></figure>
-      </div>
-    </section>
+  <section class="panel">
+    <div class="gallery-head"><h2 class="gallery-title">Gemischte Galerie</h2></div>
+    <div class="gallery-grid" id="galleryGrid">
+      <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="./unit3/gallery_accident/Autounfall%20auf%20belebter%20Stadtstra%C3%9Fe.png"><span class="tag"></span></figure>
+      <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="./unit3/vokabulary/images/b14ab389-89b7-4387-b867-f1d8dedae2b0.png"><span class="tag"></span></figure>
+      <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="./privat_images/20251231_161818.jpg"><span class="tag"></span></figure>
+      <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="./unit4/gallery_nz/Alpenlandschaft%20mit%20t%C3%BCrkisfarbenem%20See.png"><span class="tag"></span></figure>
+    </div>
+  </section>
 
-    <footer class="site-footer">
-      <p><strong>Mittelschule am Sportpark</strong>, Anton-Troppmann-Weg 1, 82008 Unterhaching</p>
-      <p>Verantwortlich: Johannes Mößner (Lehrkraft, Mittelschule Bayern)</p>
-      <nav class="footer-links" aria-label="Rechtliche Informationen">
-        <a href="./impressum.html">Impressum</a>
-        <a href="./datenschutz.html">Datenschutz</a>
-        <a href="./bildnachweise.html">Bildnachweise</a>
-        <a href="./haftung.html">Haftung</a>
-      </nav>
-    </footer>
-  </main>
+  <footer class="site-footer">
+    <p><strong>Mittelschule am Sportpark</strong>, Anton-Troppmann-Weg 1, 82008 Unterhaching</p>
+    <p>Verantwortlich: Johannes Mößner (Lehrkraft, Mittelschule Bayern)</p>
+    <nav class="footer-links" aria-label="Rechtliche Informationen">
+      <a href="./impressum.html">Impressum</a>
+      <a href="./datenschutz.html">Datenschutz</a>
+      <a href="./bildnachweise.html">Bildnachweise</a>
+      <a href="./haftung.html">Haftung</a>
+    </nav>
+  </footer>
+</main>
 
-  <script>
-    const images = [
-      "./gallery/world/south-africa-01.jpg",
-      "./gallery/world/south-africa-02.jpg",
-      "./gallery/world/south-africa-03.jpg",
-      "./gallery/world/south-africa-04.jpg",
-      "./gallery/world/south-africa-05.jpg",
-      "./gallery/world/india-01.jpg",
-      "./gallery/world/india-02.jpg",
-      "./gallery/world/india-03.jpg",
-      "./gallery/world/india-04.jpg",
-      "./gallery/world/india-05.jpg",
-      "./gallery/world/australia-01.jpg",
-      "./gallery/world/australia-02.jpg",
-      "./gallery/world/australia-03.jpg",
-      "./gallery/world/australia-04.jpg",
-      "./gallery/world/australia-05.jpg",
-      "./gallery/world/new-zealand-01.jpg",
-      "./gallery/world/new-zealand-02.jpg",
-      "./gallery/world/new-zealand-03.jpg",
-      "./gallery/world/new-zealand-04.jpg",
-      "./gallery/world/new-zealand-05.jpg"
-    ];
+<script>
+  const groups = [
+      {
+        key: "accident",
+        label: "Unit 3 - Accident",
+        images: [
+        "./unit3/gallery_accident/Autounfall%20auf%20belebter%20Stadtstra%C3%9Fe.png",
+        "./unit3/gallery_accident/Autounfall%20mit%20Reh%20bei%20D%C3%A4mmerung.png",
+        "./unit3/gallery_accident/Unfall%20an%20der%20Kreuzung.png",
+        "./unit3/gallery_accident/Unfall%20auf%20der%20Landstra%C3%9Fe.png"
+        ]
+      },
+      {
+        key: "role-model",
+        label: "Unit 3 - Role Model",
+        images: [
+        "./unit3/vokabulary/images/b14ab389-89b7-4387-b867-f1d8dedae2b0.png",
+        "./unit3/vokabulary/images/Popstar%20im%20Rampenlicht%20auf%20der%20B%C3%BChne.png",
+        "./unit3/vokabulary/images/Rapper%20im%20Rampenlicht%20und%20Glanz.png",
+        "./unit3/vokabulary/images/Wissenschaftlerin%20im%20Labor%20mit%20Leuchtr%C3%B6hre.png"
+        ]
+      },
+      {
+        key: "holidays",
+        label: "South Africa 2026",
+        images: [
+        "./privat_images/20251231_161818.jpg",
+        "./privat_images/20251231_163700.jpg",
+        "./privat_images/20251231_173600.jpg",
+        "./privat_images/20251231_180933.jpg",
+        "./privat_images/20251231_182407.jpg",
+        "./privat_images/20251231_193422.jpg",
+        "./privat_images/20260101_064549.jpg",
+        "./privat_images/20260101_071334.jpg",
+        "./privat_images/20260101_071350.jpg",
+        "./privat_images/20260101_072623.jpg",
+        "./privat_images/20260101_115519.jpg",
+        "./privat_images/20260101_171743.jpg",
+        "./privat_images/20260101_191732.jpg",
+        "./privat_images/20260102_071236.jpg",
+        "./privat_images/20260102_135105.jpg",
+        "./privat_images/20260102_140408.jpg",
+        "./privat_images/20260102_141752.jpg",
+        "./privat_images/20260102_160611.jpg",
+        "./privat_images/20260103_075737.jpg",
+        "./privat_images/20260103_105218.jpg",
+        "./privat_images/20260103_154000.jpg",
+        "./privat_images/20260103_170140.jpg",
+        "./privat_images/20260104_081626.jpg",
+        "./privat_images/20260104_095206.jpg",
+        "./privat_images/20260104_095504.jpg",
+        "./privat_images/20260104_101841.jpg",
+        "./privat_images/20260105_054819.jpg",
+        "./privat_images/20260105_081337.jpg",
+        "./privat_images/20260105_082036.jpg",
+        "./privat_images/20260105_082327.jpg",
+        "./privat_images/20260105_085715.jpg",
+        "./privat_images/20260105_090056.jpg",
+        "./privat_images/20260105_094650.jpg",
+        "./privat_images/20260105_094758.jpg",
+        "./privat_images/20260105_094946.jpg",
+        "./privat_images/20260105_104254.jpg",
+        "./privat_images/20260105_104301.jpg",
+        "./privat_images/20260105_104535.jpg",
+        "./privat_images/20260105_121132(1)(1).jpg",
+        "./privat_images/20260105_121848.jpg",
+        "./privat_images/20260105_160228.jpg",
+        "./privat_images/20260105_160321(1).jpg",
+        "./privat_images/20260105_160734.jpg",
+        "./privat_images/20260105_174049.jpg",
+        "./privat_images/20260105_174422.jpg",
+        "./privat_images/20260105_192623.jpg",
+        "./privat_images/GP011705%20(3).jpg",
+        "./privat_images/IMG-20260103-WA0014.jpg",
+        "./privat_images/IMG-20260106-WA0022.jpg",
+        "./privat_images/IMG-20260106-WA0023.jpg",
+        "./privat_images/IMG-20260106-WA0026.jpg",
+        "./privat_images/IMG-20260106-WA0032.jpg",
+        "./privat_images/IMG-20260106-WA0034.jpg",
+        "./privat_images/IMG-20260106-WA0042.jpg",
+        "./privat_images/IMG-20260106-WA0048.jpg",
+        "./privat_images/IMG-20260106-WA0079.jpg",
+        "./privat_images/IMG-20260106-WA0101.jpg",
+        "./privat_images/IMG-20260106-WA0126.jpg",
+        "./privat_images/IMG-20260106-WA0158.jpg",
+        "./privat_images/IMG-20260106-WA0176.jpg",
+        "./privat_images/IMG-20260106-WA0202.jpg",
+        "./privat_images/Robberg-Nature-Reserve-1-Kopie-1024x679.jpg"
+        ]
+      },
+      {
+        key: "new-zealand",
+        label: "Unit 4 - New Zealand",
+        images: [
+        "./unit4/gallery_nz/Alpenlandschaft%20mit%20t%C3%BCrkisfarbenem%20See.png",
+        "./unit4/gallery_nz/Auckland%20Skyline%20mit%20Sky%20Tower.png",
+        "./unit4/gallery_nz/Blick%20auf%20Wellington%20von%20oben.png",
+        "./unit4/gallery_nz/Haka-Auff%C3%BChrung%20vor%20traditionellem%20Wharenui.png",
+        "./unit4/gallery_nz/Idyllischer%20Blick%20auf%20ein%20Hobbit-Haus.png",
+        "./unit4/gallery_nz/Lupinenbl%C3%BCten%20am%20t%C3%BCrkisfarbenen%20See.png",
+        "./unit4/gallery_nz/Schafherde%20im%20neuseel%C3%A4ndischen%20Landhausblick.png"
+        ]
+      }
+  ];
 
-    const labels = {
-      "south-africa": "South Africa",
-      india: "India",
-      australia: "Australia",
-      "new-zealand": "New Zealand"
-    };
+  window.addEventListener("DOMContentLoaded", () => {
+    const slides = Array.from(document.querySelectorAll(".slide")).slice(0, 4);
+    const state = groups.map(() => ({ queue: [], current: null }));
 
-    const slides = Array.from(document.querySelectorAll(".slide"));
-
-    const randomIndex = () => Math.floor(Math.random() * images.length);
-
-    function ensureImage(src) {
-      return images.includes(src) ? src : images[0];
+    function shuffle(list) {
+      const arr = [...list];
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
     }
 
-    function applyImage(slide, src) {
+    function refill(groupIndex) {
+      const g = groups[groupIndex];
+      const current = state[groupIndex].current;
+      const pool = g.images.filter((src) => src !== current);
+      state[groupIndex].queue = shuffle(pool.length ? pool : g.images);
+    }
+
+    function nextFromGroup(groupIndex) {
+      if (state[groupIndex].queue.length === 0) refill(groupIndex);
+      const next = state[groupIndex].queue.shift();
+      state[groupIndex].current = next;
+      return next;
+    }
+
+    function applyImage(slide, src, label) {
       const img = slide.querySelector("img");
       const tag = slide.querySelector(".tag");
-      const safeSrc = ensureImage(src);
-      const key = safeSrc.split("/").pop().split("-").slice(0, -1).join("-");
-      tag.textContent = labels[key] || "Travel";
+      tag.textContent = label;
       img.style.opacity = "0.25";
       setTimeout(() => {
-        img.src = safeSrc;
+        img.src = src;
+        img.dataset.srcKey = src;
         img.style.opacity = "1";
       }, 130);
     }
 
-    function bindImageFallbacks() {
-      slides.forEach((slide, idx) => {
-        const img = slide.querySelector("img");
-        if (!img) return;
-        img.onerror = () => {
-          const fallback = images[(idx + 1) % images.length];
-          img.src = fallback;
-        };
-      });
-    }
+    slides.forEach((slide, idx) => {
+      const g = groups[idx % groups.length];
+      const img = slide.querySelector("img");
+      if (img && g.images.length) img.onerror = () => { img.src = g.images[0]; };
+    });
 
-    function fillInitial() {
-      const used = new Set();
-      slides.forEach((slide) => {
-        let src = images[randomIndex()];
-        while (used.has(src)) src = images[randomIndex()];
-        used.add(src);
-        applyImage(slide, src);
-      });
-    }
+    slides.forEach((slide, idx) => {
+      const gIdx = idx % groups.length;
+      applyImage(slide, nextFromGroup(gIdx), groups[gIdx].label);
+    });
 
     let pointer = 0;
-    function rotateOne() {
-      const slide = slides[pointer % slides.length];
-      applyImage(slide, images[randomIndex()]);
+    setInterval(() => {
+      const gIdx = pointer % groups.length;
+      const slide = slides[gIdx];
+      if (slide) applyImage(slide, nextFromGroup(gIdx), groups[gIdx].label);
       pointer += 1;
-    }
+    }, 2300);
+  });
+</script>
 
-    bindImageFallbacks();
-    fillInitial();
-    setInterval(rotateOne, 2300);
-  </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
 
 

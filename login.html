@@ -1,0 +1,146 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Login - English 9</title>
+  <style>
+    :root {
+      --bg-1: #eef4ff;
+      --bg-2: #ffe8d6;
+      --card: #ffffff;
+      --ink: #14213d;
+      --primary: #0b67d1;
+      --primary-2: #2f8ef6;
+      --danger: #b00020;
+      --line: #d5e3ff;
+      --shadow: 0 16px 36px rgba(17, 45, 96, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 8%, #dce9ff 0%, transparent 40%),
+        radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 32%),
+        linear-gradient(130deg, var(--bg-1), var(--bg-2));
+      padding: 1rem;
+    }
+
+    .card {
+      width: min(420px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 1.3rem;
+    }
+
+    h1 {
+      margin: 0 0 0.45rem;
+      font-size: 1.65rem;
+      color: #0d2f5a;
+    }
+
+    p {
+      margin: 0 0 1rem;
+      color: #465875;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      margin: 0.7rem 0 0.3rem;
+      font-weight: 700;
+      color: #1e3d6a;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #a8c4f4;
+      border-radius: 12px;
+      padding: 0.72rem 0.8rem;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus {
+      border-color: var(--primary-2);
+      box-shadow: 0 0 0 3px rgba(47, 142, 246, 0.2);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 1rem;
+      border: 0;
+      border-radius: 12px;
+      padding: 0.8rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    }
+
+    .error {
+      margin-top: 0.85rem;
+      min-height: 1.2rem;
+      color: var(--danger);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>English 9 Login</h1>
+    <p>Bitte melde dich an, um die Lernseite zu oeffnen.</p>
+
+    <form id="loginForm" novalidate>
+      <label for="username">Benutzername</label>
+      <input id="username" name="username" type="text" autocomplete="username" required>
+
+      <label for="password">Passwort</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+      <button type="submit">Anmelden</button>
+      <div id="error" class="error" role="alert" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script>
+    const USERNAME = "Eng2026";
+    const PASSWORD = "schule123";
+    const AUTH_KEY = "eng9_authenticated";
+
+    if (sessionStorage.getItem(AUTH_KEY) === "1") {
+      window.location.href = "index.html";
+    }
+
+    const form = document.getElementById("loginForm");
+    const errorEl = document.getElementById("error");
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value;
+
+      if (user === USERNAME && pass === PASSWORD) {
+        sessionStorage.setItem(AUTH_KEY, "1");
+        window.location.href = "index.html";
+        return;
+      }
+
+      errorEl.textContent = "Benutzername oder Passwort ist falsch.";
+    });
+  </script>
+</body>
+</html>
