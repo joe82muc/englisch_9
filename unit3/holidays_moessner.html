@@ -436,12 +436,16 @@
       return "Holiday memory from South Africa, 2026.";
     }
 
-    const items = imageFiles.map((file, idx) => ({
-      file,
-      src: "../privat_images/" + file,
-      title: "South Africa Memory #" + String(idx + 1).padStart(2, "0"),
-      subtitle: subtitleFromName(file)
-    }));
+        const items = imageFiles.map((file, idx) => {
+      const encoded = encodeURIComponent(file);
+      return {
+        file,
+        fullSrc: "../privat_images/" + encoded,
+        thumbSrc: "./holidays_thumbs/" + encoded,
+        title: "South Africa Memory #" + String(idx + 1).padStart(2, "0"),
+        subtitle: subtitleFromName(file)
+      };
+    });
 
     const galleryEl = document.getElementById("gallery");
     const heroImg = document.getElementById("heroImage");
@@ -454,7 +458,7 @@
 
     function renderHero() {
       const it = items[current];
-      heroImg.src = it.src;
+      heroImg.src = it.thumbSrc;
       heroImg.alt = it.title;
       heroTitle.textContent = it.title;
       heroSub.textContent = it.subtitle;
@@ -482,7 +486,7 @@
     items.forEach((it, idx) => {
       const fig = document.createElement("figure");
       fig.className = "card";
-      fig.innerHTML = '<img loading="lazy" decoding="async" src="' + it.src + '" alt="' + it.title + '"><figcaption><p class="cap-title">' + it.title + '</p><p class="cap-sub">' + it.subtitle + '</p></figcaption>';
+      fig.innerHTML = '<img loading="lazy" decoding="async" src="' + it.thumbSrc + '" alt="' + it.title + '"><figcaption><p class="cap-title">' + it.title + '</p><p class="cap-sub">' + it.subtitle + '</p></figcaption>';
       fig.addEventListener("click", () => openLightbox(idx));
       galleryEl.appendChild(fig);
     });
@@ -499,7 +503,7 @@
 
     function renderLightbox() {
       const it = items[lbIndex];
-      lbImg.src = it.src;
+      lbImg.src = it.fullSrc;
       lbImg.alt = it.title;
       lbCaption.textContent = it.title + " - " + it.subtitle;
     }
@@ -558,6 +562,7 @@
   </script>
 </body>
 </html>
+
 
 
 
