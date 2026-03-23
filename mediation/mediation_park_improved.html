@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#065f46">
-<title>Mediation – Visiting a National Park (verbessert)</title>
+<title>Mediation - Visiting a National Park (verbessert)</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -19,12 +19,12 @@
   --shadow:0 10px 30px rgba(2,6,23,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:"Trebuchet MS","Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 .hdr{background:linear-gradient(135deg,var(--green),#047857);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
 .back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.75);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
 .utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#86efac;margin-bottom:.3rem;}
-h1{font-family:'Fraunces',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#fff;line-height:1.1;}
+h1{font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#fff;line-height:1.1;}
 h1 em{font-style:italic;opacity:.88;}
 .hsub{font-size:.8rem;color:rgba(255,255,255,.8);margin-top:.3rem;}
 
@@ -59,12 +59,12 @@ h1 em{font-style:italic;opacity:.88;}
 @keyframes b{0%,80%,100%{transform:translateY(0);opacity:.45}40%{transform:translateY(-6px);opacity:1}}
 
 .complete{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #86efac;border-radius:22px;padding:1.2rem;text-align:center;box-shadow:var(--shadow);margin:1.5rem 0}
-.complete h2{font-family:'Fraunces',serif;font-size:1.55rem;color:#065f46;margin-bottom:.45rem}
+.complete h2{font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:1.55rem;color:#065f46;margin-bottom:.45rem}
 .complete p{font-size:.95rem;color:#166534;line-height:1.45}
 .restart-btn{margin-top:.9rem;background:var(--green);color:#fff;border:none;border-radius:14px;padding:.85rem 1rem;font-size:.95rem;font-weight:700;cursor:pointer}
 
 .input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1.5px solid var(--border);padding:.7rem 1rem calc(env(safe-area-inset-bottom) + .7rem);display:flex;gap:.5rem;align-items:flex-end;z-index:10;box-shadow:0 -8px 24px rgba(2,6,23,.05)}
-.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fdf9;}
+.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fdf9;}
 .input-bar textarea:focus{border-color:var(--green2);}
 .input-bar textarea:disabled{background:#f1f5f9;color:#94a3b8;}
 .send-btn{background:var(--green);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
@@ -75,20 +75,34 @@ h1 em{font-style:italic;opacity:.88;}
   .hdr{padding-left:calc((100vw - 900px)/2 + 1rem);padding-right:calc((100vw - 900px)/2 + 1rem)}
 }
 </style>
+<style id="med-nav-style">
+.med-nav{max-width:980px;margin:12px auto 0;padding:0 12px;display:flex;gap:10px}
+.med-nav a,.med-nav button{appearance:none;border:1px solid #b8cff8;background:linear-gradient(180deg,#fff,#f3f8ff);color:#12335f;padding:8px 14px;border-radius:999px;font:700 14px/1.1 "Trebuchet MS","Segoe UI",sans-serif;text-decoration:none;cursor:pointer}
+.med-nav a:hover,.med-nav button:hover{border-color:#7fb0f0}
+</style>
+<style id="med-align-fix">
+/* header and situation left edge aligned */
+.hdr{max-width:900px;margin:.55rem auto 0;border-radius:22px;padding:1.05rem 1rem 1.55rem !important}
+.scenario{max-width:900px;margin:1rem auto 0 !important;padding:0 !important}
+.prog-wrap{max-width:900px;margin:.25rem auto 0 !important;padding:0 !important}
+.chat{max-width:900px;margin:0 auto !important;padding:0 0 8.5rem !important}
+@media (max-width:940px){
+  .hdr,.scenario,.prog-wrap,.chat{max-width:none !important;margin-left:1rem !important;margin-right:1rem !important}
+}
+</style>
 </head>
 <body>
+<div class='med-nav'><a href='../index.html'>Home</a><button type='button' id='medBackBtn'>Zurück</button></div>
 
-<div class="hdr">
-  <a href="index.html" class="back">← Back</a>
-  <div class="utag">Unit 3 · Mediation · Speaking</div>
-  <h1>Visiting a<br><em>National Park</em> 🌿</h1>
+<div class="hdr"><div class="utag">Unit 3 - Mediation - Speaking</div>
+  <h1>Visiting a<br><em>National Park</em> </h1>
   <p class="hsub">Du vermittelst zwischen deinem Onkel und dem Park Ranger</p>
 </div>
 
 <div class="scenario">
   <div class="scene-card">
-    <h2>🎭 Situation</h2>
-    <p>Du machst Urlaub in Südafrika mit deinem Onkel. Ihr besucht den „Kruger National Park“. Am Eingang gibt euch ein Park Ranger Auskunft. Dein Onkel spricht kein Englisch – du musst vermitteln.</p>
+    <h2>Situation</h2>
+    <p>Du machst Urlaub in Südafrika mit deinem Onkel. Ihr besucht den -Kruger National Park-. Am Eingang gibt euch ein Park Ranger Auskunft. Dein Onkel spricht kein Englisch - du musst vermitteln.</p>
   </div>
 </div>
 
@@ -107,7 +121,7 @@ h1 em{font-style:italic;opacity:.88;}
 <div class="chat" id="chat"></div>
 
 <div class="input-bar" id="inputBar">
-  <textarea id="userInput" rows="1" placeholder="Übersetze für den Park Ranger…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <textarea id="userInput" rows="1" placeholder="Übersetze für den Park Ranger-" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
 </div>
 
@@ -122,7 +136,7 @@ var sendBtn = document.getElementById('sendBtn');
 var STEPS = [
   {
     uncle: "Hallo, wir wollen jetzt in den Park fahren. Kann man aus dem Auto aussteigen, wenn man zum Beispiel Fotos von den Tieren machen will?",
-    instruction: "🇩🇪→🇬🇧 Frag den Ranger, ob man aus dem Auto aussteigen darf, um Fotos zu machen.",
+    instruction: "Hinweis: Frag den Ranger, ob man aus dem Auto aussteigen darf, um Fotos zu machen.",
     direction: "de-en",
     keywords: ['can','get out','car','take','photos','animals'],
     minWords: 5,
@@ -132,16 +146,16 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "No, sorry. You have to stay in your car all the time with the doors closed. But you'll find signs which show the distance to the nearest camp.",
-    instruction: "🇬🇧→🇩🇪 Übersetze für deinen Onkel: Man darf nicht aussteigen und muss im Auto bleiben.",
+    instruction: "Hinweis: Übersetze für deinen Onkel: Man darf nicht aussteigen und muss im Auto bleiben.",
     direction: "en-de",
     keywords: ['nicht','aussteigen','im auto','türen','geschlossen','schilder','entfernung','camp'],
     minWords: 5,
-    ideal: "Nein, leider nicht. Ihr müsst die ganze Zeit im Auto bleiben und die Türen geschlossen halten. Schilder zeigen euch die Entfernung zum nächsten Camp.",
+    ideal: "Nein, leider nicht. Ihr m-sst die ganze Zeit im Auto bleiben und die Türen geschlossen halten. Schilder zeigen euch die Entfernung zum nächsten Camp.",
     ranger: ""
   },
   {
     uncle: "OK. Können wir im Park telefonieren mit dem Handy?",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man im Park mit dem Handy telefonieren darf.",
+    instruction: "Hinweis: Frag, ob man im Park mit dem Handy telefonieren darf.",
     direction: "de-en",
     keywords: ['can','use','phone','mobile','park'],
     minWords: 4,
@@ -151,16 +165,16 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "No, you can only use your phones in camps, at gates or in emergencies.",
-    instruction: "🇬🇧→🇩🇪 Übersetze: Handys sind nur in Camps, an Toren oder in Notfällen erlaubt.",
+    instruction: "Hinweis: Übersetze: Handys sind nur in Camps, an Toren oder in Notf-llen erlaubt.",
     direction: "en-de",
-    keywords: ['nur','handys','camps','toren','notfällen','erlaubt'],
+    keywords: ['nur','handys','camps','toren','notf-llen','erlaubt'],
     minWords: 4,
-    ideal: "Nein, Handys darf man nur in Camps, an Toren oder in Notfällen benutzen.",
+    ideal: "Nein, Handys darf man nur in Camps, an Toren oder in Notf-llen benutzen.",
     ranger: ""
   },
   {
     uncle: "Frag doch mal, ob man die Tiere im Park füttern darf.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob man die Tiere füttern darf.",
+    instruction: "Hinweis: Frag, ob man die Tiere füttern darf.",
     direction: "de-en",
     keywords: ['can','feed','animals'],
     minWords: 4,
@@ -170,16 +184,16 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "Of course not. Never feed or disturb the animals.",
-    instruction: "🇬🇧→🇩🇪 Übersetze: Man darf die Tiere nicht füttern oder stören.",
+    instruction: "Hinweis: Übersetze: Man darf die Tiere nicht füttern oder stören.",
     direction: "en-de",
     keywords: ['nicht','füttern','stören','tiere'],
     minWords: 4,
-    ideal: "Natürlich nicht. Füttert oder stört die Tiere niemals.",
+    ideal: "Nat-rlich nicht. F-ttert oder st-rt die Tiere niemals.",
     ranger: ""
   },
   {
-    uncle: "Das verstehe ich. Frag ihn doch bitte, ob es im Park gefährlich werden kann.",
-    instruction: "🇩🇪→🇬🇧 Frag, ob es im Park gefährlich sein kann.",
+    uncle: "Das verstehe ich. Frag ihn doch bitte, ob es im Park gef-hrlich werden kann.",
+    instruction: "Hinweis: Frag, ob es im Park gef-hrlich sein kann.",
     direction: "de-en",
     keywords: ['can','dangerous','park','be'],
     minWords: 4,
@@ -189,11 +203,11 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "You'll be safe as long as you follow all the rules. Make sure you're back at your camp before the gates close.",
-    instruction: "🇬🇧→🇩🇪 Übersetze: Man ist sicher, wenn man die Regeln befolgt und rechtzeitig zurück ist.",
+    instruction: "Hinweis: Übersetze: Man ist sicher, wenn man die Regeln befolgt und rechtzeitig zurück ist.",
     direction: "en-de",
-    keywords: ['sicher','regeln','befolgt','camp','tor','schließen','zurück'],
+    keywords: ['sicher','regeln','befolgt','camp','tor','schlie-en','zurück'],
     minWords: 5,
-    ideal: "Du bist sicher, solange du alle Regeln befolgst. Sei wieder im Camp, bevor die Tore schließen.",
+    ideal: "Du bist sicher, solange du alle Regeln befolgst. Sei wieder im Camp, bevor die Tore schlie-en.",
     ranger: ""
   }
 ];
@@ -210,7 +224,7 @@ function addMsg(type, sender, text) {
 function addInstruction(text) {
   var div = document.createElement('div');
   div.className = 'instr';
-  div.textContent = '👉 ' + text;
+  div.textContent = text;
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
 }
@@ -219,7 +233,7 @@ function addTyping() {
   var div = document.createElement('div');
   div.className = 'msg ranger';
   div.id = 'typing';
-  div.innerHTML = '<div class="sender">🌿 Park Ranger</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  div.innerHTML = '<div class="sender">Park Ranger</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
   return div;
@@ -246,19 +260,19 @@ function startStep() {
   attempts = 0;
 
   if (step.direction === 'en-de') {
-    addMsg('ranger', '🌿 Park Ranger', step.rangerSays);
+    addMsg('ranger', 'Park Ranger', step.rangerSays);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Onkel…';
+      inputEl.placeholder = 'Übersetze auf Deutsch für deinen Onkel-';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
     }, 600);
   } else {
-    addMsg('uncle', '👨 Onkel (Deutsch)', step.uncle);
+    addMsg('uncle', 'Onkel (Deutsch)', step.uncle);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Englisch für den Ranger…';
+      inputEl.placeholder = 'Übersetze auf Englisch für den Ranger-';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
@@ -275,13 +289,13 @@ async function handleSend() {
   inputEl.value = '';
 
   var step = STEPS[currentStep];
-  addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
+  addMsg('student', step.direction === 'en-de' ? 'Du (Deutsch)' : 'Du (Englisch)', val);
   attempts++;
 
   var result = await evaluateWithAI(val, step);
 
   if (result.pass) {
-    addMsg('ok', '✅ Gut gemacht!', result.feedback || 'Gut gelöst.');
+    addMsg('ok', '? Gut gemacht!', result.feedback || 'Gut gel-st.');
     currentStep++;
     updateProgress();
 
@@ -296,7 +310,7 @@ async function handleSend() {
           addTyping();
           setTimeout(function() {
             removeTyping();
-            addMsg('ranger', '🌿 Park Ranger', step.ranger);
+            addMsg('ranger', 'Park Ranger', step.ranger);
             setTimeout(function() { startStep(); }, 1000);
           }, 1100);
         }, 600);
@@ -304,9 +318,9 @@ async function handleSend() {
     }
   } else {
     if (attempts >= 3 && result.example) {
-      addMsg('tip', '🤖 KI-Tipp', result.feedback + '<br><br><strong>Beispiel:</strong> <em>' + result.example + '</em>');
+      addMsg('tip', 'KI-Tipp', result.feedback + '<br><br><strong>Beispiel:</strong> <em>' + result.example + '</em>');
     } else {
-      addMsg('tip', '🤖 KI-Tipp', result.feedback);
+      addMsg('tip', 'KI-Tipp', result.feedback);
     }
 
     setTimeout(function() {
@@ -328,9 +342,9 @@ async function evaluateWithAI(studentText, step) {
         exerciseContext:
           'MEDIATION NATIONAL PARK (9. Klasse). Richtung: ' + step.direction +
           '. Original: "' + (step.uncle || step.rangerSays || '') + '"' +
-          '. Ideale Sinnlösung: "' + (step.ideal || '') + '"' +
-          '. Schüler: "' + studentText + '"' +
-          '. REGELN: Schüler spricht DIREKT mit Gesprächspartner. 1. Person und 3. Person beide ok. Sinn wichtiger als exakte Worte. Bei kleinen Fehlern nicht zu streng. Antworte NUR als JSON: {"pass":true,"feedback":"Kurzes Lob","example":""} oder {"pass":false,"feedback":"Was noch fehlt","example":"Kurzes Beispiel"}'
+          '. Ideale Sinnl-sung: "' + (step.ideal || '') + '"' +
+          '. Sch-ler: "' + studentText + '"' +
+          '. REGELN: Sch-ler spricht DIREKT mit Gespr-chspartner. 1. Person und 3. Person beide ok. Sinn wichtiger als exakte Worte. Bei kleinen Fehlern nicht zu streng. Antworte NUR als JSON: {"pass":true,"feedback":"Kurzes Lob","example":""} oder {"pass":false,"feedback":"Was noch fehlt","example":"Kurzes Beispiel"}'
       })
     });
 
@@ -365,20 +379,20 @@ function evaluateLocal(text, step) {
   var low = text.toLowerCase().trim();
 
   if (low.split(/\s+/).length < step.minWords) {
-    return {pass: false, feedback: 'Dein Satz ist noch zu kurz. Versuche eine vollständige Übersetzung.', example: step.ideal || ''};
+    return {pass: false, feedback: 'Dein Satz ist noch zu kurz. Versuche eine vollst-ndige -bersetzung.', example: step.ideal || ''};
   }
 
   if (step.direction === 'en-de') {
     var engWords = ['the','you','your','they','have','can','will','would','should','could','what','please'];
     var engCount = engWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
     if (engCount >= 2) {
-      return {pass: false, feedback: 'Du sollst auf DEUTSCH übersetzen. Es sind noch zu viele englische Wörter im Satz.', example: step.ideal || ''};
+      return {pass: false, feedback: 'Du sollst auf DEUTSCH Übersetzen. Es sind noch zu viele englische Wörter im Satz.', example: step.ideal || ''};
     }
   } else {
     var deWords = ['und','kann','darf','wir','bitte','fragen','ob','auch','nicht','mein','haben','gibt'];
     var deCount = deWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
     if (deCount >= 2) {
-      return {pass: false, feedback: 'Du sollst auf ENGLISCH übersetzen. Es sind noch zu viele deutsche Wörter im Satz.', example: step.ideal || ''};
+      return {pass: false, feedback: 'Du sollst auf ENGLISCH Übersetzen. Es sind noch zu viele deutsche Wörter im Satz.', example: step.ideal || ''};
     }
   }
 
@@ -387,7 +401,7 @@ function evaluateLocal(text, step) {
     if (step.direction === 'de-en' && step.instruction.toLowerCase().includes('frag') && !text.includes('?')) {
       return {pass: false, feedback: 'Fast richtig. Vergiss das Fragezeichen nicht.', example: step.ideal || ''};
     }
-    return {pass: true, feedback: step.direction === 'en-de' ? 'Gut übersetzt!' : 'Sehr gut formuliert!', example: ''};
+    return {pass: true, feedback: step.direction === 'en-de' ? 'Gut -bersetzt!' : 'Sehr gut formuliert!', example: ''};
   }
 
   if (matchCount === 1) {
@@ -404,7 +418,7 @@ function showComplete() {
 
   var div = document.createElement('div');
   div.className = 'complete';
-  div.innerHTML = '<h2>🎉 Mediation geschafft!</h2><p>Du hast alle ' + STEPS.length + ' Schritte erfolgreich vermittelt.<br>Dein Onkel ist begeistert.</p><button class="restart-btn" onclick="location.reload()">🔄 Nochmal spielen</button>';
+  div.innerHTML = '<h2>Mediation geschafft!</h2><p>Du hast alle ' + STEPS.length + ' Schritte erfolgreich vermittelt.<br>Dein Onkel ist begeistert.</p><button class="restart-btn" onclick="location.reload()">Nochmal spielen</button>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth'});
 }
@@ -423,5 +437,21 @@ inputEl.addEventListener('keydown', function(e) {
 updateProgress();
 startStep();
 </script>
+<script id="med-nav-script">
+(function(){
+  var b=document.getElementById('medBackBtn');
+  if(!b) return;
+  b.addEventListener('click', function(){
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='../index.html'; }
+  });
+})();
+</script>
 </body>
 </html>
+
+
+
+
+
+

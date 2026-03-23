@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Mediation - Englisch 9</title>
   <style>
     :root {
@@ -24,6 +24,13 @@
         radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),
         linear-gradient(130deg, var(--bg-1), var(--bg-2));
     }
+    .topnav { max-width: 1180px; margin: 12px auto 0; padding: 0 12px; display:flex; gap:10px; }
+    .topnav a, .topnav button {
+      appearance:none; border:1px solid #b8cff8; background:linear-gradient(180deg,#fff,#f3f8ff);
+      color:#12335f; padding:8px 14px; border-radius:999px; font:700 14px/1.1 "Trebuchet MS","Segoe UI",sans-serif;
+      text-decoration:none; cursor:pointer;
+    }
+    .topnav a:hover, .topnav button:hover { border-color:#7fb0f0; }
     .wrap { max-width: 1180px; margin: 0 auto; padding: 1.1rem 1rem 2.2rem; }
     .hero {
       background: linear-gradient(130deg, #0a5ebf, #1d80df 52%, #f39d5f);
@@ -77,26 +84,20 @@
     }
     .card b { display:block; font-size: 1rem; margin-bottom: .35rem; }
     .card span { font-size: .88rem; color: #365684; line-height: 1.35; }
-    .api {
-      border: 1px dashed #9cc2f7;
-      background: #f5f9ff;
-      border-radius: 12px;
-      padding: .7rem;
-      color: #26466e;
-      font-size: .9rem;
-    }
-    code { font-family: Consolas, monospace; }
     @media (max-width: 980px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
+  <div class="topnav">
+    <a href="../index.html">Home</a>
+    <button type="button" id="goBackBtn">Zurück</button>
+  </div>
   <main class="wrap">
     <section class="hero">
       <h1>Mediation</h1>
       <p class="meta">Englisch 9. Klasse - KI-gestützte Dialogübungen</p>
-      <a class="back" href="../index.html">&larr; Zur Startseite</a>
-    </section>
+</section>
 
     <section class="panel">
       <p class="label">Mediation-Aufgaben</p>
@@ -109,9 +110,19 @@
         <a class="card" href="./mediation_market.html"><b>Market</b><span>Preise, Handeln und Bezahlmöglichkeiten.</span></a>
         <a class="card" href="./mediation hospital.html"><b>Hospital</b><span>Broschüre vermitteln und Dialogaufgaben.</span></a>
       </div>
-    </section> </main>
+    </section>
+  </main>
+  <script>
+  (function(){
+    var b=document.getElementById('goBackBtn');
+    if(!b) return;
+    b.addEventListener('click', function(){
+      if(document.referrer){ history.back(); }
+      else { location.href='../index.html'; }
+    });
+  })();
+  </script>
 </body>
 </html>
-
 
 

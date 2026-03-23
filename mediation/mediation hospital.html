@@ -25,7 +25,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{
-  font-family:'DM Sans',sans-serif;
+  font-family:"Trebuchet MS","Segoe UI",sans-serif;
   background:linear-gradient(180deg,#eef6fb 0%,#e4f0f8 100%);
   color:var(--text);
   min-height:100vh;
@@ -44,12 +44,12 @@ body{
   padding:.28rem .62rem;background:rgba(255,255,255,.13);margin-bottom:.7rem;
 }
 .h-top{font-size:.72rem;letter-spacing:1.7px;text-transform:uppercase;color:#b9def7;}
-h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height:1.15;margin-top:.15rem;}
+h1{font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height:1.15;margin-top:.15rem;}
 .h-sub{font-size:.85rem;color:#d2e8f8;margin-top:.35rem;}
 
 .page{max-width:980px;margin:1rem auto 0;padding:0 1rem;display:grid;gap:1rem;}
 .card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:1rem 1.1rem;box-shadow:0 6px 18px rgba(15,59,87,.08);}
-.card h2{font-family:'Fraunces',serif;font-size:1.15rem;color:var(--navy);margin-bottom:.6rem;}
+.card h2{font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:1.15rem;color:var(--navy);margin-bottom:.6rem;}
 .card h3{font-size:1rem;color:var(--navy);margin:.45rem 0 .35rem;}
 .small{font-size:.86rem;color:var(--muted);line-height:1.6;}
 
@@ -66,7 +66,7 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
 .q-item label{display:block;font-weight:600;font-size:.9rem;line-height:1.5;margin-bottom:.42rem;}
 .input, .textarea{
   width:100%;border:1.5px solid #c8ddec;border-radius:10px;
-  padding:.56rem .72rem;font-family:'DM Sans',sans-serif;font-size:.92rem;
+  padding:.56rem .72rem;font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:.92rem;
   background:#f8fcff;outline:none;
 }
 .input:focus,.textarea:focus{border-color:var(--navy-2);}
@@ -112,12 +112,18 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
 
 .footer-note{max-width:980px;margin:.6rem auto 0;padding:0 1rem 1rem;color:#587083;font-size:.78rem;}
 </style>
+<style id="med-nav-style">
+.med-nav{max-width:980px;margin:12px auto 0;padding:0 12px;display:flex;gap:10px}
+.med-nav a,.med-nav button{appearance:none;border:1px solid #b8cff8;background:linear-gradient(180deg,#fff,#f3f8ff);color:#12335f;padding:8px 14px;border-radius:999px;font:700 14px/1.1 "Trebuchet MS","Segoe UI",sans-serif;text-decoration:none;cursor:pointer}
+.med-nav a:hover,.med-nav button:hover{border-color:#7fb0f0}
+</style>
 </head>
 <body>
+<div class='med-nav'><a href='../index.html'>Home</a><button type='button' id='medBackBtn'>Zurück</button></div>
 <div class="header">
   <div class="header-inner">
-    <a class="back-btn" href="./index.html">← Back</a>
-    <div class="h-top">Mediation · Unit 3</div>
+    <a class="back-btn" href="./index.html">? Back</a>
+    <div class="h-top">Mediation - Unit 3</div>
     <h1>Mediation 3 - At the Hospital</h1>
     <p class="h-sub">Aufgabenstellung wie im Arbeitsblatt, mit KI-Hilfe, einblendbaren Musterlösungen und korrigierter Endversion.</p>
   </div>
@@ -145,40 +151,40 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
     <p class="task-sub">Schreibe die fehlenden Informationen. Musterlösung kann bei Bedarf eingeblendet werden.</p>
     <div class="q-list" id="t1-list"></div>
     <div class="actions">
-      <button class="btn btn-check" onclick="checkTask1()">Task 1 prüfen</button>
+      <button class="btn btn-check" onclick="checkTask1()">Task 1 pr-fen</button>
     </div>
     <div class="feedback" id="t1-feedback"></div>
   </section>
 
   <section class="card" id="task2">
     <div class="task-title">2) Fasse die wichtigsten Informationen aus der Broschüre auf Deutsch zusammen. Schreibe ganze Sätze.</div>
-    <p class="task-sub">Rebecca und ihre Familie sind im Urlaub in Südafrika. Rebeccas Vater fühlt sich nicht wohl. Im Hotel haben sie die Broschüre eines Krankenhauses entdeckt. Übernimm Rebeccas Rolle und fasse für ihren Vater, der nicht so gut Englisch spricht, das Wichtigste auf Deutsch zusammen. Gehe dabei auf diese Bereiche ein: 1. Notaufnahme; 2. Informationsschalter; 3. Besuchszeiten; 4. Café und Shop; 5. Parken.</p>
+    <p class="task-sub">Rebecca und ihre Familie sind im Urlaub in Südafrika. Rebeccas Vater f-hlt sich nicht wohl. Im Hotel haben sie die Broschüre eines Krankenhauses entdeckt. -bernimm Rebeccas Rolle und fasse für ihren Vater, der nicht so gut Englisch spricht, das Wichtigste auf Deutsch zusammen. Gehe dabei auf diese Bereiche ein: 1. Notaufnahme; 2. Informationsschalter; 3. Besuchszeiten; 4. Café und Shop; 5. Parken.</p>
     <textarea id="t2-text" class="textarea" placeholder="Schreibe deine Zusammenfassung auf Deutsch..."></textarea>
     <div class="actions">
-      <button class="btn btn-check" onclick="checkTask2()">Task 2 prüfen</button>
+      <button class="btn btn-check" onclick="checkTask2()">Task 2 pr-fen</button>
       <button class="btn btn-secondary btn-model" id="task2-model-btn" onclick="toggleModel('task2')">Musterlösung anzeigen</button>
       <button class="btn btn-hint" onclick="askHint('task2', this)">KI-Hilfe Task 2</button>
       <button class="btn btn-hint" onclick="askGrammar('task2', this)">KI-Grammatik (LLM)</button>
     </div>
-    <div class="model" id="task2-model"><strong>Musterlösung:</strong><br>Das City General Hospital hat eine Notaufnahme, die 24 Stunden am Tag geöffnet ist. Der Eingang der Notaufnahme liegt an der südwestlichen Ecke des Krankenhauses. Der Informationsschalter befindet sich am Haupteingang und beantwortet allgemeine Fragen von Patienten und Besuchern. Besuchszeiten sind täglich von 15:00 bis 17:00 Uhr und von 19:00 bis 20:00 Uhr, auch am Wochenende; morgens sind keine Besucher erlaubt und Besuche dürfen höchstens 30 Minuten dauern. Das Café und der Shop sind von Montag bis Samstag von 9:00 bis 18:00 Uhr geöffnet. Geparkt werden soll auf dem Parkplatz gegenüber dem Haupteingang, damit die Ambulanzzufahrten frei bleiben.</div>
+    <div class="model" id="task2-model"><strong>Musterlösung:</strong><br>Das City General Hospital hat eine Notaufnahme, die 24 Stunden am Tag geöffnet ist. Der Eingang der Notaufnahme liegt an der südwestlichen Ecke des Krankenhauses. Der Informationsschalter befindet sich am Haupteingang und beantwortet allgemeine Fragen von Patienten und Besuchern. Besuchszeiten sind täglich von 15:00 bis 17:00 Uhr und von 19:00 bis 20:00 Uhr, auch am Wochenende; morgens sind keine Besucher erlaubt und Besuche dürfen h-chstens 30 Minuten dauern. Das Café und der Shop sind von Montag bis Samstag von 9:00 bis 18:00 Uhr geöffnet. Geparkt werden soll auf dem Parkplatz gegenüber dem Haupteingang, damit die Ambulanzzufahrten frei bleiben.</div>
     <div class="feedback" id="t2-feedback"></div>
     <div class="hint-box" id="task2-hint"></div>
     <div class="grammar-box" id="task2-grammar"></div>
   </section>
 
   <section class="card" id="task3">
-    <div class="task-title">3) Hilf Rebeccas Vater beim Gespräch in der Notaufnahme und vermittle sinngemäß.</div>
+    <div class="task-title">3) Hilf Rebeccas Vater beim Gespr-ch in der Notaufnahme und vermittle sinngem--.</div>
     <p class="task-sub">Rebeccas Vater hat starke Kopfschmerzen. Daher fährt die Familie in die Notaufnahme. Rebecca hilft ihrem Vater, der nicht so gut Englisch spricht, sich im Krankenhaus zu verständigen. Ergänze den Dialog.</p>
     <div class="q-list" id="t3-list"></div>
     <div class="actions">
-      <button class="btn btn-check" onclick="checkTask3()">Task 3 prüfen</button>
+      <button class="btn btn-check" onclick="checkTask3()">Task 3 pr-fen</button>
     </div>
     <div class="feedback" id="t3-feedback"></div>
   </section>
 
   <section class="card" id="final-card">
     <h2>Gesamtcheck & Korrigierte Version</h2>
-    <p class="small">Hier bekommst du eine zusammenhängende, korrigierte Endfassung deiner Antworten.</p>
+    <p class="small">Hier bekommst du eine zusammenh-ngende, korrigierte Endfassung deiner Antworten.</p>
     <div class="final-actions">
       <button class="btn btn-check" onclick="runOverallCheck()">Gesamtcheck</button>
       <button class="btn btn-secondary" onclick="buildCorrectedVersion()">Korrigierte Version erzeugen (KI)</button>
@@ -203,7 +209,7 @@ h1{font-family:'Fraunces',serif;font-size:clamp(1.5rem,4.2vw,2.1rem);line-height
   </section>
 </div>
 
-<div class="footer-note">Render-Integration aktiv: KI-Hilfe über <code>https://englisch-9.onrender.com</code> mit lokalem Fallback.</div>
+<div class="footer-note">Render-Integration aktiv: KI-Hilfe -ber <code>https://englisch-9.onrender.com</code> mit lokalem Fallback.</div>
 
 <script>
 const API_HINT_ENDPOINTS = [
@@ -221,12 +227,12 @@ const API_CORRECT_ENDPOINTS = [
 const task1Items = [
   {
     id:'t1-1',
-    prompt:'1. Mit 2.000 Betten und über 4.000 Mitarbeitern ist das City General Hospital ...',
-    model:'... eines der größten Krankenhäuser in der Gegend.'
+    prompt:'1. Mit 2.000 Betten und -ber 4.000 Mitarbeitern ist das City General Hospital ...',
+    model:'... eines der gr--ten Krankenh-user in der Gegend.'
   },
   {
     id:'t1-2',
-    prompt:'2. Ungefähr ... sind Notfälle.',
+    prompt:'2. Ungef-hr ... sind Notf-lle.',
     model:'... 50% aller Patienten.'
   },
   {
@@ -249,7 +255,7 @@ const task1Items = [
   {
     id:'t1-6',
     prompt:'6. Das Rauchen ist ...',
-    model:'... in allen Krankenhausgebäuden verboten.'
+    model:'... in allen Krankenhausgeb-uden verboten.'
   }
 ];
 
@@ -262,9 +268,9 @@ const task3Items = [
   },
   {
     id:'t3-2',
-    prompt:'Rebecca (nach Dads Aussage über Kopfschmerzen und Hitze)',
-    source:'Dad: Ich habe seit Mittwoch schlimme Kopfschmerzen. Mir ist auch heiß.',
-    model:'Mein Vater hat seit Mittwoch starke Kopfschmerzen und ihm ist auch heiß.'
+    prompt:'Rebecca (nach Dads Aussage -ber Kopfschmerzen und Hitze)',
+    source:'Dad: Ich habe seit Mittwoch schlimme Kopfschmerzen. Mir ist auch hei-.',
+    model:'Mein Vater hat seit Mittwoch starke Kopfschmerzen und ihm ist auch hei-.'
   },
   {
     id:'t3-3',
@@ -274,7 +280,7 @@ const task3Items = [
   },
   {
     id:'t3-4',
-    prompt:'Rebecca (nach Dads Safari-Erklärung)',
+    prompt:'Rebecca (nach Dads Safari-Erkl-rung)',
     source:'Dad: ... Safari ... Hut im Hotel ... ganze Zeit in der Sonne.',
     model:'Wir waren am Mittwoch auf Safari. Mein Vater hat seinen Hut im Hotel vergessen und war die ganze Zeit in der Sonne.'
   },
@@ -294,7 +300,7 @@ const task3Items = [
     id:'t3-7',
     prompt:'Rebecca (nach "Please fill in this form ... the doctor will come in a minute.")',
     source:'Receptionist: Please fill in this form and sign it... doctor will come in a minute.',
-    model:'Sie sagt, wir sollen dieses Formular ausfüllen und unterschreiben und dann dort drüben warten. Der Arzt kommt gleich.'
+    model:'Sie sagt, wir sollen dieses Formular ausf-llen und unterschreiben und dann dort dr-ben warten. Der Arzt kommt gleich.'
   },
   {
     id:'t3-8',
@@ -305,7 +311,7 @@ const task3Items = [
 ];
 
 const task1HintRules = {
-  't1-1': ['eines der', 'größ', 'krankenh', 'gegend'],
+  't1-1': ['eines der', 'gr--', 'krankenh', 'gegend'],
   't1-2': ['50'],
   't1-3': ['notaufnahme', 'ambulanz'],
   't1-4': ['lehrkrankenhaus'],
@@ -315,7 +321,7 @@ const task1HintRules = {
 
 const task3HintRules = {
   't3-1': ['fragt', 'helfen'],
-  't3-2': ['kopfschmerzen', 'heiß'],
+  't3-2': ['kopfschmerzen', 'hei-'],
   't3-3': ['wetter', 'vater'],
   't3-4': ['safari', 'hut', 'sonne'],
   't3-5': ['medikamente', 'allergien'],
@@ -327,7 +333,7 @@ const task3HintRules = {
 const task1SemanticRules = {
   't1-1': [
     ['eines der','einer der','eins der'],
-    ['groß','größt','groesst','grosst','gros'],
+    ['gro-','gr--t','groesst','grosst','gros'],
     ['krankenhaus','hospital']
   ],
   't1-2': [
@@ -342,7 +348,7 @@ const task1SemanticRules = {
   ],
   't1-5': [
     ['200','zweihundert'],
-    ['nurses','krankenschwestern','pfleger','assistant doctors','assistenzärzte','assistenzaerzte']
+    ['nurses','krankenschwestern','pfleger','assistant doctors','assistenz-rzte','assistenzaerzte']
   ],
   't1-6': [
     ['rauchen','smoking'],
@@ -356,10 +362,10 @@ function matchAnyGroup(text, groups) {
 
 function normalizeLoose(s){
   return norm(s)
-    .replace(/ä/g,'a')
-    .replace(/ö/g,'o')
-    .replace(/ü/g,'u')
-    .replace(/ß/g,'ss');
+    .replace(/-/g,'a')
+    .replace(/-/g,'o')
+    .replace(/-/g,'u')
+    .replace(/-/g,'ss');
 }
 
 function includesLoose(text, token){
@@ -516,14 +522,14 @@ function keywordCheck(value, model){
 
 function buildTask1Hint(id, text){
   const v = normalizeLoose(text);
-  if (!v) return 'Schritt 1: Schreibe zuerst eine kurze Antwort mit den Schlüsselwörtern aus der Broschüre.';
+  if (!v) return 'Schritt 1: Schreibe zuerst eine kurze Antwort mit den Schl-sselwörtern aus der Broschüre.';
 
   if (id === 't1-1' && includesLoose(v, 'eines der') && includesLoose(v, 'gegend')) {
     if (!includesLoose(v, 'krankenhaus')) {
-      return 'Inhalt stimmt. Grammatik-Feinschliff: Ergänze das Nomen "Krankenhäuser".';
+      return 'Inhalt stimmt. Grammatik-Feinschliff: Ergänze das Nomen "Krankenh-user".';
     }
     if (!includesLoose(v, 'gro')) {
-      return 'Inhalt stimmt fast. Ergänze ein passendes Adjektiv wie "größten".';
+      return 'Inhalt stimmt fast. Ergänze ein passendes Adjektiv wie "gr--ten".';
     }
   }
 
@@ -534,13 +540,13 @@ function buildTask1Hint(id, text){
   const semantic = task1SemanticRules[id] || [];
   const missingGroup = semantic.find(group => !group.some(token => includesLoose(v, token)));
   if (missingGroup && missingGroup.length > 0) {
-    return 'Nächster Schritt: Ergänze noch "' + missingGroup[0] + '".';
+    return 'N-chster Schritt: Ergänze noch "' + missingGroup[0] + '".';
   }
 
   const rule = task1HintRules[id] || [];
   const missing = rule.filter(k => !v.includes(k));
-  if (missing.length > 0) return 'Nächster Schritt: Ergänze noch "' + missing[0] + '".';
-  return 'Fast richtig. Prüfe noch einmal die Kerninformation aus der Broschüre.';
+  if (missing.length > 0) return 'N-chster Schritt: Ergänze noch "' + missing[0] + '".';
+  return 'Fast richtig. Pr-fe noch einmal die Kerninformation aus der Broschüre.';
 }
 
 function buildTask3Hint(id, text){
@@ -552,7 +558,7 @@ function buildTask3Hint(id, text){
     return 'Inhalt passt schon gut. Feinschliff: einfacher und klarer Satzbau.';
   }
   const missing = rule.find(k => !v.includes(k));
-  return 'Nächster Schritt: Baue das Schlüsselwort "' + (missing || rule[0] || 'Kernaussage') + '" ein.';
+  return 'N-chster Schritt: Baue das Schlüsselwort "' + (missing || rule[0] || 'Kernaussage') + '" ein.';
 }
 
 function checkTask1(){
@@ -561,7 +567,7 @@ function checkTask1(){
     const val = getTask1Value(it);
     const ok = isTask1SemanticallyCorrect(it.id, val) || keywordCheck(val, it.model);
     if (ok) okCount++;
-    setFeedback(it.id, ok, ok ? 'Sinngemäß richtig.' : 'Inhaltlich noch unvollständig. Ergänze die Kerninformation.');
+    setFeedback(it.id, ok, ok ? 'Sinngem-- richtig.' : 'Inhaltlich noch unvollst-ndig. Ergänze die Kerninformation.');
   });
   const fb = document.getElementById('t1-feedback');
   fb.className = 'feedback ' + (okCount >= 4 ? 'ok' : 'bad');
@@ -576,7 +582,7 @@ function checkTask2(){
   const ok = hits >= 8 && val.trim().length > 220;
   const fb = document.getElementById('t2-feedback');
   fb.className = 'feedback ' + (ok ? 'ok' : 'bad');
-  fb.textContent = ok ? 'Task 2 wirkt vollständig.' : 'Es fehlen noch Inhalte (5 Bereiche vollständig abdecken).';
+  fb.textContent = ok ? 'Task 2 wirkt vollst-ndig.' : 'Es fehlen noch Inhalte (5 Bereiche vollst-ndig abdecken).';
 }
 
 function checkTask3(){
@@ -588,7 +594,7 @@ function checkTask3(){
     const hasRelevantWord = rule.some(k => v.includes(k));
     const ok = keywordCheck(val, it.model) || (v.length > 18 && hasRelevantWord);
     if (ok) okCount++;
-    setFeedback(it.id, ok, ok ? 'Sinngemäß passend.' : 'Noch nicht eindeutig genug vermittelt.');
+    setFeedback(it.id, ok, ok ? 'Sinngem-- passend.' : 'Noch nicht eindeutig genug vermittelt.');
   });
   const fb = document.getElementById('t3-feedback');
   fb.className = 'feedback ' + (okCount >= 6 ? 'ok' : 'bad');
@@ -659,11 +665,11 @@ async function askHint(id, btn){
       if (text.length < 50) {
         steps.push('Schritt 1: Starte mit 1 Satz zur Notaufnahme (24 Stunden + Lage des Eingangs).');
       } else {
-        if (!t.includes('notaufnahme')) steps.push('Nächster Schritt: Notaufnahme ergänzen.');
-        if (!t.includes('informationsschalter') && !t.includes('info')) steps.push('Nächster Schritt: Informationsschalter am Haupteingang ergänzen.');
-        if (!t.includes('besuch') && !t.includes('15') && !t.includes('17')) steps.push('Nächster Schritt: Besuchszeiten ergänzen (nachmittags + abends, nicht morgens).');
-        if (!t.includes('cafe') && !t.includes('shop')) steps.push('Nächster Schritt: Café und Shop mit Öffnungszeit ergänzen.');
-        if (!t.includes('park') && !t.includes('parkplatz')) steps.push('Nächster Schritt: Parken gegenüber Haupteingang + Zufahrten frei halten ergänzen.');
+        if (!t.includes('notaufnahme')) steps.push('N-chster Schritt: Notaufnahme ergänzen.');
+        if (!t.includes('informationsschalter') && !t.includes('info')) steps.push('N-chster Schritt: Informationsschalter am Haupteingang ergänzen.');
+        if (!t.includes('besuch') && !t.includes('15') && !t.includes('17')) steps.push('N-chster Schritt: Besuchszeiten ergänzen (nachmittags + abends, nicht morgens).');
+        if (!t.includes('cafe') && !t.includes('shop')) steps.push('N-chster Schritt: Café und Shop mit -ffnungszeit ergänzen.');
+        if (!t.includes('park') && !t.includes('parkplatz')) steps.push('N-chster Schritt: Parken gegenüber Haupteingang + Zufahrten frei halten ergänzen.');
         if (steps.length === 0) steps.push('Feinschliff: Kürzere, klare Sätze und alle 5 Bereiche in eigener Reihenfolge.');
       }
       hintBox.innerHTML = '<strong>KI-Hilfe (kleinschrittig):</strong> ' + esc(steps[0]);
@@ -682,7 +688,7 @@ async function askHint(id, btn){
     const hintBox = document.getElementById(id === 'task2' ? 'task2-hint' : id + '-hint');
     if (hintBox) {
       hintBox.classList.add('show');
-      hintBox.innerHTML = '<strong>KI-Hilfe:</strong> Temporärer Fehler. Bitte nochmal klicken.';
+      hintBox.innerHTML = '<strong>KI-Hilfe:</strong> Tempor-rer Fehler. Bitte nochmal klicken.';
     }
   } finally {
     setBtnBusy(btn, false, '', 'KI-Hilfe');
@@ -695,13 +701,13 @@ function localGrammarFix(text){
   t = t.replace(/\s+/g, ' ');
   t = t.replace(/\bi\b/g, 'I');
   // Common German mediation fixes
-  t = t.replace(/\beines\s+der\s+gr[oö]?[sß]t\w*\s+in\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
-  t = t.replace(/\beines\s+der\s+gr[oö]?[sß]t\w*\s+in\s+der\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
-  t = t.replace(/\beines\s+der\s+gr[oö]?[sß]t\w*\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
-  t = t.replace(/\beine?s?\s+der\s+g[r]?[oö]?[sß]te[n]?\s+in\s+(der\s+)?gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
-  t = t.replace(/\beines\s+der\s+g[oö]ssen\s+in\s+der\s+gegend\b/gi, 'Eines der größten Krankenhäuser in der Gegend');
-  t = t.replace(/\beine\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
-  t = t.replace(/\bein\s+der\s+gr[oö]ßten\s+krankenhaus\b/gi, 'Eines der größten Krankenhäuser');
+  t = t.replace(/\beines\s+der\s+gr[o-]?[s-]t\w*\s+in\s+gegend\b/gi, 'Eines der gr--ten Krankenh-user in der Gegend');
+  t = t.replace(/\beines\s+der\s+gr[o-]?[s-]t\w*\s+in\s+der\s+gegend\b/gi, 'Eines der gr--ten Krankenh-user in der Gegend');
+  t = t.replace(/\beines\s+der\s+gr[o-]?[s-]t\w*\s+gegend\b/gi, 'Eines der gr--ten Krankenh-user in der Gegend');
+  t = t.replace(/\beine?s?\s+der\s+g[r]?[o-]?[s-]te[n]?\s+in\s+(der\s+)?gegend\b/gi, 'Eines der gr--ten Krankenh-user in der Gegend');
+  t = t.replace(/\beines\s+der\s+g[o-]ssen\s+in\s+der\s+gegend\b/gi, 'Eines der gr--ten Krankenh-user in der Gegend');
+  t = t.replace(/\beine\s+der\s+gr[o-]-ten\s+krankenhaus\b/gi, 'Eines der gr--ten Krankenh-user');
+  t = t.replace(/\bein\s+der\s+gr[o-]-ten\s+krankenhaus\b/gi, 'Eines der gr--ten Krankenh-user');
   t = t.replace(/\bin\s+gegend\b/gi, 'in der Gegend');
   t = t.replace(/\b50\s*prozent\b/gi, '50 Prozent');
   t = t.replace(/\bfunfzig\s*prozent\b/gi, '50 Prozent');
@@ -721,7 +727,7 @@ function postFixGermanSuggestion(id, out){
   if (id === 't1-1') {
     const v = normalizeLoose(t);
     if (includesLoose(v, 'eines der') && includesLoose(v, 'gegend') && !includesLoose(v, 'krankenh')) {
-      return 'Eines der größten Krankenhäuser in der Gegend.';
+      return 'Eines der gr--ten Krankenh-user in der Gegend.';
     }
   }
   if (id === 't1-2') {
@@ -751,7 +757,7 @@ function looksGerman(text){
 function translateKnownEnglishToGerman(s){
   const t = norm(s);
   if (t.includes('fifty percent')) return '50 Prozent.';
-  if (t.includes('one of the largest') || t.includes('one of the biggest')) return 'Eines der größten Krankenhäuser in der Gegend.';
+  if (t.includes('one of the largest') || t.includes('one of the biggest')) return 'Eines der gr--ten Krankenh-user in der Gegend.';
   if (t.includes('teaching hospital')) return 'Ein Lehrkrankenhaus.';
   if (t.includes('no smoking')) return 'Rauchen ist verboten.';
   return '';
@@ -759,19 +765,19 @@ function translateKnownEnglishToGerman(s){
 
 function canonicalGermanById(id){
   const map = {
-    't1-1': 'Eines der größten Krankenhäuser in der Gegend.',
+    't1-1': 'Eines der gr--ten Krankenh-user in der Gegend.',
     't1-2': '50 Prozent.',
     't1-3': 'In die Notaufnahme und mit der Ambulanz oder dem Hubschrauber.',
     't1-4': 'Ein Lehrkrankenhaus.',
     't1-5': '200 apprentice nurses und assistant doctors.',
-    't1-6': 'In allen Krankenhausgebäuden verboten.',
+    't1-6': 'In allen Krankenhausgeb-uden verboten.',
     't3-1': 'Die Arzthelferin fragt, wie sie helfen kann.',
-    't3-2': 'Mein Vater hat seit Mittwoch starke Kopfschmerzen und ihm ist heiß.',
+    't3-2': 'Mein Vater hat seit Mittwoch starke Kopfschmerzen und ihm ist hei-.',
     't3-3': 'Sie sagt, dass das heiße Wetter meinem Vater vielleicht nicht gutgetan hat.',
     't3-4': 'Wir waren am Mittwoch auf Safari, er hatte keinen Hut und war lange in der Sonne.',
     't3-5': 'Sie fragt, ob mein Vater Medikamente nimmt oder Allergien hat.',
     't3-6': 'Mein Vater nimmt keine Medikamente und hat keine Allergien.',
-    't3-7': 'Sie sagt, wir sollen das Formular ausfüllen, unterschreiben und warten; der Arzt kommt gleich.',
+    't3-7': 'Sie sagt, wir sollen das Formular ausf-llen, unterschreiben und warten; der Arzt kommt gleich.',
     't3-8': 'Mein Vater bedankt sich für die Hilfe.'
   };
   return map[id] || '';
@@ -822,7 +828,7 @@ async function askGrammar(id, btn){
       return;
     }
 
-    box.innerHTML = '<strong>KI-Grammatik:</strong> LLM prüft Grammatik...';
+    box.innerHTML = '<strong>KI-Grammatik:</strong> LLM pr-ft Grammatik...';
 
     try {
       const corrected = await callCorrectApi(text);
@@ -836,10 +842,10 @@ async function askGrammar(id, btn){
           language: 'de',
           model: 'gpt-4.1-mini',
           exerciseId: id + '-grammar',
-          task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht ändern. Sprache MUSS Deutsch bleiben.',
+          task: 'Korrigiere nur Grammatik und Rechtschreibung. Inhalt und Bedeutung nicht -ndern. Sprache MUSS Deutsch bleiben.',
           studentAnswer: text,
           correctAnswer: '',
-          instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erklärung.'
+          instruction: 'Gib nur die korrigierte Version auf Deutsch zurück, ohne Erkl-rung.'
         });
         const cleaned = corrected.replace(/^```[\s\S]*?\n/, '').replace(/```$/,'').trim();
         const out = finalizeGrammarOutput(id, text, cleaned);
@@ -901,7 +907,7 @@ function runOverallCheck(){
   checkTask3();
   const msg = document.getElementById('overall-feedback');
   msg.className = 'feedback ok';
-  msg.textContent = 'Gesamtcheck ausgeführt. Nutze nun "Korrigierte Version erzeugen" für die Endfassung.';
+  msg.textContent = 'Gesamtcheck ausgefährt. Nutze nun "Korrigierte Version erzeugen" für die Endfassung.';
 }
 
 async function sendChat(){
@@ -930,11 +936,11 @@ async function sendChat(){
       task:'Freie Rueckfrage zur Mediation',
       studentAnswer:q,
       correctAnswer:'Hilf mit konkreten Formulierungen fuer Task 1-3',
-      instruction:'Antworte kurz, schülernah und mit konkretem Formulierungsvorschlag.'
+      instruction:'Antworte kurz, sch-lernah und mit konkretem Formulierungsvorschlag.'
     });
     b.textContent = hint;
   } catch (e) {
-    b.textContent = 'Ich bin gerade offline. Nutze die Musterlösungen als Leitlinie und frage später erneut.';
+    b.textContent = 'Ich bin gerade offline. Nutze die Musterlösungen als Leitlinie und frage sp-ter erneut.';
   }
 
   log.scrollTop = log.scrollHeight;
@@ -951,6 +957,19 @@ initTask1();
 initTask3();
 document.getElementById('t2-text').addEventListener('input', () => updateModelButton('task2'));
 </script>
+<script id="med-nav-script">
+(function(){
+  var b=document.getElementById('medBackBtn');
+  if(!b) return;
+  b.addEventListener('click', function(){
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='../index.html'; }
+  });
+})();
+</script>
 </body>
 </html>
+
+
+
 

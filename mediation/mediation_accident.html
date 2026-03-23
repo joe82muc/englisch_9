@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#065f46">
-<title>Mediation – Reporting an Accident</title>
+<title>Mediation - Reporting an Accident</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -18,21 +18,21 @@
   --gbg:#dcfce7;--gb:#16a34a;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:"Trebuchet MS","Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
 /* HEADER */
 .hdr{background:linear-gradient(135deg,#991b1b,#dc2626);padding:calc(env(safe-area-inset-top)+1.2rem) 1.2rem 2rem;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%);}
 .back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:.8rem;text-decoration:none;}
 .utag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7dd3fc;margin-bottom:.3rem;}
-h1{font-family:'Fraunces',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#fff;line-height:1.1;}
+h1{font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#fff;line-height:1.1;}
 h1 em{font-style:italic;opacity:.85;}
 .hsub{font-size:.8rem;color:rgba(255,255,255,.6);margin-top:.3rem;}
 
 /* SCENARIO */
 .scenario{max-width:680px;margin:1.2rem auto;padding:0 1rem;}
 .scene-card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:1rem 1.2rem;box-shadow:0 2px 12px rgba(6,95,70,.08);margin-bottom:1rem;}
-.scene-card h2{font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;color:var(--green);margin-bottom:.5rem;}
+.scene-card h2{font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:.95rem;font-weight:700;color:var(--green);margin-bottom:.5rem;}
 .scene-card p{font-size:.82rem;line-height:1.6;color:var(--muted);}
 
 /* CHAT */
@@ -75,7 +75,7 @@ h1 em{font-style:italic;opacity:.85;}
 
 /* INPUT BAR */
 .input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1.5px solid var(--border);padding:.7rem 1rem calc(env(safe-area-inset-bottom) + .7rem);display:flex;gap:.5rem;align-items:flex-end;z-index:10;}
-.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fafc;}
+.input-bar textarea{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:.6rem .85rem;font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:.88rem;resize:none;outline:none;min-height:42px;max-height:120px;transition:border .2s;background:#f8fafc;}
 .input-bar textarea:focus{border-color:var(--green2);}
 .input-bar textarea:disabled{background:#f1f5f9;color:#94a3b8;}
 .send-btn{background:var(--green);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
@@ -93,24 +93,38 @@ h1 em{font-style:italic;opacity:.85;}
 
 /* Complete */
 .complete{text-align:center;padding:2rem 1rem;}
-.complete h2{font-family:'Fraunces',serif;color:var(--green);font-size:1.3rem;margin-bottom:.5rem;}
+.complete h2{font-family:"Trebuchet MS","Segoe UI",sans-serif;color:var(--green);font-size:1.3rem;margin-bottom:.5rem;}
 .complete p{color:var(--muted);font-size:.88rem;}
-.restart-btn{margin-top:1rem;padding:.6rem 1.5rem;background:var(--green);color:#fff;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;}
+.restart-btn{margin-top:1rem;padding:.6rem 1.5rem;background:var(--green);color:#fff;border:none;border-radius:50px;font-family:"Trebuchet MS","Segoe UI",sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;}
+</style>
+<style id="med-nav-style">
+.med-nav{max-width:980px;margin:12px auto 0;padding:0 12px;display:flex;gap:10px}
+.med-nav a,.med-nav button{appearance:none;border:1px solid #b8cff8;background:linear-gradient(180deg,#fff,#f3f8ff);color:#12335f;padding:8px 14px;border-radius:999px;font:700 14px/1.1 "Trebuchet MS","Segoe UI",sans-serif;text-decoration:none;cursor:pointer}
+.med-nav a:hover,.med-nav button:hover{border-color:#7fb0f0}
+</style>
+<style id="med-align-fix">
+/* header and situation left edge aligned */
+.hdr{max-width:680px;margin:.55rem auto 0;border-radius:22px;padding:1.05rem 1rem 1.55rem !important}
+.scenario{max-width:680px;margin:1rem auto 0 !important;padding:0 !important}
+.progress{max-width:680px;margin:.45rem auto !important;padding:0 !important}
+.chat-wrap{max-width:680px;margin:0 auto !important;padding:0 0 8rem !important}
+@media (max-width:720px){
+  .hdr,.scenario,.progress,.chat-wrap{max-width:none !important;margin-left:1rem !important;margin-right:1rem !important}
+}
 </style>
 </head>
 <body>
+<div class='med-nav'><a href='../index.html'>Home</a><button type='button' id='medBackBtn'>Zurück</button></div>
 
-<div class="hdr">
-  <a href="index.html" class="back">← Back</a>
-  <div class="utag">Unit 3 · Mediation · Accident</div>
-  <h1>Reporting<br><em>an Accident</em> 🚗</h1>
+<div class="hdr"><div class="utag">Unit 3 - Mediation - Accident</div>
+  <h1>Reporting<br><em>an Accident</em> </h1>
   <p class="hsub">Du vermittelst zwischen deiner Tante und dem Polizisten</p>
 </div>
 
 <div class="scenario">
   <div class="scene-card">
-    <h2>🎭 Situation</h2>
-    <p>Du bist mit deiner Tante in Kapstadt unterwegs. Vor euren Augen passiert ein Verkehrsunfall zwischen einem Auto und einem Radfahrer. Ein Polizist kommt und befragt euch als Zeugen. Deine Tante spricht kein Englisch – du musst vermitteln!</p>
+    <h2>Situation</h2>
+    <p>Du bist mit deiner Tante in Kapstadt unterwegs. Vor euren Augen passiert ein Verkehrsunfall zwischen einem Auto und einem Radfahrer. Ein Polizist kommt und befragt euch als Zeugen. Deine Tante spricht kein Englisch - du musst vermitteln!</p>
   </div>
 </div>
 
@@ -124,20 +138,20 @@ h1 em{font-style:italic;opacity:.85;}
 </div>
 
 <div class="input-bar" id="inputBar">
-  <textarea id="userInput" rows="1" placeholder="Übersetze für den Polizisten…" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+  <textarea id="userInput" rows="1" placeholder="Übersetze für den Polizisten-" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
 </div>
 
 <script>
 var API_BASE = 'https://englisch-9.onrender.com';
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    DIALOG SCRIPT
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 var STEPS = [
   {
     uncle: "Sag dem Polizisten unsere Namen. Ich heiße Maria Schmidt und bin am 15. März 1978 geboren.",
-    instruction: "🇩🇪→🇬🇧 Nenne dem Polizisten den Namen und das Geburtsdatum. Du kannst 'Her name is...' (3. Person) oder 'My name is...' (1. Person für sie) sagen.",
+    instruction: "Hinweis: Nenne dem Polizisten den Namen und das Geburtsdatum. Du kannst 'Her name is...' (3. Person) oder 'My name is...' (1. Person für sie) sagen.",
     direction: "de-en",
     keywords: ['name','maria','schmidt','date','birth','born','march','1978'],
     minWords: 5,
@@ -146,7 +160,7 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "Thank you. And what is your address and phone number, please?",
-    instruction: "🇬🇧→🇩🇪 Der Polizist will die Adresse und Telefonnummer wissen. Übersetze das für deine Tante auf Deutsch!",
+    instruction: "Hinweis: Der Polizist will die Adresse und Telefonnummer wissen. Übersetze das für deine Tante auf Deutsch!",
     direction: "en-de",
     keywords: ['adresse','telefonnummer','nummer','anschrift','telefon','wo wohn'],
     minWords: 4,
@@ -154,7 +168,7 @@ var STEPS = [
   },
   {
     uncle: "Unsere Adresse ist das Hotel Sunshine, Long Street 42. Unsere Telefonnummer ist 0049-176-1234567.",
-    instruction: "🇩🇪→🇬🇧 Nenne die Adresse und Telefonnummer auf Englisch.",
+    instruction: "Hinweis: Nenne die Adresse und Telefonnummer auf Englisch.",
     direction: "de-en",
     keywords: ['address','hotel','sunshine','long street','phone','number'],
     minWords: 5,
@@ -163,15 +177,15 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "Got it. Now, can you tell me what time the accident happened?",
-    instruction: "🇬🇧→🇩🇪 Der Polizist fragt, wann der Unfall passiert ist. Übersetze für deine Tante!",
+    instruction: "Hinweis: Der Polizist fragt, wann der Unfall passiert ist. Übersetze für deine Tante!",
     direction: "en-de",
     keywords: ['wann','unfall','passiert','zeit','uhrzeit','geschehen'],
     minWords: 3,
     ranger: ""
   },
   {
-    uncle: "Wir sind um 3 Uhr angekommen. Ich glaube der Unfall ist ungefähr zehn Minuten vorher passiert.",
-    instruction: "🇩🇪→🇬🇧 Sag dem Polizisten, wann ihr ankamt und wann der Unfall war. Benutze 'arrived at …' und 'before'.",
+    uncle: "Wir sind um 3 Uhr angekommen. Ich glaube der Unfall ist ungef-hr zehn Minuten vorher passiert.",
+    instruction: "Hinweis: Sag dem Polizisten, wann ihr ankamt und wann der Unfall war. Benutze 'arrived at -' und 'before'.",
     direction: "de-en",
     keywords: ['arrived','three','ten','minutes','before','happened','think','accident'],
     minWords: 6,
@@ -179,15 +193,15 @@ var STEPS = [
   },
   {
     uncle: "Also, zuerst ist das Auto viel zu schnell um die Ecke gefahren. Dann hat es den Radfahrer erwischt. Danach sind beide stehen geblieben.",
-    instruction: "🇩🇪→🇬🇧 Beschreibe den Unfallhergang. Benutze 'First … Then … After that …'.",
+    instruction: "Hinweis: Beschreibe den Unfallhergang. Benutze 'First - Then - After that -'.",
     direction: "de-en",
     keywords: ['first','then','after','car','fast','cyclist','hit','stopped','corner'],
     minWords: 7,
     ranger: "Thank you. How many people were involved in the accident?"
   },
   {
-    uncle: "Es waren zwei Personen beteiligt – der Autofahrer und der Radfahrer. Der Radfahrer lag auf der Straße.",
-    instruction: "🇩🇪→🇬🇧 Sag, wie viele Personen beteiligt waren.",
+    uncle: "Es waren zwei Personen beteiligt - der Autofahrer und der Radfahrer. Der Radfahrer lag auf der Stra-e.",
+    instruction: "Hinweis: Sag, wie viele Personen beteiligt waren.",
     direction: "de-en",
     keywords: ['two','people','driver','cyclist','involved','road','street','ground'],
     minWords: 5,
@@ -196,7 +210,7 @@ var STEPS = [
   {
     uncle: "",
     rangerSays: "Thank you for your help. We will get in touch if we have any more questions. Please stay safe.",
-    instruction: "🇬🇧→🇩🇪 Der Polizist bedankt sich. Übersetze das für deine Tante!",
+    instruction: "Hinweis: Der Polizist bedankt sich. Übersetze das für deine Tante!",
     direction: "en-de",
     keywords: ['danke','hilfe','melden','fragen','weitere','sicher','pass auf'],
     minWords: 3,
@@ -210,9 +224,9 @@ var chatEl = document.getElementById('chat');
 var inputEl = document.getElementById('userInput');
 var sendBtn = document.getElementById('sendBtn');
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    CHAT HELPERS
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 function addMsg(type, sender, text) {
   var div = document.createElement('div');
   div.className = 'msg ' + type;
@@ -225,7 +239,7 @@ function addMsg(type, sender, text) {
 function addInstruction(text) {
   var div = document.createElement('div');
   div.className = 'instr';
-  div.textContent = '👉 ' + text;
+  div.textContent = text;
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
 }
@@ -234,7 +248,7 @@ function addTyping() {
   var div = document.createElement('div');
   div.className = 'msg ranger';
   div.id = 'typing';
-  div.innerHTML = '<div class="sender">👮 Polizist</div><div class="typing"><span></span><span></span><span></span></div>';
+  div.innerHTML = '<div class="sender">Polizist</div><div class="typing"><span></span><span></span><span></span></div>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth', block:'end'});
   return div;
@@ -251,9 +265,9 @@ function updateProgress() {
   document.getElementById('progLabel').textContent = 'Schritt ' + currentStep + ' / ' + STEPS.length;
 }
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    START
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 function startStep() {
   if (currentStep >= STEPS.length) {
     showComplete();
@@ -264,20 +278,20 @@ function startStep() {
   
   if (step.direction === 'en-de') {
     // Ranger said something, student translates to German for relative
-    addMsg('ranger', '👮 Polizist', step.rangerSays);
+    addMsg('ranger', 'Polizist', step.rangerSays);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Deutsch für deine Tante…';
+      inputEl.placeholder = 'Übersetze auf Deutsch für deine Tante-';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
     }, 600);
   } else {
     // Relative says something in German, student translates to English
-    addMsg('uncle', '👩 Tante (Deutsch)', step.uncle);
+    addMsg('uncle', 'Tante (Deutsch)', step.uncle);
     setTimeout(function() {
       addInstruction(step.instruction);
-      inputEl.placeholder = 'Übersetze auf Englisch für den Polizisten…';
+      inputEl.placeholder = 'Übersetze auf Englisch für den Polizisten-';
       inputEl.disabled = false;
       inputEl.focus();
       sendBtn.disabled = false;
@@ -286,9 +300,9 @@ function startStep() {
 }
 
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    HANDLE SEND
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 async function handleSend() {
   var val = inputEl.value.trim();
   if (!val || val.length < 2) return;
@@ -300,7 +314,7 @@ async function handleSend() {
   var step = STEPS[currentStep];
   
   // Show student message
-  addMsg('student', step.direction === 'en-de' ? '🎓 Du (Deutsch)' : '🎓 Du (Englisch)', val);
+  addMsg('student', step.direction === 'en-de' ? 'Du (Deutsch)' : 'Du (Englisch)', val);
   attempts++;
   
   // Try AI evaluation first, fallback to local
@@ -308,7 +322,7 @@ async function handleSend() {
   
   if (result.pass) {
     // Success!
-    addMsg('ok', '✅ Gut gemacht!', result.feedback);
+    addMsg('ok', '? Gut gemacht!', result.feedback);
     
     currentStep++;
     updateProgress();
@@ -328,7 +342,7 @@ async function handleSend() {
           var typing = addTyping();
           setTimeout(function() {
             removeTyping();
-            addMsg('ranger', '👮 Polizist', step.ranger);
+            addMsg('ranger', 'Polizist', step.ranger);
             setTimeout(function() { startStep(); }, 1000);
           }, 1200);
         }, 600);
@@ -338,9 +352,9 @@ async function handleSend() {
   } else {
     // Not good enough
     if (attempts >= 3) {
-      addMsg('tip', '🤖 KI-Tipp', result.feedback + '<br><br><strong>Beispiel:</strong> <em>' + result.example + '</em>');
+      addMsg('tip', 'KI-Tipp', result.feedback + '<br><br><strong>Beispiel:</strong> <em>' + result.example + '</em>');
     } else {
-      addMsg('tip', '🤖 KI-Tipp', result.feedback);
+      addMsg('tip', 'KI-Tipp', result.feedback);
     }
     
     // Re-enable input
@@ -352,9 +366,9 @@ async function handleSend() {
   }
 }
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    AI EVALUATION
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 async function evaluateWithAI(studentText, step) {
   try {
     var res = await fetch(API_BASE + '/api/hint-accident', {
@@ -363,7 +377,7 @@ async function evaluateWithAI(studentText, step) {
       body: JSON.stringify({
         studentAnswer: studentText,
         correctAnswer: step.ranger,
-        exerciseContext: 'MEDIATION (9. Klasse). Richtung: ' + step.direction + '. Original: "' + (step.uncle || step.rangerSays || '') + '" Schüler: "' + studentText + '" REGELN: Schüler spricht DIREKT mit Gesprächspartner (NICHT Tell him/Say to her). 1. Person UND 3. Person beide OK. SINN muss stimmen, nicht exakte Worte. Sei NICHT zu streng - wenn Sinn passt = pass:true. Antworte NUR JSON: {"pass":true,"feedback":"Kurzes Lob","example":""} oder {"pass":false,"feedback":"Was fehlt","example":"Beispiel"}'
+        exerciseContext: 'MEDIATION (9. Klasse). Richtung: ' + step.direction + '. Original: "' + (step.uncle || step.rangerSays || '') + '" Sch-ler: "' + studentText + '" REGELN: Sch-ler spricht DIREKT mit Gespr-chspartner (NICHT Tell him/Say to her). 1. Person UND 3. Person beide OK. SINN muss stimmen, nicht exakte Worte. Sei NICHT zu streng - wenn Sinn passt = pass:true. Antworte NUR JSON: {"pass":true,"feedback":"Kurzes Lob","example":""} oder {"pass":false,"feedback":"Was fehlt","example":"Beispiel"}'
       })
     });
     if (!res.ok) throw new Error('err');
@@ -404,7 +418,7 @@ async function evaluateWithAI(studentText, step) {
     
     // Last resort: use keywords
     var lower = hint.toLowerCase();
-    if (lower.includes('sehr gut') || lower.includes('korrekt') || lower.includes('richtig übertragen') || lower.includes('pass": true') || lower.includes('pass":true')) {
+    if (lower.includes('sehr gut') || lower.includes('korrekt') || lower.includes('richtig -bertragen') || lower.includes('pass": true') || lower.includes('pass":true')) {
       return { pass: true, feedback: 'Gut gemacht!', example: '' };
     }
     
@@ -417,15 +431,15 @@ async function evaluateWithAI(studentText, step) {
   }
 }
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    LOCAL EVALUATION (Fallback)
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 function evaluateLocal(text, step) {
   var low = text.toLowerCase();
   var words = text.trim().split(/\s+/).length;
   
   if (words < step.minWords) {
-    return {pass: false, feedback: 'Dein Satz ist zu kurz. Versuche eine vollständige Übersetzung.', example: ''};
+    return {pass: false, feedback: 'Dein Satz ist zu kurz. Versuche eine vollst-ndige -bersetzung.', example: ''};
   }
   
   if (step.direction === 'en-de') {
@@ -433,14 +447,14 @@ function evaluateLocal(text, step) {
     var engWords = ['the','you','your','they','have','can','will','would','should','could','what','please'];
     var engCount = engWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
     if (engCount >= 2) {
-      return {pass: false, feedback: 'Du sollst auf DEUTSCH übersetzen! Es sind noch englische Wörter im Satz.', example: ''};
+      return {pass: false, feedback: 'Du sollst auf DEUTSCH Übersetzen! Es sind noch englische Wörter im Satz.', example: ''};
     }
   } else {
     // Student should write ENGLISH
     var deWords = ['und','kann','darf','wir','bitte','fragen','ob','auch','nicht','mein','haben','gibt'];
     var deCount = deWords.filter(function(w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).length;
     if (deCount >= 2) {
-      return {pass: false, feedback: 'Du sollst auf ENGLISCH übersetzen! Es sind noch deutsche Wörter im Satz.', example: ''};
+      return {pass: false, feedback: 'Du sollst auf ENGLISCH Übersetzen! Es sind noch deutsche Wörter im Satz.', example: ''};
     }
   }
   
@@ -450,20 +464,20 @@ function evaluateLocal(text, step) {
     if (step.direction === 'de-en') {
       var isQuestion = step.instruction.toLowerCase().includes('frag');
       if (isQuestion && !text.includes('?')) {
-        return {pass: false, feedback: 'Fast richtig! Vergiss das Fragezeichen nicht – du stellst eine Frage.', example: ''};
+        return {pass: false, feedback: 'Fast richtig! Vergiss das Fragezeichen nicht - du stellst eine Frage.', example: ''};
       }
     }
-    return {pass: true, feedback: step.direction === 'en-de' ? 'Gut übersetzt!' : 'Sehr gut!', example: ''};
+    return {pass: true, feedback: step.direction === 'en-de' ? 'Gut -bersetzt!' : 'Sehr gut!', example: ''};
   } else if (matchCount === 1) {
     return {pass: false, feedback: 'Du bist auf dem richtigen Weg, aber es fehlt noch etwas. Lies nochmal genau.', example: ''};
   } else {
-    return {pass: false, feedback: 'Das trifft noch nicht ganz. Lies nochmal den Originaltext und übersetze den Sinn.', example: ''};
+    return {pass: false, feedback: 'Das trifft noch nicht ganz. Lies nochmal den Originaltext und Übersetze den Sinn.', example: ''};
   }
 }
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    COMPLETE
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 function showComplete() {
   inputEl.disabled = true;
   sendBtn.disabled = true;
@@ -471,14 +485,14 @@ function showComplete() {
   
   var div = document.createElement('div');
   div.className = 'complete';
-  div.innerHTML = '<h2>🎉 Mediation geschafft!</h2><p>Du hast alle 5 Situationen erfolgreich vermittelt.<br>Dein Onkel ist begeistert!</p><button class="restart-btn" onclick="location.reload()">🔄 Nochmal spielen</button>';
+  div.innerHTML = '<h2>Mediation geschafft!</h2><p>Du hast alle 5 Situationen erfolgreich vermittelt.<br>Dein Onkel ist begeistert!</p><button class="restart-btn" onclick="location.reload()">Nochmal spielen</button>';
   chatEl.appendChild(div);
   div.scrollIntoView({behavior:'smooth'});
 }
 
-/* ═══════════════════════════════════════
+/* ---------------------------------------
    TEXTAREA AUTO-RESIZE + ENTER
-   ═══════════════════════════════════════ */
+   --------------------------------------- */
 inputEl.addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
@@ -494,5 +508,20 @@ inputEl.addEventListener('keydown', function(e) {
 updateProgress();
 startStep();
 </script>
+<script id="med-nav-script">
+(function(){
+  var b=document.getElementById('medBackBtn');
+  if(!b) return;
+  b.addEventListener('click', function(){
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='../index.html'; }
+  });
+})();
+</script>
 </body>
 </html>
+
+
+
+
+
