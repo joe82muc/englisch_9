@@ -12,7 +12,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "schule123";
 const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || "";
-const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || "";
+const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || "westeurope";
 const AZURE_TTS_VOICE = process.env.AZURE_TTS_VOICE || "en-GB-SoniaNeural";
 
 app.use(cors());
