@@ -1,0 +1,48 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demnächst verfügbar</title>
+  <style>
+    :root{--bg1:#f4f8ff;--bg2:#fff1de;--ink:#10203a;--line:#d7e3ff;--card:#fff;--shadow:0 14px 36px rgba(20,49,96,.14)}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:"Trebuchet MS","Segoe UI",sans-serif;color:var(--ink);background:linear-gradient(130deg,var(--bg1),var(--bg2))}
+    .wrap{max-width:900px;margin:0 auto;padding:1rem}
+    .hero{background:linear-gradient(130deg,#0556b6,#1f7de2 52%,#ff8c42);color:#fff;border-radius:20px;padding:1rem;box-shadow:var(--shadow)}
+    .card{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1rem;box-shadow:var(--shadow)}
+    .actions{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.9rem}
+    .btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:999px;border:1px solid #b8cff8;background:linear-gradient(180deg,#fff,#f3f8ff);color:#12335f;padding:.55rem .95rem;font-weight:700}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Demnächst verfügbar</h1>
+      <p id="topic">Dieser Bereich wird aktuell vorbereitet.</p>
+    </section>
+    <section class="card">
+      <p>Die Inhalte werden schrittweise ergänzt. Bitte später erneut öffnen.</p>
+      <div class="actions">
+        <a class="btn" id="homeLink" href="./index.html">Zur Startseite</a>
+        <a class="btn" href="#" onclick="history.length>1?history.back():location.href='./index.html';return false;">Zurück</a>
+      </div>
+    </section>
+  </main>
+  <script>
+    (function(){
+      var p = new URLSearchParams(location.search);
+      var item = p.get('item') || '';
+      var map = {
+        'unit1':'Unit 1',
+        'unit2':'Unit 2',
+        'sonstige-grammatik':'Sonstige Grammatik',
+        'schriftliche-pruefung':'Schriftliche Prüfung Quali'
+      };
+      if(map[item]){
+        document.getElementById('topic').textContent = map[item] + ' wird demnächst freigeschaltet.';
+      }
+    })();
+  </script>
+</body>
+</html>
