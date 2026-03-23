@@ -11,6 +11,9 @@ const PORT = Number(process.env.PORT || 3000);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "schule123";
+const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || "";
+const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || "";
+const AZURE_TTS_VOICE = process.env.AZURE_TTS_VOICE || "en-GB-SoniaNeural";
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
@@ -479,6 +482,45 @@ Gib kurzes Feedback zu einem Role-Model-Text.
   }
 });
 
+app.post("/api/tts", async (req, res) => {
+  const text = clean(req.body?.text);
+  const voice = clean(req.body?.voice) || AZURE_TTS_VOICE;
+
+  if (!text) return res.status(400).json({ error: "text fehlt." });
+  if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) {
+    return res.status(503).json({ error: "Azure TTS nicht konfiguriert." });
+  }
+
+  try {
+    const safeText = escapeXml(text.slice(0, 280));
+    const ssml = `<speak version="1.0" xml:lang="en-US"><voice name="${voice}">${safeText}</voice></speak>`;
+    const endpoint = `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
+
+    const r = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "audio-24khz-96kbitrate-mono-mp3",
+        "User-Agent": "englisch9-tts"
+      },
+      body: ssml
+    });
+
+    if (!r.ok) {
+      const errTxt = await r.text();
+      return res.status(502).json({ error: `Azure TTS Fehler ${r.status}`, details: errTxt.slice(0, 240) });
+    }
+
+    const audio = Buffer.from(await r.arrayBuffer());
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Cache-Control", "no-store");
+    return res.send(audio);
+  } catch (e) {
+    console.error("Fehler bei /api/tts:", e.message);
+    return res.status(500).json({ error: "TTS fehlgeschlagen." });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server laeuft auf Port ${PORT}`);
   console.log(`Static root: ${STATIC_ROOT}`);
@@ -600,6 +642,15 @@ function getAuthToken(req) {
 
 function clean(v) { return String(v || "").trim(); }
 
+function escapeXml(v) {
+  return String(v || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 function normalizeKey(firstName, lastName, className) {
   return `${firstName}|${lastName}|${className}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 }
@@ -684,4 +735,5 @@ function buildStudentOverview(records) {
   overview.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
   return overview;
 }
+
 
