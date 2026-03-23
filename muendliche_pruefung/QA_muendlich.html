@@ -1,106 +1,124 @@
 ﻿<!doctype html>
-<html lang='de'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
-<title>QA muendlich - HTML</title>
-<style>
-:root { --bg-1:#f4f8ff; --bg-2:#fff1de; --ink:#10203a; --soft:#5c6d8a; --card:#fff; --line:#d7e3ff; --shadow:0 14px 36px rgba(20,49,96,.14); }
-*{box-sizing:border-box}
-body{margin:0;font-family:"Trebuchet MS","Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 8%, #dce9ff 0%, transparent 42%),radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),linear-gradient(130deg,var(--bg-1),var(--bg-2));}
-.wrap{max-width:1100px;margin:0 auto;padding:1.1rem 1rem 2.2rem}
-.hero{background:linear-gradient(130deg,#0556b6,#1f7de2 52%,#ff8c42);color:#fff;border-radius:24px;padding:1.2rem;box-shadow:var(--shadow)}
-h1{margin:0;font-size:clamp(1.5rem,3.2vw,2.5rem)}
-.sub{margin:.45rem 0 0;opacity:.96}
-.back{display:inline-block;margin-top:.7rem;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.6);padding:.3rem .7rem;border-radius:999px;font-weight:700}
-.card{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1rem;box-shadow:var(--shadow)}
-.kicker{margin:0 0 .5rem;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#3a5b93;font-weight:700}
-h2{margin:.1rem 0 .6rem;color:#0e3c79;font-size:1.25rem}
-p{margin:.28rem 0;line-height:1.45}
-ul{margin:.4rem 0 .2rem 1.05rem;padding:0}
-li{margin:.25rem 0;line-height:1.45}
-.img-grid{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:.75rem}
-.img-grid img{width:100%;border-radius:12px;border:1px solid #b9d4ff;display:block}
-.footer{margin-top:1rem;color:var(--soft);font-size:.85rem;text-align:center}
-</style><style id="global-nav-style">
-.global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
-.global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
-.global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
-.global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
-@media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
-</style>
-</head><body>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QA mündliche Prüfung - Englisch</title>
+  <style>
+    :root { --bg-1:#f4f8ff; --bg-2:#fff1de; --ink:#10203a; --soft:#5c6d8a; --card:#fff; --line:#d7e3ff; --shadow:0 14px 36px rgba(20,49,96,.14); }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Trebuchet MS","Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 8%, #dce9ff 0%, transparent 42%),radial-gradient(circle at 92% 84%, #ffd8b8 0%, transparent 34%),linear-gradient(130deg,var(--bg-1),var(--bg-2));}
+    .wrap{max-width:1100px;margin:0 auto;padding:1.1rem 1rem 2.2rem}
+    .hero{background:linear-gradient(130deg,#0556b6,#1f7de2 52%,#ff8c42);color:#fff;border-radius:24px;padding:1.2rem;box-shadow:var(--shadow)}
+    h1{margin:0;font-size:clamp(1.5rem,3.2vw,2.5rem)}
+    .card{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1rem;box-shadow:var(--shadow)}
+    .kicker{margin:0 0 .5rem;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#3a5b93;font-weight:700}
+    h2{margin:.1rem 0 .6rem;color:#0e3c79;font-size:1.25rem}
+    p{margin:.35rem 0;line-height:1.5}
+    ul{margin:.35rem 0 .65rem 1.1rem;padding:0}
+    li{margin:.25rem 0;line-height:1.5}
+    .img-grid{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:.75rem}
+    .img-grid img{width:100%;border-radius:12px;border:1px solid #b9d4ff;display:block}
+  </style>
+  <style id="global-nav-style">
+    .global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+    .global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+    .global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+    .global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+    @media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+  </style>
+</head>
+<body>
 <div class="global-nav" id="global-nav">
   <a id="globalNavHome" href="#">Home</a>
   <button id="globalNavBack" type="button">Zurück</button>
   <div class="spacer">Englisch 9</div>
-</div><main class='wrap'>
-<section class='hero'><h1>QA muendlich - Englisch</h1>
-</section>
-<section class='card'>
-<p class='kicker'>Seite 1</p>
-<h2>1. PICTURE BASED-TALK</h2>
-<p>Der Ablauf:</p>
-<p>- du erhelst ein Bild zu einem Thema</p>
-<p>- du hast 30 Sekunden Zeit, um dich mit dem Bild auseinanderzusetzen</p>
-<p>- Die Lehrkraefte stellen bildbezogene Fragen. (Diese beziehen sich auf die im Bild dargestellten</p>
-<p>Aspekte).</p>
-<p>- Die Lehrkraefte stellen weiterfuehrende Fragen. (Diese beziehen sich nicht mehr direkt auf den</p>
-<p>Bildinhalt, gehen jedoch vom Bild aus.)</p>
-<p>- wichtig: Phrasen verwenden (Im Vordergrund, auf der linken Seite, in my opinion, etc.)</p>
-<p>- sei immer wachsam, oft geben Pruefer unbeabsichtigt versteckte Tipps oder sogar Vokabeln preis!</p>
-<p>Vorbereiten:</p>
-<p>? eben lesst sich dieser Prefungsteil sehr gut mit einem Freund/ einer Freundin</p>
-<p>? nehmt euch am besten detailreiche Bilder z.B. aus einer Zeitung oder dem Internet</p>
-<p>? schreibt zusammen alle Begriffe heraus, die ihr benoetigt um das Bild zu beschreiben</p>
-<p>? dann dem anderen das Bild mit den zuvor gefundenen Vokabeln beschreiben</p>
-<p>Beispiel:</p>
-<div class='img-grid'>
-<img src='QA_muendlich_assets/qa_img_01.jpg' alt='PDF Bild qa_img_01.jpg'>
 </div>
-</section>
-<section class='card'>
-<p class='kicker'>Seite 2</p>
-<h2>2. TOPIC-BASED-TALK</h2>
-<p>Der Ablauf:</p>
-<p>- Du bekommst eine Mindmap mit einem Thema in der Mitte und 6 Unterthemen</p>
-<p>- kurze Vorbereitungszeit von 90 Sekunden</p>
-<p>- du kannst dir Notizen machen!</p>
-<p>- aus 6 Teilaspekten insgesamt 3 auswaehlen!</p>
-<p>- eigene Meinung zum Thema haben und den Pruefer moeglichst nicht zum Fragen kommen lassen</p>
-<p>Vorbereiten:</p>
-<p>? Inhalte der Units gut koennen &gt; Mindmaps zu den Themenbereiche strukturieren</p>
-<p>? laut sprechend in Englischer Sprache berichten</p>
-<p>? Versuche 3-5 Minuten in Englisch ueber ein Thema zu sprechen, das ist lenger als du denkst!</p>
-<p>? einige besondere / themenspezifische Vokabeln wissen</p>
-<p>My topic is eHoliday- and Ied like to talk about the subtopics means of transport, money and costs and recreation.</p>
-<p>First of all ... Let us go on with ... What I want to add ...</p>
-<p>What is also important ... You should always think about ... This subtopic leads me to ...</p>
-<p>When Talking about holidays you also have to mention- Spending time abroad...</p>
-<p>In my opinion ... In my last holiday I went to ... My dream holidays would be ...</p>
-<p>Moegliche Themen:</p>
-<p>Life in a big city School Free time Australia India New Zealand</p>
-<p>Part-time jobs Mobile phones South Africa Sports English language</p>
-<div class='img-grid'>
-<img src='QA_muendlich_assets/qa_img_03.png' alt='PDF Bild qa_img_03.png'>
-</div>
-</section>
-<section class='card'>
-<p class='kicker'>Seite 3</p>
-<h2>3. INTERPRETING</h2>
-<p>Der Ablauf:</p>
-<p>- du sollst zeigen, dass du in Alltagssituationen aus dem Englischen ins Deutsche bzw. aus dem</p>
-<p>Deutschen ins Englische dolmetschen kannst</p>
-<p>- zuerst wird dir die Situation in englischer Sprache kurz muendlich vorgestellt</p>
-<p>- die Lehrkraefte tragen die einzelnen Gesprechsteile abwechselnd vor</p>
-<p>- hast du etwas nicht verstanden, frage hoeflich nach, damit dir der Dialogpartner den Satz noch</p>
-<p>einmal sagt</p>
-<p>Tipps:</p>
-<p>? gut zuhoeren und inhaltlich genau ebersetzen!</p>
-<p>? kennst du eine Vokabel nicht, umschreibe das Wort auf Englisch</p>
-<p>Beispiel</p>
-<div class='img-grid'>
-<img src='QA_muendlich_assets/qa_img_04.png' alt='PDF Bild qa_img_04.png'>
-</div>
-</section>
-</main><script id="global-nav-script">
+
+<main class="wrap">
+  <section class="hero">
+    <h1>QA mündliche Prüfung - Englisch</h1>
+  </section>
+
+  <section class="card">
+    <p class="kicker">Seite 1</p>
+    <h2>1. Picture-based Talk</h2>
+    <p><strong>Der Ablauf:</strong></p>
+    <ul>
+      <li>Du erhältst ein Bild zu einem Thema.</li>
+      <li>Du hast 30 Sekunden Zeit, um dich mit dem Bild auseinanderzusetzen.</li>
+      <li>Die Lehrkräfte stellen bildbezogene Fragen (zu den dargestellten Aspekten).</li>
+      <li>Die Lehrkräfte stellen weiterführende Fragen (nicht mehr direkt zum Bildinhalt, aber vom Bild ausgehend).</li>
+      <li>Wichtig: passende Phrasen verwenden (z. B. „Im Vordergrund ...“, „auf der linken Seite ...“, „In my opinion ...“).</li>
+      <li>Sei wachsam: Prüferinnen und Prüfer geben oft unbeabsichtigt hilfreiche Tipps oder Vokabeln.</li>
+    </ul>
+    <p><strong>Vorbereitung:</strong></p>
+    <ul>
+      <li>Diesen Prüfungsteil kannst du sehr gut mit einem Freund oder einer Freundin üben.</li>
+      <li>Nehmt detailreiche Bilder, z. B. aus Zeitung oder Internet.</li>
+      <li>Schreibt gemeinsam wichtige Begriffe auf, die ihr zur Bildbeschreibung benötigt.</li>
+      <li>Beschreibt euch anschließend gegenseitig das Bild mit den gesammelten Vokabeln.</li>
+    </ul>
+    <p><strong>Beispiel:</strong></p>
+    <div class="img-grid">
+      <img src="QA_muendlich_assets/qa_img_01.jpg" alt="Beispielbild qa_img_01.jpg">
+    </div>
+  </section>
+
+  <section class="card">
+    <p class="kicker">Seite 2</p>
+    <h2>2. Topic-based Talk</h2>
+    <p><strong>Der Ablauf:</strong></p>
+    <ul>
+      <li>Du bekommst eine Mindmap mit einem Thema in der Mitte und sechs Unterthemen.</li>
+      <li>Du hast eine kurze Vorbereitungszeit von 90 Sekunden.</li>
+      <li>Du darfst dir Notizen machen.</li>
+      <li>Du wählst aus sechs Teilaspekten insgesamt drei aus.</li>
+      <li>Du solltest eine eigene Meinung zum Thema haben und möglichst frei sprechen.</li>
+    </ul>
+    <p><strong>Vorbereitung:</strong></p>
+    <ul>
+      <li>Inhalte der Units sicher beherrschen und Mindmaps zu Themenbereichen strukturieren.</li>
+      <li>Laut sprechen und in englischer Sprache berichten.</li>
+      <li>3 bis 5 Minuten über ein Thema sprechen üben. Das ist länger, als man denkt.</li>
+      <li>Einige besondere beziehungsweise themenspezifische Vokabeln gezielt lernen.</li>
+    </ul>
+    <p><strong>Beispielsätze:</strong></p>
+    <p>My topic is <em>holidays</em>, and I would like to talk about the subtopics means of transport, money and costs, and recreation.</p>
+    <p>First of all ... Let us go on with ... What I want to add is ...</p>
+    <p>What is also important ... You should always think about ... This subtopic leads me to ...</p>
+    <p>When talking about holidays, you should also mention spending time abroad.</p>
+    <p>In my opinion ... In my last holiday, I went to ... My dream holiday would be ...</p>
+    <p><strong>Mögliche Themen:</strong></p>
+    <p>Life in a big city, School, Free time, Australia, India, New Zealand, Part-time jobs, Mobile phones, South Africa, Sports, English language</p>
+    <div class="img-grid">
+      <img src="QA_muendlich_assets/qa_img_03.png" alt="Beispielbild qa_img_03.png">
+    </div>
+  </section>
+
+  <section class="card">
+    <p class="kicker">Seite 3</p>
+    <h2>3. Interpreting</h2>
+    <p><strong>Der Ablauf:</strong></p>
+    <ul>
+      <li>Du sollst zeigen, dass du in Alltagssituationen aus dem Englischen ins Deutsche und aus dem Deutschen ins Englische dolmetschen kannst.</li>
+      <li>Zuerst wird dir die Situation in englischer Sprache kurz mündlich vorgestellt.</li>
+      <li>Die Lehrkräfte tragen die Gesprächsteile abwechselnd vor.</li>
+      <li>Wenn du etwas nicht verstanden hast, frage höflich nach, damit dein Dialogpartner den Satz wiederholen kann.</li>
+    </ul>
+    <p><strong>Tipps:</strong></p>
+    <ul>
+      <li>Gut zuhören und inhaltlich genau übersetzen.</li>
+      <li>Wenn du eine Vokabel nicht kennst, umschreibe das Wort auf Englisch.</li>
+    </ul>
+    <p><strong>Beispiel:</strong></p>
+    <div class="img-grid">
+      <img src="QA_muendlich_assets/qa_img_04.png" alt="Beispielbild qa_img_04.png">
+    </div>
+  </section>
+</main>
+
+<script id="global-nav-script">
 (function(){
   function homeUrl(){
     var href=String(window.location.href||'');
@@ -115,6 +133,5 @@ li{margin:.25rem 0;line-height:1.45}
   if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
 })();
 </script>
-</body></html>
-
-
+</body>
+</html>
