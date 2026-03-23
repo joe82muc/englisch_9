@@ -56,14 +56,25 @@
   .big-pct{font-size:4rem;font-weight:900;color:var(--orange)}
   @media(max-width:640px){.choices{grid-template-columns:1fr}}
 </style>
+<style id="global-nav-style">
+.global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+.global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+.global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+@media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+</style>
 </head>
 <body>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
 <div class="wrap">
   <section class="hero">
     <h1>Vokabeltrainer Unit 4</h1>
-    <p class="sub">New Zealand · Englisch 9. Klasse</p>
-    <a class="back" href="./unit4.html">&larr; Zurück zu Unit 4</a>
-  </section>
+    <p class="sub">New Zealand Â· Englisch 9. Klasse</p>
+</section>
 
   <section class="panel">
     <div class="filter-row" id="filter-row">
@@ -82,15 +93,15 @@
         <button class="pill" onclick="setMode('type',this)">Tippen</button>
       </div>
       <div class="pill-group">
-        <button class="pill active" onclick="setDir('random',this)">Zufällig</button>
-        <button class="pill" onclick="setDir('en-de',this)">EN → DE</button>
-        <button class="pill" onclick="setDir('de-en',this)">DE → EN</button>
+        <button class="pill active" onclick="setDir('random',this)">ZufÃ¤llig</button>
+        <button class="pill" onclick="setDir('en-de',this)">EN â†’ DE</button>
+        <button class="pill" onclick="setDir('de-en',this)">DE â†’ EN</button>
       </div>
     </div>
 
     <div class="scorebar">
-      <span><strong id="sc-right">0</strong>✅ Richtig</span>
-      <span><strong id="sc-wrong">0</strong>❌ Falsch</span>
+      <span><strong id="sc-right">0</strong>âœ… Richtig</span>
+      <span><strong id="sc-wrong">0</strong>âŒ Falsch</span>
       <span><strong id="sc-total">0</strong>Gesamt</span>
     </div>
 
@@ -98,25 +109,25 @@
 
     <div class="card" id="quiz-card">
       <div class="unit-tag" id="unit-tag">Unit 4</div>
-      <div class="direction-label" id="dir-label">Englisch → Deutsch</div>
+      <div class="direction-label" id="dir-label">Englisch â†’ Deutsch</div>
       <div class="question-word" id="qword">-</div>
       <div class="phonetic" id="phonetic"></div>
-      <button class="speak-btn" id="speak-btn" onclick="speak()">🔊 anhören</button>
+      <button class="speak-btn" id="speak-btn" onclick="speak()">ðŸ”Š anhÃ¶ren</button>
 
       <div id="mc-area"><div class="choices" id="choices"></div></div>
       <div id="type-area" style="display:none">
         <div class="type-area">
           <input type="text" id="type-input" placeholder="Deine Antwort ..." autocomplete="off" onkeydown="if(event.key==='Enter')checkType()">
           <div style="display:flex;gap:.5rem">
-            <button class="btn-secondary" id="hint-btn" onclick="showHint()">💡 Tipp</button>
-            <button class="btn-primary" onclick="checkType()">Prüfen</button>
+            <button class="btn-secondary" id="hint-btn" onclick="showHint()">ðŸ’¡ Tipp</button>
+            <button class="btn-primary" onclick="checkType()">PrÃ¼fen</button>
           </div>
         </div>
       </div>
 
       <div class="feedback" id="feedback"></div>
       <div class="btn-row">
-        <button class="btn-secondary" id="skip-btn" onclick="skip()">Überspringen</button>
+        <button class="btn-secondary" id="skip-btn" onclick="skip()">Ãœberspringen</button>
         <button class="btn-primary" id="next-btn" onclick="nextCard()" style="display:none">Weiter</button>
       </div>
     </div>
@@ -131,119 +142,144 @@
 
 <script>
 const vocab = [
-  {en:"New Zealand",de:"Neuseeland",pron:"nju: zi:lənd",topic:"intro"},
-  {en:"careers",de:"Berufe",pron:"kəˈrɪəz",topic:"intro"},
-  {en:"advisor",de:"Berater; Beraterin",pron:"ədˈvaɪzə",topic:"intro"},
-  {en:"around",de:"ungefähr",pron:"əˈraʊnd",topic:"intro"},
-  {en:"a third",de:"ein Drittel",pron:"ə θɜːd",topic:"intro"},
-  {en:"volunteer",de:"Freiwilliger; Freiwillige",pron:"ˌvɒlənˈtɪə",topic:"intro"},
-  {en:"emergency service",de:"Notdienst; Rettungsdienst",pron:"ɪˈmɜːdʒənsi ˈsɜːvɪs",topic:"intro"},
-  {en:"health",de:"Gesundheit",pron:"helθ",topic:"intro"},
-  {en:"member",de:"Mitglied",pron:"ˈmembə",topic:"intro"},
-  {en:"club",de:"Verein",pron:"klʌb",topic:"intro"},
-  {en:"Maori",de:"Maori",pron:"ˈmaʊri",topic:"intro"},
-  {en:"fjord",de:"Fjord",pron:"fjɔːd",topic:"intro"},
-  {en:"volcano",de:"Vulkan",pron:"vɒlˈkeɪnəʊ",topic:"intro"},
+  {en:"New Zealand",de:"Neuseeland",pron:"nju: zi:lÉ™nd",topic:"intro"},
+  {en:"careers",de:"Berufe",pron:"kÉ™ËˆrÉªÉ™z",topic:"intro"},
+  {en:"advisor",de:"Berater; Beraterin",pron:"É™dËˆvaÉªzÉ™",topic:"intro"},
+  {en:"around",de:"ungefÃ¤hr",pron:"É™ËˆraÊŠnd",topic:"intro"},
+  {en:"a third",de:"ein Drittel",pron:"É™ Î¸ÉœËd",topic:"intro"},
+  {en:"volunteer",de:"Freiwilliger; Freiwillige",pron:"ËŒvÉ’lÉ™nËˆtÉªÉ™",topic:"intro"},
+  {en:"emergency service",de:"Notdienst; Rettungsdienst",pron:"ÉªËˆmÉœËdÊ’É™nsi ËˆsÉœËvÉªs",topic:"intro"},
+  {en:"health",de:"Gesundheit",pron:"helÎ¸",topic:"intro"},
+  {en:"member",de:"Mitglied",pron:"ËˆmembÉ™",topic:"intro"},
+  {en:"club",de:"Verein",pron:"klÊŒb",topic:"intro"},
+  {en:"Maori",de:"Maori",pron:"ËˆmaÊŠri",topic:"intro"},
+  {en:"fjord",de:"Fjord",pron:"fjÉ”Ëd",topic:"intro"},
+  {en:"volcano",de:"Vulkan",pron:"vÉ’lËˆkeÉªnÉ™ÊŠ",topic:"intro"},
 
-  {en:"Ms",de:"Frau",pron:"mɪz",topic:"topic1"},
-  {en:"suitability",de:"Eignung; Tauglichkeit",pron:"ˌsuːtəˈbɪləti",topic:"topic1"},
+  {en:"Ms",de:"Frau",pron:"mÉªz",topic:"topic1"},
+  {en:"suitability",de:"Eignung; Tauglichkeit",pron:"ËŒsuËtÉ™ËˆbÉªlÉ™ti",topic:"topic1"},
   {en:"test",de:"Test; Klassenarbeit",pron:"test",topic:"topic1"},
-  {en:"to complete",de:"ausfüllen; machen",pron:"kəmˈpliːt",topic:"topic1"},
-  {en:"result",de:"Ergebnis",pron:"rɪˈzʌlt",topic:"topic1"},
-  {en:"thank you very much",de:"Vielen Dank; Herzlichen Dank",pron:"θæŋk juː veri mʌtʃ",topic:"topic1"},
-  {en:"mechanic",de:"Mechaniker; Mechanikerin",pron:"mɪˈkænɪk",topic:"topic1"},
-  {en:"garage",de:"Kfz-Werkstatt; Garage",pron:"ˈgærɑːʒ",topic:"topic1"},
-  {en:"to prefer",de:"bevorzugen",pron:"prɪˈfɜː",topic:"topic1"},
-  {en:"compromise",de:"Kompromiss",pron:"ˈkɒmprəmaɪz",topic:"topic1"},
-  {en:"conflict",de:"Konflikt; Auseinandersetzung",pron:"ˈkɒnflɪkt",topic:"topic1"},
-  {en:"calm",de:"ruhig; friedlich",pron:"kɑːm",topic:"topic1"},
-  {en:"support",de:"Unterstützung; Hilfe",pron:"səˈpɔːt",topic:"topic1"},
-  {en:"communication",de:"Kommunikation",pron:"kəˌmjuːnɪˈkeɪʃn",topic:"topic1"},
-  {en:"tourist information centre",de:"Touristeninformation",pron:"ˈtʊərɪst ˌɪnfəˈmeɪʃn sentə",topic:"topic1"},
-  {en:"to study",de:"studieren; lernen",pron:"ˈstʌdi",topic:"topic1"},
-  {en:"certificate",de:"Zertifikat; Bescheinigung",pron:"səˈtɪfɪkət",topic:"topic1"},
-  {en:"to take an exam",de:"eine Prüfung schreiben",pron:"ɪgˈzæm",topic:"topic1"},
-  {en:"careers day",de:"Berufsinformationstag",pron:"kəˈrɪəz deɪ",topic:"topic1"},
-  {en:"employer",de:"Arbeitgeber; Arbeitgeberin",pron:"ɪmˈplɔɪə",topic:"topic1"},
-  {en:"if I were you",de:"wenn ich du wäre",pron:"ɪf aɪ wɜː juː",topic:"topic1"},
-  {en:"might",de:"könnte",pron:"maɪt",topic:"topic1"},
-  {en:"best of luck",de:"viel Glück",pron:"best əv lʌk",topic:"topic1"},
-  {en:"to count on",de:"sich auf jmdn. verlassen",pron:"kaʊnt ɒn",topic:"topic1"},
-  {en:"tool",de:"Werkzeug; Gerät",pron:"tuːl",topic:"topic1"},
+  {en:"to complete",de:"ausfÃ¼llen; machen",pron:"kÉ™mËˆpliËt",topic:"topic1"},
+  {en:"result",de:"Ergebnis",pron:"rÉªËˆzÊŒlt",topic:"topic1"},
+  {en:"thank you very much",de:"Vielen Dank; Herzlichen Dank",pron:"Î¸Ã¦Å‹k juË veri mÊŒtÊƒ",topic:"topic1"},
+  {en:"mechanic",de:"Mechaniker; Mechanikerin",pron:"mÉªËˆkÃ¦nÉªk",topic:"topic1"},
+  {en:"garage",de:"Kfz-Werkstatt; Garage",pron:"ËˆgÃ¦rÉ‘ËÊ’",topic:"topic1"},
+  {en:"to prefer",de:"bevorzugen",pron:"prÉªËˆfÉœË",topic:"topic1"},
+  {en:"compromise",de:"Kompromiss",pron:"ËˆkÉ’mprÉ™maÉªz",topic:"topic1"},
+  {en:"conflict",de:"Konflikt; Auseinandersetzung",pron:"ËˆkÉ’nflÉªkt",topic:"topic1"},
+  {en:"calm",de:"ruhig; friedlich",pron:"kÉ‘Ëm",topic:"topic1"},
+  {en:"support",de:"UnterstÃ¼tzung; Hilfe",pron:"sÉ™ËˆpÉ”Ët",topic:"topic1"},
+  {en:"communication",de:"Kommunikation",pron:"kÉ™ËŒmjuËnÉªËˆkeÉªÊƒn",topic:"topic1"},
+  {en:"tourist information centre",de:"Touristeninformation",pron:"ËˆtÊŠÉ™rÉªst ËŒÉªnfÉ™ËˆmeÉªÊƒn sentÉ™",topic:"topic1"},
+  {en:"to study",de:"studieren; lernen",pron:"ËˆstÊŒdi",topic:"topic1"},
+  {en:"certificate",de:"Zertifikat; Bescheinigung",pron:"sÉ™ËˆtÉªfÉªkÉ™t",topic:"topic1"},
+  {en:"to take an exam",de:"eine PrÃ¼fung schreiben",pron:"ÉªgËˆzÃ¦m",topic:"topic1"},
+  {en:"careers day",de:"Berufsinformationstag",pron:"kÉ™ËˆrÉªÉ™z deÉª",topic:"topic1"},
+  {en:"employer",de:"Arbeitgeber; Arbeitgeberin",pron:"ÉªmËˆplÉ”ÉªÉ™",topic:"topic1"},
+  {en:"if I were you",de:"wenn ich du wÃ¤re",pron:"Éªf aÉª wÉœË juË",topic:"topic1"},
+  {en:"might",de:"kÃ¶nnte",pron:"maÉªt",topic:"topic1"},
+  {en:"best of luck",de:"viel GlÃ¼ck",pron:"best É™v lÊŒk",topic:"topic1"},
+  {en:"to count on",de:"sich auf jmdn. verlassen",pron:"kaÊŠnt É’n",topic:"topic1"},
+  {en:"tool",de:"Werkzeug; GerÃ¤t",pron:"tuËl",topic:"topic1"},
 
-  {en:"retail",de:"Einzelhandel",pron:"ˈriːteɪl",topic:"topic2"},
-  {en:"store",de:"Laden",pron:"stɔː",topic:"topic2"},
-  {en:"option",de:"Möglichkeit; Option; Wahl",pron:"ˈɒpʃn",topic:"topic2"},
-  {en:"retailer",de:"Einzelhändler; Einzelhändlerin",pron:"ˈriːteɪlə",topic:"topic2"},
-  {en:"shop assistant",de:"Verkäufer; Verkäuferin",pron:"ʃɒp əˈsɪstənt",topic:"topic2"},
-  {en:"apprenticeship",de:"Ausbildung; Lehre",pron:"əˈprentɪsʃɪp",topic:"topic2"},
-  {en:"butcher",de:"Fleischer; Metzger",pron:"ˈbʊtʃə",topic:"topic2"},
-  {en:"baker",de:"Bäcker; Bäckerin",pron:"ˈbeɪkə",topic:"topic2"},
-  {en:"product",de:"Produkt; Erzeugnis",pron:"ˈprɒdʌkt",topic:"topic2"},
-  {en:"checkout",de:"Kasse",pron:"ˈtʃekaʊt",topic:"topic2"},
-  {en:"to fill",de:"füllen; befüllen",pron:"fɪl",topic:"topic2"},
-  {en:"to present",de:"präsentieren",pron:"prɪˈzent",topic:"topic2"},
-  {en:"to work",de:"funktionieren",pron:"wɜːk",topic:"topic2"},
-  {en:"supplier",de:"Zulieferer; Anbieter",pron:"səˈplaɪə",topic:"topic2"},
-  {en:"refrigerated warehouse",de:"Kühllager",pron:"rɪˈfrɪdʒəreɪtɪd ˈweəhaʊs",topic:"topic2"},
-  {en:"refrigerated",de:"gekühlt",pron:"rɪˈfrɪdʒəreɪtɪd",topic:"topic2"},
-  {en:"warehouse",de:"Lager; Lagerhalle",pron:"ˈweəhaʊs",topic:"topic2"},
-  {en:"may",de:"können; dürfen",pron:"meɪ",topic:"topic2"},
-  {en:"to take a look at",de:"einen Blick werfen auf",pron:"teɪk ə lʊk ət",topic:"topic2"},
-  {en:"to donate",de:"spenden; stiften",pron:"dəʊˈneɪt",topic:"topic2"},
-  {en:"to reduce",de:"reduzieren; verringern",pron:"rɪˈdjuːs",topic:"topic2"},
-  {en:"worth",de:"im Wert von",pron:"wɜːθ",topic:"topic2"},
-  {en:"to be included",de:"mit enthalten sein",pron:"ɪnˈkluːdɪd",topic:"topic2"},
-  {en:"intern",de:"Praktikant; Praktikantin",pron:"ˈɪntɜːn",topic:"topic2"},
-  {en:"to take place",de:"stattfinden",pron:"teɪk pleɪs",topic:"topic2"},
+  {en:"retail",de:"Einzelhandel",pron:"ËˆriËteÉªl",topic:"topic2"},
+  {en:"store",de:"Laden",pron:"stÉ”Ë",topic:"topic2"},
+  {en:"option",de:"MÃ¶glichkeit; Option; Wahl",pron:"ËˆÉ’pÊƒn",topic:"topic2"},
+  {en:"retailer",de:"EinzelhÃ¤ndler; EinzelhÃ¤ndlerin",pron:"ËˆriËteÉªlÉ™",topic:"topic2"},
+  {en:"shop assistant",de:"VerkÃ¤ufer; VerkÃ¤uferin",pron:"ÊƒÉ’p É™ËˆsÉªstÉ™nt",topic:"topic2"},
+  {en:"apprenticeship",de:"Ausbildung; Lehre",pron:"É™ËˆprentÉªsÊƒÉªp",topic:"topic2"},
+  {en:"butcher",de:"Fleischer; Metzger",pron:"ËˆbÊŠtÊƒÉ™",topic:"topic2"},
+  {en:"baker",de:"BÃ¤cker; BÃ¤ckerin",pron:"ËˆbeÉªkÉ™",topic:"topic2"},
+  {en:"product",de:"Produkt; Erzeugnis",pron:"ËˆprÉ’dÊŒkt",topic:"topic2"},
+  {en:"checkout",de:"Kasse",pron:"ËˆtÊƒekaÊŠt",topic:"topic2"},
+  {en:"to fill",de:"fÃ¼llen; befÃ¼llen",pron:"fÉªl",topic:"topic2"},
+  {en:"to present",de:"prÃ¤sentieren",pron:"prÉªËˆzent",topic:"topic2"},
+  {en:"to work",de:"funktionieren",pron:"wÉœËk",topic:"topic2"},
+  {en:"supplier",de:"Zulieferer; Anbieter",pron:"sÉ™ËˆplaÉªÉ™",topic:"topic2"},
+  {en:"refrigerated warehouse",de:"KÃ¼hllager",pron:"rÉªËˆfrÉªdÊ’É™reÉªtÉªd ËˆweÉ™haÊŠs",topic:"topic2"},
+  {en:"refrigerated",de:"gekÃ¼hlt",pron:"rÉªËˆfrÉªdÊ’É™reÉªtÉªd",topic:"topic2"},
+  {en:"warehouse",de:"Lager; Lagerhalle",pron:"ËˆweÉ™haÊŠs",topic:"topic2"},
+  {en:"may",de:"kÃ¶nnen; dÃ¼rfen",pron:"meÉª",topic:"topic2"},
+  {en:"to take a look at",de:"einen Blick werfen auf",pron:"teÉªk É™ lÊŠk É™t",topic:"topic2"},
+  {en:"to donate",de:"spenden; stiften",pron:"dÉ™ÊŠËˆneÉªt",topic:"topic2"},
+  {en:"to reduce",de:"reduzieren; verringern",pron:"rÉªËˆdjuËs",topic:"topic2"},
+  {en:"worth",de:"im Wert von",pron:"wÉœËÎ¸",topic:"topic2"},
+  {en:"to be included",de:"mit enthalten sein",pron:"ÉªnËˆkluËdÉªd",topic:"topic2"},
+  {en:"intern",de:"Praktikant; Praktikantin",pron:"ËˆÉªntÉœËn",topic:"topic2"},
+  {en:"to take place",de:"stattfinden",pron:"teÉªk pleÉªs",topic:"topic2"},
 
-  {en:"rider",de:"Reiter; Reiterin",pron:"ˈraɪdə",topic:"text"},
-  {en:"great-grandmother",de:"Urgroßmutter",pron:"ˌgreɪt ˈgrænˌmʌðə",topic:"text"},
-  {en:"chief",de:"Häuptling",pron:"tʃiːf",topic:"text"},
-  {en:"to found",de:"gründen",pron:"faʊnd",topic:"text"},
-  {en:"prayer",de:"Gebet",pron:"preə",topic:"text"},
-  {en:"although",de:"obwohl",pron:"ɔːlˈðəʊ",topic:"text"},
-  {en:"to try hard",de:"sich anstrengen",pron:"traɪ hɑːd",topic:"text"},
-  {en:"to feel sorry for",de:"Mitleid haben mit",pron:"fiːl ˈsɒri fə",topic:"text"},
-  {en:"to push",de:"schubsen; drängeln",pron:"pʊʃ",topic:"text"},
-  {en:"mask",de:"Maske",pron:"mɑːsk",topic:"text"},
-  {en:"stingray",de:"Stachelrochen",pron:"ˈstɪŋreɪ",topic:"text"},
-  {en:"towards",de:"auf ... zu; in Richtung",pron:"təˈwɔːdz",topic:"text"},
-  {en:"bottom",de:"Grund; Boden",pron:"ˈbɒtəm",topic:"text"},
-  {en:"breath",de:"Atemzug; Atem",pron:"breθ",topic:"text"},
-  {en:"to point",de:"zeigen",pron:"pɔɪnt",topic:"text"},
-  {en:"dolphin",de:"Delfin",pron:"ˈdɒlfɪn",topic:"text"},
-  {en:"to pick up",de:"aufheben",pron:"pɪk ʌp",topic:"text"},
-  {en:"crayfish",de:"Languste; Flusskrebs",pron:"ˈkreɪfɪʃ",topic:"text"},
-  {en:"carving",de:"Schnitzerei",pron:"ˈkɑːvɪŋ",topic:"text"},
+  {en:"rider",de:"Reiter; Reiterin",pron:"ËˆraÉªdÉ™",topic:"text"},
+  {en:"great-grandmother",de:"UrgroÃŸmutter",pron:"ËŒgreÉªt ËˆgrÃ¦nËŒmÊŒÃ°É™",topic:"text"},
+  {en:"chief",de:"HÃ¤uptling",pron:"tÊƒiËf",topic:"text"},
+  {en:"to found",de:"grÃ¼nden",pron:"faÊŠnd",topic:"text"},
+  {en:"prayer",de:"Gebet",pron:"preÉ™",topic:"text"},
+  {en:"although",de:"obwohl",pron:"É”ËlËˆÃ°É™ÊŠ",topic:"text"},
+  {en:"to try hard",de:"sich anstrengen",pron:"traÉª hÉ‘Ëd",topic:"text"},
+  {en:"to feel sorry for",de:"Mitleid haben mit",pron:"fiËl ËˆsÉ’ri fÉ™",topic:"text"},
+  {en:"to push",de:"schubsen; drÃ¤ngeln",pron:"pÊŠÊƒ",topic:"text"},
+  {en:"mask",de:"Maske",pron:"mÉ‘Ësk",topic:"text"},
+  {en:"stingray",de:"Stachelrochen",pron:"ËˆstÉªÅ‹reÉª",topic:"text"},
+  {en:"towards",de:"auf ... zu; in Richtung",pron:"tÉ™ËˆwÉ”Ëdz",topic:"text"},
+  {en:"bottom",de:"Grund; Boden",pron:"ËˆbÉ’tÉ™m",topic:"text"},
+  {en:"breath",de:"Atemzug; Atem",pron:"breÎ¸",topic:"text"},
+  {en:"to point",de:"zeigen",pron:"pÉ”Éªnt",topic:"text"},
+  {en:"dolphin",de:"Delfin",pron:"ËˆdÉ’lfÉªn",topic:"text"},
+  {en:"to pick up",de:"aufheben",pron:"pÉªk ÊŒp",topic:"text"},
+  {en:"crayfish",de:"Languste; Flusskrebs",pron:"ËˆkreÉªfÉªÊƒ",topic:"text"},
+  {en:"carving",de:"Schnitzerei",pron:"ËˆkÉ‘ËvÉªÅ‹",topic:"text"},
 
-  {en:"fascinating",de:"faszinierend",pron:"ˈfæsɪneɪtɪŋ",topic:"more"},
-  {en:"kiwi",de:"Kiwi",pron:"ˈkiːwiː",topic:"more"},
-  {en:"New Zealander",de:"Neuseeländer; Neuseeländerin",pron:"njuː ˈziːləndə",topic:"more"},
-  {en:"actually",de:"eigentlich; tatsächlich",pron:"ˈæktʃuəli",topic:"more"},
-  {en:"spotted",de:"gepunktet",pron:"ˈspɒtɪd",topic:"more"},
-  {en:"outdoors",de:"im Freien",pron:"aʊtˈdɔːz",topic:"more"},
-  {en:"volcanic",de:"vulkanisch",pron:"vɒlˈkænɪk",topic:"more"},
-  {en:"lava",de:"Lava",pron:"ˈlɑːvə",topic:"more"},
-  {en:"kayaker",de:"Kajakfahrer; Kajakfahrerin",pron:"ˈkaɪækə",topic:"more"},
-  {en:"hiking",de:"Wandern",pron:"ˈhaɪkɪŋ",topic:"more"},
-  {en:"gateway",de:"Tor; Eingangstor",pron:"ˈɡeɪtweɪ",topic:"more"},
-  {en:"to recognise",de:"anerkennen; erkennen",pron:"ˈrekəɡnaɪz",topic:"more"},
-  {en:"explorer",de:"Entdecker; Entdeckerin",pron:"ɪkˈsplɔːrə",topic:"more"},
-  {en:"expedition",de:"Expedition; Forschungsreise",pron:"ˌekspəˈdɪʃn",topic:"more"},
-  {en:"Antarctic",de:"südpolar; antarktisch",pron:"ænˈtɑːktɪk",topic:"more"},
+  {en:"fascinating",de:"faszinierend",pron:"ËˆfÃ¦sÉªneÉªtÉªÅ‹",topic:"more"},
+  {en:"kiwi",de:"Kiwi",pron:"ËˆkiËwiË",topic:"more"},
+  {en:"New Zealander",de:"NeuseelÃ¤nder; NeuseelÃ¤nderin",pron:"njuË ËˆziËlÉ™ndÉ™",topic:"more"},
+  {en:"actually",de:"eigentlich; tatsÃ¤chlich",pron:"ËˆÃ¦ktÊƒuÉ™li",topic:"more"},
+  {en:"spotted",de:"gepunktet",pron:"ËˆspÉ’tÉªd",topic:"more"},
+  {en:"outdoors",de:"im Freien",pron:"aÊŠtËˆdÉ”Ëz",topic:"more"},
+  {en:"volcanic",de:"vulkanisch",pron:"vÉ’lËˆkÃ¦nÉªk",topic:"more"},
+  {en:"lava",de:"Lava",pron:"ËˆlÉ‘ËvÉ™",topic:"more"},
+  {en:"kayaker",de:"Kajakfahrer; Kajakfahrerin",pron:"ËˆkaÉªÃ¦kÉ™",topic:"more"},
+  {en:"hiking",de:"Wandern",pron:"ËˆhaÉªkÉªÅ‹",topic:"more"},
+  {en:"gateway",de:"Tor; Eingangstor",pron:"ËˆÉ¡eÉªtweÉª",topic:"more"},
+  {en:"to recognise",de:"anerkennen; erkennen",pron:"ËˆrekÉ™É¡naÉªz",topic:"more"},
+  {en:"explorer",de:"Entdecker; Entdeckerin",pron:"ÉªkËˆsplÉ”ËrÉ™",topic:"more"},
+  {en:"expedition",de:"Expedition; Forschungsreise",pron:"ËŒekspÉ™ËˆdÉªÊƒn",topic:"more"},
+  {en:"Antarctic",de:"sÃ¼dpolar; antarktisch",pron:"Ã¦nËˆtÉ‘ËktÉªk",topic:"more"},
 
-  {en:"full-time",de:"Vollzeit",pron:"ˌfʊl ˈtaɪm",topic:"writing"},
-  {en:"excellent",de:"hervorragend; exzellent",pron:"ˈeksələnt",topic:"writing"},
-  {en:"enquiry",de:"Anfrage",pron:"ɪnˈkwaɪəri",topic:"writing"},
-  {en:"c/o",de:"bei",pron:"siː əʊ",topic:"writing"},
-  {en:"RE",de:"Betr.",pron:"ɑːr iː",topic:"writing"},
-  {en:"qualified",de:"qualifiziert",pron:"ˈkwɒlɪfaɪd",topic:"writing"},
-  {en:"enclosed",de:"beigefügt; anbei",pron:"ɪnˈkləʊzd",topic:"writing"}
+  {en:"full-time",de:"Vollzeit",pron:"ËŒfÊŠl ËˆtaÉªm",topic:"writing"},
+  {en:"excellent",de:"hervorragend; exzellent",pron:"ËˆeksÉ™lÉ™nt",topic:"writing"},
+  {en:"enquiry",de:"Anfrage",pron:"ÉªnËˆkwaÉªÉ™ri",topic:"writing"},
+  {en:"c/o",de:"bei",pron:"siË É™ÊŠ",topic:"writing"},
+  {en:"RE",de:"Betr.",pron:"É‘Ër iË",topic:"writing"},
+  {en:"qualified",de:"qualifiziert",pron:"ËˆkwÉ’lÉªfaÉªd",topic:"writing"},
+  {en:"enclosed",de:"beigefÃ¼gt; anbei",pron:"ÉªnËˆklÉ™ÊŠzd",topic:"writing"}
 ];
 
 let mode='mc', dirSetting='random', filterTopic='all';
 let queue=[], current=null, right=0, wrong=0, direction='en-de', answered=false;
+let ttsUnlocked = false;
+let fallbackAudio = null;
+
+const E9_TOKEN = localStorage.getItem('e9_token') || '';
+
+async function sendVocabProgress(percent,total){
+  if(!E9_TOKEN) return;
+  try{
+    await fetch((location.hostname.includes('github.io')||location.protocol==='file:'?'https://englisch-9.onrender.com':'') + '/api/progress/record',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+E9_TOKEN},
+      body:JSON.stringify({
+        exerciseId:'unit4-vokabeltrainer',
+        exerciseName:'Unit 4 Vokabeltrainer',
+        unit:'unit4',
+        category:'vocabulary',
+        percent:percent,
+        score:right,
+        total:total,
+        completed:true,
+        meta:{mode:mode,direction:dirSetting,topic:filterTopic}
+      })
+    });
+  }catch(_e){}
+}
 
 const shuffle = a => [...a].sort(()=>Math.random()-0.5);
 const filteredVocab = () => filterTopic==='all' ? vocab : vocab.filter(v=>v.topic===filterTopic);
@@ -258,7 +294,7 @@ function setMode(m, btn){
 }
 function setDir(d, btn){
   dirSetting=d;
-  document.querySelectorAll('.pill').forEach(b=>{ if(b.textContent.includes('→')||b.textContent.includes('Zufällig')) b.classList.remove('active');});
+  document.querySelectorAll('.pill').forEach(b=>{ if(b.textContent.includes('â†’')||b.textContent.includes('ZufÃ¤llig')) b.classList.remove('active');});
   btn.classList.add('active');
   restart();
 }
@@ -288,7 +324,7 @@ function nextCard(){
   const qWord = isEnDe ? current.en : current.de;
   const aWord = isEnDe ? current.de : current.en;
 
-  document.getElementById('dir-label').textContent = isEnDe ? 'Englisch → Deutsch' : 'Deutsch → Englisch';
+  document.getElementById('dir-label').textContent = isEnDe ? 'Englisch â†’ Deutsch' : 'Deutsch â†’ Englisch';
   document.getElementById('qword').textContent = qWord;
   document.getElementById('phonetic').textContent = isEnDe ? '[' + current.pron + ']' : '';
   document.getElementById('feedback').textContent='';
@@ -300,7 +336,7 @@ function nextCard(){
   document.getElementById('unit-tag').textContent = map[current.topic] || 'Unit 4';
 
   const sBtn=document.getElementById('speak-btn');
-  sBtn.textContent='🔊 anhören';
+  sBtn.textContent='ðŸ”Š anhÃ¶ren';
 
   updateProgress();
   if(mode==='mc') buildChoices(aWord,isEnDe);
@@ -360,13 +396,156 @@ function checkType(){
 
 function showNextBtn(){ document.getElementById('skip-btn').style.display='none'; document.getElementById('next-btn').style.display=''; }
 function skip(){ if(answered) return; answered=true; const c=direction==='en-de'?current.de:current.en; showFeedback(false,c); wrong++; updateScore(); showNextBtn(); }
-function showFeedback(ok,correct){ const el=document.getElementById('feedback'); el.className='feedback '+(ok?'good':'bad'); el.textContent=ok?'✅ Richtig!':'❌ Richtig: '+correct; }
-function speak(){ if(!current) return; const u=new SpeechSynthesisUtterance(current.en); u.lang='en-GB'; u.rate=.86; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+function showFeedback(ok,correct){ const el=document.getElementById('feedback'); el.className='feedback '+(ok?'good':'bad'); el.textContent=ok?'âœ… Richtig!':'âŒ Richtig: '+correct; }
+function unlockTTS(){
+  if (ttsUnlocked || !("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return;
+  try{
+    const warmup = new SpeechSynthesisUtterance(" ");
+    warmup.volume = 0;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(warmup);
+    ttsUnlocked = true;
+  }catch(e){}
+}
+
+function getEnglishVoice(){
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+  return (
+    voices.find(v => /en-GB/i.test(v.lang)) ||
+    voices.find(v => /en-US/i.test(v.lang)) ||
+    voices.find(v => /^en/i.test(v.lang)) ||
+    null
+  );
+}
+
+function playAudioFallback(text){
+  return new Promise((resolve, reject) => {
+    try{
+      if(!fallbackAudio){
+        fallbackAudio = new Audio();
+      }
+      const q = encodeURIComponent(text);
+      fallbackAudio.src = "https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=" + q;
+      fallbackAudio.onended = () => resolve(true);
+      fallbackAudio.onerror = () => reject(new Error("audio-fallback-error"));
+      const p = fallbackAudio.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => resolve(true)).catch(reject);
+      }
+    }catch(e){
+      reject(e);
+    }
+  });
+}
+
+function speak(){
+  if(!current) return;
+  const fb = document.getElementById("feedback");
+  const btn = document.getElementById("speak-btn");
+
+  if(!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined"){
+    fb.className = "feedback bad";
+    fb.textContent = "Audio wird von diesem Browser nicht unterstÃ¼tzt.";
+    return;
+  }
+
+  unlockTTS();
+
+  const u = new SpeechSynthesisUtterance(current.en);
+  const voice = getEnglishVoice();
+  u.lang = voice ? voice.lang : "en-US";
+  if (voice) u.voice = voice;
+  u.rate = 0.9;
+  u.pitch = 1;
+  let started = false;
+  let fallbackTimer = null;
+
+  u.onstart = () => {
+    started = true;
+    if (fallbackTimer) clearTimeout(fallbackTimer);
+    btn.textContent = "ðŸ”Š lÃ¤uft ...";
+  };
+  u.onend = () => {
+    if (fallbackTimer) clearTimeout(fallbackTimer);
+    btn.textContent = "ðŸ”Š anhÃ¶ren";
+  };
+  u.onerror = async () => {
+    if (fallbackTimer) clearTimeout(fallbackTimer);
+    btn.textContent = "ðŸ”Š anhÃ¶ren";
+    try{
+      await playAudioFallback(current.en);
+      fb.className = "feedback good";
+      fb.textContent = "Audio Ã¼ber Fallback abgespielt.";
+    }catch(e){
+      fb.className = "feedback bad";
+      fb.textContent = "Audio blockiert. Bitte Lautlosmodus aus und LautstÃ¤rke prÃ¼fen.";
+    }
+  };
+
+  try{
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+    fallbackTimer = setTimeout(async () => {
+      if (started) return;
+      try{
+        await playAudioFallback(current.en);
+        fb.className = "feedback good";
+        fb.textContent = "Audio Ã¼ber Fallback abgespielt.";
+      }catch(e){
+        fb.className = "feedback bad";
+        fb.textContent = "Kein Audio. Bitte Safari/Chrome nutzen und Lautlosmodus aus.";
+      }finally{
+        btn.textContent = "ðŸ”Š anhÃ¶ren";
+      }
+    }, 1000);
+  }catch(e){
+    playAudioFallback(current.en)
+      .then(() => {
+        fb.className = "feedback good";
+        fb.textContent = "Audio Ã¼ber Fallback abgespielt.";
+      })
+      .catch(() => {
+        fb.className = "feedback bad";
+        fb.textContent = "Audio konnte nicht gestartet werden.";
+      })
+      .finally(() => {
+        btn.textContent = "ðŸ”Š anhÃ¶ren";
+      });
+  }
+}
 function updateScore(){ document.getElementById('sc-right').textContent=right; document.getElementById('sc-wrong').textContent=wrong; document.getElementById('sc-total').textContent=right+wrong; }
 function updateProgress(){ const total=filteredVocab().length||1; document.getElementById('pbar').style.width=((total-queue.length)/total*100)+'%'; }
-function showResult(){ document.getElementById('quiz-card').style.display='none'; document.querySelector('.progress-wrap').style.display='none'; const pct=Math.round(right/((right+wrong)||1)*100); document.getElementById('pct-display').textContent=pct+'%'; document.getElementById('result').style.display='block'; }
+function showResult(){ document.getElementById('quiz-card').style.display='none'; document.querySelector('.progress-wrap').style.display='none'; const total=(right+wrong)||1; const pct=Math.round(right/total*100); document.getElementById('pct-display').textContent=pct+'%'; document.getElementById('result').style.display='block'; sendVocabProgress(pct,total); }
+
+window.addEventListener("pointerdown", unlockTTS, { once: true });
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
 
 restart();
 </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
+
+
+
+
+
+

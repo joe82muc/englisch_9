@@ -119,15 +119,26 @@
       .slide, .slide img { min-height: 140px; }
     }
   </style>
+<style id="global-nav-style">
+.global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+.global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+.global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+@media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+</style>
 </head>
 <body>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
   <main class="wrap">
     <section class="hero">
       <h1>Unit 4: New Zealand</h1>
       <p class="meta">Englisch 9. Klasse - Mittelschule am Sportpark</p>
-      <p class="author">Lernplattform von Johannes Mößner</p>
-      <a class="back" href="../index.html">&larr; Zur Startseite</a>
-    </section>
+      <p class="author">Lernplattform von Johannes MÃ¶ÃŸner</p>
+</section>
 
     <section class="panel">
       <p class="label">Grammatik</p>
@@ -147,46 +158,35 @@
 
     <section class="panel">
       <h2 class="gallery-title">New Zealand Galerie (echte Neuseeland-Bilder)</h2>
-      <div class="gallery-grid" id="galleryGrid">
-        <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="./gallery_nz/nz-01.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="./gallery_nz/nz-02.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="./gallery_nz/nz-03.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="./gallery_nz/nz-04.jpg"><span class="tag"></span></figure>
+            <div class="gallery-grid" id="galleryGrid">
+        <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="./gallery_nz/Alpenlandschaft%20mit%20t%C3%BCrkisfarbenem%20See.png"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="./gallery_nz/Auckland%20Skyline%20mit%20Sky%20Tower.png"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="./gallery_nz/Blick%20auf%20Wellington%20von%20oben.png"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="./gallery_nz/Haka-Auff%C3%BChrung%20vor%20traditionellem%20Wharenui.png"><span class="tag"></span></figure>
       </div>
     </section>
   </main>
 
   <script>
-    const images = Array.from({ length: 25 }, (_, i) => `./gallery_nz/nz-${String(i + 1).padStart(2, "0")}.jpg`);
+        const images = [
+      "./gallery_nz/Alpenlandschaft%20mit%20t%C3%BCrkisfarbenem%20See.png",
+      "./gallery_nz/Auckland%20Skyline%20mit%20Sky%20Tower.png",
+      "./gallery_nz/Blick%20auf%20Wellington%20von%20oben.png",
+      "./gallery_nz/Haka-Auff%C3%BChrung%20vor%20traditionellem%20Wharenui.png",
+      "./gallery_nz/Idyllischer%20Blick%20auf%20ein%20Hobbit-Haus.png",
+      "./gallery_nz/Lupinenbl%C3%BCten%20am%20t%C3%BCrkisfarbenen%20See.png",
+      "./gallery_nz/Schafherde%20im%20neuseel%C3%A4ndischen%20Landhausblick.png"
+    ];
 
     const tags = {
-      "nz-01": "Landscape",
-      "nz-02": "Landscape",
-      "nz-03": "Landscape",
-      "nz-04": "Landscape",
-      "nz-05": "Landscape",
-      "nz-06": "Landscape",
-      "nz-07": "Landscape",
-      "nz-08": "Landscape",
-      "nz-09": "Landscape",
-      "nz-10": "Landscape",
-      "nz-11": "Landscape",
-      "nz-12": "Landscape",
-      "nz-13": "Landscape",
-      "nz-14": "Landscape",
-      "nz-15": "Landscape",
-      "nz-16": "Animals",
-      "nz-17": "Animals",
-      "nz-18": "Animals",
-      "nz-19": "People / Culture",
-      "nz-20": "People / Culture",
-      "nz-21": "People / Culture",
-      "nz-22": "People / Culture",
-      "nz-23": "Landscape",
-      "nz-24": "Landscape",
-      "nz-25": "Landscape"
+      "Alpenlandschaft mit türkisfarbenem See": "Alpine Lake View",
+      "Auckland Skyline mit Sky Tower": "Auckland Skyline",
+      "Blick auf Wellington von oben": "Wellington Overlook",
+      "Haka-Aufführung vor traditionellem Wharenui": "Haka Performance",
+      "Idyllischer Blick auf ein Hobbit-Haus": "Hobbit House View",
+      "Lupinenblüten am türkisfarbenen See": "Lupin Fields by the Lake",
+      "Schafherde im neuseeländischen Landhausblick": "Sheep in Rural New Zealand"
     };
-
     const slides = Array.from(document.querySelectorAll(".slide"));
     let queue = [];
 
@@ -222,7 +222,7 @@
       const img = slide.querySelector("img");
       const tag = slide.querySelector(".tag");
       const safeSrc = ensureImage(src);
-      const key = safeSrc.split("/").pop().replace(".jpg", "");
+      const key = decodeURIComponent(safeSrc.split("/").pop()).replace(/\.[^/.]+$/, "");
       tag.textContent = "New Zealand - " + (tags[key] || "Photo");
       img.style.opacity = "0.25";
       setTimeout(() => {
@@ -269,7 +269,26 @@
     fillInitial();
     setInterval(rotateOne, 2400);
   </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
+
+
+
+
 
 
