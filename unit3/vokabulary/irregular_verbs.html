@@ -97,12 +97,23 @@ h1 em{font-style:normal;opacity:1}
 @media (max-width:760px){.ltabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.choices{grid-template-columns:1fr}}
 </style>
+<style id="global-nav-style">
+.global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+.global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+.global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+@media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+</style>
 </head>
 <body>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
 
 <div class="hdr">
-  <a href="../../index.html" class="back">&larr; Zur Startseite</a>
-  <div class="utag">Grammar Reference - All Units</div>
+<div class="utag">Grammar Reference - All Units</div>
   <h1>Irregular<br><em>Verbs</em></h1>
   <p class="hsub">64 unregelmaessige Verben - mit Aussprache - 3 Niveaustufen</p>
 </div>
@@ -112,7 +123,7 @@ h1 em{font-style:normal;opacity:1}
 <div class="ibox">
   <div class="ihdr open" onclick="toggleInfo()">
     <h2>Die 3 Formen - How to use them</h2>
-    <span class="iarrow" id="iarr">▼</span>
+    <span class="iarrow" id="iarr">?</span>
   </div>
   <div class="ibody open" id="ibody">
     <table class="itable">
@@ -565,6 +576,24 @@ resetQ('a');
 resetQ('b');
 resetQ('c');
 </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
+
+
+
 

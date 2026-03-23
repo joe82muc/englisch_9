@@ -77,7 +77,7 @@
       margin-top: .8rem;
       display: grid;
       gap: .55rem;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .shot {
@@ -305,26 +305,41 @@
       .qual-grid, .phrase-grid { grid-template-columns: 1fr; }
     }
   </style>
+<style id="global-nav-style">
+.global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+.global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+.global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+@media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+</style>
 </head>
 <body>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
   <main class="wrap">
     <section class="hero">
-      <a class="back" href="https://joe82muc.github.io/englisch_9/index.html">&larr; Back to Home</a>
-      <h1>Role Model Studio</h1>
+<h1>Role Model Studio</h1>
       <p class="sub">More sparkle, same working KI. Train your language with singer role models.</p>
 
-      <div class="gallery">
+            <div class="gallery">
         <figure class="shot">
-          <img loading="lazy" style="object-position:center 18%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Billie_Eilish_2019_by_Glenn_Francis.jpg" alt="Billie Eilish portrait">
-          <span>Billie Eilish</span>
+          <img loading="lazy" style="object-position:center 35%" src="./images/Popstar%20im%20Rampenlicht%20auf%20der%20B%C3%BChne.png" alt="Popstar on stage">
+          <span>Popstar on Stage</span>
         </figure>
         <figure class="shot">
-          <img loading="lazy" style="object-position:center 10%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Taylor_Swift_2_-_2019_by_Glenn_Francis.jpg" alt="Taylor Swift portrait">
-          <span>Taylor Swift</span>
+          <img loading="lazy" style="object-position:center 42%" src="./images/Rapper%20im%20Rampenlicht%20und%20Glanz.png" alt="Rapper under stage lights">
+          <span>Rapper in the Spotlight</span>
         </figure>
         <figure class="shot">
-          <img loading="lazy" style="object-position:center 24%" src="https://commons.wikimedia.org/wiki/Special:FilePath/Adele_2016.jpg" alt="Adele portrait">
-          <span>Adele</span>
+          <img loading="lazy" style="object-position:center 50%" src="./images/Wissenschaftlerin%20im%20Labor%20mit%20Leuchtr%C3%B6hre.png" alt="Scientist in a lab">
+          <span>Scientist in the Lab</span>
+        </figure>
+        <figure class="shot">
+          <img loading="lazy" style="object-position:center 45%" src="./images/b14ab389-89b7-4387-b867-f1d8dedae2b0.png" alt="Role model portrait">
+          <span>Modern Role Model</span>
         </figure>
       </div>
     </section>
@@ -562,5 +577,32 @@
       'c1 c2 c3 c4 c5'.split(' ').forEach(k=>delete ans[k]);
     }
   </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+

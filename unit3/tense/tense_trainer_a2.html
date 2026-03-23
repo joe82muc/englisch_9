@@ -48,21 +48,44 @@
     .fb { font-size: .8rem; font-weight: 800; } .fb.g { color: var(--ok); } .fb.b { color: var(--bad); }
     @media (max-width: 760px) { .tabs { flex-direction: column; } .ov-grid { grid-template-columns: 1fr; } }
   </style>
+<style id="global-nav-style">
+.global-nav{max-width:1200px;margin:12px auto 0;padding:0 12px;display:flex;gap:10px;align-items:center}
+.global-nav a,.global-nav button{appearance:none;border:1px solid #b8cff8;background:linear-gradient(180deg,#fff,#f3f8ff);color:#12335f;padding:8px 14px;border-radius:999px;font:700 14px/1.1 "Trebuchet MS","Segoe UI",sans-serif;cursor:pointer;text-decoration:none}
+.global-nav a:hover,.global-nav button:hover{border-color:#7fb0f0;box-shadow:0 8px 20px rgba(24,65,128,.14)}
+.global-nav .spacer{margin-left:auto;color:#365684;font:600 12px/1.2 "Trebuchet MS","Segoe UI",sans-serif;opacity:.9}
+@media (max-width:640px){.global-nav{padding:0 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+</style>
+<style id="index-theme-style-tense">
+:root{--ix-bg-1:#f4f8ff;--ix-bg-2:#fff1de;--ix-ink:#10203a;--ix-line:#d7e3ff;--ix-card:#fff;--ix-shadow:0 14px 36px rgba(20,49,96,.14)}
+body{font-family:"Trebuchet MS","Segoe UI",sans-serif !important;color:var(--ix-ink) !important;background:radial-gradient(circle at 10% 8%,#dce9ff 0%,transparent 42%),radial-gradient(circle at 92% 84%,#ffd8b8 0%,transparent 34%),linear-gradient(130deg,var(--ix-bg-1),var(--ix-bg-2)) !important}
+.wrap{max-width:1200px !important;margin:0 auto !important;padding:1.1rem 1rem 2.2rem !important}
+.hero{background:linear-gradient(130deg,#0556b6,#1f7de2 52%,#ff8c42) !important;color:#fff !important;border-radius:24px !important;box-shadow:var(--ix-shadow) !important}
+.sub{color:#eef5ff !important}
+.back{color:#fff !important;border:1px solid rgba(255,255,255,.6) !important;border-radius:999px !important;padding:.35rem .7rem !important;text-decoration:none !important}
+.box,.ibox,.card{background:var(--ix-card) !important;border-color:var(--ix-line) !important;box-shadow:var(--ix-shadow) !important}
+.ihdr{background:linear-gradient(130deg,#0b67d1,#2f8ef6) !important}
+.tab.active,.btn.chk{background:linear-gradient(120deg,#0b67d1,#2f8ef6) !important;border-color:#0b67d1 !important}
+.lnk{background:rgba(255,255,255,.95) !important;color:#12335f !important;border-color:rgba(255,255,255,.55) !important}
+@media (max-width:620px){.wrap{padding:.85rem .8rem 1.8rem !important}.hero{border-radius:18px !important;padding:1rem !important}}
+</style>
 </head>
 <body>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
   <main class="wrap">
     <section class="hero">
-      <a class="back" href="tense_overview_a2.html">&larr; Zur Uebersicht</a>
-      <h1 id="title">Tense</h1>
+<h1 id="title">Tense</h1>
       <p class="sub">A2+ Training mit Aussagen, Fragen, Verneinungen, Signalwoertern und KI-Hilfe auf Deutsch.</p>
       <div class="links">
-        <a class="lnk" href="../../index.html">Back to Home</a>
-        <a class="lnk" href="tense_overview_a2.html">Alle Zeiten</a>
+<a class="lnk" href="tense_overview_a2.html">Alle Zeiten</a>
       </div>
     </section>
 
     <section class="ibox">
-      <div class="ihdr">Uebersicht</div>
+      <div class="ihdr">Übersicht</div>
       <div class="ibody">
         <div class="ov-grid">
           <div class="ov-box"><h3>Aussagesatz</h3><p id="stForm"></p></div>
@@ -290,6 +313,32 @@
 
     const ans = {};
     const sc = { a: { r: 0, w: 0 }, b: { r: 0, w: 0 }, c: { r: 0, w: 0 } };
+    const E9_TOKEN = localStorage.getItem("e9_token") || "";
+    async function syncTenseProgress(){
+      if(!E9_TOKEN) return;
+      try{
+        const total=(CFG.a.length+CFG.b.length+CFG.c.length)||1;
+        const done=Object.keys(ans).length;
+        const right=sc.a.r+sc.b.r+sc.c.r;
+        const wrong=sc.a.w+sc.b.w+sc.c.w;
+        const pct=Math.round((right/Math.max(right+wrong,1))*100);
+        await fetch((location.hostname.includes('github.io')||location.protocol==='file:'?'https://englisch-9.onrender.com':'') + '/api/progress/record',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+E9_TOKEN},
+          body:JSON.stringify({
+            exerciseId:'tense-'+(key||'present_simple'),
+            exerciseName:(CFG.title||'Tense Trainer')+' A2+',
+            unit:'grammar',
+            category:'tense-trainer',
+            percent:pct,
+            score:right,
+            total:right+wrong,
+            completed:done>=total,
+            meta:{done:done,totalItems:total}
+          })
+        });
+      }catch(_e){}
+    }
     const nrm = (s) => String(s || "").toLowerCase().replace(/[?.!,']/g, "").replace(/\s+/g, " ").trim();
     function updSc(l){ document.getElementById(l+"r").textContent=sc[l].r; document.getElementById(l+"w").textContent=sc[l].w; }
     function setLevel(l,btn){ document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); document.querySelectorAll(".lsec").forEach(s=>s.classList.remove("show")); document.getElementById("level-"+l).classList.add("show"); }
@@ -320,7 +369,7 @@
       btn.closest(".mc-wrap").querySelectorAll(".mc").forEach(b=>{b.disabled=true;if(nrm(b.dataset.val)===nrm(correct))b.classList.add("ok");});
       const ok=nrm(btn.dataset.val)===nrm(correct); if(!ok)btn.classList.add("err");
       const fb=document.getElementById(id+"f"); fb.className="fb "+(ok?"g":"b"); fb.textContent=ok?"Correct.":"Answer: "+correct;
-      if(ok)sc.a.r++;else sc.a.w++;updSc("a");
+      if(ok)sc.a.r++;else sc.a.w++;updSc("a"); syncTenseProgress();
     }
 
     function renderB(){
@@ -343,14 +392,14 @@
       const ok1=nrm(i1?i1.value:"")===nrm(answers[0]); const ok2=answers[1]===undefined?true:nrm(i2?i2.value:"")===nrm(answers[1]); const ok=ok1&&ok2;
       if(i1){i1.classList.add(ok1?"ok":"err");i1.disabled=true;} if(i2){i2.classList.add(ok2?"ok":"err");i2.disabled=true;}
       const fb=document.getElementById(id+"f"); fb.className="fb "+(ok?"g":"b"); fb.textContent=ok?"Correct.":"Solution: "+answers.join(" / ");
-      ans[id]=true; if(ok)sc.b.r++;else sc.b.w++;updSc("b");
+      ans[id]=true; if(ok)sc.b.r++;else sc.b.w++;updSc("b"); syncTenseProgress();
     }
     function showB(id,answers){
       if(ans[id])return;
       const i1=document.getElementById(id+"g"), i2=document.getElementById(id+"g2");
       if(i1){i1.value=answers[0];i1.classList.add("ok");i1.disabled=true;} if(i2&&answers[1]!==undefined){i2.value=answers[1];i2.classList.add("ok");i2.disabled=true;}
       const fb=document.getElementById(id+"f"); fb.className="fb g"; fb.textContent="-> "+answers.join(" / ");
-      ans[id]=true; sc.b.w++;updSc("b");
+      ans[id]=true; sc.b.w++;updSc("b"); syncTenseProgress();
     }
     async function aiHintB(id,q){
       const out=document.getElementById(id+"ai"), i1=document.getElementById(id+"g"), i2=document.getElementById(id+"g2");
@@ -387,7 +436,7 @@
       const okLen=val.length>=(t.minChars||20), ok=okAll&&okAny&&okLen;
       inp.classList.add(ok?"ok":"err"); inp.disabled=true;
       const fb=document.getElementById(id+"f"); fb.className="fb "+(ok?"g":"b"); fb.textContent=ok?"Great.":"Bitte Aufgabe genauer treffen.";
-      ans[id]=true; if(ok)sc.c.r++;else sc.c.w++; updSc("c");
+      ans[id]=true; if(ok)sc.c.r++;else sc.c.w++; updSc("c"); syncTenseProgress();
     }
     async function aiHelp(id,t){
       const inp=document.getElementById(id+"i"), out=document.getElementById(id+"ai"), value=(inp&&inp.value?inp.value:"").trim();
@@ -404,16 +453,35 @@
       if(ans[id])return;
       const inp=document.getElementById(id+"i"); inp.value=t.model; inp.classList.add("ok"); inp.disabled=true;
       const fb=document.getElementById(id+"f"); fb.className="fb g"; fb.textContent="-> Beispiel angezeigt";
-      ans[id]=true; sc.c.w++; updSc("c");
+      ans[id]=true; sc.c.w++; updSc("c"); syncTenseProgress();
     }
 
-    function resetA(){sc.a={r:0,w:0};updSc("a");Object.keys(ans).filter(k=>k.startsWith("a")).forEach(k=>delete ans[k]);renderA();}
-    function resetB(){sc.b={r:0,w:0};updSc("b");Object.keys(ans).filter(k=>k.startsWith("b")).forEach(k=>delete ans[k]);renderB();}
-    function resetC(){sc.c={r:0,w:0};updSc("c");Object.keys(ans).filter(k=>k.startsWith("c")).forEach(k=>delete ans[k]);renderC();}
+    function resetA(){sc.a={r:0,w:0};updSc("a"); syncTenseProgress();Object.keys(ans).filter(k=>k.startsWith("a")).forEach(k=>delete ans[k]);renderA();}
+    function resetB(){sc.b={r:0,w:0};updSc("b"); syncTenseProgress();Object.keys(ans).filter(k=>k.startsWith("b")).forEach(k=>delete ans[k]);renderB();}
+    function resetC(){sc.c={r:0,w:0};updSc("c"); syncTenseProgress();Object.keys(ans).filter(k=>k.startsWith("c")).forEach(k=>delete ans[k]);renderC();}
 
     renderOverview(); renderA(); renderB(); renderC();
   </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
+
+
+
+
 
 

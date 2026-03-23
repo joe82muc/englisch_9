@@ -1,0 +1,570 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Holidays Mr. Moessner - South Africa 2026</title>
+  <style>
+    :root {
+      --sand: #f8edd8;
+      --sun: #ffb661;
+      --ocean: #0f4c81;
+      --ocean-2: #1e6da8;
+      --sky: #e7f3ff;
+      --ink: #11223a;
+      --muted: #445774;
+      --card: #ffffff;
+      --line: #c8ddf6;
+      --shadow: 0 16px 34px rgba(14, 47, 94, 0.22);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, #ffe3be 0%, transparent 38%),
+        radial-gradient(circle at 84% 88%, #cde7ff 0%, transparent 42%),
+        linear-gradient(140deg, var(--sand), var(--sky));
+    }
+    .wrap {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 1rem 1rem 2.1rem;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      background: linear-gradient(132deg, #0a3f6d, #0f5f98 54%, #ef9445);
+      color: #fff;
+      box-shadow: var(--shadow);
+      padding: 1.15rem 1.15rem 1.25rem;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.45rem);
+      line-height: 1.2;
+      position: relative;
+      z-index: 1;
+    }
+    .hero p {
+      margin: 0.46rem 0 0;
+      max-width: 60ch;
+      color: #f3f8ff;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-actions {
+      margin-top: 0.78rem;
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .pill {
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 999px;
+      text-decoration: none;
+      color: #fff;
+      padding: 0.42rem 0.85rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.1);
+      cursor: pointer;
+    }
+    .pill .yt-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-right: 0.42rem;
+      border-radius: 4px;
+      background: #ff1f1f;
+      color: #fff;
+      font-size: 0.64rem;
+      line-height: 1;
+      vertical-align: middle;
+    }    .hero::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -65px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.25), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+    .panel {
+      margin-top: 1rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 0.95rem;
+    }
+    .panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-bottom: 0.65rem;
+      align-items: center;
+    }
+    .panel-title {
+      margin: 0;
+      font-size: 1.22rem;
+      color: #0e3f73;
+    }
+    .panel-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .slideshow {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid #afd0f8;
+      background: #d5e9ff;
+      min-height: min(62vh, 560px);
+    }
+    .slideshow img {
+      width: 100%;
+      height: min(62vh, 560px);
+      object-fit: cover;
+      display: block;
+    }
+    .caption {
+      position: absolute;
+      left: 0.7rem;
+      right: 0.7rem;
+      bottom: 0.7rem;
+      border-radius: 14px;
+      padding: 0.6rem 0.75rem;
+      color: #fff;
+      background: linear-gradient(180deg, rgba(8, 26, 47, 0.15), rgba(8, 26, 47, 0.74));
+      backdrop-filter: blur(2px);
+    }
+    .caption strong {
+      display: block;
+      font-size: 1rem;
+    }
+    .caption span {
+      font-size: 0.88rem;
+      opacity: 0.92;
+    }
+    .controls {
+      margin-top: 0.72rem;
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+    .controls button {
+      border: 1px solid #98c4f5;
+      background: linear-gradient(180deg, #ffffff, #e8f2ff);
+      color: #123f70;
+      border-radius: 999px;
+      padding: 0.46rem 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .gallery {
+      margin-top: 0.75rem;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.72rem;
+    }
+    .card {
+      margin: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #b9d4f5;
+      background: #edf5ff;
+      box-shadow: 0 10px 20px rgba(14, 65, 130, 0.13);
+      cursor: zoom-in;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px rgba(14, 65, 130, 0.18);
+    }
+    .card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      background: #d8e9ff;
+    }
+    .card figcaption {
+      padding: 0.55rem 0.62rem 0.64rem;
+    }
+    .cap-title {
+      margin: 0;
+      font-size: 0.91rem;
+      color: #133761;
+      font-weight: 700;
+    }
+    .cap-sub {
+      margin: 0.2rem 0 0;
+      font-size: 0.82rem;
+      color: #496183;
+    }
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 12, 24, 0.88);
+      display: none;
+      place-items: center;
+      padding: 1rem;
+      z-index: 12000;
+    }
+    .lightbox.open { display: grid; }
+    .lb-inner {
+      width: min(1100px, 100%);
+      max-height: 92vh;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #08172b;
+      box-shadow: 0 22px 52px rgba(0,0,0,0.45);
+    }
+    .lb-image-wrap {
+      background: #030c17;
+      display: grid;
+      place-items: center;
+      max-height: calc(92vh - 130px);
+    }
+    .lb-image-wrap img {
+      max-width: 100%;
+      max-height: calc(92vh - 130px);
+      display: block;
+    }
+    .lb-foot {
+      padding: 0.65rem 0.75rem 0.75rem;
+      color: #e7f0ff;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+      background: #10243f;
+    }
+    .lb-foot p {
+      margin: 0;
+      font-size: 0.93rem;
+    }
+    .lb-controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .lb-controls button {
+      border: 1px solid rgba(255,255,255,0.38);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.42rem 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    @media (max-width: 1120px) {
+      .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 820px) {
+      .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card img { height: 180px; }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding: 0.8rem 0.72rem 1.6rem; }
+      .hero { border-radius: 18px; }
+      .panel { border-radius: 16px; padding: 0.75rem; }
+      .gallery { grid-template-columns: 1fr; }
+      .card img { height: 220px; }
+      .slideshow img { height: 44vh; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Holidays Mr. Moessner</h1>
+      <p>Our private photo memories from South Africa (2026). Tap any photo to enlarge it and start a slideshow.</p>
+      <div class="hero-actions">
+        <a class="pill" href="./unit3.html">Back to Unit 3</a>
+        <button class="pill" id="openSlideshow" type="button">Open Fullscreen Slideshow</button>
+        <a class="pill" href="https://www.youtube.com/@joe82muc-m" target="_blank" rel="noopener noreferrer"><span class="yt-icon" aria-hidden="true">▶</span>YouTube Channel</a>
+        <a class="pill" href="https://www.youtube.com/@joe82muc-m/shorts" target="_blank" rel="noopener noreferrer"><span class="yt-icon" aria-hidden="true">▶</span>YT Shorts</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">South Africa Moments</h2>
+          <p class="panel-sub">A visual diary: landscapes, city life, wildlife, coastlines, and road-trip impressions.</p>
+        </div>
+      </div>
+
+      <div class="slideshow">
+        <img id="heroImage" src="" alt="Holiday photo highlight">
+        <div class="caption">
+          <strong id="heroTitle"></strong>
+          <span id="heroSub"></span>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="prevHero" type="button">Previous</button>
+        <button id="nextHero" type="button">Next</button>
+        <button id="toggleHero" type="button">Pause Auto</button>
+      </div>
+
+      <div class="gallery" id="gallery"></div>
+    </section>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Image preview">
+    <div class="lb-inner">
+      <div class="lb-image-wrap">
+        <img id="lbImage" src="" alt="Large preview">
+      </div>
+      <div class="lb-foot">
+        <p id="lbCaption"></p>
+        <div class="lb-controls">
+          <button id="lbPrev" type="button">Previous</button>
+          <button id="lbNext" type="button">Next</button>
+          <button id="lbPlay" type="button">Play</button>
+          <button id="lbClose" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const imageFiles = [
+      "20251231_161818.jpg",
+      "20251231_163700.jpg",
+      "20251231_173600.jpg",
+      "20251231_180933.jpg",
+      "20251231_182407.jpg",
+      "20251231_193422.jpg",
+      "20260101_064549.jpg",
+      "20260101_071334.jpg",
+      "20260101_071350.jpg",
+      "20260101_072623.jpg",
+      "20260101_115519.jpg",
+      "20260101_171743.jpg",
+      "20260101_191732.jpg",
+      "20260102_071236.jpg",
+      "20260102_135105.jpg",
+      "20260102_140408.jpg",
+      "20260102_141752.jpg",
+      "20260102_160611.jpg",
+      "20260103_075737.jpg",
+      "20260103_105218.jpg",
+      "20260103_154000.jpg",
+      "20260103_170140.jpg",
+      "20260104_081626.jpg",
+      "20260104_095206.jpg",
+      "20260104_095504.jpg",
+      "20260104_101841.jpg",
+      "20260105_054819.jpg",
+      "20260105_081337.jpg",
+      "20260105_082036.jpg",
+      "20260105_082327.jpg",
+      "20260105_085715.jpg",
+      "20260105_090056.jpg",
+      "20260105_094650.jpg",
+      "20260105_094758.jpg",
+      "20260105_094946.jpg",
+      "20260105_104254.jpg",
+      "20260105_104301.jpg",
+      "20260105_104535.jpg",
+      "20260105_121132(1)(1).jpg",
+      "20260105_121848.jpg",
+      "20260105_160228.jpg",
+      "20260105_160321(1).jpg",
+      "20260105_160734.jpg",
+      "20260105_174049.jpg",
+      "20260105_174422.jpg",
+      "20260105_192623.jpg",
+      "GP011705 (3).jpg",
+      "IMG-20260103-WA0014.jpg",
+      "IMG-20260106-WA0022.jpg",
+      "IMG-20260106-WA0023.jpg",
+      "IMG-20260106-WA0026.jpg",
+      "IMG-20260106-WA0032.jpg",
+      "IMG-20260106-WA0034.jpg",
+      "IMG-20260106-WA0042.jpg",
+      "IMG-20260106-WA0048.jpg",
+      "IMG-20260106-WA0079.jpg",
+      "IMG-20260106-WA0101.jpg",
+      "IMG-20260106-WA0126.jpg",
+      "IMG-20260106-WA0158.jpg",
+      "IMG-20260106-WA0176.jpg",
+      "IMG-20260106-WA0202.jpg",
+      "Robberg-Nature-Reserve-1-Kopie-1024x679.jpg"
+    ];
+
+    function friendlyDate(yyyymmdd, hhmmss) {
+      const year = Number(yyyymmdd.slice(0, 4));
+      const month = Number(yyyymmdd.slice(4, 6)) - 1;
+      const day = Number(yyyymmdd.slice(6, 8));
+      const hour = Number(hhmmss.slice(0, 2));
+      const minute = Number(hhmmss.slice(2, 4));
+      const d = new Date(year, month, day, hour, minute);
+      return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function subtitleFromName(name) {
+      if (name.startsWith("Robberg-Nature-Reserve")) return "Clifftop views and ocean breeze at Robberg Nature Reserve.";
+      if (name.startsWith("GP")) return "Action-cam memory from the South African coastline.";
+      if (name.startsWith("IMG-")) return "Shared holiday snapshot: everyday moments and local color.";
+
+      const m = name.match(/^(\d{8})_(\d{6})/);
+      if (m) {
+        const hour = Number(m[2].slice(0, 2));
+        let mood = "Quiet evening lights and road-trip memories.";
+        if (hour >= 5 && hour < 9) mood = "Early morning adventure with fresh coastal air.";
+        else if (hour >= 9 && hour < 12) mood = "Late-morning discoveries between towns and beaches.";
+        else if (hour >= 12 && hour < 16) mood = "Sunny afternoon impressions from our holiday route.";
+        else if (hour >= 16 && hour < 19) mood = "Golden-hour colors over South African landscapes.";
+        return mood + " " + friendlyDate(m[1], m[2]);
+      }
+      return "Holiday memory from South Africa, 2026.";
+    }
+
+    const items = imageFiles.map((file, idx) => ({
+      file,
+      src: "../privat_images/" + file,
+      title: "South Africa Memory #" + String(idx + 1).padStart(2, "0"),
+      subtitle: subtitleFromName(file)
+    }));
+
+    const galleryEl = document.getElementById("gallery");
+    const heroImg = document.getElementById("heroImage");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroSub = document.getElementById("heroSub");
+
+    let current = 0;
+    let heroTimer = null;
+    let heroPlaying = true;
+
+    function renderHero() {
+      const it = items[current];
+      heroImg.src = it.src;
+      heroImg.alt = it.title;
+      heroTitle.textContent = it.title;
+      heroSub.textContent = it.subtitle;
+    }
+
+    function next(step = 1) {
+      current = (current + step + items.length) % items.length;
+      renderHero();
+    }
+
+    function startHero() {
+      stopHero();
+      heroTimer = setInterval(() => next(1), 3600);
+      heroPlaying = true;
+      document.getElementById("toggleHero").textContent = "Pause Auto";
+    }
+
+    function stopHero() {
+      if (heroTimer) clearInterval(heroTimer);
+      heroTimer = null;
+      heroPlaying = false;
+      document.getElementById("toggleHero").textContent = "Resume Auto";
+    }
+
+    items.forEach((it, idx) => {
+      const fig = document.createElement("figure");
+      fig.className = "card";
+      fig.innerHTML = '<img loading="lazy" decoding="async" src="' + it.src + '" alt="' + it.title + '"><figcaption><p class="cap-title">' + it.title + '</p><p class="cap-sub">' + it.subtitle + '</p></figcaption>';
+      fig.addEventListener("click", () => openLightbox(idx));
+      galleryEl.appendChild(fig);
+    });
+
+    document.getElementById("prevHero").addEventListener("click", () => { next(-1); if (heroPlaying) startHero(); });
+    document.getElementById("nextHero").addEventListener("click", () => { next(1); if (heroPlaying) startHero(); });
+    document.getElementById("toggleHero").addEventListener("click", () => { if (heroPlaying) stopHero(); else startHero(); });
+
+    const lb = document.getElementById("lightbox");
+    const lbImg = document.getElementById("lbImage");
+    const lbCaption = document.getElementById("lbCaption");
+    let lbIndex = 0;
+    let lbTimer = null;
+
+    function renderLightbox() {
+      const it = items[lbIndex];
+      lbImg.src = it.src;
+      lbImg.alt = it.title;
+      lbCaption.textContent = it.title + " - " + it.subtitle;
+    }
+
+    function openLightbox(idx) {
+      lbIndex = idx;
+      renderLightbox();
+      lb.classList.add("open");
+      lb.setAttribute("aria-hidden", "false");
+    }
+
+    function closeLightbox() {
+      lb.classList.remove("open");
+      lb.setAttribute("aria-hidden", "true");
+      stopLightboxPlay();
+    }
+
+    function stepLightbox(dir) {
+      lbIndex = (lbIndex + dir + items.length) % items.length;
+      renderLightbox();
+    }
+
+    function startLightboxPlay() {
+      stopLightboxPlay();
+      lbTimer = setInterval(() => stepLightbox(1), 2900);
+      document.getElementById("lbPlay").textContent = "Pause";
+    }
+
+    function stopLightboxPlay() {
+      if (lbTimer) clearInterval(lbTimer);
+      lbTimer = null;
+      document.getElementById("lbPlay").textContent = "Play";
+    }
+
+    document.getElementById("lbPrev").addEventListener("click", () => stepLightbox(-1));
+    document.getElementById("lbNext").addEventListener("click", () => stepLightbox(1));
+    document.getElementById("lbClose").addEventListener("click", closeLightbox);
+    const openBtn = document.getElementById("openSlideshow"); if (openBtn) { openBtn.addEventListener("click", () => { openLightbox(current); startLightboxPlay(); }); }
+    document.getElementById("lbPlay").addEventListener("click", () => { if (lbTimer) stopLightboxPlay(); else startLightboxPlay(); });
+
+    lb.addEventListener("click", (e) => { if (e.target === lb) closeLightbox(); });
+
+    window.addEventListener("keydown", (e) => {
+      if (!lb.classList.contains("open")) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowRight") stepLightbox(1);
+      if (e.key === "ArrowLeft") stepLightbox(-1);
+      if (e.key === " ") {
+        e.preventDefault();
+        if (lbTimer) stopLightboxPlay(); else startLightboxPlay();
+      }
+    });
+
+    renderHero();
+    startHero();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

@@ -77,10 +77,12 @@
       font-weight: 700;
       min-height: 52px;
     }
-    .btn.secondary {
-      background: linear-gradient(180deg, #fff7ef, #ffefd9);
-      border-color: #f1c79e;
-      color: #70350a;
+    
+    .btn.holidays {
+      background: linear-gradient(180deg, #fff2b5, #ffd24d);
+      border-color: #e4a400;
+      color: #5b3a00;
+      box-shadow: 0 8px 18px rgba(164, 114, 0, 0.22);
     }
     .gallery-title { margin: 0 0 0.7rem; color: #0e3c79; }
     .gallery-grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -124,15 +126,26 @@
       .slide, .slide img { min-height: 140px; }
     }
   </style>
+<style id="global-nav-style">
+.global-nav{position:sticky;top:0;z-index:9999;display:flex;gap:10px;align-items:center;padding:10px 14px;background:rgba(12,58,109,.92);backdrop-filter:blur(5px);border-bottom:1px solid rgba(255,255,255,.22)}
+.global-nav a,.global-nav button{appearance:none;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:999px;font:700 14px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.global-nav a:hover,.global-nav button:hover{background:rgba(255,255,255,.24)}
+.global-nav .spacer{margin-left:auto;color:#e4f0ff;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.9}
+@media (max-width:640px){.global-nav{padding:8px 10px;gap:8px}.global-nav a,.global-nav button{padding:7px 11px;font-size:13px}.global-nav .spacer{display:none}}
+</style>
 </head>
 <body>
+<div class="global-nav" id="global-nav">
+  <a id="globalNavHome" href="#">Home</a>
+  <button id="globalNavBack" type="button">Zurück</button>
+  <div class="spacer">Englisch 9</div>
+</div>
   <main class="wrap">
     <section class="hero">
       <h1>Unit 3: South Africa</h1>
       <p class="meta">Englisch 9. Klasse - Mittelschule am Sportpark</p>
       <p class="author">Lernplattform von Johannes Mößner</p>
-      <a class="back" href="../index.html">&larr; Zur Startseite</a>
-    </section>
+</section>
 
     <section class="panel">
       <p class="label">Grammatik</p>
@@ -152,38 +165,86 @@
         <a class="btn secondary" href="./vokabulary/vokabeltrainer.html">Vokabeltrainer</a>
         <a class="btn secondary" href="./email/email.html">E-Mail Training</a>
         <a class="btn secondary" href="../mediation/index.html">Mediation</a>
+        <a class="btn holidays" href="./holidays_moessner.html">Holidays Mr. M&ouml;ssner</a>
       </div>
     </section>
 
     <section class="panel">
-      <h2 class="gallery-title">South Africa Galerie (Tiere, Aborigines, modern, traditionell, Landschaft)</h2>
-      <div class="gallery-grid" id="galleryGrid">
-        <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="./gallery_sa/sa-01.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="./gallery_sa/sa-02.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="./gallery_sa/sa-03.jpg"><span class="tag"></span></figure>
-        <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="./gallery_sa/sa-04.jpg"><span class="tag"></span></figure>
+      <h2 class="gallery-title">Our holidays in South Africa in 2026</h2>
+            <div class="gallery-grid" id="galleryGrid">
+        <figure class="slide"><img alt="Gallery image 1" loading="lazy" decoding="async" src="../privat_images/20251231_161818.jpg"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 2" loading="lazy" decoding="async" src="../privat_images/20251231_163700.jpg"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 3" loading="lazy" decoding="async" src="../privat_images/20251231_173600.jpg"><span class="tag"></span></figure>
+        <figure class="slide"><img alt="Gallery image 4" loading="lazy" decoding="async" src="../privat_images/20251231_180933.jpg"><span class="tag"></span></figure>
       </div>
     </section>
   </main>
 
-  <script>
+    <script>
     const images = [
-      "./gallery_sa/sa-01.jpg","./gallery_sa/sa-02.jpg","./gallery_sa/sa-03.jpg","./gallery_sa/sa-04.jpg","./gallery_sa/sa-05.jpg",
-      "./gallery_sa/sa-06.jpg","./gallery_sa/sa-07.jpg","./gallery_sa/sa-08.jpg","./gallery_sa/sa-09.jpg","./gallery_sa/sa-10.jpg",
-      "./gallery_sa/sa-11.jpg","./gallery_sa/sa-12.jpg","./gallery_sa/sa-13.jpg","./gallery_sa/sa-14.jpg","./gallery_sa/sa-15.jpg",
-      "./gallery_sa/sa-16.jpg","./gallery_sa/sa-17.jpg","./gallery_sa/sa-18.jpg","./gallery_sa/sa-19.jpg","./gallery_sa/sa-20.jpg",
-      "./gallery_sa/sa-21.jpg","./gallery_sa/sa-22.jpg","./gallery_sa/sa-23.jpg","./gallery_sa/sa-24.jpg","./gallery_sa/sa-25.jpg",
-      "./gallery_sa/sa-26.jpg","./gallery_sa/sa-27.jpg","./gallery_sa/sa-28.jpg","./gallery_sa/sa-29.jpg","./gallery_sa/sa-30.jpg"
+      "../privat_images/20251231_161818.jpg",
+      "../privat_images/20251231_163700.jpg",
+      "../privat_images/20251231_173600.jpg",
+      "../privat_images/20251231_180933.jpg",
+      "../privat_images/20251231_182407.jpg",
+      "../privat_images/20251231_193422.jpg",
+      "../privat_images/20260101_064549.jpg",
+      "../privat_images/20260101_071334.jpg",
+      "../privat_images/20260101_071350.jpg",
+      "../privat_images/20260101_072623.jpg",
+      "../privat_images/20260101_115519.jpg",
+      "../privat_images/20260101_171743.jpg",
+      "../privat_images/20260101_191732.jpg",
+      "../privat_images/20260102_071236.jpg",
+      "../privat_images/20260102_135105.jpg",
+      "../privat_images/20260102_140408.jpg",
+      "../privat_images/20260102_141752.jpg",
+      "../privat_images/20260102_160611.jpg",
+      "../privat_images/20260103_075737.jpg",
+      "../privat_images/20260103_105218.jpg",
+      "../privat_images/20260103_154000.jpg",
+      "../privat_images/20260103_170140.jpg",
+      "../privat_images/20260104_081626.jpg",
+      "../privat_images/20260104_095206.jpg",
+      "../privat_images/20260104_095504.jpg",
+      "../privat_images/20260104_101841.jpg",
+      "../privat_images/20260105_054819.jpg",
+      "../privat_images/20260105_081337.jpg",
+      "../privat_images/20260105_082036.jpg",
+      "../privat_images/20260105_082327.jpg",
+      "../privat_images/20260105_085715.jpg",
+      "../privat_images/20260105_090056.jpg",
+      "../privat_images/20260105_094650.jpg",
+      "../privat_images/20260105_094758.jpg",
+      "../privat_images/20260105_094946.jpg",
+      "../privat_images/20260105_104254.jpg",
+      "../privat_images/20260105_104301.jpg",
+      "../privat_images/20260105_104535.jpg",
+      "../privat_images/20260105_121132%281%29%281%29.jpg",
+      "../privat_images/20260105_121848.jpg",
+      "../privat_images/20260105_160228.jpg",
+      "../privat_images/20260105_160321%281%29.jpg",
+      "../privat_images/20260105_160734.jpg",
+      "../privat_images/20260105_174049.jpg",
+      "../privat_images/20260105_174422.jpg",
+      "../privat_images/20260105_192623.jpg",
+      "../privat_images/GP011705%20%283%29.jpg",
+      "../privat_images/IMG-20260103-WA0014.jpg",
+      "../privat_images/IMG-20260106-WA0022.jpg",
+      "../privat_images/IMG-20260106-WA0023.jpg",
+      "../privat_images/IMG-20260106-WA0026.jpg",
+      "../privat_images/IMG-20260106-WA0032.jpg",
+      "../privat_images/IMG-20260106-WA0034.jpg",
+      "../privat_images/IMG-20260106-WA0042.jpg",
+      "../privat_images/IMG-20260106-WA0048.jpg",
+      "../privat_images/IMG-20260106-WA0079.jpg",
+      "../privat_images/IMG-20260106-WA0101.jpg",
+      "../privat_images/IMG-20260106-WA0126.jpg",
+      "../privat_images/IMG-20260106-WA0158.jpg",
+      "../privat_images/IMG-20260106-WA0176.jpg",
+      "../privat_images/IMG-20260106-WA0202.jpg",
+      "../privat_images/Robberg-Nature-Reserve-1-Kopie-1024x679.jpg"
     ];
-
-    const tags = {
-      "sa-01": "Landscape", "sa-02": "Landscape", "sa-03": "Landscape", "sa-04": "Landscape", "sa-05": "Landscape",
-      "sa-06": "Modern People", "sa-07": "Modern People", "sa-08": "Traditional", "sa-09": "Modern People", "sa-10": "Modern People",
-      "sa-11": "Animals", "sa-12": "Animals", "sa-13": "Animals", "sa-14": "Animals", "sa-15": "Animals",
-      "sa-16": "Animals", "sa-17": "Animals", "sa-18": "Animals", "sa-19": "Animals", "sa-20": "Animals",
-      "sa-21": "Aborigines", "sa-22": "Traditional", "sa-23": "Traditional", "sa-24": "Traditional", "sa-25": "Modern",
-      "sa-26": "Modern", "sa-27": "Modern", "sa-28": "Landscape", "sa-29": "Landscape", "sa-30": "Landscape"
-    };
 
     const slides = Array.from(document.querySelectorAll(".slide"));
     let queue = [];
@@ -220,8 +281,7 @@
       const img = slide.querySelector("img");
       const tag = slide.querySelector(".tag");
       const safeSrc = ensureImage(src);
-      const key = safeSrc.split("/").pop().replace(".jpg", "");
-      tag.textContent = "South Africa - " + (tags[key] || "Photo");
+      tag.textContent = "South Africa - Holiday 2026";
       img.style.opacity = "0.25";
       setTimeout(() => {
         img.src = safeSrc;
@@ -267,8 +327,33 @@
     fillInitial();
     setInterval(rotateOne, 2400);
   </script>
+<script id="global-nav-script">
+(function(){
+  function homeUrl(){
+    var href=String(window.location.href||'');
+    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
+    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
+    return 'index.html';
+  }
+  var home=document.getElementById('globalNavHome');
+  var back=document.getElementById('globalNavBack');
+  if(home){ home.setAttribute('href', homeUrl()); }
+  if(back){ back.addEventListener('click', function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href=homeUrl(); } }); }
+})();
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
 
 
 
