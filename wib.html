@@ -95,7 +95,7 @@
     <section class="hero">
       <h1>WiB Quiz: Banken und Zahlungsverkehr (60 Fragen)</h1>
       <p class="sub">Auf Basis der Dateien Fragen S.90-105 + Lernskript.</p>
-      <p class="hint">Wertung: 1 Punkt nur bei komplett richtiger Frage (alle richtigen, keine falschen).</p>
+      <p class="hint">Wertung: 1 Punkt nur bei komplett richtiger Frage (alle richtigen, keine falschen). Es gibt Fragen mit 2 oder 3 richtigen Antworten. Danach folgt Runde 2 mit allen falschen Fragen.</p>
     </section>
 
     <section class="panel">
@@ -133,7 +133,7 @@
       { q: "Welche Aussagen zur Bedeutung von Banken für Haushalte stimmen?", options: ["Gehalt wird überwiesen.", "Miete kann bezahlt werden.", "Größere Wünsche können über Kredite finanziert werden.", "Haushalte brauchen niemals ein Konto.", "Bargeldabhebungen sind nur ohne Bank möglich."], correct: [0,1,2] },
       { q: "Welche Aussagen zur Rolle von Banken für Unternehmen sind richtig?", options: ["Löhne werden überwiesen.", "Maschinen können über Kredite finanziert werden.", "Internationale Zahlungen laufen über Banken.", "Unternehmen benötigen keine Zahlungsabwicklung.", "Banken sind für Exporte bedeutungslos."], correct: [0,1,2] },
       { q: "Welche Aussagen zeigen die Bedeutung für den Staat?", options: ["Steuern werden eingezogen.", "Renten/Kindergeld können ausgezahlt werden.", "Öffentliche Projekte werden mitfinanziert.", "Der Staat nutzt grundsätzlich kein Bankensystem.", "Banken ersetzen den Staat vollständig."], correct: [0,1,2] },
-      { q: "Welche Geldstrom-Beispiele sind korrekt?", options: ["Unternehmen -> Haushalte: Löhne", "Haushalte -> Staat: Steuern", "Banken -> Haushalte: Kredite", "Haushalte -> Unternehmen: Rente", "Staat -> Ausland: immer Exporterlöse"], correct: [0,1,2] },
+      { q: "Welche Geldstrom-Beispiele sind korrekt?", options: ["Unternehmen -> Haushalte: Löhne", "Haushalte -> Staat: Steuern", "Banken -> Haushalte: ausschließlich Bußgelder", "Haushalte -> Unternehmen: Rente", "Staat -> Ausland: immer Exporterlöse"], correct: [0,1] },
 
       { q: "Warum ist ein funktionierendes Bankensystem für ein Land wichtig?", options: ["Zahlungen werden zuverlässig abgewickelt.", "Investitionen werden über Kredite ermöglicht.", "Geldströme zwischen Staat, Haushalten und Unternehmen werden verbunden.", "Es verhindert jede Form von Betrug automatisch.", "Es macht Gesetze überflüssig."], correct: [0,1,2] },
       { q: "Welche Folgen drohen ohne Banken für Unternehmen?", options: ["Erschwerte Lohnzahlungen", "Weniger Investitionen ohne Kredite", "Probleme bei Auslandszahlungen", "Automatisch höhere Exporte", "Keine Notwendigkeit von Buchhaltung"], correct: [0,1,2] },
@@ -141,29 +141,29 @@
       { q: "Welche Aussagen zum Girokonto treffen zu?", options: ["Es ist Basis des täglichen Zahlungsverkehrs.", "Darüber laufen z. B. Mietzahlungen und Lastschriften.", "Kontoauszüge helfen bei Kontrolle von Einnahmen/Ausgaben.", "Es ist nur für Unternehmen erlaubt.", "Onlinekäufe sind darüber unmöglich."], correct: [0,1,2] },
       { q: "Welche Angaben sind für eine Überweisung zentral?", options: ["IBAN Empfänger", "Empfängername", "Betrag", "Name des Bankberaters", "Lieblingsfarbe des Empfängers"], correct: [0,1,2] },
       { q: "Welche Aussagen zum Ablauf einer Überweisung stimmen?", options: ["Auftrag wird vom Kontoinhaber erteilt.", "Bank bucht beim Sender ab und beim Empfänger gut.", "In Deutschland oft innerhalb eines Werktags.", "Empfänger muss immer bar unterschreiben.", "Überweisung ist nur am Schalter möglich."], correct: [0,1,2] },
-      { q: "Warum ist der Verwendungszweck wichtig?", options: ["Zuordnung der Zahlung", "Schnellere Nachvollziehbarkeit", "Hilft bei Rechnungsbezug", "Ersetzt die IBAN", "Macht Betrag unnötig"], correct: [0,1,2] },
+      { q: "Warum ist der Verwendungszweck wichtig?", options: ["Zuordnung der Zahlung", "Er ist bei jeder Zahlung gesetzlich Pflicht", "Hilft bei Rechnungsbezug", "Ersetzt die IBAN", "Macht Betrag unnötig"], correct: [0,2] },
       { q: "Welche Aussagen zum Dauerauftrag sind richtig?", options: ["Automatische, wiederkehrende Überweisung", "Geeignet bei gleichbleibenden Beträgen", "Kann geändert oder gelöscht werden", "Wird vom Empfänger ohne Zustimmung eingerichtet", "Nur für einmalige Zahlungen gedacht"], correct: [0,1,2] },
-      { q: "Wann ist Lastschrift meist besser als Dauerauftrag?", options: ["Wenn Beträge variieren", "Wenn Anbieter den Einzug organisiert", "Wenn eine Einzugsermächtigung erteilt wurde", "Wenn man absolut keinen Kontoauszug will", "Wenn man jeden Betrag bar zahlen möchte"], correct: [0,1,2] },
+      { q: "Wann ist Lastschrift meist besser als Dauerauftrag?", options: ["Wenn Beträge variieren", "Wenn Anbieter den Einzug organisiert", "Wenn keine Einzugsermächtigung vorliegt", "Wenn man absolut keinen Kontoauszug will", "Wenn man jeden Betrag bar zahlen möchte"], correct: [0,1] },
 
       { q: "Was ist eine Lastschrift?", options: ["Anbieter zieht Betrag ein", "Vorherige Zustimmung nötig", "Abbuchung erscheint am Kontoauszug", "Bank überweist nur auf Zuruf", "Nur bei Kreditkarten möglich"], correct: [0,1,2] },
       { q: "Welche Aussagen zur Einzugsermächtigung sind korrekt?", options: ["Sie ist eine Zustimmung zur Abbuchung.", "Ohne Zustimmung darf niemand einziehen.", "Sie kann schriftlich oder digital erteilt werden.", "Sie gilt automatisch für alle Firmen.", "Sie ersetzt die IBAN komplett."], correct: [0,1,2] },
       { q: "Welche Beispiele sind typische Lastschrift-Fälle?", options: ["Handyvertrag", "Fitnessstudio", "Streaming-Abo", "Einmalige spontane Barspende", "Münzgeld am Kiosk"], correct: [0,1,2] },
       { q: "Welche Rechte hast du bei falscher Lastschrift laut Skript?", options: ["Rückbuchung über die Bank", "Frist meist etwa 8 Wochen", "Regelmäßige Kontrolle der Auszüge", "Keine Rechte nach Abbuchung", "Nur der Händler darf korrigieren"], correct: [0,1,2] },
       { q: "Was kennzeichnet eine Debitkarte?", options: ["Direkt mit Girokonto verbunden", "Betrag meist sofort abgebucht", "Nutzung eigener Deckung", "Immer Monatsabrechnung wie Kreditkarte", "Unabhängig vom Konto"], correct: [0,1,2] },
-      { q: "Welche Schritte sind typisch beim Bezahlen mit Debitkarte?", options: ["Karte einstecken oder kontaktlos halten", "PIN-Eingabe je nach Betrag/Terminal", "Abbuchung vom Konto", "Händler erstellt Kreditvertrag", "Kunde lädt zuerst Zollformular"], correct: [0,1,2] },
+      { q: "Welche Schritte sind typisch beim Bezahlen mit Debitkarte?", options: ["Karte einstecken oder kontaktlos halten", "PIN-Eingabe je nach Betrag/Terminal", "Abbuchung erst am Monatsende gesammelt", "Händler erstellt Kreditvertrag", "Kunde lädt zuerst Zollformular"], correct: [0,1] },
       { q: "Was beschreibt die elektronische Geldbörse (GeldKarte)?", options: ["Guthaben liegt auf dem Kartenchip", "Geeignet für kleine Zahlungen", "Aufladung z. B. am Automaten möglich", "Nur bei Kreditkarten vorhanden", "Ersetzt jedes Girokonto vollständig"], correct: [0,1,2] },
       { q: "Welche Beispiele wurden für Chip-Guthaben genannt?", options: ["Busticket am Automaten", "Essen in der Mensa", "Paketsendung an Packstation", "Autokauf im Autohaus", "Lohnüberweisung"], correct: [0,1,2] },
       { q: "Welche Gefahren beim Bezahlen mit Karte sind realistisch?", options: ["PIN-Ausspähung", "Kartenverlust", "Missbrauch bei unsicherem Umgang", "Geld wird auf Papierkonto gebrannt", "Automatische Schuldenfreiheit"], correct: [0,1,2] },
       { q: "Welche Schutzmaßnahmen bei Kartenzahlung sind sinnvoll?", options: ["PIN geheim halten", "Kontoauszüge prüfen", "Karte bei Verlust sofort sperren", "PIN auf Karte schreiben", "Passwort überall identisch nutzen"], correct: [0,1,2] },
 
-      { q: "Was beschreibt eine Kreditkarte korrekt?", options: ["Abrechnung meist gesammelt später", "Kurzfristiger Kredit der Bank", "Bonitätsprüfung vor Ausgabe möglich", "Immer sofortige Abbuchung wie Debit", "Nur für Unternehmen verfügbar"], correct: [0,1,2] },
+      { q: "Was beschreibt eine Kreditkarte korrekt?", options: ["Abrechnung meist gesammelt später", "Kurzfristiger Kredit der Bank", "Bonitätsprüfung ist bei Kreditkarten grundsätzlich verboten", "Immer sofortige Abbuchung wie Debit", "Nur für Unternehmen verfügbar"], correct: [0,1] },
       { q: "Welche Elemente liegen typischerweise auf der Vorderseite einer Kreditkarte?", options: ["EMV-Chip", "Name", "Kartennummer", "Steuer-ID", "Geburtsort des Karteninhabers"], correct: [0,1,2] },
       { q: "Welche Angaben sind typisch auf der Rückseite der Kreditkarte?", options: ["Magnetstreifen", "Unterschriftsfeld", "Sicherheitscode CVC/CVV", "IBAN in voller Länge", "Steuerklasse"], correct: [0,1,2] },
       { q: "Was bedeutet Bonität bei Kreditkarten?", options: ["Einschätzung der Rückzahlungsfähigkeit", "Basis für Kartenentscheidung der Bank", "Bezieht u. a. Einkommen/Zahlungsverhalten ein", "Name für Kartendesign", "Nur PIN-Länge"], correct: [0,1,2] },
       { q: "Welche Aussagen zu PayPal stimmen?", options: ["Onlinebezahldienst", "Bankkonto/Kreditkarte verknüpfbar", "Käuferschutz als Vorteil", "Nur per Bargeldeinzahlung nutzbar", "Keine Registrierung nötig"], correct: [0,1,2] },
       { q: "Welche Risiken wurden bei PayPal genannt?", options: ["Phishing-Mails", "Falsche Zahlungsaufforderungen", "Missbrauch bei schwachen Passwörtern", "Kein Risiko durch Datenpreisgabe überhaupt", "Nur bei Offline-Kauf relevant"], correct: [0,1,2] },
       { q: "Welche Aussagen zu Klarna sind korrekt?", options: ["Bietet u. a. Rechnung und Ratenzahlung", "Kauf auf Rechnung: Ware zuerst, Zahlung später", "Zu viele kleine Käufe können Schulden fördern", "Ratenzahlung beseitigt automatisch jedes Risiko", "Nutzung nur für Unternehmen"], correct: [0,1,2] },
-      { q: "Welche Aussagen zu Mobile Payment stimmen?", options: ["Technik: NFC", "Smartphone/Smartwatch möglich", "Bei höheren Beträgen kann PIN nötig sein", "Funktioniert nur mit Bargeld", "Nur ohne App zulässig"], correct: [0,1,2] },
+      { q: "Welche Aussagen zu Mobile Payment stimmen?", options: ["Technik: NFC", "Smartphone/Smartwatch möglich", "Bei höheren Beträgen ist niemals PIN nötig", "Funktioniert nur mit Bargeld", "Nur ohne App zulässig"], correct: [0,1] },
       { q: "Welche Voraussetzungen sind für Mobile Payment typisch?", options: ["NFC-fähiges Gerät", "Passende App/Wallet", "Aktivierte Zahlungsfunktion", "Festnetztelefon", "Druckeranschluss"], correct: [0,1,2] },
 
       { q: "Welche Merkmale sprechen für einen Fake-Shop?", options: ["Extrem niedrige Preise", "Kein vollständiges Impressum", "Nur Vorkasse", "Viele nachvollziehbare Bewertungen", "Klar erkennbare Betreiberadresse"], correct: [0,1,2] },
@@ -171,30 +171,49 @@
       { q: "Welche Probleme können bei Auslands-Onlineshops entstehen?", options: ["Lange Lieferzeiten", "Zusätzliche Zollkosten", "Schwierige Rücksendung", "Immer bessere Qualität", "Garantien immer stärker"], correct: [0,1,2] },
       { q: "Welche Sicherheitsregeln beim Onlinekauf sind richtig?", options: ["Bekannte Shops bevorzugen", "Auf https achten", "TAN nie weitergeben", "Unsichere Passwörter mehrfach nutzen", "Bei Unsicherheit abbrechen"], correct: [0,1,2] },
       { q: "Welche Aussage-Kombination zur SCHUFA trifft zu?", options: ["Sie sammelt Bonitätsinformationen.", "Sie hilft Kreditgebern bei Risikoeinschätzung.", "Sie entscheidet nicht allein über jeden Kredit.", "Sie ist ein Online-Shop-Siegel.", "Sie ersetzt Bankgesetze."], correct: [0,1,2] },
-      { q: "Was zeigen https und Schloss-Symbol im Browser an?", options: ["Verbindung ist verschlüsselt", "Datenübertragung ist besser geschützt", "Es erhöht Sicherheit beim Bezahlen", "Shop ist garantiert seriös in jedem Punkt", "Passwort kann öffentlich geteilt werden"], correct: [0,1,2] },
+      { q: "Was zeigen https und Schloss-Symbol im Browser an?", options: ["Verbindung ist verschlüsselt", "Datenübertragung ist besser geschützt", "Sie garantieren vollständigen Käuferschutz", "Shop ist garantiert seriös in jedem Punkt", "Passwort kann öffentlich geteilt werden"], correct: [0,1] },
       { q: "Warum sollen PIN und TAN niemals weitergegeben werden?", options: ["Sie autorisieren Zahlungen", "Missbrauch kann zu Geldverlust führen", "Betrüger können Kontozugriff erhalten", "Banken verlangen das per E-Mail", "Nur Freunde dürfen sie kennen"], correct: [0,1,2] },
       { q: "Welche Punkte sollte man vor Erstkauf in neuem Shop prüfen?", options: ["Impressum und Kontaktdaten", "Preisvergleich mit anderen Shops", "Zahlungsarten und Bewertungen", "Nur Werbebannerfarbe", "Ob Shop viele Popups hat"], correct: [0,1,2] },
       { q: "Wie sollte man auf eine E-Mail reagieren, die TAN und Bankdaten verlangt?", options: ["Nicht antworten", "Absender kritisch prüfen", "Direkt bei Bank über offizielle Kanäle nachfragen", "TAN testweise senden", "Link sofort anklicken und einloggen"], correct: [0,1,2] },
       { q: "Warum können extrem billige Angebote verdächtig sein?", options: ["Möglicher Fake-Shop", "Mögliche Fälschung/Schlechtqualität", "Risiko von Vorkasse-Betrug", "Immer offizieller Herstellerverkauf", "Automatische Zollfreiheit"], correct: [0,1,2] },
 
       { q: "Bildfrage: Welche Aussagen zur dargestellten Banken-Welt passen zum Lernskript?", img: "./wib_media/wib_01.png", options: ["Banken verbinden viele Lebensbereiche.", "Zahlungsverkehr ist ein Kernbereich.", "Kredite und Sparen gehören zu Bankaufgaben.", "Banken arbeiten nur mit Bargeld.", "Banken sind für Unternehmen bedeutungslos."], correct: [0,1,2] },
-      { q: "Bildfrage: Welche Aussagen zu Geldströmen passen?", img: "./wib_media/wib_03.png", options: ["Zwischen Haushalten und Unternehmen fließt Geld in beide Richtungen.", "Banken übernehmen Vermittlungsfunktionen.", "Staatliche Zahlungen beeinflussen den Kreislauf.", "Es gibt nur einen einzigen Geldweg.", "Ausland spielt nie eine Rolle."], correct: [0,1,2] },
+      { q: "Bildfrage: Welche Aussagen zu Geldströmen passen?", img: "./wib_media/wib_03.png", options: ["Zwischen Haushalten und Unternehmen fließt Geld in beide Richtungen.", "Banken übernehmen Vermittlungsfunktionen.", "Staatliche Zahlungen spielen im Kreislauf keine Rolle.", "Es gibt nur einen einzigen Geldweg.", "Ausland spielt nie eine Rolle."], correct: [0,1] },
       { q: "Bildfrage: Welche Aussagen zu Zahlungsarten passen zur Darstellung?", img: "./wib_media/wib_05.png", options: ["Es gibt mehrere bargeldlose Wege.", "Überweisung und Lastschrift unterscheiden sich im Auftraggeber.", "Kartenzahlung ist eine Form bargeldlosen Bezahlens.", "Nur Bargeld ist dargestellt.", "Dauerauftrag ist identisch mit Kredit."], correct: [0,1,2] },
       { q: "Bildfrage: Was passt zu Debit- vs. Kreditkarte?", img: "./wib_media/wib_06.png", options: ["Debit: meist direkte Abbuchung", "Kredit: spätere Sammelabrechnung möglich", "Kreditkarte basiert oft auf Bonitätsprüfung", "Beide sind völlig identisch", "Debitkarte ist nie mit Girokonto verbunden"], correct: [0,1,2] },
-      { q: "Bildfrage: Welche Aussagen zu Online-Bezahldiensten stimmen?", img: "./wib_media/wib_09.png", options: ["Bequemlichkeit kann zu unüberlegten Käufen führen", "Sicherheitsregeln bleiben wichtig", "Passwortschutz ist zentral", "Risiken gibt es nur offline", "PIN darf bei Unsicherheit geteilt werden"], correct: [0,1,2] },
+      { q: "Bildfrage: Welche Aussagen zu Online-Bezahldiensten stimmen?", img: "./wib_media/wib_09.png", options: ["Bequemlichkeit kann zu unüberlegten Käufen führen", "Sicherheitsregeln bleiben wichtig", "Passwörter sollten möglichst kurz sein", "Risiken gibt es nur offline", "PIN darf bei Unsicherheit geteilt werden"], correct: [0,1] },
       { q: "Bildfrage: Welche Aussagen zu Mobile Payment treffen zu?", img: "./wib_media/wib_11.png", options: ["NFC ist die zentrale Technik", "Kontaktlose Distanz ist sehr kurz", "Geräte wie Smartphone/Watch sind nutzbar", "Nur mit Papierüberweisung möglich", "Es braucht niemals Sicherheitsabfragen"], correct: [0,1,2] },
 
       { q: "Transfer: Du zahlst monatlich dieselbe Miete. Welche Aussagen sind sinnvoll?", options: ["Dauerauftrag ist passend", "Fester Termin verbessert Planung", "Mahngebühren lassen sich eher vermeiden", "Lastschrift ohne Zustimmung ist besser", "Einmal im Jahr bar zahlen reicht"], correct: [0,1,2] },
       { q: "Transfer: Handyvertrag wird monatlich unterschiedlich abgerechnet. Was passt?", options: ["Lastschrift ist oft sinnvoll", "Einzugsermächtigung ist nötig", "Kontoauszug sollte kontrolliert werden", "Fester Dauerauftrag ist immer ideal", "Keine Zustimmung erforderlich"], correct: [0,1,2] },
-      { q: "Transfer: Smartphone-Akku leer, aber du willst kontaktlos zahlen. Welche Optionen sind realistisch?", options: ["Physische Debit-/Kreditkarte nutzen", "Barzahlung als Alternative", "Vorher auf genug Akkustand achten", "Nur Mobile Payment ist gesetzlich erlaubt", "PIN an Nachbar weitergeben"], correct: [0,1,2] },
+      { q: "Transfer: Smartphone-Akku leer, aber du willst kontaktlos zahlen. Welche Optionen sind realistisch?", options: ["Physische Debit-/Kreditkarte nutzen", "Barzahlung als Alternative", "Vorher auf genug Akkustand achten ist unnötig", "Nur Mobile Payment ist gesetzlich erlaubt", "PIN an Nachbar weitergeben"], correct: [0,1] },
       { q: "Transfer: Neuer Shop verlangt nur Vorkasse und ist extrem billig. Was spricht für Vorsicht?", options: ["Fake-Shop-Risiko", "Mögliche Nichtlieferung", "Seriosität erst prüfen", "Sofort große Bestellung ist am sichersten", "TAN per Mail senden beschleunigt"], correct: [0,1,2] },
-      { q: "Transfer: Erste eigene Wohnung. Welche Zahlungsarten sind für regelmäßige Fixkosten besonders geeignet?", options: ["Miete per Dauerauftrag", "Versorger oft per Lastschrift", "Kontobewegungen regelmäßig prüfen", "Fixkosten nur bar zahlen", "Nie Verwendungszweck nutzen"], correct: [0,1,2] },
+      { q: "Transfer: Erste eigene Wohnung. Welche Zahlungsarten sind für regelmäßige Fixkosten besonders geeignet?", options: ["Miete per Dauerauftrag", "Versorger oft per Lastschrift", "Kontobewegungen regelmäßig prüfen ist unnötig", "Fixkosten nur bar zahlen", "Nie Verwendungszweck nutzen"], correct: [0,1] },
       { q: "Transfer: Freund meint, nur Bargeld sei sinnvoll. Welche Gegenargumente sind stark?", options: ["Bargeldlos spart oft Zeit", "Onlinekäufe benötigen meist Kontozahlung", "Regelmäßige Zahlungen lassen sich automatisieren", "Bargeldlos ist immer risikofrei", "Bargeld ist gesetzlich komplett verboten"], correct: [0,1,2] }
     ];
+
+    // Mischt die Antwortreihenfolge pro Frage und passt die richtigen Indizes an.
+    function shuffleQuestionOptions() {
+      questions.forEach((q) => {
+        const tagged = q.options.map((text, idx) => ({ text, ok: q.correct.includes(idx) }));
+        for (let i = tagged.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [tagged[i], tagged[j]] = [tagged[j], tagged[i]];
+        }
+        q.options = tagged.map((x) => x.text);
+        q.correct = tagged
+          .map((x, idx) => (x.ok ? idx : -1))
+          .filter((idx) => idx !== -1);
+      });
+    }
+    shuffleQuestionOptions();
 
     const totalQuestions = questions.length;
     const maxPoints = totalQuestions;
 
+    let round = 1;
+    let activeIndexes = questions.map((_, i) => i);
+    let wrongFromRound1 = [];
     let current = 0;
     let totalPoints = 0;
     let checked = false;
@@ -216,15 +235,22 @@
       scoreLiveEl.textContent = `Punkte aktuell: ${totalPoints} / ${maxPoints}`;
     }
 
+    function markWrongForRound2(qIndex) {
+      if (round === 1 && !wrongFromRound1.includes(qIndex)) {
+        wrongFromRound1.push(qIndex);
+      }
+    }
+
     function renderQuestion() {
       checked = false;
       feedbackEl.textContent = "";
       feedbackEl.className = "feedback";
-      nextBtn.disabled = true;
+      nextBtn.disabled = false;
       resultBox.style.display = "none";
 
-      const item = questions[current];
-      progressEl.textContent = `Frage ${current + 1} von ${totalQuestions}`;
+      const qIndex = activeIndexes[current];
+      const item = questions[qIndex];
+      progressEl.textContent = `Runde ${round}: Frage ${current + 1} von ${activeIndexes.length}`;
       questionEl.textContent = item.q;
 
       if (item.img) {
@@ -267,15 +293,19 @@
         return;
       }
 
-      const correct = questions[current].correct;
+      const qIndex = activeIndexes[current];
+      const correct = questions[qIndex].correct;
       const qPoints = sameSet(picked, correct) ? 1 : 0;
       totalPoints += qPoints;
 
-      const rightTexts = correct.map((i) => questions[current].options[i]).join(" | ");
+      const rightTexts = correct.map((i) => questions[qIndex].options[i]).join(" | ");
       if (qPoints === 1) {
-        feedbackEl.textContent = `Perfekt. +1 Punkt. Richtige Antworten: ${rightTexts}`;
+        feedbackEl.textContent = round === 2
+          ? `Richtig im zweiten Versuch. +1 Punkt. Richtige Antworten: ${rightTexts}`
+          : `Perfekt. +1 Punkt. Richtige Antworten: ${rightTexts}`;
         feedbackEl.className = "feedback ok";
       } else {
+        markWrongForRound2(qIndex);
         feedbackEl.textContent = `0 Punkte in dieser Frage. Richtige Antworten: ${rightTexts}`;
         feedbackEl.className = "feedback bad";
       }
@@ -286,17 +316,36 @@
     }
 
     function nextQuestion() {
-      if (!checked) return;
+      if (!checked) {
+        const qIndex = activeIndexes[current];
+        markWrongForRound2(qIndex);
+      }
       current += 1;
-      if (current >= totalQuestions) {
+      if (current >= activeIndexes.length) {
+        if (round === 1 && wrongFromRound1.length > 0) {
+          startSecondRound();
+          return;
+        }
         showResult();
         return;
       }
       renderQuestion();
     }
 
+    function startSecondRound() {
+      round = 2;
+      activeIndexes = [...wrongFromRound1];
+      current = 0;
+      checked = false;
+      feedbackEl.textContent = "";
+      feedbackEl.className = "feedback";
+      renderQuestion();
+    }
+
     function showResult() {
-      progressEl.textContent = `Fertig: ${totalQuestions} Fragen bearbeitet`;
+      progressEl.textContent = wrongFromRound1.length > 0
+        ? `Fertig: 2 Runden abgeschlossen`
+        : `Fertig: 1 Runde abgeschlossen`;
       questionEl.textContent = "Quiz abgeschlossen";
       formEl.innerHTML = "";
       imgWrap.style.display = "none";
@@ -306,14 +355,21 @@
       restartBtn.style.display = "inline-block";
 
       const pct = Math.round((totalPoints / maxPoints) * 100);
-      resultText.textContent = `Du hast ${totalPoints} von ${maxPoints} Punkten erreicht (${pct} %).`;
+      const roundInfo = wrongFromRound1.length
+        ? `Runde 2 enthielt ${wrongFromRound1.length} Wiederholungsfragen.`
+        : `Alle Fragen waren bereits in Runde 1 richtig.`;
+      resultText.textContent = `Du hast ${totalPoints} von ${maxPoints} Punkten erreicht (${pct} %). ${roundInfo}`;
       resultBox.style.display = "block";
       updateLiveScore();
     }
 
     function restartQuiz() {
+      round = 1;
+      activeIndexes = questions.map((_, i) => i);
+      wrongFromRound1 = [];
       current = 0;
       totalPoints = 0;
+      checked = false;
       checkBtn.disabled = false;
       restartBtn.style.display = "none";
       renderQuestion();
@@ -327,3 +383,5 @@
   </script>
 </body>
 </html>
+
+
