@@ -11,6 +11,8 @@ const PORT = Number(process.env.PORT || 3000);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "2";
+const SITE_USERNAME = process.env.SITE_USERNAME || "1";
+const SITE_PASSWORD = process.env.SITE_PASSWORD || "2";
 const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || "";
 const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || "";
 const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || "";
@@ -53,6 +55,34 @@ app.get("/api/health", (_req, res) => {
 });
 
 const sessions = new Map();
+const siteSessions = new Map();
+
+app.post("/api/site/login", (req, res) => {
+  const username = clean(req.body?.username);
+  const password = clean(req.body?.password);
+
+  if (username !== SITE_USERNAME || password !== SITE_PASSWORD) {
+    return res.status(401).json({ ok: false, error: "Benutzername oder Passwort falsch." });
+  }
+
+  const token = uid("site");
+  siteSessions.set(token, { createdAt: new Date().toISOString() });
+  return res.json({ ok: true, token });
+});
+
+app.get("/api/site/verify", (req, res) => {
+  const token = getAuthToken(req);
+  if (!token || !siteSessions.has(token)) {
+    return res.status(401).json({ ok: false, error: "Nicht autorisiert." });
+  }
+  return res.json({ ok: true });
+});
+
+app.post("/api/site/logout", (req, res) => {
+  const token = getAuthToken(req);
+  if (token) siteSessions.delete(token);
+  return res.json({ ok: true });
+});
 
 app.post("/api/auth/login", (req, res) => {
   const firstName = clean(req.body?.firstName);
@@ -1011,6 +1041,11 @@ function buildStudentOverview(records) {
   overview.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
   return overview;
 }
+
+
+
+
+
 
 
 
