@@ -10,10 +10,14 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
-const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "schule123";
-const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || "";
-const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || "";
-const AZURE_TTS_VOICE = process.env.AZURE_TTS_VOICE || "en-GB-SoniaNeural";
+const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "2";
+const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || "";
+const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY || "";
+const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_DEPLOYMENT || "";
+const AZURE_OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION || "2024-10-21";
+const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || process.env.SPEECH_KEY || "";
+const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || process.env.SPEECH_REGION || "";
+const AZURE_SPEECH_VOICE = process.env.AZURE_SPEECH_VOICE || "en-US-JennyNeural";
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
@@ -41,7 +45,9 @@ app.get("/api/health", (_req, res) => {
     staticRoot: STATIC_ROOT,
     ai: {
       keyConfigured: Boolean(ANTHROPIC_API_KEY),
-      model: ANTHROPIC_MODEL
+      model: ANTHROPIC_MODEL,
+      azureOpenAiConfigured: Boolean(AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT),
+      azureSpeechConfigured: Boolean(AZURE_SPEECH_KEY && AZURE_SPEECH_REGION)
     }
   });
 });
@@ -295,6 +301,125 @@ app.post("/api/vocab/generate", authRequired, (req, res) => {
   return res.json({ ok: true, cards, timerSec: 5 });
 });
 
+app.post("/api/vocab/example", async (req, res) => {
+  try {
+    const word = clean(req.body?.word);
+    const meaning = clean(req.body?.meaning || "");
+    const topic = clean(req.body?.topic || "topic2").toLowerCase();
+    const level = clean(req.body?.level || "A2+");
+    const providerRaw = clean(req.body?.provider || "anthropic").toLowerCase();
+    const provider = providerRaw === "azure" ? "azure" : "anthropic";
+    const sentenceModeRaw = clean(req.body?.sentenceMode || "mixed").toLowerCase();
+    const allowedModes = new Set(["mixed", "daily", "definition", "paraphrase"]);
+    const sentenceMode = allowedModes.has(sentenceModeRaw) ? sentenceModeRaw : "mixed";
+    const modeForPrompt = sentenceMode === "mixed" ? ["daily", "definition", "paraphrase"][Math.floor(Math.random() * 3)] : sentenceMode;
+    const variationSeed = String(req.body?.variationSeed || Date.now());
+    const previousSentences = Array.isArray(req.body?.previousSentences)
+      ? req.body.previousSentences.map((s) => String(s || "").trim()).filter(Boolean).slice(-8)
+      : [];
+    if (!word) return res.status(400).json({ error: "word fehlt." });
+
+    let sentence = "";
+    let source = "fallback";
+
+    const system = [
+      "You are an English teacher assistant for German grade 9 students.",
+      "Write exactly one short and natural English example sentence.",
+      "Use level as requested (A2, A2+, or B1).",
+      "Keep it simple and school-friendly. Max 16 words.",
+      "Use the given word exactly once.",
+      "The sentence must match the real meaning of the word.",
+      "Vary the wording each time.",
+      "Do not repeat any previous sentence from the provided list.",
+      "No list, no explanation, sentence only."
+    ].join("\n");
+    const userPrompt = `Word: ${word}\nMeaning hint (German): ${meaning || "-"}\nTopic: ${topic}\nLevel: ${level}\nSentence mode: ${modeForPrompt}\nVariation: ${variationSeed}\nPrevious: ${previousSentences.join(" || ") || "-"}`;
+
+    if (provider === "anthropic") {
+      if (ANTHROPIC_API_KEY) {
+        const raw = await askAnthropic(system, userPrompt, 110);
+        sentence = normalizeEnglishSentence(raw);
+        source = sentence ? "anthropic" : source;
+      }
+      if (!sentence && AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT) {
+        const aiRaw = await askAzureOpenAI(system, userPrompt, 120);
+        sentence = normalizeEnglishSentence(aiRaw);
+        source = sentence ? "azure-openai-fallback" : source;
+      }
+    } else {
+      if (AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT) {
+        const aiRaw = await askAzureOpenAI(system, userPrompt, 120);
+        sentence = normalizeEnglishSentence(aiRaw);
+        source = sentence ? "azure-openai" : source;
+      }
+      if (!sentence && ANTHROPIC_API_KEY) {
+        const raw = await askAnthropic(system, userPrompt, 110);
+        sentence = normalizeEnglishSentence(raw);
+        source = sentence ? "anthropic-fallback" : source;
+      }
+    }
+
+    if (!sentence) {
+      sentence = buildFallbackExampleSentence(word, topic, level, previousSentences, modeForPrompt, meaning);
+      source = "fallback";
+    }
+
+    return res.json({ ok: true, sentence, source });
+  } catch (error) {
+    console.error("Fehler bei /api/vocab/example:", error.message);
+    const word = clean(req.body?.word || "word");
+    const meaning = clean(req.body?.meaning || "");
+    const topic = clean(req.body?.topic || "topic2").toLowerCase();
+    const level = clean(req.body?.level || "A2+");
+    const sentenceModeRaw = clean(req.body?.sentenceMode || "mixed").toLowerCase();
+    const allowedModes = new Set(["mixed", "daily", "definition", "paraphrase"]);
+    const sentenceMode = allowedModes.has(sentenceModeRaw) ? sentenceModeRaw : "mixed";
+    const modeForPrompt = sentenceMode === "mixed" ? ["daily", "definition", "paraphrase"][Math.floor(Math.random() * 3)] : sentenceMode;
+    const previousSentences = Array.isArray(req.body?.previousSentences)
+      ? req.body.previousSentences.map((s) => String(s || "").trim()).filter(Boolean).slice(-8)
+      : [];
+    return res.status(200).json({ ok: true, sentence: buildFallbackExampleSentence(word, topic, level, previousSentences, modeForPrompt, meaning), source: "fallback-error" });
+  }
+});
+
+app.post("/api/speech/speak", async (req, res) => {
+  try {
+    const text = clean(req.body?.text);
+    const voice = clean(req.body?.voice || AZURE_SPEECH_VOICE || "en-US-JennyNeural");
+    if (!text) return res.status(400).json({ error: "text fehlt." });
+    if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) {
+      return res.status(503).json({ error: "azure_speech_not_configured" });
+    }
+
+    const ssml = `<speak version='1.0' xml:lang='en-US'><voice name='${escapeXml(voice)}'>${escapeXml(text)}</voice></speak>`;
+    const endpoint = `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
+        "User-Agent": "englisch_9"
+      },
+      body: ssml
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(502).json({ error: "azure_speech_error", detail: errText.slice(0, 300) });
+    }
+
+    const arr = await response.arrayBuffer();
+    const buf = Buffer.from(arr);
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(200).send(buf);
+  } catch (error) {
+    console.error("Fehler bei /api/speech/speak:", error.message);
+    return res.status(500).json({ error: "speech_failed" });
+  }
+});
+
 const SYSTEM_PROMPT = `Du bist ein freundlicher Englischlehrer fuer eine 9. Klasse (Gymnasium, Bayern).
 
 DEINE REGELN:
@@ -482,43 +607,75 @@ Gib kurzes Feedback zu einem Role-Model-Text.
   }
 });
 
-app.post("/api/tts", async (req, res) => {
-  const text = clean(req.body?.text);
-  const voice = clean(req.body?.voice) || AZURE_TTS_VOICE;
 
-  if (!text) return res.status(400).json({ error: "text fehlt." });
-  if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) {
-    return res.status(503).json({ error: "Azure TTS nicht konfiguriert." });
-  }
-
+app.post("/api/check-quality", async (req, res) => {
   try {
-    const safeText = escapeXml(text.slice(0, 280));
-    const ssml = `<speak version="1.0" xml:lang="en-US"><voice name="${voice}">${safeText}</voice></speak>`;
-    const endpoint = `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const task = String(req.body?.task ?? req.body?.context ?? "").trim();
+    const minWords = Math.max(3, Number(req.body?.minWords || 6));
+    const minSpelling = Math.max(70, Math.min(100, Number(req.body?.minSpelling || 90)));
 
-    const r = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "audio-24khz-96kbitrate-mono-mp3",
-        "User-Agent": "englisch9-tts"
-      },
-      body: ssml
-    });
-
-    if (!r.ok) {
-      const errTxt = await r.text();
-      return res.status(502).json({ error: `Azure TTS Fehler ${r.status}`, details: errTxt.slice(0, 240) });
+    if (!answer) {
+      return res.status(400).json({ error: "answer fehlt." });
     }
 
-    const audio = Buffer.from(await r.arrayBuffer());
-    res.setHeader("Content-Type", "audio/mpeg");
-    res.setHeader("Cache-Control", "no-store");
-    return res.send(audio);
-  } catch (e) {
-    console.error("Fehler bei /api/tts:", e.message);
-    return res.status(500).json({ error: "TTS fehlgeschlagen." });
+    const words = answer.split(/\s+/).filter(Boolean);
+    const fallbackCorrect = words.length >= minWords && answer.length >= 20;
+
+    if (!ANTHROPIC_API_KEY) {
+      return res.json({
+        ok: true,
+        correct: fallbackCorrect,
+        verdict: fallbackCorrect ? "Richtig" : "Noch nicht vollständig",
+        reason: fallbackCorrect ? "Inhalt wirkt vollständig genug." : "Bitte noch etwas genauer und vollständiger antworten.",
+        source: "fallback-no-key",
+        spelling: fallbackCorrect ? 90 : 70
+      });
+    }
+
+    const system = `Du bist Englischlehrer (9. Klasse).\nBewerte eine Schuelerantwort streng.\nAntworte NUR als JSON: {"correct":true|false,"reason":"...","spelling":0-100}.\nRegeln:\n- correct=true NUR wenn Inhalt/Aufgabe passt, Zeitform stimmt und Rechtschreibung mindestens bei minSpelling liegt.\n- Wenn Zeitform falsch ist (z.B. when ... come statt came), dann correct=false.\n- spelling ist deine geschaetzte Rechtschreib-Qualitaet in Prozent.`;
+
+    const user = `Aufgabe: ${task || "Freie Antwort"}\nAntwort: ${answer}\nMindestwoerter: ${minWords}\nMindestrechtschreibung: ${minSpelling}%`;
+    const raw = await askAnthropic(system, user, 180);
+
+    let correct = fallbackCorrect;
+    let spelling = fallbackCorrect ? 90 : 70;
+    let reason = correct ? "Antwort wirkt gut und vollständig." : "Antwort ist noch nicht vollständig genug.";
+
+    if (raw) {
+      try {
+        const clean = raw.replace(/```json\s*/g, "").replace(/```/g, "").trim();
+        const parsed = JSON.parse(clean);
+        const parsedSpelling = Number(parsed.spelling);
+        spelling = Number.isFinite(parsedSpelling) ? Math.max(0, Math.min(100, parsedSpelling)) : spelling;
+        correct = Boolean(parsed.correct) && spelling >= minSpelling;
+        reason = String(parsed.reason || reason);
+      } catch (_e) {
+        // fallback remains active
+      }
+    }
+
+    return res.json({
+      ok: true,
+      correct,
+      verdict: correct ? "Richtig" : "Noch nicht vollständig",
+      spelling,
+      reason,
+      source: "anthropic"
+    });
+  } catch (error) {
+    console.error("Fehler bei /api/check-quality:", error.message);
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const words = answer.split(/\s+/).filter(Boolean);
+    const correct = words.length >= 6 && answer.length >= 20;
+    return res.status(200).json({
+      ok: true,
+      correct,
+      verdict: correct ? "Richtig" : "Noch nicht vollständig",
+      spelling: correct ? 90 : 70,
+      reason: correct ? "Antwort wirkt gut und vollständig." : "Bitte noch etwas genauer und vollständiger antworten.",
+      source: "fallback-error"
+    });
   }
 });
 app.listen(PORT, () => {
@@ -589,6 +746,134 @@ function uniqueModels(models) {
   return out;
 }
 
+async function askAzureOpenAI(system, user, maxTokens) {
+  if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_API_KEY || !AZURE_OPENAI_DEPLOYMENT) return "";
+  const base = AZURE_OPENAI_ENDPOINT.replace(/\/+$/, "");
+  const url = `${base}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OPENAI_API_VERSION}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": AZURE_OPENAI_API_KEY
+    },
+    body: JSON.stringify({
+      temperature: 0.35,
+      max_tokens: maxTokens,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ]
+    })
+  });
+  if (!response.ok) {
+    const raw = await response.text();
+    throw new Error(`Azure OpenAI HTTP ${response.status}: ${raw.slice(0, 250)}`);
+  }
+  const data = await response.json();
+  return String(data?.choices?.[0]?.message?.content || "").trim();
+}
+
+function normalizeEnglishSentence(raw) {
+  let text = String(raw || "").replace(/["`]/g, "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  text = text.split("\n")[0].trim();
+  text = text.replace(/^\d+[\).\s-]*/, "").trim();
+  if (!/[.!?]$/.test(text)) text += ".";
+  if (text.length > 180) text = text.slice(0, 179).trim() + ".";
+  return text;
+}
+
+function buildFallbackExampleSentence(word, topic, level, previousSentences, mode, meaning) {
+  const cleanWord = String(word || "word").trim() || "word";
+  const lower = cleanWord.toLowerCase();
+  const levelKey = String(level || "A2+").toUpperCase();
+  const modeKey = String(mode || "daily").toLowerCase();
+  const meaningHint = String(meaning || "").trim();
+  const previous = Array.isArray(previousSentences) ? new Set(previousSentences.map((s) => String(s || "").trim())) : new Set();
+
+  const modeSentences = {
+    daily: [
+      `I used "${lower}" in a short conversation after school.`,
+      `Today I heard "${lower}" in a normal daily situation.`,
+      `My friend and I used "${lower}" while talking about our day.`
+    ],
+    definition: [
+      `"${lower}" means ${meaningHint || "something important in this topic"}.`,
+      `In simple words, "${lower}" is ${meaningHint || "a useful term for Unit 4"}.`,
+      `A short definition: "${lower}" is ${meaningHint || "a key word in this lesson"}.`
+    ],
+    paraphrase: [
+      `You can say "${lower}" when you want to describe ${meaningHint || "this idea"} in another way.`,
+      `Another way to explain "${lower}" is to use easy words for ${meaningHint || "its meaning"}.`,
+      `I can paraphrase "${lower}" by describing ${meaningHint || "it"} in simple English.`
+    ]
+  };
+
+  if (modeSentences[modeKey]) {
+    const filteredMode = modeSentences[modeKey].filter((s) => !previous.has(s));
+    const useMode = filteredMode.length ? filteredMode : modeSentences[modeKey];
+    return useMode[Math.floor(Math.random() * useMode.length)];
+  }
+
+  const byTopic = {
+    writing: [
+      `I used "${lower}" in my short application letter.`,
+      `In writing class, I practiced "${lower}" today.`,
+      `My teacher liked my sentence with "${lower}".`
+    ],
+    text: [
+      `In the story, "${lower}" was an important word.`,
+      `I understood the text better after learning "${lower}".`,
+      `We found "${lower}" in the reading task today.`
+    ],
+    topic1: [
+      `I can use "${lower}" when talking about jobs.`,
+      `In careers class, we practiced "${lower}" together.`,
+      `My partner used "${lower}" in a good sentence.`
+    ],
+    topic2: [
+      `At work, "${lower}" is useful in daily tasks.`,
+      `In the shop role-play, I used "${lower}" correctly.`,
+      `We needed "${lower}" in our business exercise.`
+    ],
+    intro: [
+      `Today we learned "${lower}" in Unit 4.`,
+      `Our class practiced "${lower}" with simple examples.`,
+      `I can remember "${lower}" from today's lesson.`
+    ],
+    more: [
+      `I used "${lower}" while talking about New Zealand.`,
+      `In our project, "${lower}" was a helpful word.`,
+      `We built a short dialogue with "${lower}".`
+    ]
+  };
+  const simple = [
+    `Today we practiced "${lower}" in English class.`,
+    `I can use "${lower}" in a correct sentence now.`,
+    `My classmate and I used "${lower}" in a dialogue.`
+  ];
+  let pool = byTopic[topic] || simple;
+  if (levelKey === "B1") {
+    pool = pool.concat([
+      `I can use "${lower}" confidently when explaining my ideas.`,
+      `During discussion, I used "${lower}" in a clear sentence.`
+    ]);
+  }
+  const filtered = pool.filter((s) => !previous.has(s));
+  const use = filtered.length ? filtered : pool;
+  const idx = Math.floor(Math.random() * use.length);
+  return use[idx];
+}
+
+function escapeXml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 function resolveStaticRoot() {
   const candidates = [__dirname, path.join(__dirname, ".."), path.join(__dirname, "..", "..")];
   for (const dir of candidates) {
@@ -641,15 +926,6 @@ function getAuthToken(req) {
 }
 
 function clean(v) { return String(v || "").trim(); }
-
-function escapeXml(v) {
-  return String(v || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 function normalizeKey(firstName, lastName, className) {
   return `${firstName}|${lastName}|${className}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
@@ -735,5 +1011,7 @@ function buildStudentOverview(records) {
   overview.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
   return overview;
 }
+
+
 
 
