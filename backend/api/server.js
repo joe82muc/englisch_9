@@ -790,13 +790,14 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
       "Du bist ein strenger, aber fairer NT-Lehrer (9. Klasse, Bayern).",
       "Pruefe eine Schuelerantwort gegen die Musterloesung aus dem Schulbuch.",
       "Wichtig: Begriffe aufzuzaehlen reicht NICHT. Der inhaltliche Zusammenhang und die Logik sind entscheidend.",
-      "Bewerte mit diesem Rubriksystem: pro Kriterium sind nur 2, 1.5 oder 0 Punkte erlaubt.",
+      "Bewerte mit diesem Rubriksystem: pro Kriterium sind nur 2, 1 oder 0 Punkte erlaubt.",
       "2 Punkte = vollstaendige, logische Erklaerung mit passendem Fachbegriff.",
-      "1.5 Punkte = Fachbegriff vorhanden, aber Erklaerung ungenau/zu knapp.",
-      "0 Punkte = Fachbegriff fehlt oder fachlich falsch erklaert.",
+      "1 Punkt = Fachbegriff vorhanden, aber Erklaerung ungenau/zu knapp.",
+      "0 Punkte = nur Fachbegriff ohne Erklaerung ODER fachlich falsch.",
+      "Ignoriere Rechtschreibung und Grammatik komplett; bewerte nur Fachinhalt + Logik.",
       "Es gibt 5 Kriterien, also max. 10 Punkte pro Aufgabe.",
       "Antworte nur als JSON ohne Markdown.",
-      'Schema: {"points":0-10,"verdict":"Richtig|Teilweise|Ueberarbeiten","isLogical":true|false,"feedback":"2-4 Saetze ohne Musterloesung","criteria":[{"id":"...","score":0|1.5|2,"note":"..."}],"missing":["..."],"strength":["..."],"scores":{"logic":0-100,"content":0-100,"terminology":0-100}}'
+      'Schema: {"points":0-10,"verdict":"Richtig|Teilweise|Ueberarbeiten","isLogical":true|false,"feedback":"2-4 Saetze ohne Musterloesung","criteria":[{"id":"...","score":0|1|2,"note":"..."}],"missing":["..."],"strength":["..."],"scores":{"logic":0-100,"content":0-100,"terminology":0-100}}'
     ].join("\n");
 
     const user = [
@@ -870,9 +871,9 @@ function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, log
   const conceptRatio = keyConcepts?.length ? foundConcepts.length / keyConcepts.length : 0;
 
   const connectorHits = (logicConnectors || []).filter((c) => lower.includes(String(c).toLowerCase())).length;
-  const hasSentenceStructure = /[.!?]/.test(text) && words.length >= minWords;
-  const isLikelyKeywordList = !/[.!?]/.test(text) || words.length < Math.max(6, Math.floor(minWords * 0.65));
-  const looksLogical = hasSentenceStructure && connectorHits >= 1 && !isLikelyKeywordList;
+  const hasEnoughContent = words.length >= Math.max(6, Math.floor(minWords * 0.6));
+  const looksLikeKeywordList = words.length <= 8 && connectorHits === 0;
+  const looksLogical = hasEnoughContent && connectorHits >= 1 && !looksLikeKeywordList;
 
   const criteriaList = Array.isArray(criteria) && criteria.length
     ? criteria
@@ -880,16 +881,16 @@ function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, log
 
   const criteriaScores = criteriaList.map((c) => {
     if (String(c.id).toLowerCase() === "logik" || String(c.concept).toLowerCase() === "prozesslogik") {
-      const score = looksLogical ? 2 : (hasSentenceStructure ? 1.5 : 0);
-      return { id: c.id, score, note: score === 2 ? "Logische Verknuepfung klar." : score === 1.5 ? "Logik teilweise vorhanden." : "Logik fehlt." };
+      const score = looksLogical ? 2 : (hasEnoughContent ? 1 : 0);
+      return { id: c.id, score, note: score === 2 ? "Logische Verknuepfung klar." : score === 1 ? "Logik teilweise vorhanden." : "Logik fehlt." };
     }
     const candidates = String(c.concept || "").toLowerCase().split("/").map((x) => x.trim()).filter(Boolean);
     const hasConcept = candidates.some((k) => lower.includes(k));
-    const score = hasConcept ? (looksLogical ? 2 : 1.5) : 0;
+    const score = hasConcept ? (looksLogical ? 2 : (hasEnoughContent ? 1 : 0)) : 0;
     return {
       id: c.id,
       score,
-      note: score === 2 ? "Fachbegriff + logische Erklaerung." : score === 1.5 ? "Fachbegriff da, aber ungenau erklaert." : "Fachbegriff fehlt/falsch."
+      note: score === 2 ? "Fachbegriff + logische Erklaerung." : score === 1 ? "Fachbegriff da, aber ungenau erklaert." : "Nur Fachbegriff oder fachlich falsch."
     };
   });
   const points = Number(criteriaScores.reduce((sum, c) => sum + Number(c.score || 0), 0).toFixed(1));
@@ -914,7 +915,7 @@ function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, log
     missing,
     strength,
     scores: {
-      logic: Math.min(100, (hasSentenceStructure ? 45 : 20) + connectorHits * 15),
+      logic: Math.min(100, (hasEnoughContent ? 45 : 20) + connectorHits * 15),
       content: Math.round(conceptRatio * 100),
       terminology: Math.round(conceptRatio * 100)
     },
@@ -944,7 +945,7 @@ function clampCriterionScore(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   if (n >= 1.75) return 2;
-  if (n >= 0.75) return 1.5;
+  if (n >= 0.5) return 1;
   return 0;
 }
 
@@ -952,7 +953,7 @@ function clampNtPoints10(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   const clamped = Math.max(0, Math.min(10, n));
-  return Math.round(clamped * 2) / 2;
+  return Math.round(clamped);
 }
 
 async function askAnthropic(system, user, maxTokens) {
