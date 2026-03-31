@@ -714,12 +714,26 @@ const NT_APP8_TASKS = {
     question: "Erklaere, wie ein Szintigramm erstellt wird.",
     modelAnswer: "Dem Patienten werden winzige Mengen radioaktiver Iod-Isotope in die Blutbahn gespritzt. Da sich die radioaktiven Isotope chemisch genauso verhalten wie normales Iod, gelangen sie in die Schilddruese und reichern sich dort an. Die radioaktiven Strahlen, die jetzt ausgesendet werden, koennen mit einem Messgeraet aufgezeichnet und am Computer zu einem Bild der Schilddruese zusammengesetzt werden. Dieses Abbild nennt man Szintigramm.",
     keyConcepts: ["iod-isotope", "blutbahn", "schilddruese", "messgeraet", "abbild/szintigramm"],
+    criteria: [
+      { id: "stoffgabe", concept: "iod-isotope/blutbahn", target: "radioaktive Iod-Isotope in die Blutbahn" },
+      { id: "anreicherung", concept: "schilddruese", target: "Anreicherung in der Schilddruese" },
+      { id: "messung", concept: "messgeraet/strahlen", target: "Aussendung und Messung der Strahlung" },
+      { id: "bildentstehung", concept: "computer/bild/abbild/szintigramm", target: "Zusammensetzen zum Bild (Szintigramm)" },
+      { id: "logik", concept: "prozesslogik", target: "logische Reihenfolge mit Ursache-Wirkung" }
+    ],
     logicConnectors: ["zuerst", "dann", "danach", "weil", "dadurch", "deshalb"]
   },
   B: {
     question: "Begruende, warum die Leckstellensuche mit Xenon eine sinnvolle Methode ist.",
     modelAnswer: "Die Leckstellensuche in unterirdisch verlegten Gasleitungen kann sehr aufwaendig sein, da man Leitungen ueber laengere Strecken aufgraben muss. Um den Aufwand zu minimieren, versetzt man das Erdgas mit dem radioaktiven Gas Xenon. Mithilfe eines Geiger-Mueller-Zaehler kann man feststellen, wo Gas zusammen mit Xenon austritt und so die Leckstelle gezielt finden.",
     keyConcepts: ["unterirdische leitungen", "aufgraben/aufwand", "xenon", "geiger-mueller-zaehler", "leckstelle/austritt"],
+    criteria: [
+      { id: "problem", concept: "unterirdische leitungen/aufgraben/aufwand", target: "Problem: aufwaendige Lecksuche durch Aufgraben" },
+      { id: "xenon", concept: "xenon/erdgas", target: "Xenon wird dem Erdgas beigemischt" },
+      { id: "messprinzip", concept: "geiger-mueller-zaehler", target: "Messung mit Geiger-Mueller-Zaehler" },
+      { id: "nutzwert", concept: "austritt/leckstelle", target: "Austritt zeigt Leckstelle gezielt" },
+      { id: "logik", concept: "prozesslogik", target: "klare Begruendung, warum Methode sinnvoll ist" }
+    ],
     logicConnectors: ["weil", "um ... zu", "dadurch", "deshalb", "so kann"]
   }
 };
@@ -740,6 +754,13 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
     const keyConcepts = Array.isArray(req.body?.keyConcepts)
       ? req.body.keyConcepts.map((x) => clean(x)).filter(Boolean)
       : (task ? task.keyConcepts : []);
+    const criteria = Array.isArray(req.body?.criteria)
+      ? req.body.criteria.map((c) => ({
+          id: clean(c?.id),
+          concept: clean(c?.concept),
+          target: clean(c?.target)
+        })).filter((c) => c.id && c.target)
+      : (task ? task.criteria : []);
     const logicConnectors = Array.isArray(req.body?.logicConnectors)
       ? req.body.logicConnectors.map((x) => clean(x).toLowerCase()).filter(Boolean)
       : (task ? task.logicConnectors : []);
@@ -752,6 +773,7 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
       answer,
       question,
       keyConcepts,
+      criteria,
       logicConnectors,
       minWords
     });
@@ -768,15 +790,19 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
       "Du bist ein strenger, aber fairer NT-Lehrer (9. Klasse, Bayern).",
       "Pruefe eine Schuelerantwort gegen die Musterloesung aus dem Schulbuch.",
       "Wichtig: Begriffe aufzuzaehlen reicht NICHT. Der inhaltliche Zusammenhang und die Logik sind entscheidend.",
-      "Wenn nur Stichwoerter ohne logische Erklaerung vorhanden sind: maximal 1 Punkt.",
-      "Bewerte nach: Logik, Vollstaendigkeit, Fachsprache, sachliche Richtigkeit.",
+      "Bewerte mit diesem Rubriksystem: pro Kriterium sind nur 2, 1.5 oder 0 Punkte erlaubt.",
+      "2 Punkte = vollstaendige, logische Erklaerung mit passendem Fachbegriff.",
+      "1.5 Punkte = Fachbegriff vorhanden, aber Erklaerung ungenau/zu knapp.",
+      "0 Punkte = Fachbegriff fehlt oder fachlich falsch erklaert.",
+      "Es gibt 5 Kriterien, also max. 10 Punkte pro Aufgabe.",
       "Antworte nur als JSON ohne Markdown.",
-      'Schema: {"points":0|1|2,"verdict":"Richtig|Teilweise|Ueberarbeiten","isLogical":true|false,"feedback":"2-4 Saetze ohne Musterloesung","missing":["..."],"strength":["..."],"scores":{"logic":0-100,"content":0-100,"terminology":0-100}}'
+      'Schema: {"points":0-10,"verdict":"Richtig|Teilweise|Ueberarbeiten","isLogical":true|false,"feedback":"2-4 Saetze ohne Musterloesung","criteria":[{"id":"...","score":0|1.5|2,"note":"..."}],"missing":["..."],"strength":["..."],"scores":{"logic":0-100,"content":0-100,"terminology":0-100}}'
     ].join("\n");
 
     const user = [
       `Frage: ${question}`,
       `Musterloesung (nur fuer Bewertung): ${modelAnswer}`,
+      `Kriterien (5x): ${criteria.map((c, i) => `${i + 1}) ${c.id}: ${c.target}`).join(" | ") || "-"}`,
       `Erwartete Schluesselkonzepte: ${keyConcepts.join(", ") || "-"}`,
       `Schuelerantwort: ${answer}`,
       `Mindestlaenge: ${minWords} Woerter`
@@ -788,14 +814,21 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
       return res.json({ ok: true, source: "fallback-parse", ...fallback });
     }
 
-    const points = clampNtPoints(parsed.points);
+    const points = clampNtPoints10(parsed.points);
     return res.json({
       ok: true,
       source: "anthropic",
       points,
-      verdict: String(parsed.verdict || (points === 2 ? "Richtig" : points === 1 ? "Teilweise" : "Ueberarbeiten")),
+      verdict: String(parsed.verdict || (points >= 8.5 ? "Richtig" : points >= 5 ? "Teilweise" : "Ueberarbeiten")),
       isLogical: Boolean(parsed.isLogical),
       feedback: String(parsed.feedback || fallback.feedback),
+      criteria: Array.isArray(parsed.criteria)
+        ? parsed.criteria.map((c) => ({
+            id: String(c?.id || ""),
+            score: clampCriterionScore(c?.score),
+            note: String(c?.note || "")
+          })).slice(0, 5)
+        : fallback.criteria,
       missing: Array.isArray(parsed.missing) ? parsed.missing.map((x) => String(x)).slice(0, 6) : fallback.missing,
       strength: Array.isArray(parsed.strength) ? parsed.strength.map((x) => String(x)).slice(0, 4) : fallback.strength,
       scores: {
@@ -813,6 +846,7 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
       answer,
       question: clean(req.body?.question || (task ? task.question : "")),
       keyConcepts: task ? task.keyConcepts : [],
+      criteria: task ? task.criteria : [],
       logicConnectors: task ? task.logicConnectors : [],
       minWords: Math.max(8, Number(req.body?.minWords || 12))
     });
@@ -824,7 +858,7 @@ app.listen(PORT, () => {
   console.log(`Static root: ${STATIC_ROOT}`);
 });
 
-function evaluateNtAnswerFallback({ answer, question, keyConcepts, logicConnectors, minWords }) {
+function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, logicConnectors, minWords }) {
   const text = String(answer || "").trim();
   const words = text.split(/\s+/).filter(Boolean);
   const lower = text.toLowerCase();
@@ -840,26 +874,43 @@ function evaluateNtAnswerFallback({ answer, question, keyConcepts, logicConnecto
   const isLikelyKeywordList = !/[.!?]/.test(text) || words.length < Math.max(6, Math.floor(minWords * 0.65));
   const looksLogical = hasSentenceStructure && connectorHits >= 1 && !isLikelyKeywordList;
 
-  let points = 0;
-  if (conceptRatio >= 0.75 && looksLogical) points = 2;
-  else if (conceptRatio >= 0.4 && hasSentenceStructure) points = 1;
+  const criteriaList = Array.isArray(criteria) && criteria.length
+    ? criteria
+    : (keyConcepts || []).slice(0, 5).map((k, i) => ({ id: `k${i + 1}`, concept: k, target: k }));
+
+  const criteriaScores = criteriaList.map((c) => {
+    if (String(c.id).toLowerCase() === "logik" || String(c.concept).toLowerCase() === "prozesslogik") {
+      const score = looksLogical ? 2 : (hasSentenceStructure ? 1.5 : 0);
+      return { id: c.id, score, note: score === 2 ? "Logische Verknuepfung klar." : score === 1.5 ? "Logik teilweise vorhanden." : "Logik fehlt." };
+    }
+    const candidates = String(c.concept || "").toLowerCase().split("/").map((x) => x.trim()).filter(Boolean);
+    const hasConcept = candidates.some((k) => lower.includes(k));
+    const score = hasConcept ? (looksLogical ? 2 : 1.5) : 0;
+    return {
+      id: c.id,
+      score,
+      note: score === 2 ? "Fachbegriff + logische Erklaerung." : score === 1.5 ? "Fachbegriff da, aber ungenau erklaert." : "Fachbegriff fehlt/falsch."
+    };
+  });
+  const points = Number(criteriaScores.reduce((sum, c) => sum + Number(c.score || 0), 0).toFixed(1));
 
   const missing = (keyConcepts || []).filter((k) => !foundConcepts.includes(k)).slice(0, 6);
   const strength = [];
   if (foundConcepts.length) strength.push(`Fachbegriffe genutzt: ${foundConcepts.join(", ")}`);
   if (connectorHits > 0) strength.push("Logik-Woerter erkennbar (z. B. weil/dadurch).");
 
-  const feedback = points === 2
-    ? "Inhalt und Ablauf sind logisch und fachlich stimmig. Gute Erklaerung in zusammenhaengenden Saetzen."
-    : points === 1
-      ? "Die Grundidee ist erkennbar, aber die logische Verknuepfung ist noch nicht durchgehend klar. Erklaere die Schritte staerker als Ursache-und-Wirkung."
-      : "Aktuell sind zu wenig zusammenhaengende Erklaerungen enthalten. Nenne die Schritte/Begruendung in logischer Reihenfolge statt nur Stichwoerter.";
+  const feedback = points >= 8.5
+    ? "Inhalt und Ablauf sind logisch und fachlich stimmig. Du erklaerst die Kernschritte fair und praezise."
+    : points >= 5
+      ? "Die Grundidee ist erkennbar, aber einige Punkte sind noch zu knapp erklaert. Verknuepfe Fachbegriffe staerker mit Ursache und Wirkung."
+      : "Aktuell reichen Begriffe allein noch nicht aus. Erklaere die Fachbegriffe in vollstaendigen, logischen Saetzen.";
 
   return {
     points,
-    verdict: points === 2 ? "Richtig" : points === 1 ? "Teilweise" : "Ueberarbeiten",
+    verdict: points >= 8.5 ? "Richtig" : points >= 5 ? "Teilweise" : "Ueberarbeiten",
     isLogical: looksLogical,
     feedback,
+    criteria: criteriaScores,
     missing,
     strength,
     scores: {
@@ -889,12 +940,19 @@ function parseNtEvaluation(raw) {
   }
 }
 
-function clampNtPoints(value) {
+function clampCriterionScore(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
-  if (n <= 0) return 0;
-  if (n >= 2) return 2;
-  return 1;
+  if (n >= 1.75) return 2;
+  if (n >= 0.75) return 1.5;
+  return 0;
+}
+
+function clampNtPoints10(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  const clamped = Math.max(0, Math.min(10, n));
+  return Math.round(clamped * 2) / 2;
 }
 
 async function askAnthropic(system, user, maxTokens) {
