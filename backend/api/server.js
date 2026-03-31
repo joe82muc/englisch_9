@@ -708,10 +708,194 @@ app.post("/api/check-quality", async (req, res) => {
     });
   }
 });
+
+const NT_APP8_TASKS = {
+  A: {
+    question: "Erklaere, wie ein Szintigramm erstellt wird.",
+    modelAnswer: "Dem Patienten werden winzige Mengen radioaktiver Iod-Isotope in die Blutbahn gespritzt. Da sich die radioaktiven Isotope chemisch genauso verhalten wie normales Iod, gelangen sie in die Schilddruese und reichern sich dort an. Die radioaktiven Strahlen, die jetzt ausgesendet werden, koennen mit einem Messgeraet aufgezeichnet und am Computer zu einem Bild der Schilddruese zusammengesetzt werden. Dieses Abbild nennt man Szintigramm.",
+    keyConcepts: ["iod-isotope", "blutbahn", "schilddruese", "messgeraet", "abbild/szintigramm"],
+    logicConnectors: ["zuerst", "dann", "danach", "weil", "dadurch", "deshalb"]
+  },
+  B: {
+    question: "Begruende, warum die Leckstellensuche mit Xenon eine sinnvolle Methode ist.",
+    modelAnswer: "Die Leckstellensuche in unterirdisch verlegten Gasleitungen kann sehr aufwaendig sein, da man Leitungen ueber laengere Strecken aufgraben muss. Um den Aufwand zu minimieren, versetzt man das Erdgas mit dem radioaktiven Gas Xenon. Mithilfe eines Geiger-Mueller-Zaehler kann man feststellen, wo Gas zusammen mit Xenon austritt und so die Leckstelle gezielt finden.",
+    keyConcepts: ["unterirdische leitungen", "aufgraben/aufwand", "xenon", "geiger-mueller-zaehler", "leckstelle/austritt"],
+    logicConnectors: ["weil", "um ... zu", "dadurch", "deshalb", "so kann"]
+  }
+};
+
+app.post("/api/nt/app8/evaluate", async (req, res) => {
+  try {
+    const taskId = clean(req.body?.taskId || "").toUpperCase();
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const customQuestion = clean(req.body?.question || "");
+    const customModelAnswer = clean(req.body?.modelAnswer || "");
+    const minWords = Math.max(8, Number(req.body?.minWords || 12));
+
+    if (!answer) return res.status(400).json({ error: "answer fehlt." });
+
+    const task = NT_APP8_TASKS[taskId] || null;
+    const question = customQuestion || (task ? task.question : "");
+    const modelAnswer = customModelAnswer || (task ? task.modelAnswer : "");
+    const keyConcepts = Array.isArray(req.body?.keyConcepts)
+      ? req.body.keyConcepts.map((x) => clean(x)).filter(Boolean)
+      : (task ? task.keyConcepts : []);
+    const logicConnectors = Array.isArray(req.body?.logicConnectors)
+      ? req.body.logicConnectors.map((x) => clean(x).toLowerCase()).filter(Boolean)
+      : (task ? task.logicConnectors : []);
+
+    if (!question || !modelAnswer) {
+      return res.status(400).json({ error: "question und modelAnswer (oder gueltige taskId) sind erforderlich." });
+    }
+
+    const fallback = evaluateNtAnswerFallback({
+      answer,
+      question,
+      keyConcepts,
+      logicConnectors,
+      minWords
+    });
+
+    if (!ANTHROPIC_API_KEY) {
+      return res.json({
+        ok: true,
+        source: "fallback-no-key",
+        ...fallback
+      });
+    }
+
+    const system = [
+      "Du bist ein strenger, aber fairer NT-Lehrer (9. Klasse, Bayern).",
+      "Pruefe eine Schuelerantwort gegen die Musterloesung aus dem Schulbuch.",
+      "Wichtig: Begriffe aufzuzaehlen reicht NICHT. Der inhaltliche Zusammenhang und die Logik sind entscheidend.",
+      "Wenn nur Stichwoerter ohne logische Erklaerung vorhanden sind: maximal 1 Punkt.",
+      "Bewerte nach: Logik, Vollstaendigkeit, Fachsprache, sachliche Richtigkeit.",
+      "Antworte nur als JSON ohne Markdown.",
+      'Schema: {"points":0|1|2,"verdict":"Richtig|Teilweise|Ueberarbeiten","isLogical":true|false,"feedback":"2-4 Saetze ohne Musterloesung","missing":["..."],"strength":["..."],"scores":{"logic":0-100,"content":0-100,"terminology":0-100}}'
+    ].join("\n");
+
+    const user = [
+      `Frage: ${question}`,
+      `Musterloesung (nur fuer Bewertung): ${modelAnswer}`,
+      `Erwartete Schluesselkonzepte: ${keyConcepts.join(", ") || "-"}`,
+      `Schuelerantwort: ${answer}`,
+      `Mindestlaenge: ${minWords} Woerter`
+    ].join("\n\n");
+
+    const raw = await askAnthropic(system, user, 420);
+    const parsed = parseNtEvaluation(raw);
+    if (!parsed) {
+      return res.json({ ok: true, source: "fallback-parse", ...fallback });
+    }
+
+    const points = clampNtPoints(parsed.points);
+    return res.json({
+      ok: true,
+      source: "anthropic",
+      points,
+      verdict: String(parsed.verdict || (points === 2 ? "Richtig" : points === 1 ? "Teilweise" : "Ueberarbeiten")),
+      isLogical: Boolean(parsed.isLogical),
+      feedback: String(parsed.feedback || fallback.feedback),
+      missing: Array.isArray(parsed.missing) ? parsed.missing.map((x) => String(x)).slice(0, 6) : fallback.missing,
+      strength: Array.isArray(parsed.strength) ? parsed.strength.map((x) => String(x)).slice(0, 4) : fallback.strength,
+      scores: {
+        logic: clampPercent(parsed.scores?.logic ?? fallback.scores.logic),
+        content: clampPercent(parsed.scores?.content ?? fallback.scores.content),
+        terminology: clampPercent(parsed.scores?.terminology ?? fallback.scores.terminology)
+      }
+    });
+  } catch (error) {
+    console.error("Fehler bei /api/nt/app8/evaluate:", error.message);
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const taskId = clean(req.body?.taskId || "").toUpperCase();
+    const task = NT_APP8_TASKS[taskId] || null;
+    const fallback = evaluateNtAnswerFallback({
+      answer,
+      question: clean(req.body?.question || (task ? task.question : "")),
+      keyConcepts: task ? task.keyConcepts : [],
+      logicConnectors: task ? task.logicConnectors : [],
+      minWords: Math.max(8, Number(req.body?.minWords || 12))
+    });
+    return res.status(200).json({ ok: true, source: "fallback-error", ...fallback });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server laeuft auf Port ${PORT}`);
   console.log(`Static root: ${STATIC_ROOT}`);
 });
+
+function evaluateNtAnswerFallback({ answer, question, keyConcepts, logicConnectors, minWords }) {
+  const text = String(answer || "").trim();
+  const words = text.split(/\s+/).filter(Boolean);
+  const lower = text.toLowerCase();
+
+  const foundConcepts = (keyConcepts || []).filter((k) => {
+    const candidates = String(k).toLowerCase().split("/").map((x) => x.trim()).filter(Boolean);
+    return candidates.some((c) => lower.includes(c));
+  });
+  const conceptRatio = keyConcepts?.length ? foundConcepts.length / keyConcepts.length : 0;
+
+  const connectorHits = (logicConnectors || []).filter((c) => lower.includes(String(c).toLowerCase())).length;
+  const hasSentenceStructure = /[.!?]/.test(text) && words.length >= minWords;
+  const isLikelyKeywordList = !/[.!?]/.test(text) || words.length < Math.max(6, Math.floor(minWords * 0.65));
+  const looksLogical = hasSentenceStructure && connectorHits >= 1 && !isLikelyKeywordList;
+
+  let points = 0;
+  if (conceptRatio >= 0.75 && looksLogical) points = 2;
+  else if (conceptRatio >= 0.4 && hasSentenceStructure) points = 1;
+
+  const missing = (keyConcepts || []).filter((k) => !foundConcepts.includes(k)).slice(0, 6);
+  const strength = [];
+  if (foundConcepts.length) strength.push(`Fachbegriffe genutzt: ${foundConcepts.join(", ")}`);
+  if (connectorHits > 0) strength.push("Logik-Woerter erkennbar (z. B. weil/dadurch).");
+
+  const feedback = points === 2
+    ? "Inhalt und Ablauf sind logisch und fachlich stimmig. Gute Erklaerung in zusammenhaengenden Saetzen."
+    : points === 1
+      ? "Die Grundidee ist erkennbar, aber die logische Verknuepfung ist noch nicht durchgehend klar. Erklaere die Schritte staerker als Ursache-und-Wirkung."
+      : "Aktuell sind zu wenig zusammenhaengende Erklaerungen enthalten. Nenne die Schritte/Begruendung in logischer Reihenfolge statt nur Stichwoerter.";
+
+  return {
+    points,
+    verdict: points === 2 ? "Richtig" : points === 1 ? "Teilweise" : "Ueberarbeiten",
+    isLogical: looksLogical,
+    feedback,
+    missing,
+    strength,
+    scores: {
+      logic: Math.min(100, (hasSentenceStructure ? 45 : 20) + connectorHits * 15),
+      content: Math.round(conceptRatio * 100),
+      terminology: Math.round(conceptRatio * 100)
+    },
+    meta: {
+      wordCount: words.length,
+      foundConcepts: foundConcepts.length,
+      totalConcepts: keyConcepts?.length || 0,
+      connectorHits
+    },
+    question
+  };
+}
+
+function parseNtEvaluation(raw) {
+  if (!raw) return null;
+  try {
+    const cleanRaw = String(raw).replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanRaw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    return parsed;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function clampNtPoints(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  if (n <= 0) return 0;
+  if (n >= 2) return 2;
+  return 1;
+}
 
 async function askAnthropic(system, user, maxTokens) {
   const apiKey = ANTHROPIC_API_KEY;
