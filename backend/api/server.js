@@ -820,7 +820,7 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
       ok: true,
       source: "anthropic",
       points,
-      verdict: String(parsed.verdict || (points >= 8.5 ? "Richtig" : points >= 5 ? "Teilweise" : "Ueberarbeiten")),
+      verdict: String(parsed.verdict || (points >= 8 ? "Richtig" : points >= 4 ? "Teilweise" : "Ueberarbeiten")),
       isLogical: Boolean(parsed.isLogical),
       feedback: String(parsed.feedback || fallback.feedback),
       criteria: Array.isArray(parsed.criteria)
@@ -872,8 +872,10 @@ function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, log
 
   const connectorHits = (logicConnectors || []).filter((c) => lower.includes(String(c).toLowerCase())).length;
   const hasEnoughContent = words.length >= Math.max(6, Math.floor(minWords * 0.6));
-  const looksLikeKeywordList = words.length <= 8 && connectorHits === 0;
-  const looksLogical = hasEnoughContent && connectorHits >= 1 && !looksLikeKeywordList;
+  const sentenceCount = text.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean).length;
+  const hasProcessFlow = sentenceCount >= 2 && /(wird|wurden|gelangt|gelangen|dann|dadurch|so|um|anschlie|anschlie)/i.test(text);
+  const looksLikeKeywordList = words.length <= 8 && connectorHits === 0 && sentenceCount <= 1;
+  const looksLogical = hasEnoughContent && (connectorHits >= 1 || hasProcessFlow) && !looksLikeKeywordList;
 
   const criteriaList = Array.isArray(criteria) && criteria.length
     ? criteria
@@ -902,13 +904,13 @@ function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, log
 
   const feedback = points >= 8.5
     ? "Inhalt und Ablauf sind logisch und fachlich stimmig. Du erklaerst die Kernschritte fair und praezise."
-    : points >= 5
+    : points >= 4
       ? "Die Grundidee ist erkennbar, aber einige Punkte sind noch zu knapp erklaert. Verknuepfe Fachbegriffe staerker mit Ursache und Wirkung."
       : "Aktuell reichen Begriffe allein noch nicht aus. Erklaere die Fachbegriffe in vollstaendigen, logischen Saetzen.";
 
   return {
     points,
-    verdict: points >= 8.5 ? "Richtig" : points >= 5 ? "Teilweise" : "Ueberarbeiten",
+    verdict: points >= 8 ? "Richtig" : points >= 4 ? "Teilweise" : "Ueberarbeiten",
     isLogical: looksLogical,
     feedback,
     criteria: criteriaScores,
