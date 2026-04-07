@@ -854,6 +854,261 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
     return res.status(200).json({ ok: true, source: "fallback-error", ...fallback });
   }
 });
+
+const NT_APP10_KEY_CONCEPTS = [
+  "u-235",
+  "neutron",
+  "spaltung",
+  "truemmerkern",
+  "energie",
+  "kettenreaktion",
+  "moderator",
+  "graphit",
+  "kritische masse",
+  "absorber",
+  "1:1"
+];
+
+app.post("/api/nt/app10/coach", async (req, res) => {
+  try {
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const question = clean(req.body?.question || "Erklaere die Kettenreaktion in 2-4 logischen Saetzen.");
+    const stepRequested = Number(req.body?.step || 0);
+
+    if (!answer) {
+      return res.status(400).json({ ok: false, error: "answer fehlt." });
+    }
+
+    const base = buildNtApp10CoachFallback({ answer, question, stepRequested });
+
+    if (!ANTHROPIC_API_KEY) {
+      return res.json({ ok: true, source: "fallback-no-key", ...base });
+    }
+
+    const system = [
+      "Du bist ein NT-Lehrer (9. Klasse, Bayern) mit Fokus auf kleinschrittiges Coaching.",
+      "Ziel: Schueler sollen in kleinen Schritten zu 2-3 korrekten Loesungssaetzen kommen.",
+      "Wichtig: Gib NICHT die komplette Musterloesung aus.",
+      "Stattdessen: nenne naechste Mikro-Schritte und Satzrahmen mit Luecken (__).",
+      "Ton: klar, freundlich, konkret, schuelernah.",
+      "Antworte NUR als JSON.",
+      'Schema: {"feedback":"...","nextStep":1|2|3|4,"microTasks":["..."],"sentenceFrames":["..."],"checklist":["..."],"rewriteHint":"..."}'
+    ].join("\n");
+
+    const user = [
+      `Frage: ${question}`,
+      `Schuelerantwort: ${answer}`,
+      `Voranalyse (intern): Punkte=${base.points}/10, Note=${base.grade}, Schritt=${base.step}`,
+      `Gefundene Konzepte: ${base.meta.foundConcepts.join(", ") || "-"}`,
+      `Fehlende Konzepte: ${base.missing.join(", ") || "-"}`,
+      "Erzeuge ein kleinschrittiges Coaching fuer den naechsten Lernschritt."
+    ].join("\n\n");
+
+    const raw = await askAnthropic(system, user, 420);
+    const parsed = parseNtApp10CoachJson(raw);
+
+    if (!parsed) {
+      return res.json({ ok: true, source: "fallback-parse", ...base });
+    }
+
+    const nextStep = inferNtApp10Step(Number(parsed.nextStep || base.step), base.points);
+    const microTasks = Array.isArray(parsed.microTasks)
+      ? parsed.microTasks.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 4)
+      : base.microTasks;
+    const sentenceFrames = Array.isArray(parsed.sentenceFrames)
+      ? parsed.sentenceFrames.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 4)
+      : base.sentenceFrames;
+    const checklist = Array.isArray(parsed.checklist)
+      ? parsed.checklist.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 5)
+      : base.checklist;
+
+    return res.json({
+      ok: true,
+      source: "anthropic",
+      points: base.points,
+      grade: base.grade,
+      verdict: base.verdict,
+      step: nextStep,
+      feedback: String(parsed.feedback || base.feedback),
+      microTasks: microTasks.length ? microTasks : base.microTasks,
+      sentenceFrames: sentenceFrames.length ? sentenceFrames : base.sentenceFrames,
+      checklist: checklist.length ? checklist : base.checklist,
+      rewriteHint: String(parsed.rewriteHint || base.rewriteHint),
+      missing: base.missing,
+      strengths: base.strengths,
+      meta: base.meta
+    });
+  } catch (error) {
+    console.error("Fehler bei /api/nt/app10/coach:", error.message);
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const question = clean(req.body?.question || "Erklaere die Kettenreaktion in 2-4 logischen Saetzen.");
+    const stepRequested = Number(req.body?.step || 0);
+    const fallback = buildNtApp10CoachFallback({ answer, question, stepRequested });
+    return res.status(200).json({ ok: true, source: "fallback-error", ...fallback });
+  }
+});
+
+function buildNtApp10CoachFallback({ answer, question, stepRequested }) {
+  const text = String(answer || "").trim();
+  const lower = text.toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  const foundConcepts = NT_APP10_KEY_CONCEPTS.filter((c) => {
+    if (c === "truemmerkern") return /truemmerkern|tr[üu]mmerkern/i.test(text);
+    if (c === "1:1") return /1\s*:\s*1/.test(lower) || /eins\s*zu\s*eins/.test(lower);
+    if (c === "u-235") return /u\s*-?\s*235/.test(lower);
+    return lower.includes(c);
+  });
+
+  const logicHits = ["weil", "dadurch", "damit", "deshalb", "dann", "somit", "so dass"].filter((w) => lower.includes(w)).length;
+  const sentenceCount = text.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean).length;
+
+  let points = 0;
+  points += Math.min(6, foundConcepts.length * 0.8);
+  if (sentenceCount >= 2) points += 1;
+  if (logicHits >= 1) points += 1.5;
+  if (logicHits >= 2) points += 1.5;
+  points = clampNtPoints10(points);
+
+  const grade = computeNtGradeFrom10(points);
+  const step = inferNtApp10Step(stepRequested, points);
+  const missing = NT_APP10_KEY_CONCEPTS.filter((c) => !foundConcepts.includes(c)).slice(0, 6);
+
+  const stepKits = {
+    1: {
+      feedback: "Guter Start. Wir bauen jetzt zuerst die Grundkette in kurzen Teilsaetzen auf.",
+      microTasks: [
+        "Nenne zuerst den Ausloeser: Neutron trifft U-235.",
+        "Schreibe dann, was direkt passiert: Spaltung in Truemmerkerne.",
+        "Ergaenze erst danach den Energie-Aspekt."
+      ],
+      sentenceFrames: [
+        "Ein Neutron trifft auf ____. ",
+        "Dadurch spaltet sich der Kern in ____. ",
+        "Dabei wird ____ frei."
+      ],
+      checklist: [
+        "Mindestens 2 vollstaendige Saetze",
+        "U-235 genannt",
+        "Spaltung + Energie genannt"
+      ],
+      rewriteHint: "Verbinde zuerst nur Ausloeser und direkte Folge in zwei klaren Saetzen."
+    },
+    2: {
+      feedback: "Die Basis stimmt. Jetzt ergaenzen wir die Kettenreaktion mit Ursache und Wirkung.",
+      microTasks: [
+        "Erklaere, dass neue Neutronen weitere Kerne spalten.",
+        "Nutze mindestens ein Logik-Wort (z. B. dadurch, deshalb).",
+        "Halte die Reihenfolge im Ablauf ein."
+      ],
+      sentenceFrames: [
+        "Bei der Spaltung entstehen neue ____. ",
+        "Diese treffen weitere ____ und loesen neue Spaltungen aus.",
+        "So entsteht eine ____."
+      ],
+      checklist: [
+        "Ablauf logisch verknuepft",
+        "Neutronen als Folge genannt",
+        "Begriff Kettenreaktion korrekt verwendet"
+      ],
+      rewriteHint: "Schreibe einen dritten Satz, der klar zeigt, wie aus einer Spaltung viele werden."
+    },
+    3: {
+      feedback: "Inhaltlich gut. Jetzt fehlt die kontrollierte Variante im Kraftwerk.",
+      microTasks: [
+        "Baue Moderatoren oder Absorber passend ein.",
+        "Erklaere kurz den Sinn der Steuerung.",
+        "Nutze den 1:1-Gedanken fuer stabile Leistung."
+      ],
+      sentenceFrames: [
+        "Moderatoren bremsen die ____ ab.",
+        "Absorber fangen ueberschuessige ____ ein.",
+        "Bei einer kontrollierten Reaktion gilt ungefaehr ____ (ein Neutron loest eine neue Spaltung aus)."
+      ],
+      checklist: [
+        "Steuerung erklaert",
+        "Moderator/Absorber fachlich richtig",
+        "1:1-Verhaeltnis sinngemaess enthalten"
+      ],
+      rewriteHint: "Ergaenze einen Satz, der den Unterschied zwischen unkontrolliert und kontrolliert zeigt."
+    },
+    4: {
+      feedback: "Sehr nah an einer Musterantwort. Jetzt nur noch sprachlich praezise und kompakt formulieren.",
+      microTasks: [
+        "Pruefe Fachbegriffe auf Genauigkeit.",
+        "Verkuerze zu 2-4 klaren Loesungssaetzen.",
+        "Achte auf klare Reihenfolge: Ausloeser -> Folge -> Steuerung."
+      ],
+      sentenceFrames: [
+        "Ausloeser: ____.",
+        "Folgekette: ____.",
+        "Kontrolle im Kraftwerk: ____.",
+        "Bedingung: kritische Masse von ____ muss erreicht sein."
+      ],
+      checklist: [
+        "2-4 klare Saetze",
+        "Fachlich vollstaendig",
+        "Logik durchgehend nachvollziehbar"
+      ],
+      rewriteHint: "Formuliere jetzt deine Endversion mit maximal vier praezisen Saetzen."
+    }
+  };
+
+  const kit = stepKits[step] || stepKits[2];
+  const verdict = points >= 8 ? "Richtig" : points >= 4 ? "Teilweise" : "Ueberarbeiten";
+
+  return {
+    points,
+    grade,
+    verdict,
+    step,
+    feedback: kit.feedback,
+    microTasks: kit.microTasks,
+    sentenceFrames: kit.sentenceFrames,
+    checklist: kit.checklist,
+    rewriteHint: kit.rewriteHint,
+    missing,
+    strengths: foundConcepts.slice(0, 6),
+    meta: {
+      question,
+      wordCount: words.length,
+      sentenceCount,
+      logicHits,
+      foundConcepts
+    }
+  };
+}
+
+function computeNtGradeFrom10(points) {
+  const p = Math.max(0, Math.min(10, Number(points) || 0));
+  if (p >= 9) return 1;
+  if (p >= 8) return 2;
+  if (p >= 6) return 3;
+  if (p >= 5) return 4;
+  if (p >= 3) return 5;
+  return 6;
+}
+
+function inferNtApp10Step(stepRequested, points) {
+  const req = Number(stepRequested);
+  if (Number.isFinite(req) && req >= 1 && req <= 4) return Math.round(req);
+  const p = Number(points) || 0;
+  if (p <= 2) return 1;
+  if (p <= 5) return 2;
+  if (p <= 7) return 3;
+  return 4;
+}
+
+function parseNtApp10CoachJson(raw) {
+  if (!raw) return null;
+  try {
+    const cleanRaw = String(raw).replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanRaw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch (_e) {
+    return null;
+  }
+}
 app.listen(PORT, () => {
   console.log(`Server laeuft auf Port ${PORT}`);
   console.log(`Static root: ${STATIC_ROOT}`);
@@ -1286,6 +1541,7 @@ function buildStudentOverview(records) {
   overview.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
   return overview;
 }
+
 
 
 
