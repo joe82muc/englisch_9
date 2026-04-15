@@ -869,6 +869,27 @@ const NT_APP10_KEY_CONCEPTS = [
   "1:1"
 ];
 
+const NT_APP4_KEY_CONCEPTS = [
+  "alpha",
+  "beta",
+  "gamma",
+  "heliumkern",
+  "elektron",
+  "elektromagnetische welle",
+  "ladung",
+  "positiv",
+  "negativ",
+  "nicht abgelenkt",
+  "papier",
+  "aluminium",
+  "blei",
+  "rauchmelder",
+  "americium",
+  "medizin",
+  "lebensmittel",
+  "nicht radioaktiv"
+];
+
 app.post("/api/nt/app10/coach", async (req, res) => {
   try {
     const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
@@ -1050,6 +1071,224 @@ function buildNtApp10CoachFallback({ answer, question, stepRequested }) {
         "Logik durchgehend nachvollziehbar"
       ],
       rewriteHint: "Formuliere jetzt deine Endversion mit maximal vier praezisen Saetzen."
+    }
+  };
+
+  const kit = stepKits[step] || stepKits[2];
+  const verdict = points >= 8 ? "Richtig" : points >= 4 ? "Teilweise" : "Ueberarbeiten";
+
+  return {
+    points,
+    grade,
+    verdict,
+    step,
+    feedback: kit.feedback,
+    microTasks: kit.microTasks,
+    sentenceFrames: kit.sentenceFrames,
+    checklist: kit.checklist,
+    rewriteHint: kit.rewriteHint,
+    missing,
+    strengths: foundConcepts.slice(0, 6),
+    meta: {
+      question,
+      wordCount: words.length,
+      sentenceCount,
+      logicHits,
+      foundConcepts
+    }
+  };
+}
+
+app.post("/api/nt/app4/coach", async (req, res) => {
+  try {
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const question = clean(req.body?.question || "Erklaere Alpha-, Beta- und Gammastrahlung in 2-4 logischen Saetzen.");
+    const stepRequested = Number(req.body?.step || 0);
+
+    if (!answer) {
+      return res.status(400).json({ ok: false, error: "answer fehlt." });
+    }
+
+    const base = buildNtApp4CoachFallback({ answer, question, stepRequested });
+
+    if (!ANTHROPIC_API_KEY) {
+      return res.json({ ok: true, source: "fallback-no-key", ...base });
+    }
+
+    const system = [
+      "Du bist ein NT-Lehrer (9. Klasse, Bayern) mit Fokus auf kleinschrittiges Coaching.",
+      "Thema: Strahlungsarten (Alpha, Beta, Gamma) und Anwendungen im Alltag.",
+      "Ziel: Schueler sollen in kleinen Schritten zu 2-4 korrekten Loesungssaetzen kommen.",
+      "Wichtig: Gib NICHT die komplette Musterloesung aus.",
+      "Stattdessen: nenne naechste Mikro-Schritte und Satzrahmen mit Luecken (__).",
+      "Ton: klar, freundlich, konkret, schuelernah.",
+      "Antworte NUR als JSON.",
+      'Schema: {"feedback":"...","nextStep":1|2|3|4,"microTasks":["..."],"sentenceFrames":["..."],"checklist":["..."],"rewriteHint":"..."}'
+    ].join("\n");
+
+    const user = [
+      `Frage: ${question}`,
+      `Schuelerantwort: ${answer}`,
+      `Voranalyse (intern): Punkte=${base.points}/10, Note=${base.grade}, Schritt=${base.step}`,
+      `Gefundene Konzepte: ${base.meta.foundConcepts.join(", ") || "-"}`,
+      `Fehlende Konzepte: ${base.missing.join(", ") || "-"}`,
+      "Erzeuge ein kleinschrittiges Coaching fuer den naechsten Lernschritt."
+    ].join("\n\n");
+
+    const raw = await askAnthropic(system, user, 420);
+    const parsed = parseNtApp10CoachJson(raw);
+
+    if (!parsed) {
+      return res.json({ ok: true, source: "fallback-parse", ...base });
+    }
+
+    const nextStep = inferNtApp10Step(Number(parsed.nextStep || base.step), base.points);
+    const microTasks = Array.isArray(parsed.microTasks)
+      ? parsed.microTasks.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 4)
+      : base.microTasks;
+    const sentenceFrames = Array.isArray(parsed.sentenceFrames)
+      ? parsed.sentenceFrames.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 4)
+      : base.sentenceFrames;
+    const checklist = Array.isArray(parsed.checklist)
+      ? parsed.checklist.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 5)
+      : base.checklist;
+
+    return res.json({
+      ok: true,
+      source: "anthropic",
+      points: base.points,
+      grade: base.grade,
+      verdict: base.verdict,
+      step: nextStep,
+      feedback: String(parsed.feedback || base.feedback),
+      microTasks: microTasks.length ? microTasks : base.microTasks,
+      sentenceFrames: sentenceFrames.length ? sentenceFrames : base.sentenceFrames,
+      checklist: checklist.length ? checklist : base.checklist,
+      rewriteHint: String(parsed.rewriteHint || base.rewriteHint),
+      missing: base.missing,
+      strengths: base.strengths,
+      meta: base.meta
+    });
+  } catch (error) {
+    console.error("Fehler bei /api/nt/app4/coach:", error.message);
+    const answer = String(req.body?.answer ?? req.body?.studentAnswer ?? "").trim();
+    const question = clean(req.body?.question || "Erklaere Alpha-, Beta- und Gammastrahlung in 2-4 logischen Saetzen.");
+    const stepRequested = Number(req.body?.step || 0);
+    const fallback = buildNtApp4CoachFallback({ answer, question, stepRequested });
+    return res.status(200).json({ ok: true, source: "fallback-error", ...fallback });
+  }
+});
+
+function buildNtApp4CoachFallback({ answer, question, stepRequested }) {
+  const text = String(answer || "").trim();
+  const lower = text.toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+
+  const foundConcepts = NT_APP4_KEY_CONCEPTS.filter((c) => {
+    if (c === "alpha") return /\b(alpha|α)\b/i.test(text);
+    if (c === "beta") return /\b(beta|β)\b/i.test(text);
+    if (c === "gamma") return /\b(gamma|γ)\b/i.test(text);
+    if (c === "heliumkern") return /heliumkern|heliumkerne|2 protonen/i.test(lower);
+    if (c === "elektron") return /elektron|elektronen/i.test(lower);
+    if (c === "elektromagnetische welle") return /elektromagnetisch|welle/i.test(lower);
+    if (c === "nicht abgelenkt") return /nicht abgelenkt|keine ablenkung/i.test(lower);
+    if (c === "americium") return /americium|am-?241/i.test(lower);
+    if (c === "nicht radioaktiv") return /nicht radioaktiv|wird nicht radioaktiv/i.test(lower);
+    return lower.includes(c);
+  });
+
+  const logicHits = ["weil", "dadurch", "deshalb", "dann", "zum beispiel", "im vergleich", "waehrend", "wahrend"].filter((w) => lower.includes(w)).length;
+  const sentenceCount = text.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean).length;
+
+  let points = 0;
+  points += Math.min(6, foundConcepts.length * 0.6);
+  if (sentenceCount >= 2) points += 1;
+  if (sentenceCount >= 3) points += 1;
+  if (logicHits >= 1) points += 1;
+  if (logicHits >= 2) points += 1;
+  points = clampNtPoints10(points);
+
+  const grade = computeNtGradeFrom10(points);
+  const step = inferNtApp10Step(stepRequested, points);
+  const missing = NT_APP4_KEY_CONCEPTS.filter((c) => !foundConcepts.includes(c)).slice(0, 6);
+
+  const stepKits = {
+    1: {
+      feedback: "Guter Start. Wir sichern zuerst die Grundlagen zu Alpha, Beta und Gamma.",
+      microTasks: [
+        "Nenne alle drei Strahlungsarten explizit.",
+        "Ordne jeder Art kurz die Zusammensetzung zu.",
+        "Ergaenze die Ladung (positiv/negativ/keine)."
+      ],
+      sentenceFrames: [
+        "Alpha-Strahlung besteht aus ____. ",
+        "Beta-Strahlung besteht aus ____ und ist ____ geladen.",
+        "Gamma-Strahlung ist eine ____ mit ____ Ladung."
+      ],
+      checklist: [
+        "Alpha, Beta und Gamma genannt",
+        "Teilchen vs. Welle korrekt",
+        "Ladungen fachlich richtig"
+      ],
+      rewriteHint: "Formuliere zuerst drei kurze Saetze: je ein Satz pro Strahlungsart."
+    },
+    2: {
+      feedback: "Die Basis stimmt. Jetzt vergleichen wir Reichweite und Abschirmung.",
+      microTasks: [
+        "Erklaere, was Alpha, Beta und Gamma abschirmt.",
+        "Nutze Vergleichswoerter (waehrend, dagegen, im Vergleich).",
+        "Nenne mindestens ein korrektes Material pro Strahlungsart."
+      ],
+      sentenceFrames: [
+        "Alpha wird schon durch ____ abgeschirmt.",
+        "Beta braucht zur Abschirmung ____.",
+        "Gamma ist am durchdringendsten und braucht ____."
+      ],
+      checklist: [
+        "Papier, Aluminium, Blei korrekt zugeordnet",
+        "Durchdringung richtig verglichen",
+        "Mindestens 3 logische Saetze"
+      ],
+      rewriteHint: "Baue einen Vergleichssatz ein, der alle drei Arten direkt gegeneinander stellt."
+    },
+    3: {
+      feedback: "Sehr gut. Jetzt kommt die Anwendung im Alltag (Rauchmelder, Medizin, Lebensmittel).",
+      microTasks: [
+        "Nenne eine Anwendung mit Strahlungsart (z. B. Rauchmelder).",
+        "Erklaere den Nutzen in der Medizin in einem Satz.",
+        "Erwaehne bei Lebensmitteln, dass Bestrahlung nicht automatisch radioaktiv macht."
+      ],
+      sentenceFrames: [
+        "Im Rauchmelder wird meist ____ verwendet, weil ____.",
+        "In der Medizin nutzt man ____ zum ____.",
+        "Bestrahlte Lebensmittel sind danach ____."
+      ],
+      checklist: [
+        "Mindestens eine Alltagsanwendung korrekt",
+        "Nutzen fachlich passend erklaert",
+        "Keine fachlichen Widersprueche"
+      ],
+      rewriteHint: "Ergaenze einen vierten Satz mit einer konkreten Alltagsanwendung."
+    },
+    4: {
+      feedback: "Fast fertig. Jetzt nur noch praezise, kurz und fachlich sauber formulieren.",
+      microTasks: [
+        "Streiche Wiederholungen und halte 3-4 Saetze ein.",
+        "Pruefe Fachbegriffe und Zuordnungen.",
+        "Achte auf klare Reihenfolge: Art -> Eigenschaft -> Anwendung."
+      ],
+      sentenceFrames: [
+        "Alpha/Beta/Gamma unterscheiden sich in ____ und ____.",
+        "Die Abschirmung erfolgt durch ____ / ____ / ____.",
+        "Eine typische Anwendung ist ____.",
+        "Deshalb gilt: ____."
+      ],
+      checklist: [
+        "3-4 klare Saetze",
+        "Fachlich konsistent",
+        "Saubere Struktur"
+      ],
+      rewriteHint: "Schreibe jetzt deine Endversion in maximal vier praezisen Saetzen."
     }
   };
 
