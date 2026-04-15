@@ -37,10 +37,9 @@
   .direction-label{text-align:center;color:var(--muted);font-size:.77rem;margin:.5rem 0 .75rem;letter-spacing:.03em}
   .question-word{text-align:center;color:var(--blue);font-size:clamp(1.4rem,5vw,2.2rem);font-weight:800;line-height:1.2}
   .phonetic{text-align:center;color:var(--muted);font-size:.88rem;margin-top:.15rem;font-style:italic;min-height:1.2rem}
-  .speak-btn{display:block;margin:.45rem auto .35rem;padding:.33rem .9rem;border:1px solid #b8cff8;background:#fff;border-radius:999px;color:#355f95;font-weight:700;cursor:pointer}
-  .voice-row{display:flex;justify-content:center;align-items:center;gap:.45rem;margin:0 auto .8rem}
-  .voice-row label{font-size:.85rem;color:#355f95;font-weight:700}
-  .voice-select{padding:.28rem .5rem;border:1px solid #c6d8f7;border-radius:10px;background:#fff;color:#24456f;font-weight:700}
+  .speak-btn{display:block;margin:.65rem auto .55rem;padding:.33rem .9rem;border:1px solid #b8cff8;background:#fff;border-radius:999px;color:#355f95;font-weight:700;cursor:pointer}
+  .audio-row{display:flex;flex-wrap:wrap;justify-content:center;gap:.45rem;margin:.25rem 0 .75rem}
+  .example-box{max-width:560px;margin:.2rem auto .75rem;padding:.55rem .7rem;border:1.5px dashed #c8daf9;border-radius:10px;background:#f6f9ff;color:#24456f;font-size:.92rem;min-height:2.2rem}
   .choices{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
   .choice{padding:.75rem .5rem;background:#f4f8ff;border:1.5px solid #d1e1ff;border-radius:10px;text-align:center;cursor:pointer;font-weight:700;color:#20426f}
   .choice.correct{background:#e8f8f0;border-color:#9be3c0;color:var(--ok)}
@@ -86,8 +85,10 @@
       <button class="filter-btn" onclick="setFilter('topic1',this)">Topic 1</button>
       <button class="filter-btn" onclick="setFilter('topic2',this)">Topic 2</button>
       <button class="filter-btn" onclick="setFilter('text',this)">Text</button>
-      <button class="filter-btn" onclick="setFilter('mediation',this)">Mediation</button>
-      <button class="filter-btn" onclick="setFilter('more',this)">More</button>
+      <button class="filter-btn" onclick="setFilter('phrases_ing',this)">Phrases with -ing</button>
+      <button class="filter-btn" onclick="setFilter('more_about',this)">More about</button>
+      <button class="filter-btn" onclick="setFilter('at_doctors',this)">At the doctor's</button>
+      <button class="filter-btn" onclick="setFilter('adjectives_experience',this)">Adjectives</button>
     </div>
 
     <div class="controls">
@@ -116,14 +117,22 @@
       <div class="question-word" id="qword">-</div>
       <div class="phonetic" id="phonetic"></div>
       <button class="speak-btn" id="speak-btn" onclick="speak()">🔊 anhören</button>
-      <div class="voice-row">
-        <label for="voice-gender">Stimme:</label>
-        <select id="voice-gender" class="voice-select" onchange="setVoiceGender(this.value)">
-          <option value="auto" selected>Auto</option>
-          <option value="female">Weiblich</option>
-          <option value="male">Männlich</option>
+      <div class="audio-row">
+        <select id="example-level" class="btn-secondary" style="padding:.45rem .7rem">
+          <option value="A2">Level A2</option>
+          <option value="A2+" selected>Level A2+</option>
+          <option value="B1">Level B1</option>
         </select>
+        <select id="example-mode" class="btn-secondary" style="padding:.45rem .7rem">
+          <option value="mixed" selected>Gemischt</option>
+          <option value="daily">Alltag</option>
+          <option value="definition">Worterklärung</option>
+          <option value="paraphrase">Umschreibung</option>
+        </select>
+        <button class="btn-secondary" id="example-btn" onclick="generateExampleSentence()">🧠 Beispielsatz</button>
+        <button class="btn-secondary" id="example-speak-btn" onclick="speakExampleSentence()" disabled>🔊 Satz anhören</button>
       </div>
+      <div class="example-box" id="example-box">Klicke auf „Beispielsatz“, um einen KI-Satz zum Wort zu bekommen.</div>
 
       <div id="mc-area"><div class="choices" id="choices"></div></div>
       <div id="type-area" style="display:none">
@@ -153,106 +162,157 @@
 
 <script>
 const vocab = [
-  {en:"parliament",de:"Parlament",pron:"pːlmnt",topic:"intro"},
-  {en:"African",de:"afrikanisch; Afrikaner",pron:"æfrɪkn",topic:"intro"},
-  {en:"apartheid",de:"Apartheid",pron:"pːtaɪt",topic:"intro"},
-  {en:"system",de:"System",pron:"sɪstm",topic:"intro"},
-  {en:"to separate",de:"trennen",pron:"sepreɪt",topic:"intro"},
-  {en:"South African",de:"Südafrikaner; südafrikanisch",pron:"saθ æfrɪkn",topic:"intro"},
-  {en:"township",de:"Township; Armutsviertel",pron:"tanɪp",topic:"intro"},
-  {en:"to end",de:"enden; beenden",pron:"end",topic:"intro"},
-  {en:"because of",de:"wegen",pron:"bɪkz v",topic:"intro"},
-  {en:"gap",de:"Kluft; Lücke",pron:"ɡæp",topic:"intro"},
-  {en:"wide",de:"breit; weit",pron:"waɪd",topic:"intro"},
-  {en:"electricity",de:"Strom; Elektrizität",pron:"ɪlektrɪsɪti",topic:"intro"},
-  {en:"to aim",de:"zum Ziel haben; beabsichtigen",pron:"eɪm",topic:"intro"},
-  {en:"safari",de:"Safari",pron:"sfːri",topic:"intro"},
-  {en:"elephant",de:"Elefant",pron:"elɪfnt",topic:"intro"},
-  {en:"buffalo",de:"Büffel",pron:"bfl",topic:"intro"},
-  {en:"common",de:"verbreitet; häufig",pron:"kmn",topic:"intro"},
-  {en:"higher education",de:"Hochschulbildung",pron:"haɪr edukeɪn",topic:"intro"},
-  {en:"media",de:"Medien",pron:"miːdi",topic:"intro"},
-  {en:"goddess",de:"Göttin",pron:"ɡdes",topic:"intro"},
-  {en:"to hit",de:"anfahren; rammen",pron:"hɪt",topic:"topic1"},
-  {en:"injured",de:"verletzt",pron:"ɪndd",topic:"topic1"},
-  {en:"sergeant",de:"Polizeimeister",pron:"sːdnt",topic:"topic1"},
-  {en:"driving licence",de:"Führerschein",pron:"draɪvɪ laɪsns",topic:"topic1"},
-  {en:"to brake",de:"bremsen",pron:"breɪk",topic:"topic1"},
-  {en:"to skid",de:"schleudern; schlittern",pron:"skɪd",topic:"topic1"},
-  {en:"control",de:"Kontrolle; Steuerung",pron:"kntrl",topic:"topic1"},
-  {en:"to crash",de:"krachen",pron:"kræ",topic:"topic1"},
-  {en:"relevant",de:"relevant; von Bedeutung",pron:"relvnt",topic:"topic1"},
-  {en:"wallet",de:"Geldbörse; Geldbeutel",pron:"wlɪt",topic:"topic1"},
-  {en:"bang",de:"Knall",pron:"bæ",topic:"topic1"},
-  {en:"glass",de:"Glas",pron:"ɡlːs",topic:"topic1"},
-  {en:"police station",de:"Polizeirevier",pron:"pliːs steɪn",topic:"topic1"},
-  {en:"detail",de:"Detail; Einzelheit",pron:"diːteɪl",topic:"topic1"},
-  {en:"witness",de:"Zeuge; Zeugin",pron:"wɪtns",topic:"topic1"},
-  {en:"damage",de:"Schaden; Beschädigung",pron:"dæmɪd",topic:"topic1"},
-  {en:"report",de:"Bericht",pron:"rɪpːt",topic:"topic1"},
-  {en:"news",de:"Nachricht(en)",pron:"njuːz",topic:"topic1"},
-  {en:"newspaper",de:"Zeitung",pron:"njuːspeɪp",topic:"topic1"},
-  {en:"role model",de:"Vorbild",pron:"rl mdl",topic:"topic2"},
-  {en:"podcast",de:"Podcast",pron:"pdkːst",topic:"topic2"},
-  {en:"inspiring",de:"inspirierend; anregend",pron:"ɪnspaɪrɪ",topic:"topic2"},
-  {en:"songwriter",de:"Songschreiber; Liedermacher",pron:"sraɪt",topic:"topic2"},
-  {en:"isolated",de:"isoliert",pron:"aɪsleɪtɪd",topic:"topic2"},
-  {en:"opposition",de:"Widerstand; Opposition",pron:"pzɪn",topic:"topic2"},
-  {en:"to overcome",de:"überwinden",pron:"vkm",topic:"topic2"},
-  {en:"inspiration",de:"Inspiration; Eingebung",pron:"ɪnspreɪn",topic:"topic2"},
-  {en:"to admire",de:"bewundern",pron:"dmaɪ",topic:"topic2"},
-  {en:"to direct",de:"Regie führen; leiten",pron:"dɪrekt",topic:"topic2"},
-  {en:"politically active",de:"politisch engagiert",pron:"plɪtɪkli æktɪv",topic:"topic2"},
-  {en:"active",de:"aktiv",pron:"æktɪv",topic:"topic2"},
-  {en:"gay",de:"homosexuell; schwul",pron:"ɡeɪ",topic:"topic2"},
-  {en:"lesbian",de:"homosexuell; lesbisch",pron:"lezbin",topic:"topic2"},
-  {en:"medication",de:"Medikament; Arzneimittel",pron:"medɪkeɪn",topic:"topic2"},
-  {en:"Zulu",de:"Zulu (Sprache in Südafrika)",pron:"zuːluː",topic:"text"},
-  {en:"unemployed",de:"arbeitslos",pron:"nɪmplɪd",topic:"text"},
-  {en:"organization",de:"Organisation",pron:"ːɡnaɪzeɪn",topic:"text"},
-  {en:"original",de:"ursprünglich; original",pron:"rɪdɪnl",topic:"text"},
-  {en:"furniture",de:"Möbel",pron:"fːnɪt",topic:"text"},
-  {en:"guitar",de:"Gitarre",pron:"ɡɪtː",topic:"text"},
-  {en:"Afrikaans",de:"Afrikaans (Sprache in Südafrika)",pron:"æfrɪkːns",topic:"text"},
-  {en:"degree",de:"Hochschulabschluss",pron:"dɪɡriː",topic:"text"},
-  {en:"nursing",de:"Pflege; Krankenpflege",pron:"nːsɪ",topic:"text"},
-  {en:"fortunately",de:"zum Glück",pron:"fːtntli",topic:"text"},
-  {en:"to support",de:"unterstützen",pron:"spːt",topic:"text"},
-  {en:"midwife",de:"Hebamme",pron:"mɪdwaɪf",topic:"text"},
-  {en:"Sotho",de:"Sotho (Sprache in Südafrika)",pron:"sθ",topic:"text"},
-  {en:"kindergarten",de:"Kindergarten",pron:"kɪndɡːtn",topic:"text"},
-  {en:"preschool",de:"Vorschule",pron:"priːskuːl",topic:"text"},
-  {en:"community",de:"Gemeinde; Gemeinschaft",pron:"kmjuːnti",topic:"text"},
-  {en:"study",de:"Studium; Untersuchung",pron:"stdi",topic:"text"},
-  {en:"distance",de:"Entfernung; Distanz",pron:"dɪstns",topic:"mediation"},
-  {en:"gate",de:"Tor",pron:"ɡeɪt",topic:"mediation"},
-  {en:"emergency",de:"Notfall",pron:"ɪmːdnsi",topic:"mediation"},
-  {en:"to disturb",de:"stören; belästigen",pron:"dɪstːb",topic:"mediation"},
-  {en:"to follow",de:"folgen",pron:"fl",topic:"mediation"},
-  {en:"to make sure",de:"dafür sorgen; sich versichern",pron:"meɪk ː",topic:"mediation"},
-  {en:"monkey",de:"Affe",pron:"mki",topic:"mediation"},
-  {en:"state",de:"Landes-; staatlich",pron:"steɪt",topic:"more"},
-  {en:"function",de:"Funktion",pron:"fkn",topic:"more"},
-  {en:"to sink",de:"untergehen; sinken",pron:"sɪk",topic:"more"},
-  {en:"lighthouse",de:"Leuchtturm",pron:"laɪthas",topic:"more"},
-  {en:"arch",de:"Bogen",pron:"ːt",topic:"more"},
-  {en:"viewing platform",de:"Aussichtsplattform",pron:"vjuːɪ plætfːm",topic:"more"},
-  {en:"speech",de:"Rede; Vortrag; Sprache",pron:"spiːt",topic:"more"},
-  {en:"region",de:"Region; Gegend",pron:"riːdn",topic:"more"},
-  {en:"game reserve",de:"Wildreservat; Wildschutzgebiet",pron:"ɡeɪm rɪzːv",topic:"more"},
-  {en:"lion",de:"Löwe",pron:"laɪn",topic:"more"},
-  {en:"leopard",de:"Leopard",pron:"lepd",topic:"more"},
-  {en:"rhino",de:"Rhinozeros; Nashorn",pron:"raɪn",topic:"more"},
-  {en:"extinction",de:"Aussterben",pron:"ɪkstɪkn",topic:"more"},
-  {en:"bushman",de:"Buschmann",pron:"bmn",topic:"more"},
-  {en:"redbush",de:"Roibusch",pron:"redb",topic:"more"},
+  {en:"G'day! (= Good day!)",de:"Hi!; Hallo!; Tag!",pron:"gəˈdaɪ",topic:"intro"},
+  {en:"Australian",de:"Australier; Australierin; australisch",pron:"ɒˈstreɪliən",topic:"intro"},
+  {en:"creature",de:"Lebewesen; Kreatur; Geschöpf",pron:"ˈkriːtʃə",topic:"intro"},
+  {en:"to break, broke, broken",de:"brechen; zerbrechen; kaputt machen",pron:"breɪk",topic:"intro"},
+  {en:"species",de:"Art; Spezies",pron:"ˈspiːʃiːz",topic:"intro"},
+  {en:"koala",de:"Koala",pron:"kəʊˈɑːlə",topic:"intro"},
+  {en:"kangaroo",de:"Känguru",pron:"ˌkæŋgəˈruː",topic:"intro"},
+  {en:"flat",de:"flach; eben; platt",pron:"flæt",topic:"intro"},
+  {en:"to be called",de:"genannt werden; heißen",pron:"tə biː kɔːld",topic:"intro"},
+  {en:"the outback",de:"das Outback",pron:"ði ˈaʊtbæk",topic:"intro"},
+  {en:"Aboriginal people",de:"die Aborigines",pron:"ˌæbəˈrɪdʒənl ˈpiːpl",topic:"intro"},
+  {en:"to kill",de:"töten",pron:"tə kɪl",topic:"intro"},
+  {en:"to struggle",de:"kämpfen; ringen; sich anstrengen",pron:"tə ˈstrʌgl",topic:"intro"},
+  {en:"to belong (to)",de:"gehören (zu)",pron:"tə bɪˈlɒŋ",topic:"intro"},
+
+  {en:"Aboriginal",de:"Aborigine-; zur Aborigine-Kultur gehörend",pron:"ˌæbəˈrɪdʒənl",topic:"topic1"},
+  {en:"lifestyle",de:"Lebensstil; Lebensart; Lebensweise",pron:"ˈlaɪfstaɪl",topic:"topic1"},
+  {en:"sacred",de:"heilig",pron:"ˈseɪkrɪd",topic:"topic1"},
+  {en:"landscape",de:"Landschaft",pron:"ˈlændskeɪp",topic:"topic1"},
+  {en:"meaning",de:"Bedeutung",pron:"ˈmiːnɪŋ",topic:"topic1"},
+  {en:"didgeridoo",de:"Didgeridoo",pron:"ˌdɪdʒəriˈduː",topic:"topic1"},
+  {en:"impressed",de:"beeindruckt",pron:"ɪmˈprest",topic:"topic1"},
+  {en:"colourful",de:"bunt",pron:"ˈkʌləfl",topic:"topic1"},
+
+  {en:"receptionist",de:"Arzthelfer; Arzthelferin",pron:"rɪˈsepʃənɪst",topic:"topic2"},
+  {en:"appointment",de:"Termin",pron:"əˈpɔɪntmənt",topic:"topic2"},
+  {en:"record",de:"Akte; Unterlagen",pron:"ˈrekɔːd",topic:"topic2"},
+  {en:"recent",de:"kürzlich; neueste; letzte",pron:"ˈriːsnt",topic:"topic2"},
+  {en:"to register",de:"sich registrieren lassen; sich eintragen; sich anmelden",pron:"tə ˈredʒɪstə",topic:"topic2"},
+  {en:"patient",de:"Patient; Patientin",pron:"ˈpeɪʃnt",topic:"topic2"},
+  {en:"medical record",de:"Krankenakte; Krankenbericht",pron:"ˈmedɪkl ˈrekɔːd",topic:"topic2"},
+  {en:"medical",de:"medizinisch; ärztlich",pron:"ˈmedɪkl",topic:"topic2"},
+  {en:"ill",de:"krank; schlecht",pron:"ɪl",topic:"topic2"},
+
+  {en:"danger",de:"Gefahr",pron:"ˈdeɪndʒə",topic:"text"},
+  {en:"underwater",de:"unter Wasser",pron:"ˌʌndəˈwɔːtə",topic:"text"},
+  {en:"reef",de:"Riff",pron:"riːf",topic:"text"},
+  {en:"area",de:"Fläche; Bereich",pron:"ˈeəriə",topic:"text"},
+  {en:"coral",de:"Koralle",pron:"ˈkɒrəl",topic:"text"},
+  {en:"climate change",de:"Klimawandel",pron:"ˈklaɪmət tʃeɪndʒ",topic:"text"},
+  {en:"bleaching",de:"Bleichen; Ausbleichen",pron:"ˈbliːtʃɪŋ",topic:"text"},
+  {en:"temperature",de:"Temperatur",pron:"ˈtemprətʃə",topic:"text"},
+  {en:"alga (sg), algae (pl)",de:"Alge",pron:"ˈælɡiː",topic:"text"},
+  {en:"pollution",de:"Verschmutzung",pron:"pəˈluːʃn",topic:"text"},
+  {en:"oil spill",de:"Ölteppich; Ölpest",pron:"ɔɪl spɪl",topic:"text"},
+  {en:"to recover",de:"sich erholen",pron:"tə rɪˈkʌvə",topic:"text"},
+  {en:"farming",de:"Landwirtschaft; Ackerbau",pron:"ˈfɑːmɪŋ",topic:"text"},
+  {en:"chemical",de:"Chemikalie",pron:"ˈkemɪkl",topic:"text"},
+  {en:"rain",de:"Regen",pron:"reɪn",topic:"text"},
+  {en:"to pollute",de:"verschmutzen; verunreinigen",pron:"tə pəˈluːt",topic:"text"},
+  {en:"to protect",de:"schützen",pron:"tə prəˈtekt",topic:"text"},
+  {en:"government",de:"Regierung",pron:"ˈgʌvənmənt",topic:"text"},
+  {en:"law",de:"Gesetz",pron:"lɔː",topic:"text"},
+  {en:"alone",de:"allein",pron:"əˈləʊn",topic:"text"},
+  {en:"department",de:"Abteilung",pron:"dɪˈpɑːtmənt",topic:"text"},
+  {en:"energy",de:"Energie; Kraft",pron:"ˈenədʒi",topic:"text"},
+  {en:"completely",de:"völlig",pron:"kəmˈpliːtli",topic:"text"},
+  {en:"start",de:"Anfang; Start; Beginn",pron:"stɑːt",topic:"text"},
+
+  {en:"to be good at + -ing",de:"gut sein in; gut sein bei",pron:"tə biː gʊd ət",topic:"phrases_ing"},
+  {en:"can't stand + -ing",de:"nicht ausstehen können; nicht ertragen",pron:"kɑːnt stænd",topic:"phrases_ing"},
+  {en:"to enjoy + -ing",de:"mögen; Gefallen finden an; genießen",pron:"tə ɪnˈdʒɔɪ",topic:"phrases_ing"},
+  {en:"to hate + -ing",de:"hassen; nicht mögen",pron:"tə heɪt",topic:"phrases_ing"},
+  {en:"to keep + -ing",de:"immer wieder ...; immer weiter ...",pron:"tə kiːp",topic:"phrases_ing"},
+  {en:"to like + -ing",de:"mögen; gerne tun",pron:"tə laɪk",topic:"phrases_ing"},
+  {en:"to look forward to + -ing",de:"sich freuen auf",pron:"tə lʊk ˈfɔːwəd tuː",topic:"phrases_ing"},
+
+  {en:"down under",de:"in Australien",pron:"daʊn ˈʌndə",topic:"more_about"},
+  {en:"to weigh",de:"wiegen",pron:"tə weɪ",topic:"more_about"},
+  {en:"jumping",de:"Springen",pron:"ˈdʒʌmpɪŋ",topic:"more_about"},
+  {en:"coin",de:"Münze",pron:"kɔɪn",topic:"more_about"},
+  {en:"emu",de:"Emu",pron:"ˈiːmjuː",topic:"more_about"},
+  {en:"among",de:"unter; inmitten",pron:"əˈmʌŋ",topic:"more_about"},
+  {en:"backwards",de:"rückwärts; rückständig",pron:"ˈbækwədz",topic:"more_about"},
+  {en:"stamp",de:"Briefmarke",pron:"stæmp",topic:"more_about"},
+  {en:"rare",de:"selten; rar",pron:"reə",topic:"more_about"},
+  {en:"wombat",de:"Wombat",pron:"ˈwɒmbæt",topic:"more_about"},
+  {en:"normally",de:"normalerweise; gewöhnlich",pron:"ˈnɔːməli",topic:"more_about"},
+  {en:"saltwater crocodile",de:"Salzwasserkrokodil",pron:"ˈsɔːltwɔːtə ˈkrɒkədaɪl",topic:"more_about"},
+  {en:"strange",de:"merkwürdig; seltsam",pron:"streɪndʒ",topic:"more_about"},
+  {en:"platypus",de:"Schnabeltier",pron:"ˈplætɪpəs",topic:"more_about"},
+  {en:"couldn't believe their eyes",de:"trauten ihren Augen nicht",pron:"ˈkʊdnt bɪˈliːv ðeər aɪz",topic:"more_about"},
+  {en:"to lay, laid, laid",de:"legen",pron:"tə leɪ",topic:"more_about"},
+  {en:"kookaburra",de:"Jägerliest",pron:"ˈkʊkəbʌrə",topic:"more_about"},
+  {en:"forest",de:"Wald",pron:"ˈfɒrɪst",topic:"more_about"},
+
+  {en:"at the doctor's",de:"beim Arzt",pron:"ət ðə ˈdɒktəz",topic:"at_doctors"},
+  {en:"doctor",de:"Arzt; Ärztin",pron:"ˈdɒktə",topic:"at_doctors"},
+  {en:"nurse",de:"Krankenpfleger; Krankenschwester",pron:"nɜːs",topic:"at_doctors"},
+  {en:"prescription",de:"Rezept",pron:"prɪˈskrɪpʃn",topic:"at_doctors"},
+  {en:"medicine",de:"Medikamente; Medizin",pron:"ˈmedsn",topic:"at_doctors"},
+  {en:"tablet",de:"Tablette",pron:"ˈtæblət",topic:"at_doctors"},
+  {en:"pharmacy",de:"Apotheke",pron:"ˈfɑːməsi",topic:"at_doctors"},
+  {en:"sick",de:"krank",pron:"sɪk",topic:"at_doctors"},
+  {en:"flu",de:"Grippe",pron:"fluː",topic:"at_doctors"},
+  {en:"cold",de:"Erkältung",pron:"kəʊld",topic:"at_doctors"},
+  {en:"tired",de:"müde",pron:"ˈtaɪəd",topic:"at_doctors"},
+  {en:"sore throat",de:"Halsschmerzen",pron:"sɔː θrəʊt",topic:"at_doctors"},
+  {en:"high temperature",de:"Fieber",pron:"haɪ ˈtemprətʃə",topic:"at_doctors"},
+  {en:"headache",de:"Kopfweh; Kopfschmerzen",pron:"ˈhedeɪk",topic:"at_doctors"},
+  {en:"to examine",de:"untersuchen; kontrollieren",pron:"tə ɪgˈzæmɪn",topic:"at_doctors"},
+  {en:"to catch sth",de:"sich etwas einfangen",pron:"tə kætʃ",topic:"at_doctors"},
+  {en:"to hurt",de:"verletzen; wehtun",pron:"tə hɜːt",topic:"at_doctors"},
+  {en:"Get well soon!",de:"Gute Besserung!",pron:"get wel suːn",topic:"at_doctors"},
+
+  {en:"afraid",de:"ängstlich",pron:"əˈfreɪd",topic:"adjectives_experience"},
+  {en:"boring",de:"langweilig",pron:"ˈbɔːrɪŋ",topic:"adjectives_experience"},
+  {en:"confident",de:"selbstsicher; selbstbewusst; sicher",pron:"ˈkɒnfɪdənt",topic:"adjectives_experience"},
+  {en:"delicious",de:"lecker; köstlich",pron:"dɪˈlɪʃəs",topic:"adjectives_experience"},
+  {en:"disappointed",de:"enttäuscht",pron:"ˌdɪsəˈpɔɪntɪd",topic:"adjectives_experience"},
+  {en:"excited",de:"aufgeregt; begeistert",pron:"ɪkˈsaɪtɪd",topic:"adjectives_experience"},
+  {en:"exciting",de:"spannend; aufregend",pron:"ɪkˈsaɪtɪŋ",topic:"adjectives_experience"},
+  {en:"happy",de:"glücklich",pron:"ˈhæpi",topic:"adjectives_experience"},
+  {en:"impressed",de:"beeindruckt",pron:"ɪmˈprest",topic:"adjectives_experience"},
+  {en:"interesting",de:"interessant",pron:"ˈɪntrəstɪŋ",topic:"adjectives_experience"},
+  {en:"sad",de:"traurig",pron:"sæd",topic:"adjectives_experience"},
+  {en:"surprised",de:"überrascht",pron:"səˈpraɪzd",topic:"adjectives_experience"},
+  {en:"worried",de:"beunruhigt; besorgt",pron:"ˈwʌrid",topic:"adjectives_experience"}
 ];
 
 let mode='mc', dirSetting='random', filterTopic='all';
 let queue=[], current=null, right=0, wrong=0, direction='en-de', answered=false;
 let ttsUnlocked = false;
-let selectedVoiceGender = "auto";
 let fallbackAudio = null;
+let currentExampleSentence = "";
+let currentExampleSource = "";
+const exampleHistory = {};
+const API_BASE = (location.hostname.includes('github.io') || location.protocol === 'file:') ? 'https://englisch-9.onrender.com' : '';
+
+const E9_TOKEN = localStorage.getItem('e9_token') || '';
+
+async function sendVocabProgress(percent,total){
+  if(!E9_TOKEN) return;
+  try{
+    await fetch(API_BASE + '/api/progress/record',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+E9_TOKEN},
+      body:JSON.stringify({
+        exerciseId:'unit3-vokabeltrainer',
+        exerciseName:'Unit 3 Vokabeltrainer',
+        unit:'unit3',
+        category:'vocabulary',
+        percent:percent,
+        score:right,
+        total:total,
+        completed:true,
+        meta:{mode:mode,direction:dirSetting,topic:filterTopic}
+      })
+    });
+  }catch(_e){}
+}
 
 const shuffle = a => [...a].sort(()=>Math.random()-0.5);
 const filteredVocab = () => filterTopic==='all' ? vocab : vocab.filter(v=>v.topic===filterTopic);
@@ -299,17 +359,23 @@ function nextCard(){
 
   document.getElementById('dir-label').textContent = isEnDe ? 'Englisch → Deutsch' : 'Deutsch → Englisch';
   document.getElementById('qword').textContent = qWord;
-  document.getElementById('phonetic').textContent = isEnDe ? '[' + current.pron + ']' : '';
+  document.getElementById('phonetic').textContent = current.pron ? '[' + current.pron + ']' : '';
   document.getElementById('feedback').textContent='';
   document.getElementById('feedback').className='feedback';
   document.getElementById('skip-btn').style.display='';
   document.getElementById('next-btn').style.display='none';
 
-  const map={intro:'Intro',topic1:'Topic 1',topic2:'Topic 2',text:'Text',mediation:'Mediation',more:'More'};
+  const map={intro:"Intro",topic1:"Topic 1",topic2:"Topic 2",text:"Text",phrases_ing:"Phrases with -ing",more_about:"More about",at_doctors:"At the doctor's",adjectives_experience:"Adjectives"};
   document.getElementById('unit-tag').textContent = map[current.topic] || 'Unit 3';
 
   const sBtn=document.getElementById('speak-btn');
   sBtn.textContent='🔊 anhören';
+  const exBtn = document.getElementById('example-speak-btn');
+  const exBox = document.getElementById('example-box');
+  currentExampleSentence = "";
+  currentExampleSource = "";
+  if(exBtn) exBtn.disabled = true;
+  if(exBox) exBox.textContent = 'Klicke auf „Beispielsatz“, um einen KI-Satz zum Wort zu bekommen.';
 
   updateProgress();
   if(mode==='mc') buildChoices(aWord,isEnDe);
@@ -331,6 +397,176 @@ function buildChoices(correct,isEnDe){
     btn.onclick=()=>checkChoice(btn,opt,correct);
     cont.appendChild(btn);
   });
+}
+
+async function generateExampleSentence(){
+  if(!current) return;
+  const word = current.en;
+  const meaning = current.de || "";
+  const topic = current.topic || "topic2";
+  const level = String((document.getElementById('example-level') || {}).value || 'A2+');
+  const sentenceMode = String((document.getElementById('example-mode') || {}).value || 'mixed');
+  const historyKey = (word + '|' + level).toLowerCase();
+  const previous = Array.isArray(exampleHistory[historyKey]) ? exampleHistory[historyKey] : [];
+  const exBtn = document.getElementById('example-btn');
+  const exSpeakBtn = document.getElementById('example-speak-btn');
+  const exBox = document.getElementById('example-box');
+  if(exBtn) exBtn.disabled = true;
+  if(exBox) exBox.textContent = 'KI erstellt Beispielsatz...';
+
+  try{
+    const response = await fetch(API_BASE + '/api/vocab/example', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(E9_TOKEN ? { 'Authorization': 'Bearer ' + E9_TOKEN } : {})
+      },
+      body: JSON.stringify({
+        word,
+        meaning,
+        topic,
+        level: level,
+        sentenceMode,
+        provider: 'anthropic',
+        classLevel: 'grade9',
+        variationSeed: Date.now(),
+        previousSentences: previous.slice(-5)
+      })
+    });
+
+    if(!response.ok){
+      throw new Error('HTTP ' + response.status);
+    }
+    const data = await response.json();
+    let sentence = String(data?.sentence || '').trim();
+    currentExampleSource = String(data?.source || '');
+    if(!sentence) throw new Error('Kein Satz erhalten');
+    if(previous.includes(sentence)){
+      const response2 = await fetch(API_BASE + '/api/vocab/example', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(E9_TOKEN ? { 'Authorization': 'Bearer ' + E9_TOKEN } : {})
+        },
+        body: JSON.stringify({
+          word,
+          meaning,
+          topic,
+          level: level,
+          sentenceMode,
+          provider: 'anthropic',
+          classLevel: 'grade9',
+          variationSeed: Date.now() + 1,
+          previousSentences: previous.concat([sentence]).slice(-6)
+        })
+      });
+      if(response2.ok){
+        const data2 = await response2.json();
+        const s2 = String(data2?.sentence || '').trim();
+        if(s2 && !previous.includes(s2)) sentence = s2;
+      }
+    }
+    currentExampleSentence = sentence;
+    exampleHistory[historyKey] = previous.concat([sentence]).slice(-8);
+    if(exBox) exBox.textContent = sentence + (currentExampleSource ? (' [' + currentExampleSource + ']') : '');
+    if(exSpeakBtn) exSpeakBtn.disabled = false;
+  }catch(error){
+    const fallback = buildLocalExampleSentence(word, topic, level, sentenceMode, previous);
+    currentExampleSource = 'local-fallback';
+    currentExampleSentence = fallback;
+    exampleHistory[historyKey] = previous.concat([fallback]).slice(-8);
+    if(exBox) exBox.textContent = fallback + ' [local-fallback]';
+    if(exSpeakBtn) exSpeakBtn.disabled = false;
+  }finally{
+    if(exBtn) exBtn.disabled = false;
+  }
+}
+
+function buildLocalExampleSentence(word, topic, level, mode, previous){
+  const w = String(word || 'word').trim();
+  const p = Array.isArray(previous) ? previous : [];
+  const modeKey = String(mode || 'mixed').toLowerCase();
+  const packs = {
+    daily: [
+      `I used "${w}" when talking to my friend after school.`,
+      `Today I heard "${w}" in a normal daily situation.`,
+      `In class, we used "${w}" in a short dialogue.`
+    ],
+    definition: [
+      `"${w}" is a useful word we learn in Unit 4.`,
+      `A simple definition of "${w}" helps me remember it.`,
+      `"${w}" is an important term in this topic.`
+    ],
+    paraphrase: [
+      `Another way to explain "${w}" is with easy words.`,
+      `I can paraphrase "${w}" in a short sentence.`,
+      `We described "${w}" in different words today.`
+    ],
+    mixed: [
+      `We used "${w}" in a short speaking exercise today.`,
+      `My partner explained "${w}" with an everyday example.`,
+      `I wrote one clear sentence with "${w}" in class.`
+    ]
+  };
+  let pool = packs[modeKey] || packs.mixed;
+  if(String(level).toUpperCase() === 'B1'){
+    pool = pool.concat([
+      `I used "${w}" confidently while explaining my opinion.`,
+      `During discussion, "${w}" helped me express my idea clearly.`
+    ]);
+  }
+  const filtered = pool.filter(s => !p.includes(s));
+  const use = filtered.length ? filtered : pool;
+  const idx = Math.floor(Math.random() * use.length);
+  return use[idx];
+}
+
+async function speakTextViaAzure(text){
+  const res = await fetch(API_BASE + '/api/speech/speak', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      ...(E9_TOKEN ? { 'Authorization': 'Bearer ' + E9_TOKEN } : {})
+    },
+    body: JSON.stringify({ text, voice: 'en-US-JennyNeural' })
+  });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  await new Promise((resolve,reject)=>{
+    const audio = new Audio(url);
+    audio.onended = () => { URL.revokeObjectURL(url); resolve(true); };
+    audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('audio-error')); };
+    const p = audio.play();
+    if(p && typeof p.then === 'function'){
+      p.catch(reject);
+    }
+  });
+}
+
+async function speakExampleSentence(){
+  if(!current) return;
+  if(!currentExampleSentence){
+    await generateExampleSentence();
+  }
+  if(!currentExampleSentence) return;
+  const fb = document.getElementById("feedback");
+  try{
+    await speakTextViaAzure(currentExampleSentence);
+  }catch(_e){
+    try{
+      const u = new SpeechSynthesisUtterance(currentExampleSentence);
+      u.lang = "en-US";
+      u.rate = 0.92;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }catch(_e2){
+      if(fb){
+        fb.className = "feedback bad";
+        fb.textContent = "Satz-Audio nicht verfuegbar.";
+      }
+    }
+  }
 }
 
 function checkChoice(btn,chosen,correct){
@@ -381,63 +617,19 @@ function unlockTTS(){
   }catch(e){}
 }
 
-function setVoiceGender(v){
-  selectedVoiceGender = (v === "male" || v === "female") ? v : "auto";
-}
-
-function getEnglishVoice(gender = "auto"){
+function getEnglishVoice(){
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices() || [];
   if (!voices.length) return null;
-
-  const en = voices.filter(v => /^en/i.test(v.lang));
-  if (!en.length) return null;
-
-  const femaleHint = /female|woman|girl|aria|sara|sonia|libby|jenny|zira|susan|eva|hedda|hazel/i;
-  const maleHint = /male|man|guy|davis|ryan|guy|mark|george|guy24k|daniel|david|tom|liam/i;
-
-  if (gender === "female") {
-    return en.find(v => femaleHint.test(v.name)) ||
-           en.find(v => /en-GB/i.test(v.lang) && femaleHint.test(v.name)) ||
-           en[0];
-  }
-  if (gender === "male") {
-    return en.find(v => maleHint.test(v.name)) ||
-           en.find(v => /en-GB/i.test(v.lang) && maleHint.test(v.name)) ||
-           en[0];
-  }
-
   return (
-    en.find(v => /en-GB/i.test(v.lang)) ||
-    en.find(v => /en-US/i.test(v.lang)) ||
-    en[0]
+    voices.find(v => /en-GB/i.test(v.lang)) ||
+    voices.find(v => /en-US/i.test(v.lang)) ||
+    voices.find(v => /^en/i.test(v.lang)) ||
+    null
   );
 }
 
-async function playAudioFallback(text, gender = "auto"){
-  const API_BASE = (location.hostname.includes('github.io') || location.protocol === 'file:') ? 'https://englisch-9.onrender.com' : '';
-
-  // 1) Azure TTS via backend
-  try{
-    const azureVoice = gender === 'male' ? 'en-GB-RyanNeural' : 'en-GB-SoniaNeural';
-    const r = await fetch(API_BASE + '/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voice: azureVoice })
-    });
-
-    if(r.ok){
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      if(!fallbackAudio) fallbackAudio = new Audio();
-      fallbackAudio.src = url;
-      await fallbackAudio.play();
-      fallbackAudio.onended = () => URL.revokeObjectURL(url);
-      return true;
-    }
-  }catch(_e){ /* try next fallback */ }
-
-  // 2) old Google fallback
+function playAudioFallback(text){
   return new Promise((resolve, reject) => {
     try{
       if(!fallbackAudio){
@@ -456,84 +648,95 @@ async function playAudioFallback(text, gender = "auto"){
     }
   });
 }
+
 function speak(){
   if(!current) return;
   const fb = document.getElementById("feedback");
   const btn = document.getElementById("speak-btn");
+  const word = current.en;
 
-  if(!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined"){
-    fb.className = "feedback bad";
-    fb.textContent = "Audio wird von diesem Browser nicht unterstützt.";
-    return;
-  }
+  btn.textContent = "🔊 laedt ...";
+  speakTextViaAzure(word)
+    .then(() => {
+      btn.textContent = "🔊 anhören";
+    })
+    .catch(async () => {
+      btn.textContent = "🔊 anhören";
 
-  unlockTTS();
-
-  const u = new SpeechSynthesisUtterance(current.en);
-  const voice = getEnglishVoice(selectedVoiceGender);
-  u.lang = voice ? voice.lang : "en-US";
-  if (voice) u.voice = voice;
-  u.rate = 0.9;
-  u.pitch = 1;
-  let started = false;
-  let fallbackTimer = null;
-
-  u.onstart = () => {
-    started = true;
-    if (fallbackTimer) clearTimeout(fallbackTimer);
-    btn.textContent = "🔊 läuft ...";
-  };
-  u.onend = () => {
-    if (fallbackTimer) clearTimeout(fallbackTimer);
-    btn.textContent = "🔊 anhören";
-  };
-  u.onerror = async () => {
-    if (fallbackTimer) clearTimeout(fallbackTimer);
-    btn.textContent = "🔊 anhören";
-    try{
-      await playAudioFallback(current.en, selectedVoiceGender);
-      fb.className = "feedback good";
-      fb.textContent = "Audio über Fallback abgespielt.";
-    }catch(e){
-      fb.className = "feedback bad";
-      fb.textContent = "Audio blockiert. Bitte Lautlosmodus aus und Lautstärke prüfen.";
-    }
-  };
-
-  try{
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-    fallbackTimer = setTimeout(async () => {
-      if (started) return;
-      try{
-        await playAudioFallback(current.en, selectedVoiceGender);
-        fb.className = "feedback good";
-        fb.textContent = "Audio über Fallback abgespielt.";
-      }catch(e){
+      if(!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined"){
         fb.className = "feedback bad";
-        fb.textContent = "Kein Audio. Bitte Safari/Chrome nutzen und Lautlosmodus aus.";
-      }finally{
-        btn.textContent = "🔊 anhören";
+        fb.textContent = "Audio wird von diesem Browser nicht unterstützt.";
+        return;
       }
-    }, 1000);
-  }catch(e){
-    playAudioFallback(current.en, selectedVoiceGender)
-      .then(() => {
-        fb.className = "feedback good";
-        fb.textContent = "Audio über Fallback abgespielt.";
-      })
-      .catch(() => {
-        fb.className = "feedback bad";
-        fb.textContent = "Audio konnte nicht gestartet werden.";
-      })
-      .finally(() => {
+
+      unlockTTS();
+
+      const u = new SpeechSynthesisUtterance(current.en);
+      const voice = getEnglishVoice();
+      u.lang = voice ? voice.lang : "en-US";
+      if (voice) u.voice = voice;
+      u.rate = 0.9;
+      u.pitch = 1;
+      let started = false;
+      let fallbackTimer = null;
+
+      u.onstart = () => {
+        started = true;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        btn.textContent = "🔊 läuft ...";
+      };
+      u.onend = () => {
+        if (fallbackTimer) clearTimeout(fallbackTimer);
         btn.textContent = "🔊 anhören";
-      });
-  }
+      };
+      u.onerror = async () => {
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        btn.textContent = "🔊 anhören";
+        try{
+          await playAudioFallback(current.en);
+          fb.className = "feedback good";
+          fb.textContent = "Audio über Fallback abgespielt.";
+        }catch(e){
+          fb.className = "feedback bad";
+          fb.textContent = "Audio blockiert. Bitte Lautlosmodus aus und Lautstärke prüfen.";
+        }
+      };
+
+      try{
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+        fallbackTimer = setTimeout(async () => {
+          if (started) return;
+          try{
+            await playAudioFallback(current.en);
+            fb.className = "feedback good";
+            fb.textContent = "Audio über Fallback abgespielt.";
+          }catch(e){
+            fb.className = "feedback bad";
+            fb.textContent = "Kein Audio. Bitte Safari/Chrome nutzen und Lautlosmodus aus.";
+          }finally{
+            btn.textContent = "🔊 anhören";
+          }
+        }, 1000);
+      }catch(e){
+        playAudioFallback(current.en)
+          .then(() => {
+            fb.className = "feedback good";
+            fb.textContent = "Audio über Fallback abgespielt.";
+          })
+          .catch(() => {
+            fb.className = "feedback bad";
+            fb.textContent = "Audio konnte nicht gestartet werden.";
+          })
+          .finally(() => {
+            btn.textContent = "🔊 anhören";
+          });
+      }
+    });
 }
 function updateScore(){ document.getElementById('sc-right').textContent=right; document.getElementById('sc-wrong').textContent=wrong; document.getElementById('sc-total').textContent=right+wrong; }
 function updateProgress(){ const total=filteredVocab().length||1; document.getElementById('pbar').style.width=((total-queue.length)/total*100)+'%'; }
-function showResult(){ document.getElementById('quiz-card').style.display='none'; document.querySelector('.progress-wrap').style.display='none'; const pct=Math.round(right/((right+wrong)||1)*100); document.getElementById('pct-display').textContent=pct+'%'; document.getElementById('result').style.display='block'; }
+function showResult(){ document.getElementById('quiz-card').style.display='none'; document.querySelector('.progress-wrap').style.display='none'; const total=(right+wrong)||1; const pct=Math.round(right/total*100); document.getElementById('pct-display').textContent=pct+'%'; document.getElementById('result').style.display='block'; sendVocabProgress(pct,total); }
 
 window.addEventListener("pointerdown", unlockTTS, { once: true });
 if ("speechSynthesis" in window) {
@@ -546,10 +749,10 @@ restart();
 (function(){
   function homeUrl(){
     var href=String(window.location.href||'');
-    if(href.indexOf('/englisch_9/')>-1){ return href.split('/englisch_9/')[0]+'/englisch_9/index.html'; }
+    if(href.indexOf('/grumi/9/Englisch_9/')>-1){ return 'https://joe82muc.github.io/grumi/9/Englisch_9/index.html'; }
+    if(href.indexOf('/Apps/GRUMI_APP/9/Englisch_9/')>-1){ return href.split('/Apps/GRUMI_APP/9/Englisch_9/')[0]+'/Apps/GRUMI_APP/9/Englisch_9/index.html'; }
     if(href.indexOf('/Apps_verbessert/')>-1){ return href.split('/Apps_verbessert/')[0]+'/Apps_verbessert/index.html'; }
-    if(href.indexOf('/Apps/')>-1){ return href.split('/Apps/')[0]+'/Apps/index.html'; }
-    return 'index.html';
+    return '../index.html';
   }
   var home=document.getElementById('globalNavHome');
   var back=document.getElementById('globalNavBack');
@@ -559,6 +762,15 @@ restart();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
 
 
 
