@@ -28,10 +28,38 @@ const STATIC_ROOT = resolveStaticRoot();
 const DATA_DIR = path.join(__dirname, "..", "data");
 const STUDENTS_FILE = path.join(DATA_DIR, "students.json");
 const PROGRESS_FILE = path.join(DATA_DIR, "progress.json");
+const PICTURE_BASED_TALK_ROOT = resolveFirstExistingDir([
+  path.join(__dirname, "..", "..", "mündlich_prüfung", "picture_based_talk"),
+  path.join(__dirname, "..", "..", "muendlich_pruefung", "picture_based_talk"),
+  path.join(__dirname, "..", "..", "muendliche_pruefung", "picture_based_talk"),
+  path.join(__dirname, "..", "..", "mündliche_pruefung", "picture_based_talk")
+]);
 
 ensureDataFiles();
 
 app.use(express.static(STATIC_ROOT));
+
+if (PICTURE_BASED_TALK_ROOT) {
+  app.use("/picture-based-talk", express.static(PICTURE_BASED_TALK_ROOT));
+}
+
+app.get("/api/picture-based-talk/images", (_req, res) => {
+  if (!PICTURE_BASED_TALK_ROOT) {
+    return res.status(404).json({ ok: false, error: "picture_based_talk_not_found" });
+  }
+
+  const files = fs.readdirSync(PICTURE_BASED_TALK_ROOT, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => /\.(png|jpe?g|webp|gif|svg)$/i.test(name));
+
+  const images = files.map((name) => ({
+    name,
+    url: `/picture-based-talk/${encodeURIComponent(name)}`
+  }));
+
+  return res.json({ ok: true, images });
+});
 
 app.get("/", (_req, res) => {
   const indexAtRoot = path.join(STATIC_ROOT, "index.html");
@@ -1348,6 +1376,94 @@ function parseNtApp10CoachJson(raw) {
     return null;
   }
 }
+app.post("/api/picture-description/feedback", async (req, res) => {
+  try {
+    const text = clean(req.body?.text);
+    const imageDescription = clean(req.body?.imageDescription || "ein Bild mit Personen");
+    const targetMin = 100;
+    const targetMax = 100;
+
+    if (!text) return res.status(400).json({ ok: false, error: "text fehlt." });
+
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const quick = {
+      hasIntro: /\b(this picture shows|in this picture (i can see|you can see)|the picture shows)\b/i.test(text),
+      hasLocation: /\b(foreground|background|on the left|on the right|in the middle|at the top|at the bottom)\b/i.test(text),
+      hasPeople: /\b(there (is|are)|people|person|boy|girl|man|woman|family|friends)\b/i.test(text),
+      hasPresentProgressive: /\b(am|is|are)\s+\w+ing\b/i.test(text),
+      hasOpinion: /\b(i think|in my opinion|i like|i don't like|the atmosphere is|it looks)\b/i.test(text)
+    };
+
+    const missingBlocks = [];
+    if (!quick.hasIntro) missingBlocks.push("Einleitung (z. B. 'This picture shows ...')");
+    if (!quick.hasLocation) missingBlocks.push("Ortsangaben (foreground/background/left/right)");
+    if (!quick.hasPeople) missingBlocks.push("klare Personenbeschreibung");
+    if (!quick.hasPresentProgressive) missingBlocks.push("Present Progressive (is/are + Verb-ing)");
+    if (!quick.hasOpinion) missingBlocks.push("eigene Meinung / Atmosphaere");
+
+    const baseSystem = [
+      "Du bist ein strenger, aber freundlicher Englischlehrer fuer Klasse 9 (A2/B1).",
+      "Pruefe eine Bildbeschreibung auf VOLLSTAENDIGKEIT und LOGIK.",
+      "Achte auf Reihenfolge/Logik: allgemein -> Ort -> Personen -> Handlungen (Present Progressive) -> Meinung.",
+      "Gib NUR valides JSON im folgenden Format zurueck:",
+      "{",
+      "  \"summary\": \"...\",",
+      "  \"strengths\": [\"...\"],",
+      "  \"missing\": [\"...\"],",
+      "  \"logic\": { \"score\": 1-5, \"status\": \"stark|teilweise|schwach\", \"details\": [\"...\"] },",
+      "  \"next_steps\": [\"...\"],",
+      "  \"example_upgrade\": \"ein verbesserter Beispielsatz\"",
+      "}",
+      "Keine Markdown-Ausgabe, keine Erklaerungen ausserhalb des JSON."
+    ].join("\n");
+
+    const userPrompt = [
+      `Bildkontext: ${imageDescription}`,
+      `Text (${words} Woerter):`,
+      text,
+      "",
+      "Pruefe besonders, was inhaltlich noch fehlt und ob die Aussagen logisch zusammenhaengen."
+    ].join("\n");
+
+    let ai = null;
+    if (ANTHROPIC_API_KEY) {
+      try {
+        const raw = await askAnthropic(baseSystem, userPrompt, 420);
+        ai = parsePictureFeedbackJson(raw);
+      } catch (_e) {
+        ai = null;
+      }
+    }
+
+    const fallback = buildPictureFeedbackFallback({ text, words, missingBlocks, quick, targetMin, targetMax });
+
+    const logicScore = Number(ai?.logic?.score);
+    const finalLogicScore = Number.isFinite(logicScore) ? Math.max(1, Math.min(5, Math.round(logicScore))) : fallback.logic.score;
+
+    const payload = {
+      ok: true,
+      feedback: {
+        summary: String(ai?.summary || fallback.summary),
+        strengths: Array.isArray(ai?.strengths) && ai.strengths.length ? ai.strengths.slice(0, 5).map((x) => String(x)) : fallback.strengths,
+        missing: Array.isArray(ai?.missing) && ai.missing.length ? ai.missing.slice(0, 6).map((x) => String(x)) : fallback.missing,
+        logic: {
+          score: finalLogicScore,
+          status: String(ai?.logic?.status || fallback.logic.status),
+          details: Array.isArray(ai?.logic?.details) && ai.logic.details.length ? ai.logic.details.slice(0, 4).map((x) => String(x)) : fallback.logic.details
+        },
+        next_steps: Array.isArray(ai?.next_steps) && ai.next_steps.length ? ai.next_steps.slice(0, 4).map((x) => String(x)) : fallback.next_steps,
+        example_upgrade: String(ai?.example_upgrade || fallback.example_upgrade),
+        wordCount: words,
+        target: { min: targetMin, max: targetMax }
+      }
+    };
+
+    return res.json(payload);
+  } catch (error) {
+    console.error("Fehler bei /api/picture-description/feedback:", error.message);
+    return res.status(500).json({ ok: false, error: "picture_feedback_failed" });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server laeuft auf Port ${PORT}`);
   console.log(`Static root: ${STATIC_ROOT}`);
@@ -1643,6 +1759,12 @@ function escapeXml(text) {
     .replace(/'/g, "&apos;");
 }
 
+function resolveFirstExistingDir(candidates) {
+  for (const candidate of candidates || []) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return "";
+}
 function resolveStaticRoot() {
   const candidates = [__dirname, path.join(__dirname, ".."), path.join(__dirname, "..", "..")];
   for (const dir of candidates) {
@@ -1694,6 +1816,63 @@ function getAuthToken(req) {
   return auth.slice(7).trim();
 }
 
+function parsePictureFeedbackJson(raw) {
+  if (!raw) return null;
+  try {
+    const cleanRaw = String(raw).replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanRaw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function buildPictureFeedbackFallback({ text, words, missingBlocks, quick, targetMin, targetMax }) {
+  const sentences = String(text || "").split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
+  const connectors = (String(text || "").match(/\b(and|because|while|then|also|after that|first|finally|however)\b/gi) || []).length;
+
+  let logicScore = 5;
+  if (sentences.length < 3) logicScore -= 1;
+  if (connectors < 1) logicScore -= 1;
+  if (!quick.hasLocation || !quick.hasPresentProgressive) logicScore -= 1;
+  logicScore = Math.max(1, Math.min(5, logicScore));
+
+  const logicStatus = logicScore >= 4 ? "stark" : logicScore >= 3 ? "teilweise" : "schwach";
+  const logicDetails = [];
+  if (sentences.length < 3) logicDetails.push("Die Beschreibung ist noch zu kurz fuer einen klaren Gedankengang.");
+  if (connectors < 1) logicDetails.push("Nutze Verbindungswoerter (z. B. 'and', 'because', 'while') fuer bessere Logik.");
+  if (!quick.hasLocation) logicDetails.push("Die Raumlogik fehlt teilweise (foreground/background/left/right).");
+  if (!quick.hasPresentProgressive) logicDetails.push("Handlungen im Present Progressive fehlen fuer eine stimmige Situationsbeschreibung.");
+  if (!logicDetails.length) logicDetails.push("Die Abfolge der Informationen wirkt insgesamt logisch und gut nachvollziehbar.");
+
+  const strengths = [];
+  if (quick.hasIntro) strengths.push("Du hast eine erkennbare Einleitung.");
+  if (quick.hasLocation) strengths.push("Du nutzt Ortsangaben.");
+  if (quick.hasPeople) strengths.push("Personen werden genannt.");
+  if (quick.hasPresentProgressive) strengths.push("Present Progressive ist vorhanden.");
+  if (quick.hasOpinion) strengths.push("Eine eigene Meinung/Atmosphaere ist enthalten.");
+  if (!strengths.length) strengths.push("Du hast eine gute Basis gestartet.");
+
+  const nextSteps = [
+    missingBlocks[0] ? `Ergaenze zuerst: ${missingBlocks[0]}.` : "Formuliere die Einleitung noch praeziser.",
+    words < targetMin ? `Erweitere auf mindestens ${targetMin} Woerter mit konkreten Details.` : words > targetMax ? `Kuerze auf maximal ${targetMax} Woerter und streiche Wiederholungen.` : "Behalte die gute Laenge bei und verbessere Details.",
+    "Ordne deine Saetze klar: allgemein -> Ort -> Personen -> Handlungen -> Meinung."
+  ];
+
+  return {
+    summary: "Dein Text ist ein guter Anfang. Mit klareren Details und besserer Satzverknuepfung wird er deutlich staerker.",
+    strengths,
+    missing: missingBlocks.length ? missingBlocks : ["Keine groesseren Inhaltsluecken erkannt."],
+    logic: {
+      score: logicScore,
+      status: logicStatus,
+      details: logicDetails
+    },
+    next_steps: nextSteps,
+    example_upgrade: "In the foreground, two friends are sharing food, while another boy is talking and smiling."
+  };
+}
 function clean(v) { return String(v || "").trim(); }
 
 function normalizeKey(firstName, lastName, className) {
@@ -1780,6 +1959,9 @@ function buildStudentOverview(records) {
   overview.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
   return overview;
 }
+
+
+
 
 
 
