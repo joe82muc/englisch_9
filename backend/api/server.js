@@ -1402,14 +1402,26 @@ app.post("/api/picture-description/feedback", async (req, res) => {
     if (!quick.hasOpinion) missingBlocks.push("eigene Meinung / Atmosphaere");
 
     const baseSystem = [
-      "Du bist ein strenger, aber freundlicher Englischlehrer fuer Klasse 9 (A2/B1).",
-      "Pruefe eine Bildbeschreibung auf VOLLSTAENDIGKEIT und LOGIK.",
-      "Achte auf Reihenfolge/Logik: allgemein -> Ort -> Personen -> Handlungen (Present Progressive) -> Meinung.",
+      "Du bist ein freundlicher Englischlehrer fuer Klasse 9 (A2+/B1).",
+      "Bewerte eine Bildbeschreibung mit Fokus auf Verstaendlichkeit (wichtiger als Perfektion).",
+      "Fehler bei Grammatik leicht gewichten. Bildvokabular belohnen (foreground/background/left/right/middle).",
+      "Nutze diese KI-Kriterien (je 0-4 Punkte):",
+      "1) Inhalt: Personen, Ort, wichtige Details; Bildvokabular vorhanden.",
+      "2) Wortschatz: passende einfache Woerter + Adjektive + Kleidung.",
+      "3) Satzbau: vollstaendige einfache Saetze + Verbindungswoerter.",
+      "4) Struktur: logisch foreground -> middle -> background, mindestens 6-8 Saetze fuer volle Punkte.",
+      "Achte zusaetzlich auf Logik: allgemein -> Ort -> Personen -> Handlungen -> Meinung.",
       "Gib NUR valides JSON im folgenden Format zurueck:",
       "{",
       "  \"summary\": \"...\",",
       "  \"strengths\": [\"...\"],",
       "  \"missing\": [\"...\"],",
+      "  \"rubric\": {",
+      "    \"content\": { \"score\": 0-4, \"note\": \"...\" },",
+      "    \"vocabulary\": { \"score\": 0-4, \"note\": \"...\" },",
+      "    \"sentence_build\": { \"score\": 0-4, \"note\": \"...\" },",
+      "    \"structure\": { \"score\": 0-4, \"note\": \"...\" }",
+      "  },",
       "  \"logic\": { \"score\": 1-5, \"status\": \"stark|teilweise|schwach\", \"details\": [\"...\"] },",
       "  \"next_steps\": [\"...\"],",
       "  \"example_upgrade\": \"ein verbesserter Beispielsatz\"",
@@ -1436,9 +1448,11 @@ app.post("/api/picture-description/feedback", async (req, res) => {
     }
 
     const fallback = buildPictureFeedbackFallback({ text, words, missingBlocks, quick, targetMin, targetMax });
+    const fallbackRubric = buildPictureRubricFallback({ text, words, quick });
 
     const logicScore = Number(ai?.logic?.score);
     const finalLogicScore = Number.isFinite(logicScore) ? Math.max(1, Math.min(5, Math.round(logicScore))) : fallback.logic.score;
+    const rubric = normalizePictureRubric(ai?.rubric, fallbackRubric);
 
     const payload = {
       ok: true,
@@ -1453,6 +1467,7 @@ app.post("/api/picture-description/feedback", async (req, res) => {
         },
         next_steps: Array.isArray(ai?.next_steps) && ai.next_steps.length ? ai.next_steps.slice(0, 4).map((x) => String(x)) : fallback.next_steps,
         example_upgrade: String(ai?.example_upgrade || fallback.example_upgrade),
+        rubric,
         wordCount: words,
         target: { min: targetMin, max: targetMax }
       }
@@ -2129,6 +2144,98 @@ function buildPictureFeedbackFallback({ text, words, missingBlocks, quick, targe
     },
     next_steps: nextSteps,
     example_upgrade: "In the foreground, two friends are sharing food, while another boy is talking and smiling."
+  };
+}
+
+function clampRubricScore0to4(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(4, Math.round(n)));
+}
+
+function buildPictureRubricFallback({ text, words, quick }) {
+  const lower = String(text || "").toLowerCase();
+  const sentenceCount = String(text || "").split(/[.!?]+/).map((s) => s.trim()).filter(Boolean).length;
+  const connectorHits = (lower.match(/\b(and|also|then|because|while|in the background|in the foreground)\b/g) || []).length;
+  const adjectiveHits = (lower.match(/\b(happy|sunny|beautiful|relaxed|excited|friendly|warm)\b/g) || []).length;
+  const clothingHits = (lower.match(/\b(t-?shirt|jacket|jeans|hat|shirt|clothes|wearing)\b/g) || []).length;
+  const vocabHits = (lower.match(/\b(jeep|safari|animal|animals|camera|cameras|guide|elephant|giraffe)\b/g) || []).length;
+  const positionHits = (lower.match(/\b(foreground|background|left|right|middle)\b/g) || []).length;
+
+  let content = 1;
+  if (quick.hasPeople) content += 1;
+  if (positionHits >= 1) content += 1;
+  if (vocabHits >= 2) content += 1;
+  content = Math.max(0, Math.min(4, content));
+
+  let vocabulary = 1;
+  if (vocabHits >= 2) vocabulary += 1;
+  if (adjectiveHits >= 1) vocabulary += 1;
+  if (clothingHits >= 1) vocabulary += 1;
+  vocabulary = Math.max(0, Math.min(4, vocabulary));
+
+  let sentenceBuild = 1;
+  if (sentenceCount >= 3) sentenceBuild += 1;
+  if (connectorHits >= 1) sentenceBuild += 1;
+  if (quick.hasPresentProgressive) sentenceBuild += 1;
+  sentenceBuild = Math.max(0, Math.min(4, sentenceBuild));
+
+  let structure = 1;
+  if (quick.hasLocation) structure += 1;
+  if (sentenceCount >= 6) structure += 1;
+  if (positionHits >= 2) structure += 1;
+  structure = Math.max(0, Math.min(4, structure));
+
+  const total = content + vocabulary + sentenceBuild + structure;
+  const level = total >= 13 ? "sehr gut" : total >= 10 ? "gut" : total >= 7 ? "solide" : "ausbaufähig";
+
+  return {
+    content: { score: content, max: 4, note: "Personen, Ort und wichtige Bilddetails sind erkennbar." },
+    vocabulary: { score: vocabulary, max: 4, note: "Passender Wortschatz und Adjektive werden genutzt." },
+    sentence_build: { score: sentenceBuild, max: 4, note: "Saetze sind meist verstaendlich und verbunden." },
+    structure: { score: structure, max: 4, note: "Die Beschreibung ist grob logisch geordnet." },
+    total: { score: total, max: 16, level }
+  };
+}
+
+function normalizePictureRubric(aiRubric, fallbackRubric) {
+  const fb = fallbackRubric || buildPictureRubricFallback({ text: "", words: 0, quick: {} });
+  const src = aiRubric && typeof aiRubric === "object" ? aiRubric : {};
+
+  const contentScore = clampRubricScore0to4(src?.content?.score ?? src?.inhalt?.score ?? fb.content.score);
+  const vocabScore = clampRubricScore0to4(src?.vocabulary?.score ?? src?.wortschatz?.score ?? fb.vocabulary.score);
+  const sentenceScore = clampRubricScore0to4(src?.sentence_build?.score ?? src?.satzbau?.score ?? fb.sentence_build.score);
+  const structureScore = clampRubricScore0to4(src?.structure?.score ?? src?.struktur?.score ?? fb.structure.score);
+
+  const total = contentScore + vocabScore + sentenceScore + structureScore;
+  const level = total >= 13 ? "sehr gut" : total >= 10 ? "gut" : total >= 7 ? "solide" : "ausbaufähig";
+
+  return {
+    content: {
+      score: contentScore,
+      max: 4,
+      note: String(src?.content?.note || src?.inhalt?.note || fb.content.note || "")
+    },
+    vocabulary: {
+      score: vocabScore,
+      max: 4,
+      note: String(src?.vocabulary?.note || src?.wortschatz?.note || fb.vocabulary.note || "")
+    },
+    sentence_build: {
+      score: sentenceScore,
+      max: 4,
+      note: String(src?.sentence_build?.note || src?.satzbau?.note || fb.sentence_build.note || "")
+    },
+    structure: {
+      score: structureScore,
+      max: 4,
+      note: String(src?.structure?.note || src?.struktur?.note || fb.structure.note || "")
+    },
+    total: {
+      score: total,
+      max: 16,
+      level
+    }
   };
 }
 function clean(v) { return String(v || "").trim(); }
