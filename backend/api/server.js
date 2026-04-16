@@ -1464,6 +1464,118 @@ app.post("/api/picture-description/feedback", async (req, res) => {
     return res.status(500).json({ ok: false, error: "picture_feedback_failed" });
   }
 });
+
+app.post("/api/picture-description/rewrite-sentence", async (req, res) => {
+  try {
+    const text = clean(req.body?.text);
+    const imageDescription = clean(req.body?.imageDescription || "a photo with people");
+    const step = Math.max(1, Math.min(5, Number(req.body?.step || 1)));
+    const stepExpectation = getPictureStepExpectation(step);
+    const canAnthropic = Boolean(ANTHROPIC_API_KEY);
+    const canAzure = Boolean(AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT);
+
+    if (!text || text.length < 3) {
+      return res.status(400).json({ ok: false, error: "text fehlt oder ist zu kurz." });
+    }
+
+    if (!canAnthropic && !canAzure) {
+      return res.status(503).json({
+        ok: false,
+        error: "ai_unavailable",
+        message: "Keine KI fuer Korrektur konfiguriert (Anthropic/Azure OpenAI)."
+      });
+    }
+
+    const system = [
+      "Du bist ein Englischlehrer fuer Klasse 9 (A2/B1).",
+      "Korrigiere NUR Grammatik und Rechtschreibung, ohne Inhalt stark zu veraendern.",
+      "Pruefe ausserdem, ob der Satz logisch zum Bildkontext passt.",
+      "Pruefe streng, ob der Satz zum erwarteten Schritt passt.",
+      "Antworte NUR als valides JSON in diesem Format:",
+      "{",
+      "  \"correctedText\": \"...\",",
+      "  \"imageMatch\": {",
+      "    \"status\": \"passt|unsicher|passt_nicht\",",
+      "    \"reason\": \"...\"",
+      "  }",
+      "}",
+      "Regeln:",
+      "- correctedText muss genau ein korrekter englischer Satz sein.",
+      "- Wenn der Satz die Schritt-Erwartung nicht erfuellt, setze status auf 'passt_nicht' oder 'unsicher'.",
+      "- Keine Erklaerungen ausserhalb des JSON.",
+      "- Wenn unklar, nimm status=unsicher."
+    ].join("\n");
+
+    const userPrompt = [
+      `Schritt: ${step}`,
+      `Erwartung fuer diesen Schritt: ${stepExpectation}`,
+      `Bildkontext: ${imageDescription}`,
+      "",
+      "Schuelersatz:",
+      text
+    ].join("\n");
+
+    let raw = "";
+    let source = "";
+    let lastError = null;
+
+    if (canAnthropic) {
+      try {
+        raw = await askAnthropic(system, userPrompt, 240);
+        source = raw ? "anthropic" : "";
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!raw && canAzure) {
+      try {
+        raw = await askAzureOpenAI(system, userPrompt, 260);
+        source = raw ? "azure-openai" : source;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    if (!raw) {
+      return res.status(502).json({
+        ok: false,
+        error: "ai_no_response",
+        message: "KI konnte keine Korrektur liefern.",
+        detail: lastError ? String(lastError.message || "unknown_error").slice(0, 220) : "no_response"
+      });
+    }
+
+    const parsed = parsePictureSentenceRewriteJson(raw);
+    if (!parsed?.correctedText) {
+      return res.status(502).json({
+        ok: false,
+        error: "ai_invalid_response",
+        message: "KI-Antwort konnte nicht als JSON gelesen werden."
+      });
+    }
+
+    let correctedText = normalizeEnglishSentence(parsed.correctedText);
+    correctedText = normalizePictureStudentTypos(correctedText);
+
+    let imageMatch = {
+      status: normalizeImageMatchStatus(parsed?.imageMatch?.status || "unsicher"),
+      reason: String(parsed?.imageMatch?.reason || "KI-Bewertung ohne Begruendung.").trim()
+    };
+
+    const ruleCheck = evaluatePictureSentenceRules({ text: correctedText, imageDescription, step });
+    imageMatch = mergeImageMatch(imageMatch, ruleCheck);
+
+    return res.json({
+      ok: true,
+      correctedText,
+      imageMatch,
+      source
+    });
+  } catch (error) {
+    console.error("Fehler bei /api/picture-description/rewrite-sentence:", error.message);
+    return res.status(500).json({ ok: false, error: "rewrite_sentence_failed" });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server laeuft auf Port ${PORT}`);
   console.log(`Static root: ${STATIC_ROOT}`);
@@ -1826,6 +1938,152 @@ function parsePictureFeedbackJson(raw) {
   } catch (_e) {
     return null;
   }
+}
+
+function parsePictureSentenceRewriteJson(raw) {
+  if (!raw) return null;
+  try {
+    const cleanRaw = String(raw).replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanRaw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function normalizeImageMatchStatus(status) {
+  const key = String(status || "").trim().toLowerCase();
+  if (key === "passt" || key === "ok" || key === "fit") return "passt";
+  if (key === "passt_nicht" || key === "falsch" || key === "no_fit") return "passt_nicht";
+  return "unsicher";
+}
+
+function getPictureStepExpectation(step) {
+  const s = Number(step) || 1;
+  if (s === 1) return "General introduction to the picture (e.g. 'This picture shows ...').";
+  if (s === 2) return "Place description with location markers (foreground/background/left/right/middle).";
+  if (s === 3) return "People description (who they are, look, clothes).";
+  if (s === 4) return "Actions in Present Progressive (am/is/are + verb-ing).";
+  return "Opinion or atmosphere (e.g. I think..., The atmosphere is ...).";
+}
+
+function mergeImageMatch(primary, secondary) {
+  const rank = { passt: 0, unsicher: 1, passt_nicht: 2 };
+  const a = normalizeImageMatchStatus(primary?.status);
+  const b = normalizeImageMatchStatus(secondary?.status);
+  const worst = rank[a] >= rank[b] ? a : b;
+  const reasons = [String(primary?.reason || "").trim(), String(secondary?.reason || "").trim()].filter(Boolean);
+  return {
+    status: worst,
+    reason: reasons.join(" ")
+  };
+}
+
+function evaluatePictureSentenceRules({ text, imageDescription, step }) {
+  const sentence = String(text || "").trim();
+  const lowerText = sentence.toLowerCase();
+  const lowerImage = String(imageDescription || "").toLowerCase();
+
+  const imageTokens = lowerImage.split(/[^a-z]+/).filter((w) => w.length >= 4);
+  const textTokens = new Set(lowerText.split(/[^a-z]+/).filter(Boolean));
+  const overlap = imageTokens.filter((t) => textTokens.has(t)).length;
+
+  let imageStatus = "unsicher";
+  let imageReason = "Bildbezug ist moeglich, aber noch nicht eindeutig.";
+  if (overlap >= 2) {
+    imageStatus = "passt";
+    imageReason = "Mehrere Inhalte passen zum ausgewaehlten Bild.";
+  }
+  if (/\b(snow|classroom|kitchen|bedroom|office|hospital)\b/.test(lowerText) && !/\b(snow|classroom|kitchen|bedroom|office|hospital)\b/.test(lowerImage)) {
+    imageStatus = "passt_nicht";
+    imageReason = "Der Satz nennt Inhalte, die nicht zum Bildkontext passen.";
+  }
+
+  let stepStatus = "passt";
+  let stepReason = "Der Satz passt zum erwarteten Schritt.";
+  const s = Number(step) || 1;
+
+  if (s === 1) {
+    const ok = /\b(this picture shows|in this picture (i can see|you can see)|the picture shows)\b/i.test(sentence);
+    if (!ok) {
+      stepStatus = "unsicher";
+      stepReason = "Schritt 1 braucht eine klare Einleitung (z. B. 'This picture shows ...').";
+    }
+  } else if (s === 2) {
+    const ok = /\b(foreground|background|on the left|on the right|in the middle|at the top|at the bottom)\b/i.test(sentence);
+    if (!ok) {
+      stepStatus = "passt_nicht";
+      stepReason = "Schritt 2 braucht Ortsangaben wie foreground/background/left/right.";
+    }
+  } else if (s === 3) {
+    const ok = /\b(there (is|are)|people|person|boy|girl|man|woman|family|friends|wearing|looks like)\b/i.test(sentence);
+    if (!ok) {
+      stepStatus = "unsicher";
+      stepReason = "Schritt 3 sollte Personen oder Kleidung klar beschreiben.";
+    }
+  } else if (s === 4) {
+    const ok = /\b(am|is|are)\s+\w+ing\b/i.test(sentence);
+    if (!ok) {
+      stepStatus = "passt_nicht";
+      stepReason = "Schritt 4 verlangt Present Progressive (am/is/are + Verb-ing).";
+    }
+  } else if (s === 5) {
+    const ok = /\b(i think|in my opinion|i like|i don't like|the atmosphere is|it looks)\b/i.test(sentence);
+    if (!ok) {
+      stepStatus = "unsicher";
+      stepReason = "Schritt 5 sollte Meinung oder Atmosphaere enthalten.";
+    }
+  }
+
+  return mergeImageMatch(
+    { status: imageStatus, reason: imageReason },
+    { status: stepStatus, reason: stepReason }
+  );
+}
+
+function buildPictureSentenceRewriteFallback({ text, imageDescription, step }) {
+  let corrected = normalizeEnglishSentence(text);
+  corrected = normalizePictureStudentTypos(corrected);
+
+  const check = evaluatePictureSentenceRules({
+    text: corrected,
+    imageDescription,
+    step
+  });
+
+  return {
+    correctedText: corrected,
+    imageMatch: check
+  };
+}
+
+function normalizePictureStudentTypos(input) {
+  let out = String(input || "");
+  out = out
+    .replace(/\bi\b/g, "I")
+    .replace(/\bim\b/gi, "I'm")
+    .replace(/\bi'm\b/gi, "I'm")
+    .replace(/\bdont\b/gi, "don't")
+    .replace(/\bdoesnt\b/gi, "doesn't")
+    .replace(/\bisnt\b/gi, "isn't")
+    .replace(/\baren't\b/gi, "aren't")
+    .replace(/\bpeoples\b/gi, "people")
+    .replace(/\bchilds\b/gi, "children")
+    .replace(/\bfreinds\b/gi, "friends")
+    .replace(/\bfrends\b/gi, "friends")
+    .replace(/\bnthe\b/gi, "in the")
+    .replace(/\bi nthe\b/gi, "in the")
+    .replace(/\bbackgrund\b/gi, "background")
+    .replace(/\bbakground\b/gi, "background")
+    .replace(/\belefant\b/gi, "elephant")
+    .replace(/\bgirafe\b/gi, "giraffe")
+    .replace(/\bthare\b/gi, "there")
+    .replace(/\bthexare\b/gi, "there are");
+  out = out.replace(/\s+/g, " ").trim();
+  if (out) out = out.charAt(0).toUpperCase() + out.slice(1);
+  if (out && !/[.!?]$/.test(out)) out += ".";
+  return out;
 }
 
 function buildPictureFeedbackFallback({ text, words, missingBlocks, quick, targetMin, targetMax }) {
