@@ -532,8 +532,8 @@ async function askAnthropic(system, user, maxTokens) {
 
   const modelCandidates = uniqueModels([
     ANTHROPIC_MODEL,
-    "claude-3-5-haiku-latest",
-    "claude-3-5-sonnet-latest"
+    "claude-haiku-4-5",
+    "claude-sonnet-5"
   ]);
 
   let lastError = null;
@@ -549,7 +549,6 @@ async function askAnthropic(system, user, maxTokens) {
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
-        temperature: 0.3,
         system,
         messages: [{ role: "user", content: user }]
       })

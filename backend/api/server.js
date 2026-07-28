@@ -9,7 +9,7 @@ const cors = require("cors");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "2";
 const SITE_USERNAME = process.env.SITE_USERNAME || "1";
 const SITE_PASSWORD = process.env.SITE_PASSWORD || "2";
@@ -71,6 +71,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
+    version: "2026-07-28-modelfix",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
@@ -395,25 +396,41 @@ app.post("/api/vocab/example", async (req, res) => {
 
     if (provider === "anthropic") {
       if (ANTHROPIC_API_KEY) {
-        const raw = await askAnthropic(system, userPrompt, 110);
-        sentence = normalizeEnglishSentence(raw);
-        source = sentence ? "anthropic" : source;
+        try {
+          const raw = await askAnthropic(system, userPrompt, 110);
+          sentence = normalizeEnglishSentence(raw);
+          source = sentence ? "anthropic" : source;
+        } catch (aiError) {
+          console.error("Anthropic-Fehler bei /api/vocab/example:", aiError.message);
+        }
       }
       if (!sentence && AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT) {
-        const aiRaw = await askAzureOpenAI(system, userPrompt, 120);
-        sentence = normalizeEnglishSentence(aiRaw);
-        source = sentence ? "azure-openai-fallback" : source;
+        try {
+          const aiRaw = await askAzureOpenAI(system, userPrompt, 120);
+          sentence = normalizeEnglishSentence(aiRaw);
+          source = sentence ? "azure-openai-fallback" : source;
+        } catch (aiError) {
+          console.error("Azure-Fehler bei /api/vocab/example:", aiError.message);
+        }
       }
     } else {
       if (AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT) {
-        const aiRaw = await askAzureOpenAI(system, userPrompt, 120);
-        sentence = normalizeEnglishSentence(aiRaw);
-        source = sentence ? "azure-openai" : source;
+        try {
+          const aiRaw = await askAzureOpenAI(system, userPrompt, 120);
+          sentence = normalizeEnglishSentence(aiRaw);
+          source = sentence ? "azure-openai" : source;
+        } catch (aiError) {
+          console.error("Azure-Fehler bei /api/vocab/example:", aiError.message);
+        }
       }
       if (!sentence && ANTHROPIC_API_KEY) {
-        const raw = await askAnthropic(system, userPrompt, 110);
-        sentence = normalizeEnglishSentence(raw);
-        source = sentence ? "anthropic-fallback" : source;
+        try {
+          const raw = await askAnthropic(system, userPrompt, 110);
+          sentence = normalizeEnglishSentence(raw);
+          source = sentence ? "anthropic-fallback" : source;
+        } catch (aiError) {
+          console.error("Anthropic-Fehler bei /api/vocab/example:", aiError.message);
+        }
       }
     }
 
@@ -1701,8 +1718,8 @@ async function askAnthropic(system, user, maxTokens) {
 
   const modelCandidates = uniqueModels([
     ANTHROPIC_MODEL,
-    "claude-3-5-haiku-latest",
-    "claude-3-5-sonnet-latest"
+    "claude-haiku-4-5",
+    "claude-sonnet-5"
   ]);
 
   let lastError = null;
@@ -1718,7 +1735,6 @@ async function askAnthropic(system, user, maxTokens) {
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
-        temperature: 0.3,
         system,
         messages: [{ role: "user", content: user }]
       })
@@ -1733,9 +1749,8 @@ async function askAnthropic(system, user, maxTokens) {
     const raw = await response.text();
     const compact = raw.slice(0, 250);
 
-    const maybeModelError = response.status === 400 || response.status === 404;
-    const mentionsModel = /model/i.test(compact);
-    if (maybeModelError && mentionsModel) {
+    const maybeModelError = response.status === 404 || (response.status === 400 && /model/i.test(compact));
+    if (maybeModelError) {
       lastError = new Error(`Anthropic HTTP ${response.status} (${model}): ${compact}`);
       continue;
     }
