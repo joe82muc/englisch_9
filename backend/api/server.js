@@ -37,6 +37,16 @@ const PICTURE_BASED_TALK_ROOT = resolveFirstExistingDir([
 
 ensureDataFiles();
 
+// --- Vokabeltest-Modul (Freischaltung, Abgabe, Auswertung) ---
+const { registerVokabeltestRoutes } = require("./vokabeltest");
+const { TESTS: VOKABELTESTS } = require("./vokabeltest-daten");
+registerVokabeltestRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: VOKABELTESTS,
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi"
+});
+
 app.use(express.static(STATIC_ROOT));
 
 if (PICTURE_BASED_TALK_ROOT) {
@@ -71,7 +81,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-07-28-modelfix",
+    version: "2026-09-16-vokabeltest",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

@@ -1,0 +1,43 @@
+VOKABELTEST - DATEIEN INS SERVER-REPO HOCHLADEN
+================================================
+
+Warum? Der Render-Dienst "englisch_9" holt seinen Code NICHT aus
+dem Repo "grumi", sondern aus einem eigenen Repo:
+
+    https://github.com/joe82muc/englisch_9
+
+Dort muessen diese drei Dateien in den Ordner  backend/api/
+
+
+SO GEHT ES (ca. 3 Minuten):
+---------------------------
+
+1. Diese Seite oeffnen:
+   https://github.com/joe82muc/englisch_9/upload/main/backend/api
+
+2. Die drei Dateien aus DIESEM Ordner ins Browserfenster ziehen:
+       server.js
+       vokabeltest.js
+       vokabeltest-daten.js
+
+3. Unten bei "Commit changes" eine kurze Beschreibung eintippen, z.B.
+       Vokabeltest-Routen ergaenzt
+
+4. Auf den gruenen Knopf "Commit changes" klicken.
+   (server.js wird dabei ersetzt - das ist richtig so,
+    sie enthaelt zusaetzlich die neuen Zeilen 41-49.)
+
+5. In Render:  englisch_9  ->  Manual Deploy  ->  Deploy latest commit
+   (Falls "Auto-Deploy" auf Yes steht, passiert das von allein.)
+
+6. Pruefen:  https://englisch-9.onrender.com/api/health
+   Dort muss stehen:   "version":"2026-09-16-vokabeltest"
+   Steht dort noch 2026-07-28, hat das Deploy nicht gegriffen.
+
+
+DANACH NICHT VERGESSEN
+----------------------
+Das Lehrer-Passwort steht per Vorgabe auf "2".
+In Render unter  englisch_9 -> Environment  die Variable
+TEACHER_PASSWORD  auf ein sicheres Passwort setzen,
+BEVOR der erste echte Test geschrieben wird.
