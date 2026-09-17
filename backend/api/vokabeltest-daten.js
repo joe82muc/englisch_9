@@ -125,9 +125,118 @@ const e7u1t2 = {
   ]
 };
 
+/* ==================================================================
+   Englisch 9R - Unit 1 - Test 1
+   Zoom in (A world language) + Intro (Australia) + Topic 1 (Uluru)
+   + adjectives for talking about experiences
+   ================================================================== */
+const e9ru1t1 = {
+  id: "e9r-u1-test1",
+  title: "Vokabeltest 1 - A world language & Around Australia",
+  unit: "Englisch 9R / Unit 1",
+  classLevel: "9R",
+  direction: "mixed",
+  items: [
+    // --- Zoom in: A world language ---
+    { prompt: "Amtssprache", direction: "de-en", solutions: ["official language"] },
+    { prompt: "majority", direction: "en-de", solutions: ["Mehrheit; Mehrzahl"] },
+    { prompt: "Wettbewerb", direction: "de-en", solutions: ["competition"] },
+    { prompt: "to communicate", direction: "en-de", solutions: ["kommunizieren; sich verständigen"] },
+    { prompt: "englischsprachig", direction: "de-en", solutions: ["English-speaking"] },
+    { prompt: "business", direction: "en-de", solutions: ["Geschäftswelt; Geschäft"] },
+    { prompt: "Aufgabe; Auftrag", direction: "de-en", solutions: ["task"] },
+    { prompt: "half", direction: "en-de", solutions: ["Hälfte; die Hälfte"] },
+
+    // --- Intro: Around Australia ---
+    { prompt: "beginnen; anfangen", direction: "de-en", solutions: ["to begin; begin"] },
+    { prompt: "creature", direction: "en-de", solutions: ["Lebewesen; Kreatur; Geschöpf"] },
+    { prompt: "brechen; zerbrechen", direction: "de-en", solutions: ["to break; break"], hint: "Verb" },
+    { prompt: "settler", direction: "en-de", solutions: ["Siedler; Siedlerin"] },
+    { prompt: "töten", direction: "de-en", solutions: ["to kill; kill"] },
+    { prompt: "to struggle", direction: "en-de", solutions: ["kämpfen; ringen; sich anstrengen; Mühe haben"] },
+    { prompt: "Recht", direction: "de-en", solutions: ["right"] },
+    { prompt: "flat", direction: "en-de", solutions: ["flach; eben; platt"] },
+    { prompt: "das Outback", direction: "de-en", solutions: ["the outback; outback"] },
+    { prompt: "Aboriginal people", direction: "en-de", solutions: ["die Aborigines; Aborigines"] },
+
+    // --- Topic 1: Uluru ---
+    { prompt: "Stamm; Volksstamm", direction: "de-en", solutions: ["tribe"] },
+    { prompt: "lifestyle", direction: "en-de", solutions: ["Lebensstil; Lebensart; Lebensweise"] },
+    { prompt: "enttäuscht", direction: "de-en", solutions: ["disappointed"] },
+    { prompt: "helicopter", direction: "en-de", solutions: ["Helikopter; Hubschrauber"] },
+    { prompt: "bunt", direction: "de-en", solutions: ["colourful; colorful"] },
+    { prompt: "painting", direction: "en-de", solutions: ["Gemälde"] },
+    { prompt: "riesig", direction: "de-en", solutions: ["giant"] },
+    { prompt: "delicious", direction: "en-de", solutions: ["lecker; köstlich"] },
+    { prompt: "erfahren; herausfinden", direction: "de-en", solutions: ["to learn; learn"] },
+
+    // --- Adjectives for talking about experiences ---
+    { prompt: "excited", direction: "en-de", solutions: ["aufgeregt; begeistert"] },
+    { prompt: "spannend; aufregend", direction: "de-en", solutions: ["exciting"] },
+    { prompt: "worried", direction: "en-de", solutions: ["beunruhigt; besorgt"] },
+    { prompt: "selbstsicher; selbstbewusst", direction: "de-en", solutions: ["confident"] }
+  ]
+};
+
+/* ==================================================================
+   Englisch 9R - Unit 1 - Test 2
+   Topic 2 (At the doctor's) + Text (Great Barrier Reef)
+   + Film + Speaking skills
+   ================================================================== */
+const e9ru1t2 = {
+  id: "e9r-u1-test2",
+  title: "Vokabeltest 2 - At the doctor's & The Great Barrier Reef",
+  unit: "Englisch 9R / Unit 1",
+  classLevel: "9R",
+  direction: "mixed",
+  items: [
+    // --- Topic 2: At the doctor's ---
+    { prompt: "Arzthelfer; Arzthelferin", direction: "de-en", solutions: ["receptionist"] },
+    { prompt: "appointment", direction: "en-de", solutions: ["Termin"] },
+    { prompt: "Patient; Patientin", direction: "de-en", solutions: ["patient"] },
+    { prompt: "to register", direction: "en-de", solutions: ["sich registrieren lassen; sich eintragen; sich anmelden"] },
+    { prompt: "Krankenakte", direction: "de-en", solutions: ["medical record"] },
+    { prompt: "ill", direction: "en-de", solutions: ["krank; schlecht"] },
+    { prompt: "Fieber", direction: "de-en", solutions: ["high temperature"] },
+    { prompt: "flu", direction: "en-de", solutions: ["Grippe"] },
+    { prompt: "Rezept", direction: "de-en", solutions: ["prescription"], hint: "beim Arzt" },
+    { prompt: "medicine", direction: "en-de", solutions: ["Medikamente; Medizin"] },
+    { prompt: "Tablette", direction: "de-en", solutions: ["tablet"] },
+    { prompt: "pharmacy", direction: "en-de", solutions: ["Apotheke"] },
+    { prompt: "Gute Besserung!", direction: "de-en", solutions: ["Get well soon"] },
+    { prompt: "What's the matter?", direction: "en-de", solutions: ["Was ist los; Was hast du"] },
+    { prompt: "Kopfschmerzen", direction: "de-en", solutions: ["headache"] },
+    { prompt: "nurse", direction: "en-de", solutions: ["Krankenpfleger; Krankenschwester"] },
+
+    // --- Text: The Great Barrier Reef ---
+    { prompt: "Gefahr", direction: "de-en", solutions: ["danger"] },
+    { prompt: "reef", direction: "en-de", solutions: ["Riff"] },
+    { prompt: "Koralle", direction: "de-en", solutions: ["coral"] },
+    { prompt: "climate change", direction: "en-de", solutions: ["Klimawandel"] },
+    { prompt: "Temperatur", direction: "de-en", solutions: ["temperature"] },
+    { prompt: "area", direction: "en-de", solutions: ["Fläche; Bereich"] },
+    { prompt: "sich erholen", direction: "de-en", solutions: ["to recover; recover"] },
+    { prompt: "government", direction: "en-de", solutions: ["Regierung"] },
+    { prompt: "Gesetz", direction: "de-en", solutions: ["law"] },
+    { prompt: "however", direction: "en-de", solutions: ["jedoch"] },
+    { prompt: "völlig", direction: "de-en", solutions: ["completely"] },
+    { prompt: "energy", direction: "en-de", solutions: ["Energie; Kraft"] },
+    { prompt: "protestieren", direction: "de-en", solutions: ["to protest; protest"] },
+    { prompt: "destruction", direction: "en-de", solutions: ["Zerstörung"] },
+
+    // --- Film & Speaking skills ---
+    { prompt: "Delfin", direction: "de-en", solutions: ["dolphin"] },
+    { prompt: "wide", direction: "en-de", solutions: ["breit; groß"] },
+    { prompt: "Ecke", direction: "de-en", solutions: ["corner"] },
+    { prompt: "at the bottom", direction: "en-de", solutions: ["unten"] }
+  ]
+};
+
 const TESTS = {
   [e7u1t1.id]: e7u1t1,
-  [e7u1t2.id]: e7u1t2
+  [e7u1t2.id]: e7u1t2,
+  [e9ru1t1.id]: e9ru1t1,
+  [e9ru1t2.id]: e9ru1t2
 };
 
 module.exports = { TESTS };
