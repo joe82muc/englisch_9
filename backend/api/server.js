@@ -47,6 +47,17 @@ registerVokabeltestRoutes(app, {
   hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi"
 });
 
+// --- Netzwerktest-Modul (Informatik 9: Freischaltung, Abgabe, KI-Bewertung) ---
+const { registerNetzwerktestRoutes } = require("./netzwerktest");
+const { TESTS: NETZWERKTESTS } = require("./netzwerktest-daten");
+registerNetzwerktestRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: NETZWERKTESTS,
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
+  askAnthropic: askAnthropic
+});
+
 app.use(express.static(STATIC_ROOT));
 
 if (PICTURE_BASED_TALK_ROOT) {
@@ -81,7 +92,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-17-vokabeltest-9r",
+    version: "2026-09-18-netzwerktest-inf9",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
