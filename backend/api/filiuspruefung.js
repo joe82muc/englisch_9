@@ -210,35 +210,98 @@ function dateiPruefen(buf, upload) {
 }
 
 /**
- * Laesst die KI aus dem Pruefergebnis eine kurze Rueckmeldung formulieren.
- * Die Punkte stehen da bereits fest - die KI aendert sie nicht.
+ * Die KI bewertet das gebaute Netz zusaetzlich zu den festen Pruefpunkten.
+ *
+ * Aufteilung der Punkte in Teil B:
+ *   - Pflichtpunkte (checks): vom Pruefprogramm exakt vergeben, immer gleich.
+ *   - KI-Punkte (kiPunkte):   fuer die Qualitaet der Gesamtloesung - sauberer
+ *     Aufbau, sinnvolle Namen, stimmige Adressen, sichtbarer Mehraufwand.
+ *
+ * Die KI kann die Pflichtpunkte NICHT veraendern. Faellt sie aus, gibt es
+ * die KI-Punkte anteilig zu den erfuellten Pflichtpunkten, damit niemand
+ * wegen einer Stoerung der Schnittstelle Nachteile hat.
  */
-async function rueckmeldungTexten(pruefung, askAnthropic) {
+async function kiBewertung(pruefung, upload, askAnthropic) {
+  const max = Number(upload.kiPunkte) || 0;
   const offen = pruefung.details.filter((d) => !d.erfuellt);
-  if (!pruefung.lesbar) return pruefung.hinweis;
-  if (!offen.length) return "Alles richtig gebaut! Dein Netz erfuellt jede Anforderung.";
-  if (typeof askAnthropic !== "function") {
-    return "Noch offen: " + offen.map((d) => d.text).join("; ") + ".";
+  const erfuellt = pruefung.details.filter((d) => d.erfuellt);
+
+  if (!pruefung.lesbar) {
+    return { punkte: 0, maxPunkte: max, text: pruefung.hinweis, quelle: "keine-datei" };
   }
 
+  /* Ersatz, wenn keine KI erreichbar ist: anteilig zu den Pflichtpunkten. */
+  const anteil = pruefung.maxPunkte
+    ? Math.round(max * (pruefung.punkte / pruefung.maxPunkte))
+    : 0;
+  const ersatzText = offen.length
+    ? "Noch offen: " + offen.map((d) => d.text).join("; ") + "."
+    : "Alles Geforderte ist vorhanden.";
+
+  if (typeof askAnthropic !== "function" || !max) {
+    return { punkte: anteil, maxPunkte: max, text: ersatzText, quelle: "ersatz" };
+  }
+
+  const netz = pruefung.netz || { geraete: [], software: [], dhcp: false };
+  const liste = netz.geraete.map((g) =>
+    "- " + g.art + (g.name ? " (" + g.name + ")" : "") +
+    (g.ips && g.ips.length ? ", IP " + g.ips.join(" / ") : ", ohne feste IP") +
+    (g.gateway ? ", Gateway " + g.gateway : "")
+  ).join("\n");
+
   const system = [
-    "Du gibst einer Schuelerin oder einem Schueler der 9. Klasse Rueckmeldung",
-    "zu einem selbst gebauten Netzwerk in der Lernsoftware Filius.",
-    "Schreibe hoechstens drei kurze Saetze, freundlich und konkret.",
-    "Sage, was schon klappt und was noch fehlt. Nenne keine Punktzahlen.",
-    "Keine Anrede, keine Grussformel, nur der Text."
+    "Du bewertest das Netzwerk, das eine Schuelerin oder ein Schueler der 9. Klasse",
+    "in der Lernsoftware Filius gebaut hat (Mittelschule Bayern).",
+    "",
+    "Die Pflichtanforderungen sind bereits automatisch geprueft worden - die aendere nicht.",
+    "Du vergibst zusaetzliche Punkte fuer die QUALITAET der Gesamtloesung:",
+    "- Ist das Netz sauber und nachvollziehbar aufgebaut?",
+    "- Passen Adressen, Netzmasken und Gateways zusammen?",
+    "- Sind die Geraete sinnvoll benannt?",
+    "- Wurde mehr gemacht als verlangt, zum Beispiel DNS, Mailserver oder DHCP?",
+    "",
+    "Bewerte wohlwollend: Im Zweifel fuer die Schuelerin oder den Schueler.",
+    "Ist das Geforderte da und stimmig, gib die volle Punktzahl.",
+    "Bei einem halb fertigen Netz gib Teilpunkte, bei einem leeren Netz 0.",
+    "",
+    "Vergib ganze Punkte von 0 bis " + max + ".",
+    "",
+    "Antworte NUR mit JSON in genau dieser Form, ohne weiteren Text:",
+    '{"punkte": <Zahl>, "text": "<Rueckmeldung auf Deutsch, hoechstens 3 kurze Saetze, direkt an die Schuelerin oder den Schueler>"}'
   ].join("\n");
 
   const user = [
-    "Erfuellt: " + (pruefung.details.filter((d) => d.erfuellt).map((d) => d.text).join("; ") || "nichts"),
-    "Noch offen: " + offen.map((d) => d.text + " (" + d.ist + ")").join("; ")
+    "Aufgabenstellung:",
+    upload.aufgabe,
+    "",
+    "Automatisch geprueft - erfuellt: " + (erfuellt.map((d) => d.text).join("; ") || "nichts"),
+    "Automatisch geprueft - offen: " + (offen.map((d) => d.text + " (" + d.ist + ")").join("; ") || "nichts"),
+    "",
+    "Das tatsaechlich gebaute Netz:",
+    liste || "(keine Geraete gefunden)",
+    "",
+    "Installierte Software: " + (netz.software.join(", ") || "keine"),
+    "DHCP eingerichtet: " + (netz.dhcp ? "ja" : "nein")
   ].join("\n");
 
   try {
-    const text = clean(await askAnthropic(system, user, 250));
-    return text || ("Noch offen: " + offen.map((d) => d.text).join("; ") + ".");
+    const roh = await askAnthropic(system, user, 400);
+    const treffer = String(roh || "").match(/\{[\s\S]*\}/);
+    if (!treffer) return { punkte: anteil, maxPunkte: max, text: ersatzText, quelle: "ersatz" };
+
+    const daten = JSON.parse(treffer[0]);
+    let punkte = Number(daten.punkte);
+    if (!Number.isFinite(punkte)) return { punkte: anteil, maxPunkte: max, text: ersatzText, quelle: "ersatz" };
+    punkte = Math.max(0, Math.min(max, Math.round(punkte)));
+
+    return {
+      punkte,
+      maxPunkte: max,
+      text: clean(daten.text).slice(0, 400) || ersatzText,
+      quelle: "ki"
+    };
   } catch (_e) {
-    return "Noch offen: " + offen.map((d) => d.text).join("; ") + ".";
+    return { punkte: anteil, maxPunkte: max, text: ersatzText, quelle: "ersatz" };
   }
 }
 
@@ -283,7 +346,8 @@ function registerFiliusPruefungRoutes(app, opts) {
 
   const isTeacher = (req) => clean(req.body?.password) === PW;
   const maxA = (t) => t.items.reduce((s, i) => s + (Number(i.points) || 1), 0);
-  const maxB = (t) => (t.upload?.checks || []).reduce((s, c) => s + c.punkte, 0);
+  const maxB = (t) => (t.upload?.checks || []).reduce((s, c) => s + c.punkte, 0)
+    + (Number(t.upload?.kiPunkte) || 0);
 
   app.get("/api/filiuspruefung/list", (_req, res) => {
     const u = store.loadUnlocks();
@@ -378,7 +442,12 @@ function registerFiliusPruefungRoutes(app, opts) {
         teilB.hinweis = "Die Datei konnte nicht gelesen werden.";
       }
     }
-    teilB.rueckmeldung = await rueckmeldungTexten(teilB, askAnthropic);
+    /* Die KI bewertet die Qualitaet des Netzes zusaetzlich zu den Pflichtpunkten. */
+    const ki = await kiBewertung(teilB, test.upload, askAnthropic);
+    teilB.ki = ki;
+    teilB.rueckmeldung = ki.text;
+    teilB.punkte += ki.punkte;
+    teilB.maxPunkte += ki.maxPunkte;
 
     const score = teilA.reduce((s, d) => s + d.points, 0) + teilB.punkte;
     const total = maxA(test) + maxB(test);
@@ -403,7 +472,8 @@ function registerFiliusPruefungRoutes(app, opts) {
         score, total, percent, grade,
         teilA, teilB: {
           lesbar: teilB.lesbar, punkte: teilB.punkte, maxPunkte: teilB.maxPunkte,
-          details: teilB.details, rueckmeldung: teilB.rueckmeldung, hinweis: teilB.hinweis || ""
+          details: teilB.details, rueckmeldung: teilB.rueckmeldung,
+          ki: teilB.ki || null, hinweis: teilB.hinweis || ""
         },
         submittedAt: record.submittedAt
       }

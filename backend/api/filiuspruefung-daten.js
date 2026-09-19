@@ -1,20 +1,20 @@
 "use strict";
 
 /**
- * Praktische Pruefung zum Filius-Workshop (Informatik 9).
+ * Praktische Prüfung zum Filius-Workshop (Informatik 9).
  *
- * Diese Datei bleibt auf dem Server: Sie enthaelt die Loesungen.
+ * Diese Datei bleibt auf dem Server: Sie enthält die Lösungen.
  *
  * Teil A: Fragen zum Ankreuzen (type "choice", answer = Index der richtigen Option)
  * Teil B: Abgabe der Filius-Datei. Die Datei wird vom Server ausgelesen und
- *         gegen die Liste "checks" geprueft. Jeder Check ist ein Pflichtpunkt
- *         und wird exakt bewertet - nicht von der KI geschaetzt.
+ *         gegen die Liste "checks" geprüft. Jeder Check ist ein Pflichtpunkt
+ *         und wird exakt bewertet - nicht von der KI geschätzt.
  *
  * Check-Typen (siehe filiuspruefung.js):
- *   geraet     { art, mindestens }            - Anzahl Geraete einer Art
+ *   geraet     { art, mindestens }            - Anzahl Geräte einer Art
  *   ip         { ip }                          - diese IP existiert im Netz
- *   netz       { praefix, mindestens }         - so viele Geraete im Netz x.y.z.
- *   gateway    { praefix, gateway }            - alle Geraete im Netz haben dieses Gateway
+ *   netz       { praefix, mindestens }         - so viele Geräte im Netz x.y.z.
+ *   gateway    { praefix, gateway }            - alle Geräte im Netz haben dieses Gateway
  *   software   { name }                        - diese Software ist installiert
  *   dhcp       { }                             - irgendwo ist DHCP aktiviert
  *   router2    { }                             - Router mit mindestens 2 Schnittstellen
@@ -22,7 +22,7 @@
 
 const inf9FiliusPruefung1 = {
   id: "inf9-filius-pruefung1",
-  title: "Praktische Pruefung - Filius-Workshop",
+  title: "Praktische Prüfung - Filius-Workshop",
   unit: "Informatik 9 / Filius",
   classLevel: "9",
 
@@ -36,7 +36,7 @@ const inf9FiliusPruefung1 = {
     },
     {
       type: "choice",
-      prompt: "Mit welchem Befehl pruefst du, ob ein anderer Rechner antwortet?",
+      prompt: "Mit welchem Befehl prüfst du, ob ein anderer Rechner antwortet?",
       options: ["ipconfig", "dir", "ping", "host"],
       answer: 2, points: 1
     },
@@ -62,7 +62,7 @@ const inf9FiliusPruefung1 = {
       prompt: "Was macht der Echo-Server?",
       options: [
         "Er speichert deine Nachricht dauerhaft.",
-        "Er schickt genau dieselbe Nachricht zurueck.",
+        "Er schickt genau dieselbe Nachricht zurück.",
         "Er verteilt IP-Adressen.",
         "Er verbindet zwei Netze."
       ],
@@ -70,7 +70,7 @@ const inf9FiliusPruefung1 = {
     },
     {
       type: "choice",
-      prompt: "Welches Geraet verbindet zwei verschiedene Netze miteinander?",
+      prompt: "Welches Gerät verbindet zwei verschiedene Netze miteinander?",
       options: ["Switch", "Hub", "Vermittlungsrechner (Router)", "Repeater"],
       answer: 2, points: 1
     },
@@ -89,7 +89,7 @@ const inf9FiliusPruefung1 = {
       type: "choice",
       prompt: "Was ist die Gateway-IP anschaulich gesagt?",
       options: [
-        "Die Haustuer des eigenen Netzes.",
+        "Die Haustür des eigenen Netzes.",
         "Das Passwort des Routers.",
         "Die Nummer des Switches.",
         "Die Geschwindigkeit der Leitung."
@@ -102,25 +102,25 @@ const inf9FiliusPruefung1 = {
       options: [
         "Er speichert Webseiten.",
         "Er verteilt automatisch IP-Adressen.",
-        "Er uebersetzt Namen in IP-Adressen.",
+        "Er übersetzt Namen in IP-Adressen.",
         "Er verschickt E-Mails."
       ],
       answer: 1, points: 1
     },
     {
       type: "choice",
-      prompt: "Welches Geraet bekommt sinnvollerweise eine feste IP statt DHCP?",
-      options: ["Ein Gast-Handy", "Ein Schueler-Tablet", "Der Netzwerkdrucker", "Ein Laptop im Lesesaal"],
+      prompt: "Welches Gerät bekommt sinnvollerweise eine feste IP statt DHCP?",
+      options: ["Ein Gast-Handy", "Ein Schüler-Tablet", "Der Netzwerkdrucker", "Ein Laptop im Lesesaal"],
       answer: 2, points: 1
     },
     {
       type: "choice",
       prompt: "Wozu dient ein DNS-Server?",
       options: [
-        "Er uebersetzt Namen wie www.test.de in IP-Adressen.",
+        "Er übersetzt Namen wie www.test.de in IP-Adressen.",
         "Er vergibt IP-Adressen.",
         "Er speichert E-Mails.",
-        "Er verstaerkt das Signal."
+        "Er verstärkt das Signal."
       ],
       answer: 0, points: 1
     },
@@ -143,10 +143,10 @@ const inf9FiliusPruefung1 = {
     },
     {
       type: "choice",
-      prompt: "Warum kommt eine E-Mail an, obwohl der Empfaenger offline ist?",
+      prompt: "Warum kommt eine E-Mail an, obwohl der Empfänger offline ist?",
       options: [
         "Sie wartet auf deinem Rechner.",
-        "Sie liegt beim Mailserver und wird spaeter abgeholt.",
+        "Sie liegt beim Mailserver und wird später abgeholt.",
         "Sie geht verloren.",
         "Sie wird laufend neu verschickt."
       ],
@@ -158,14 +158,14 @@ const inf9FiliusPruefung1 = {
       options: [
         "Sie sind im selben Netz.",
         "Sie sind in verschiedenen Netzen und brauchen einen Router.",
-        "Eine der IPs ist ungueltig.",
-        "Sie koennen sich nie erreichen."
+        "Eine der IPs ist ungültig.",
+        "Sie können sich nie erreichen."
       ],
       answer: 1, points: 1
     },
     {
       type: "choice",
-      prompt: "Welche Netzmaske gehoert zu einem 192.168.0.x-Netz mit /24?",
+      prompt: "Welche Netzmaske gehört zu einem 192.168.0.x-Netz mit /24?",
       options: ["255.0.0.0", "255.255.0.0", "255.255.255.0", "255.255.255.255"],
       answer: 2, points: 1
     }
@@ -175,28 +175,36 @@ const inf9FiliusPruefung1 = {
   upload: {
     aufgabe:
       "Baue in Filius dieses Netz und lade die gespeicherte Datei hoch:\n" +
-      "1) Netz 0 mit mindestens drei Geraeten an einem Switch, IPs 192.168.0.x\n" +
-      "2) Netz 1 mit mindestens zwei Geraeten an einem zweiten Switch, IPs 192.168.1.x\n" +
+      "1) Netz 0 mit mindestens drei Geräten an einem Switch, IPs 192.168.0.x\n" +
+      "2) Netz 1 mit mindestens zwei Geräten an einem zweiten Switch, IPs 192.168.1.x\n" +
       "3) Ein Vermittlungsrechner (Router) verbindet beide Netze (192.168.0.1 / 192.168.1.1)\n" +
-      "4) Bei allen Geraeten ist das passende Gateway eingetragen\n" +
-      "5) Ein Webserver laeuft auf einem Server im Netz 0",
+      "4) Bei allen Geräten ist das passende Gateway eingetragen\n" +
+      "5) Ein Webserver läuft auf einem Server im Netz 0\n" +
+      "\n" +
+      "Tipp: Wer mehr einbaut als verlangt (zum Beispiel DNS, DHCP oder einen " +
+      "Mailserver) und sauber benennt, bekommt bei der Gesamtbewertung mehr Punkte.",
+
+    /* Punkte, die die KI zusaetzlich fuer die Qualitaet des Netzes vergibt.
+       Die Pflichtpunkte unten bleiben davon unberuehrt. */
+    kiPunkte: 8,
+
     checks: [
       { id: "sw",    typ: "geraet",   art: "Switch", mindestens: 2, punkte: 2,
         text: "Mindestens zwei Switches vorhanden" },
       { id: "rt",    typ: "router2",  punkte: 2,
         text: "Vermittlungsrechner mit mindestens zwei Schnittstellen" },
       { id: "net0",  typ: "netz",     praefix: "192.168.0.", mindestens: 3, punkte: 2,
-        text: "Mindestens drei Geraete im Netz 192.168.0.x" },
+        text: "Mindestens drei Geräte im Netz 192.168.0.x" },
       { id: "net1",  typ: "netz",     praefix: "192.168.1.", mindestens: 2, punkte: 2,
-        text: "Mindestens zwei Geraete im Netz 192.168.1.x" },
+        text: "Mindestens zwei Geräte im Netz 192.168.1.x" },
       { id: "rip0",  typ: "ip",       ip: "192.168.0.1", punkte: 1,
         text: "Router hat die IP 192.168.0.1" },
       { id: "rip1",  typ: "ip",       ip: "192.168.1.1", punkte: 1,
         text: "Router hat die IP 192.168.1.1" },
       { id: "gw0",   typ: "gateway",  praefix: "192.168.0.", gateway: "192.168.0.1", punkte: 2,
-        text: "Geraete im Netz 0 haben das Gateway 192.168.0.1" },
+        text: "Geräte im Netz 0 haben das Gateway 192.168.0.1" },
       { id: "gw1",   typ: "gateway",  praefix: "192.168.1.", gateway: "192.168.1.1", punkte: 2,
-        text: "Geraete im Netz 1 haben das Gateway 192.168.1.1" },
+        text: "Geräte im Netz 1 haben das Gateway 192.168.1.1" },
       { id: "web",   typ: "software", name: "WebServer", punkte: 2,
         text: "Ein Webserver ist installiert" }
     ]
