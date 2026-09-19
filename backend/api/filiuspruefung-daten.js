@@ -174,39 +174,74 @@ const inf9FiliusPruefung1 = {
   /* ---------------- Teil B: Filius-Datei ---------------- */
   upload: {
     aufgabe:
-      "Baue in Filius dieses Netz und lade die gespeicherte Datei hoch:\n" +
-      "1) Netz 0 mit mindestens drei Geräten an einem Switch, IPs 192.168.0.x\n" +
-      "2) Netz 1 mit mindestens zwei Geräten an einem zweiten Switch, IPs 192.168.1.x\n" +
-      "3) Ein Vermittlungsrechner (Router) verbindet beide Netze (192.168.0.1 / 192.168.1.1)\n" +
-      "4) Bei allen Geräten ist das passende Gateway eingetragen\n" +
-      "5) Ein Webserver läuft auf einem Server im Netz 0\n" +
+      "Baue in Filius das folgende Netz nach und lade die gespeicherte Datei hoch.\n" +
+      "Halte dich genau an die Namen und die IP-Adressen. Die Netzmaske ist\n" +
+      "überall 255.255.255.0.\n" +
       "\n" +
-      "Tipp: Wer mehr einbaut als verlangt (zum Beispiel DNS, DHCP oder einen " +
-      "Mailserver) und sauber benennt, bekommt bei der Gesamtbewertung mehr Punkte.",
+      "SCHRITT 1 - Netz 0 aufbauen (2 Punkte)\n" +
+      "Setze einen Switch und drei Geräte darauf:\n" +
+      "   PC 0.10      IP 192.168.0.10\n" +
+      "   PC 0.11      IP 192.168.0.11\n" +
+      "   Server 0.12  IP 192.168.0.12   (nimm hier einen Rechner, keinen Notebook)\n" +
+      "Verbinde alle drei mit dem Switch 1.\n" +
+      "\n" +
+      "SCHRITT 2 - Netz 1 aufbauen (2 Punkte)\n" +
+      "Setze einen zweiten Switch und zwei Geräte darauf:\n" +
+      "   PC 1.10      IP 192.168.1.10\n" +
+      "   PC 1.11      IP 192.168.1.11\n" +
+      "Verbinde beide mit dem Switch 2.\n" +
+      "Achtung: Beide Switches zusammen sind 2 Punkte wert.\n" +
+      "\n" +
+      "SCHRITT 3 - Router einbauen (4 Punkte)\n" +
+      "Ziehe einen Vermittlungsrechner zwischen die beiden Switches und wähle\n" +
+      "2 Schnittstellen. Setze die beiden IP-Adressen auf:\n" +
+      "   Anschluss zu Switch 1:  192.168.0.1   (1 Punkt)\n" +
+      "   Anschluss zu Switch 2:  192.168.1.1   (1 Punkt)\n" +
+      "Verbinde den Router per Kabel mit Switch 1 und mit Switch 2 (2 Punkte).\n" +
+      "\n" +
+      "SCHRITT 4 - Gateway eintragen (4 Punkte)\n" +
+      "Öffne jedes der fünf Geräte und trage das Gateway ein:\n" +
+      "   PC 0.10, PC 0.11, Server 0.12  ->  Gateway 192.168.0.1   (2 Punkte)\n" +
+      "   PC 1.10, PC 1.11               ->  Gateway 192.168.1.1   (2 Punkte)\n" +
+      "Vergisst du auch nur ein Gerät, gibt es für dieses Netz keine Punkte.\n" +
+      "\n" +
+      "SCHRITT 5 - Webserver einrichten (2 Punkte)\n" +
+      "Wechsle in den Aktionsmodus und installiere auf Server 0.12 einen\n" +
+      "Webserver. Starte ihn.\n" +
+      "\n" +
+      "SCHRITT 6 - Testen und speichern\n" +
+      "Teste im Aktionsmodus mit der Befehlszeile von PC 0.10:\n" +
+      "   ping 192.168.1.10     (muss eine Antwort geben)\n" +
+      "Speichere dann die Datei als NACHNAME-Vorname.fls und lade sie hier hoch.\n" +
+      "\n" +
+      "ZUSATZ - Gesamtbewertung durch die KI (8 Punkte)\n" +
+      "Bewertet werden sauberer Aufbau, passende Namen und stimmige Adressen.\n" +
+      "Wer mehr einbaut als verlangt (zum Beispiel DNS-Server, DHCP oder einen\n" +
+      "Mailserver), bekommt hier mehr Punkte.",
 
-    /* Punkte, die die KI zusaetzlich fuer die Qualitaet des Netzes vergibt.
+    /* Punkte, die die KI zusaetzlich für die Qualitaet des Netzes vergibt.
        Die Pflichtpunkte unten bleiben davon unberuehrt. */
     kiPunkte: 8,
 
     checks: [
       { id: "sw",    typ: "geraet",   art: "Switch", mindestens: 2, punkte: 2,
-        text: "Mindestens zwei Switches vorhanden" },
+        text: "Schritt 1+2: Zwei Switches vorhanden" },
       { id: "rt",    typ: "router2",  punkte: 2,
-        text: "Vermittlungsrechner mit mindestens zwei Schnittstellen" },
+        text: "Schritt 3: Router mit zwei Schnittstellen und beiden Kabeln" },
       { id: "net0",  typ: "netz",     praefix: "192.168.0.", mindestens: 3, punkte: 2,
-        text: "Mindestens drei Geräte im Netz 192.168.0.x" },
+        text: "Schritt 1: Drei Geräte im Netz 192.168.0.x" },
       { id: "net1",  typ: "netz",     praefix: "192.168.1.", mindestens: 2, punkte: 2,
-        text: "Mindestens zwei Geräte im Netz 192.168.1.x" },
+        text: "Schritt 2: Zwei Geräte im Netz 192.168.1.x" },
       { id: "rip0",  typ: "ip",       ip: "192.168.0.1", punkte: 1,
-        text: "Router hat die IP 192.168.0.1" },
+        text: "Schritt 3: Router hat die IP 192.168.0.1" },
       { id: "rip1",  typ: "ip",       ip: "192.168.1.1", punkte: 1,
-        text: "Router hat die IP 192.168.1.1" },
+        text: "Schritt 3: Router hat die IP 192.168.1.1" },
       { id: "gw0",   typ: "gateway",  praefix: "192.168.0.", gateway: "192.168.0.1", punkte: 2,
-        text: "Geräte im Netz 0 haben das Gateway 192.168.0.1" },
+        text: "Schritt 4: Alle Geräte im Netz 0 haben Gateway 192.168.0.1" },
       { id: "gw1",   typ: "gateway",  praefix: "192.168.1.", gateway: "192.168.1.1", punkte: 2,
-        text: "Geräte im Netz 1 haben das Gateway 192.168.1.1" },
+        text: "Schritt 4: Alle Geräte im Netz 1 haben Gateway 192.168.1.1" },
       { id: "web",   typ: "software", name: "WebServer", punkte: 2,
-        text: "Ein Webserver ist installiert" }
+        text: "Schritt 5: Webserver auf Server 0.12 installiert" }
     ]
   }
 };
