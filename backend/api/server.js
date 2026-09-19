@@ -58,6 +58,16 @@ registerNetzwerktestRoutes(app, {
   askAnthropic: askAnthropic
 });
 
+// --- Filius-Pruefung (Informatik 9: praktische Pruefung mit Dateiabgabe) ---
+const { registerFiliusPruefungRoutes } = require("./filiuspruefung");
+const { TESTS: FILIUSPRUEFUNGEN } = require("./filiuspruefung-daten");
+registerFiliusPruefungRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: FILIUSPRUEFUNGEN,
+  askAnthropic: askAnthropic
+});
+
 app.use(express.static(STATIC_ROOT));
 
 if (PICTURE_BASED_TALK_ROOT) {
@@ -92,7 +102,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-18-netzwerktest-inf9",
+    version: "2026-09-19-filiuspruefung-inf9",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
