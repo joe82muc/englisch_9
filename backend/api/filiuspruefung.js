@@ -14,6 +14,10 @@
  *
  * Das Entpacken passiert ohne Fremdbibliothek mit zlib (inflateRaw), damit
  * im Backend keine neue Abhaengigkeit noetig ist.
+ *
+ * Ausserdem liegt hier die Beispiel-Filius-Datei. Sie zeigt eine fertige
+ * Loesung und wird deshalb nur ausgeliefert, wenn die Lehrkraft sie
+ * freigegeben hat (opts.beispielDatei = Pfad zur .fls).
  */
 
 const fs = require("fs");
@@ -117,13 +121,50 @@ function filiusAuslesen(xml) {
   /* DHCP: Vorsicht - <void property="DHCPServer"> steht in JEDER Datei als
      leerer Platzhalter (nur mit einem Thread-Namen darin). Das allein beweist
      nichts. Gewertet wird nur, wenn ein Bereich oder ein Aktiv-Flag gesetzt ist. */
-  const dhcp = /<void property="(?:aktiv|anAus|aktiviert)">\s*<boolean>true<\/boolean>/i.test(xml)
-    || /<void property="(?:untergrenze|obergrenze|rangeStart|rangeEnd)">/i.test(xml)
+  /* Vorsicht 2: <void property="aktiv"><boolean>true</boolean></void> heisst nur,
+     dass IRGENDEIN Dienst laeuft - in einer Testdatei war es der Webserver.
+     Als DHCP-Nachweis zaehlt daher nur ein gesetzter Adressbereich oder ein
+     ausdrueckliches DHCP-Feld. */
+  const dhcp = /<void property="(?:untergrenze|obergrenze|rangeStart|rangeEnd)">/i.test(xml)
     || /dhcpKonfiguration|aktivDHCP|dhcpAktiviert/i.test(xml);
+
+  /* Laeuft ein Dienst wirklich? Filius merkt sich den gestarteten Dienst mit
+     aktiv=true kurz hinter der Software-Klasse. */
+  function dienstLaeuft(klasse) {
+    const re = new RegExp(
+      'class="filius\\.software\\.[\\w.]*' + klasse + '"[\\s\\S]{0,900}?<void property="aktiv">\\s*<boolean>true</boolean>',
+      "i"
+    );
+    return re.test(xml);
+  }
+
+  /* Selbst geschriebene Webseiten: Filius legt jede Datei mit Namen, Typ und
+     vollstaendigem Inhalt ab. So laesst sich pruefen, ob wirklich eine eigene
+     Seite geschrieben wurde und nicht nur die leere Vorlage stehen blieb. */
+  const seiten = [];
+  const dateiRe = /<object class="filius\.software\.system\.Datei">([\s\S]{0,60000}?)<\/object>/g;
+  let treffer;
+  while ((treffer = dateiRe.exec(xml)) !== null) {
+    const block = treffer[1];
+    const name = (block.match(/<void property="name">\s*<string>([^<]*)<\/string>/) || [])[1] || "";
+    if (!/\.html?$/i.test(name)) continue;
+    const inhalt = (block.match(/<void property="dateiInhalt">\s*<string>([\s\S]*?)<\/string>/) || [])[1] || "";
+    const text = inhalt
+      .replace(/&lt;[^&]*?&gt;/g, " ")   // HTML-Tags (im XML maskiert) entfernen
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&[a-z]+;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    seiten.push({ name, zeichen: inhalt.length, text });
+  }
 
   const ips = Array.from(new Set(geraete.flatMap((g) => g.ips)));
 
-  return { geraete, software, dhcp, ips };
+  return {
+    geraete, software, dhcp, ips, seiten,
+    webserverLaeuft: dienstLaeuft("WebServer"),
+    echoserverLaeuft: dienstLaeuft("ServerBaustein")
+  };
 }
 
 /* ------------------------------------------------------------------
@@ -164,6 +205,28 @@ function checkAusfuehren(check, netz) {
     }
     case "dhcp": {
       return { ok: netz.dhcp, ist: netz.dhcp ? "aktiviert" : "nicht gefunden" };
+    }
+    case "laeuft": {
+      /* Dienst installiert UND gestartet. */
+      const da = netz.software.includes(check.name);
+      const an = check.name === "WebServer" ? netz.webserverLaeuft
+               : check.name === "ServerBaustein" ? netz.echoserverLaeuft
+               : false;
+      if (!da) return { ok: false, ist: "nicht installiert" };
+      return { ok: an, ist: an ? "installiert und gestartet" : "installiert, aber nicht gestartet" };
+    }
+    case "webseite": {
+      /* Eigene Seite geschrieben? Die leere Filius-Vorlage hat rund 200 Zeichen,
+         deshalb zaehlt nur eine Seite mit erkennbarem eigenem Text. */
+      const min = Number(check.mindestZeichen) || 120;
+      const passende = (netz.seiten || []).filter((x) =>
+        (!check.dateiname || x.name.toLowerCase() === String(check.dateiname).toLowerCase())
+        && x.text.length >= min);
+      if (!passende.length) {
+        const gibt = (netz.seiten || []).length;
+        return { ok: false, ist: gibt ? "Seite vorhanden, aber zu wenig eigener Inhalt" : "keine HTML-Seite gefunden" };
+      }
+      return { ok: true, ist: passende.map((x) => x.name).join(", ") + " mit eigenem Inhalt" };
     }
     default:
       return { ok: false, ist: "unbekannte Pruefung" };
@@ -318,7 +381,11 @@ function createStore(dataDir) {
     if (!fs.existsSync(SUB_FILE)) fs.writeFileSync(SUB_FILE, JSON.stringify({ submissions: [] }, null, 2), "utf8");
   }
   function loadUnlocks() {
-    try { return JSON.parse(fs.readFileSync(UNLOCK_FILE, "utf8")); } catch (_e) { return { unlocked: {} }; }
+    try {
+      const d = JSON.parse(fs.readFileSync(UNLOCK_FILE, "utf8"));
+      if (!d.dateien) d.dateien = {};
+      return d;
+    } catch (_e) { return { unlocked: {}, dateien: {} }; }
   }
   function saveUnlocks(d) { fs.writeFileSync(UNLOCK_FILE, JSON.stringify(d, null, 2), "utf8"); }
   function loadSubmissions() {
@@ -478,6 +545,44 @@ function registerFiliusPruefungRoutes(app, opts) {
         submittedAt: record.submittedAt
       }
     });
+  });
+
+  /* ---------- Beispieldatei: Status, Freigabe, Download ----------
+     Die Datei zeigt eine fertige Loesung und darf deshalb nicht dauerhaft
+     offen liegen. Sie wird nur ausgeliefert, wenn die Lehrkraft sie
+     freigegeben hat - dieselbe Logik wie bei den Pruefungen. */
+
+  app.get("/api/filiuspruefung/beispiel/status", (_req, res) => {
+    const u = store.loadUnlocks();
+    const frei = Boolean(u.dateien?.beispiel?.open);
+    res.json({ ok: true, frei, dateiname: "beispiel-netz.fls" });
+  });
+
+  app.post("/api/filiuspruefung/beispiel/freigeben", (req, res) => {
+    if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
+    const open = Boolean(req.body?.open);
+    const u = store.loadUnlocks();
+    if (!u.dateien) u.dateien = {};
+    u.dateien.beispiel = { open, changedAt: new Date().toISOString() };
+    store.saveUnlocks(u);
+    res.json({ ok: true, frei: open });
+  });
+
+  app.get("/api/filiuspruefung/beispiel/datei", (_req, res) => {
+    const u = store.loadUnlocks();
+    if (!u.dateien?.beispiel?.open) {
+      return res.status(403).json({
+        ok: false, error: "locked",
+        message: "Die Beispieldatei ist noch nicht freigegeben."
+      });
+    }
+    const datei = opts.beispielDatei;
+    if (!datei || !fs.existsSync(datei)) {
+      return res.status(404).json({ ok: false, error: "not_found" });
+    }
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", 'attachment; filename="beispiel-netz.fls"');
+    res.send(fs.readFileSync(datei));
   });
 
   app.post("/api/filiuspruefung/unlock", (req, res) => {

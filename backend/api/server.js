@@ -65,7 +65,8 @@ registerFiliusPruefungRoutes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   tests: FILIUSPRUEFUNGEN,
-  askAnthropic: askAnthropic
+  askAnthropic: askAnthropic,
+  beispielDatei: path.join(__dirname, "..", "dateien", "beispiel-netz.fls")
 });
 
 app.use(express.static(STATIC_ROOT));
@@ -102,7 +103,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-20-filius-videos",
+    version: "2026-09-20-beispieldatei",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
