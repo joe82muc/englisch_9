@@ -34,6 +34,10 @@ function registerNt7Routes(app, opts) {
   const DATA_FILE = path.join(DATA_DIR, "nt7-proben.json");
   const TEACHER_PASSWORD = opts.teacherPassword || "";
   const MODEL = opts.model || process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
+  /* Der Hauptserver reicht seine askAnthropic-Funktion herein. Sie probiert
+     mehrere Modelle durch - wichtig, weil das in ANTHROPIC_MODEL gesetzte
+     Modell abgekuendigt sein kann. Fehlt sie, fragen wir direkt an. */
+  const askAnthropic = typeof opts.askAnthropic === "function" ? opts.askAnthropic : null;
   const pending = new Set();
 
 
@@ -84,6 +88,30 @@ function registerNt7Routes(app, opts) {
   async function textScore(answer, item) {
     const fallback = textFallback(answer, item);
     if (!answer || !process.env.ANTHROPIC_API_KEY) return fallback;
+
+    const systemText = [
+      "Du korrigierst eine Natur-und-Technik-Probe der 7. Klasse einer bayerischen Mittelschule.",
+      "Bewerte fachlichen Sinn wohlwollend anhand der drei Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
+      "Gib fuer jedes erfuellte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
+      "Antworte ausschliesslich mit JSON: {\"points\":0,\"comment\":\"Kurze konkrete Rueckmeldung auf Deutsch\"}."
+    ].join("\n");
+    const userText = JSON.stringify({question:item.prompt,expected:item.expected,criteria:item.criteria,studentAnswer:answer});
+
+    /* Bevorzugt ueber den Hauptserver, weil der mehrere Modelle durchprobiert. */
+    if (askAnthropic) {
+      try {
+        const raw = await askAnthropic(systemText, userText, 220);
+        const match = String(raw || "").match(/\{[\s\S]*\}/);
+        if (!match) throw new Error("Invalid AI response");
+        const parsed = JSON.parse(match[0]);
+        if (!Number.isFinite(Number(parsed.points))) throw new Error("Invalid AI points");
+        return {points:Math.max(0,Math.min(item.points,Math.round(Number(parsed.points)))),comment:clean(parsed.comment,220) || "KI-Bewertung.",source:"ki",needsReview:false};
+      } catch (err) {
+        console.error("NT7 KI-Korrektur (askAnthropic):",err.message);
+        /* weiter zum direkten Aufruf unten */
+      }
+    }
+
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST",signal:AbortSignal.timeout(18000),

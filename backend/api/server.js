@@ -73,7 +73,8 @@ registerFiliusPruefungRoutes(app, {
 const { registerNt7Routes } = require("./nt7");
 registerNt7Routes(app, {
   dataDir: DATA_DIR,
-  teacherPassword: TEACHER_PASSWORD
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
 });
 
 app.use(express.static(STATIC_ROOT));
@@ -110,7 +111,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-20-nt7",
+    version: "2026-09-20-nt7-ki",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
