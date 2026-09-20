@@ -186,8 +186,13 @@ function checkAusfuehren(check, netz) {
       return { ok: da, ist: da ? "vorhanden" : "nicht gefunden" };
     }
     case "netz": {
-      const n = netz.ips.filter((ip) => ip.startsWith(check.praefix)).length;
-      return { ok: n >= (check.mindestens || 1), ist: n + " Adressen" };
+      /* Nur Endgeraete zaehlen. Der Router hat in jedem Netz auch eine
+         Adresse - die darf nicht als Geraet durchgehen, sonst reichen
+         zwei Rechner fuer die Anforderung "drei Geraete". */
+      const n = g.filter((x) =>
+        x.art !== "Vermittlungsrechner" && x.art !== "Switch" &&
+        x.ips.some((ip) => ip.startsWith(check.praefix))).length;
+      return { ok: n >= (check.mindestens || 1), ist: n + " Geräte" };
     }
     case "gateway": {
       const imNetz = g.filter((x) => x.ips.some((ip) => ip.startsWith(check.praefix))

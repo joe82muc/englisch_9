@@ -103,7 +103,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-20-beispieldatei",
+    version: "2026-09-20-leichter",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
