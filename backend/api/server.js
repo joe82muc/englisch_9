@@ -77,6 +77,17 @@ registerNt7Routes(app, {
   askAnthropic: askAnthropic
 });
 
+// --- Deutsch 7M: Argumentationstrainer mit revisionsfaehigem KI-Feedback ---
+const { registerArgumentation7Routes } = require("./argumentation7");
+registerArgumentation7Routes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  hashSecret: process.env.ARGUMENTATION7_SECRET || `${TEACHER_PASSWORD}|de7-argumentation`,
+  askAnthropic
+});
+
+// Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
+app.use("/backend", (_req, res) => res.sendStatus(404));
 app.use(express.static(STATIC_ROOT));
 
 if (PICTURE_BASED_TALK_ROOT) {
@@ -111,7 +122,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-20-nt7-ki",
+    version: "2026-09-20-filius-de7-nt7",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
@@ -1648,10 +1659,13 @@ app.post("/api/picture-description/rewrite-sentence", async (req, res) => {
     return res.status(500).json({ ok: false, error: "rewrite_sentence_failed" });
   }
 });
-app.listen(PORT, () => {
-  console.log(`Server laeuft auf Port ${PORT}`);
-  console.log(`Static root: ${STATIC_ROOT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server laeuft auf Port ${PORT}`);
+    console.log(`Static root: ${STATIC_ROOT}`);
+  });
+}
+module.exports = app;
 
 function evaluateNtAnswerFallback({ answer, question, keyConcepts, criteria, logicConnectors, minWords }) {
   const text = String(answer || "").trim();
