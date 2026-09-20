@@ -1,0 +1,35 @@
+"use strict";
+
+// Lösungen bleiben ausschließlich im Backend.
+module.exports = {
+  "nt7-luft-1": {
+    id: "nt7-luft-1", title: "Probe 1: Luft und Wind", scope: "Eigenschaften, Gase, Formeln, Luftdruck, Windkraft", minutes: 35,
+    items: [
+      { type: "choice", prompt: "Welche Aussage über Luft stimmt?", options: ["Sie nimmt Raum ein und hat Masse.", "Sie besteht nur aus Sauerstoff.", "Sie hat keine Masse.", "Sie lässt sich nicht zusammendrücken."], answer: 0, points: 1 },
+      { type: "choice", prompt: "Wie groß ist ungefähr der Sauerstoffanteil in trockener Luft?", options: ["1 %", "21 %", "78 %", "100 %"], answer: 1, points: 1 },
+      { type: "choice", prompt: "Welche Formel steht für Kohlenstoffdioxid?", options: ["CO", "O₂", "CO₂", "N₂"], answer: 2, points: 1 },
+      { type: "choice", prompt: "Ein Windrad steht bei Windstille. Was ist dann richtig?", image: "assets/windkraft-entwicklung.png", imageAlt: "Historische Grafik zur Entwicklung der Windenergie", options: ["Es liefert gleich viel Strom wie bei starkem Wind.", "Es erzeugt wenig oder keinen Strom.", "Es verbrennt automatisch Kohle.", "Es erzeugt Sauerstoff."], answer: 1, points: 1 },
+      { type: "match", prompt: "Ordne die Luftbestandteile ihren ungefähren Anteilen zu.", pairs: [["Stickstoff", "78 %"], ["Sauerstoff", "21 %"], ["andere Gase", "1 %"]], points: 3 },
+      { type: "match", prompt: "Ordne die chemischen Formeln zu.", pairs: [["N₂", "Stickstoff"], ["O₂", "Sauerstoff"], ["CO₂", "Kohlenstoffdioxid"]], points: 3 },
+      { type: "match", prompt: "Ordne Beobachtung und Erklärung zu.", pairs: [["Ballon wird größer", "Luft nimmt Raum ein"], ["Spritze mit verschlossener Öffnung", "Luft ist zusammendrückbar"], ["Saugnapf haftet", "Außenluft drückt ihn an"]], points: 3 },
+      { type: "text", prompt: "Erkläre mit zwei Beobachtungen, warum Luft nicht 'nichts' ist.", expected: "Luft hat Masse und nimmt Raum ein. Zum Beispiel bläht sie einen Ballon auf; Luft in einer verschlossenen Spritze lässt sich zusammendrücken. Auch ihre Masse kann gewogen werden.", criteria: ["Luft nimmt Raum ein mit Beispiel", "Luft hat Masse oder ist komprimierbar mit Beispiel", "sinnvolle Erklärung"], keywords: ["raum|platz|volumen|ballon", "masse|gewicht|wiegt|waage", "spritze|zusammendrücken|komprimierbar"], points: 3 },
+      { type: "text", prompt: "Warum ist der Luftdruck auf einem hohen Berg meist geringer als im Tal?", expected: "Auf einem hohen Berg befindet sich weniger Luft über uns. Die Luftsäule übt deshalb meist einen geringeren Druck aus als im Tal.", criteria: ["über dem Berg liegt weniger Luft", "geringere Luftsäule oder Masse", "dadurch geringerer Druck"], keywords: ["weniger luft|luftschicht", "über|oberhalb|säule", "druck|drückt"], points: 3 },
+      { type: "text", prompt: "Beschreibe, wie aus Wind elektrischer Strom entsteht, und nenne einen Nachteil der Windkraft.", expected: "Wind dreht Rotorblätter. Die Drehung treibt einen Generator an, der Strom erzeugt. Ein Nachteil ist die Abhängigkeit vom Wind; auch Standortkonflikte sind möglich.", criteria: ["Wind dreht Rotor", "Generator erzeugt Strom", "sinnvoller Nachteil"], keywords: ["wind|rotor|blatt", "generator|strom|elektr", "windstille|schwankt|vögel|landschaft|lärm"], points: 3 }
+    ]
+  },
+  "nt7-luft-2": {
+    id: "nt7-luft-2", title: "Probe 2: Feuer und Luftverschmutzung", scope: "Feuerdreieck, Brandschutz, Oxidation, Schadstoffe", minutes: 35,
+    items: [
+      { type: "choice", prompt: "Welche drei Bedingungen braucht ein Feuer?", image: "assets/feuer.jpeg", imageAlt: "Brennendes Feuer", options: ["Wasser, Wind und Holz", "Brennstoff, Sauerstoff und Zündtemperatur", "Rauch, Staub und Kohlenstoffdioxid", "Licht, Regen und Luftdruck"], answer: 1, points: 1 },
+      { type: "choice", prompt: "Was ist bei einem größeren Brand richtig?", options: ["Allein löschen und niemandem etwas sagen.", "Andere warnen, in Sicherheit gehen und 112 rufen.", "Ein Foto aufnehmen und abwarten.", "Brennendes Fett mit Wasser übergießen."], answer: 1, points: 1 },
+      { type: "choice", prompt: "Warum wird Eisenwolle beim Erhitzen an der Luft schwerer?", image: "assets/eisenwolle-waage.png", imageAlt: "Eisenwolle vor und nach der Reaktion auf der Waage", options: ["Sie nimmt Sauerstoff aus der Luft auf.", "Die Wärme wird zu Eisen.", "Die Waage ist immer falsch.", "Sauerstoff verschwindet."], answer: 0, points: 1 },
+      { type: "choice", prompt: "Was bedeutet das Jahr 2050 in der im Unterricht gezeigten Max-Planck-Simulation?", options: ["Eine sichere Vorhersage.", "Eine Modellrechnung unter bestimmten Annahmen.", "Eine Messung aus der Zukunft.", "Ein Bild ohne Bezug zur Luft."], answer: 1, points: 1 },
+      { type: "match", prompt: "Ordne Bestandteil des Feuerdreiecks und Beispiel zu.", pairs: [["Brennstoff", "Holz"], ["Sauerstoff", "Luftzufuhr"], ["Zündtemperatur", "ausreichend starke Erwärmung"]], points: 3 },
+      { type: "match", prompt: "Ordne Schadstoff und Wirkung zu.", pairs: [["Kohlenstoffmonoxid (CO)", "giftiges Gas"], ["Kohlenstoffdioxid (CO₂)", "Treibhausgas"], ["Feinstaub", "winzige Teilchen in der Luft"]], points: 3 },
+      { type: "match", prompt: "Ordne Beobachtung und Erklärung zu.", pairs: [["Eisenwolle wird schwerer", "Sauerstoff wird gebunden"], ["Apfel wird braun", "Sauerstoff und Enzyme wirken zusammen"], ["Löschdecke auf Flamme", "Sauerstoffzufuhr wird unterbrochen"]], points: 3 },
+      { type: "text", prompt: "Erkläre an einem Beispiel, wie man eine Bedingung des Feuerdreiecks beim Löschen entfernt.", expected: "Eine Löschdecke unterbricht bei einem geeigneten kleinen Brand die Sauerstoffzufuhr. Wasser kann einen geeigneten Brand kühlen, sodass die Zündtemperatur nicht mehr erreicht wird. Bei Fettbränden kein Wasser verwenden.", criteria: ["eine Bedingung korrekt genannt", "passendes Löschbeispiel", "Ursache und Wirkung erklärt"], keywords: ["sauerstoff|wärme|temperatur|brennstoff", "decke|wasser|kühlen|entfernen", "fehlt|unterbrechen|ersticken|sinken"], points: 3 },
+      { type: "text", prompt: "Erkläre, warum das Reaktionsprodukt aus Eisenwolle und Sauerstoff schwerer ist als die Eisenwolle vorher.", expected: "Eisen nimmt Sauerstoff aus der Luft auf und bildet Eisenoxid. Der Sauerstoff wird Teil des neuen Stoffs. Deshalb ist das Produkt schwerer als das Eisen allein.", criteria: ["Eisen reagiert mit Sauerstoff", "Eisenoxid entsteht", "zusätzlicher Sauerstoff erklärt Massenzunahme"], keywords: ["eisen|wolle", "sauerstoff|luft", "oxid|schwer|masse|gewicht"], points: 3 },
+      { type: "text", prompt: "Warum kann Feinstaub die Gesundheit schädigen? Nenne außerdem eine mögliche Quelle.", image: "assets/smog-stadt.webp", imageAlt: "Stadt mit sichtbarer Luftverschmutzung", expected: "Sehr kleine Teilchen können tief in die Atemwege gelangen und die Gesundheit belasten. Quellen sind zum Beispiel Verkehr, Heizen, Kraftwerke, Industrie oder Brände.", criteria: ["kleine Teilchen", "gelangen tief in Atemwege", "plausible Quelle"], keywords: ["klein|winzig|fein", "lunge|atem|gesund|körper", "auto|verkehr|heiz|industrie|brand|kraftwerk"], points: 3 }
+    ]
+  }
+};

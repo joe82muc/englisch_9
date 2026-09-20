@@ -69,6 +69,13 @@ registerFiliusPruefungRoutes(app, {
   beispielDatei: path.join(__dirname, "..", "dateien", "beispiel-netz.fls")
 });
 
+// --- NT-Proben Klasse 7M (eigener Server war nirgends deployt) ---
+const { registerNt7Routes } = require("./nt7");
+registerNt7Routes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD
+});
+
 app.use(express.static(STATIC_ROOT));
 
 if (PICTURE_BASED_TALK_ROOT) {
@@ -103,7 +110,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-20-leichter",
+    version: "2026-09-20-nt7",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
