@@ -232,9 +232,194 @@ const e9ru1t2 = {
   ]
 };
 
+
+/* ==================================================================
+   Englisch 8R - Unit 1 - Vokabeltest
+   Welcome to New York!
+   ================================================================== */
+const e8ru1t1 = {
+  id: "e8r-u1-test1",
+  title: "Vokabeltest Unit 1 - Welcome to New York!",
+  unit: "Englisch 8R / Unit 1",
+  classLevel: "8R",
+  gradeScale: "8R",
+  direction: "mixed",
+  items: [
+    { prompt: "island", direction: "en-de", solutions: ["Insel"] },
+    { prompt: "Frankreich", direction: "de-en", solutions: ["France"] },
+    { prompt: "messenger", direction: "en-de", solutions: ["Kurier, Kurierin", "Bote, Botin"] },
+    { prompt: "Italien", direction: "de-en", solutions: ["Italy"] },
+    { prompt: "population (no pl)", direction: "en-de", solutions: ["Bevölkerung", "Einwohner", "Einwohnerzahl"] },
+    { prompt: "Zeitschrift", direction: "de-en", solutions: ["magazine"] },
+    { prompt: "for", direction: "en-de", solutions: ["seit"] },
+    { prompt: "Heimat", direction: "de-en", solutions: ["home country"] },
+    { prompt: "poor", direction: "en-de", solutions: ["arm"] },
+    { prompt: "Laufbahn", direction: "de-en", solutions: ["career"] },
+    { prompt: "to be a long way away", direction: "en-de", solutions: ["weit weg sein"] },
+    { prompt: "verschieden", direction: "de-en", solutions: ["different"] },
+    { prompt: "culture", direction: "en-de", solutions: ["Kultur"] },
+    { prompt: "Land", direction: "de-en", solutions: ["country"] },
+    { prompt: "to move", direction: "en-de", solutions: ["umziehen"] },
+    { prompt: "Schild", direction: "de-en", solutions: ["sign"] },
+    { prompt: "to be born", direction: "en-de", solutions: ["geboren werden"] },
+    { prompt: "Parade", direction: "de-en", solutions: ["parade"] },
+    { prompt: "Turkish", direction: "en-de", solutions: ["türkisch", "Türkisch", "aus der Türkei"] },
+    { prompt: "spanisch", direction: "de-en", solutions: ["Spanish"] },
+    { prompt: "capital (city)", direction: "en-de", solutions: ["Hauptstadt"] },
+    { prompt: "Stadtzentrum", direction: "de-en", solutions: ["city centre"] },
+    { prompt: "noisy", direction: "en-de", solutions: ["laut"] },
+    { prompt: "Park", direction: "de-en", solutions: ["park"] },
+    { prompt: "tower", direction: "en-de", solutions: ["Turm"] },
+    { prompt: "holen", direction: "de-en", solutions: ["to get"], hint: "Verb" },
+    { prompt: "to knock sb off sth", direction: "en-de", solutions: ["jmdn. von etw. stoßen"] },
+    { prompt: "demoliert", direction: "de-en", solutions: ["wrecked"] },
+    { prompt: "to lie", direction: "en-de", solutions: ["lügen"] },
+    { prompt: "Wahrheit", direction: "de-en", solutions: ["truth"] }
+  ]
+};
+
+/* ==================================================================
+   Englisch 8R - Unit 2 - Vokabeltest
+   One country - different states
+   ================================================================== */
+const e8ru2t1 = {
+  id: "e8r-u2-test1",
+  title: "Vokabeltest Unit 2 - One country - different states",
+  unit: "Englisch 8R / Unit 2",
+  classLevel: "8R",
+  gradeScale: "8R",
+  direction: "mixed",
+  items: [
+    { prompt: "surfing", direction: "en-de", solutions: ["Surfen", "Wellenreiten", "Surf-"] },
+    { prompt: "seilgezogene Straßenbahn", direction: "de-en", solutions: ["cable car"] },
+    { prompt: "earthquake", direction: "en-de", solutions: ["Erdbeben"] },
+    { prompt: "von allen Staaten", direction: "de-en", solutions: ["of all the states"] },
+    { prompt: "to produce", direction: "en-de", solutions: ["erzeugen", "herstellen", "anbauen"] },
+    { prompt: "Kajak", direction: "de-en", solutions: ["kayak"] },
+    { prompt: "water", direction: "en-de", solutions: ["Wasser"] },
+    { prompt: "Welle", direction: "de-en", solutions: ["wave"] },
+    { prompt: "canoeing", direction: "en-de", solutions: ["Kanufahren"] },
+    { prompt: "Kajakfahren", direction: "de-en", solutions: ["kayaking"] },
+    { prompt: "to sit, sat, sat", direction: "en-de", solutions: ["sitzen"] },
+    { prompt: "sich selbst", direction: "de-en", solutions: ["herself"] },
+    { prompt: "how to …", direction: "en-de", solutions: ["wie man …"] },
+    { prompt: "wenn", direction: "de-en", solutions: ["if"] },
+    { prompt: "itself", direction: "en-de", solutions: ["sich", "sich selbst"] },
+    { prompt: "leider", direction: "de-en", solutions: ["I'm afraid"] },
+    { prompt: "boarding card", direction: "en-de", solutions: ["Bordkarte"] },
+    { prompt: "Guten Flug!", direction: "de-en", solutions: ["Have a good flight!"] },
+    { prompt: "another", direction: "en-de", solutions: ["noch ein", "ein anderer", "andere"] },
+    { prompt: "Reise", direction: "de-en", solutions: ["journey"] },
+    { prompt: "ticket", direction: "en-de", solutions: ["Ticket"] },
+    { prompt: "fliegen", direction: "de-en", solutions: ["to fly"], hint: "Verb" },
+    { prompt: "to arrive", direction: "en-de", solutions: ["ankommen"] },
+    { prompt: "(sich) bewegen", direction: "de-en", solutions: ["to move"], hint: "Verb" },
+    { prompt: "to design", direction: "en-de", solutions: ["konstruieren", "entwerfen", "gestalten", "entwickeln"] },
+    { prompt: "Richterskala", direction: "de-en", solutions: ["Richter scale"] },
+    { prompt: "blanket", direction: "en-de", solutions: ["Decke", "Bettdecke", "Wolldecke"] },
+    { prompt: "Burger-Restaurant", direction: "de-en", solutions: ["burger bar"] },
+    { prompt: "sense of smell", direction: "en-de", solutions: ["Geruchssinn"] },
+    { prompt: "Sinn", direction: "de-en", solutions: ["sense"] }
+  ]
+};
+
+/* ==================================================================
+   Englisch 8R - Unit 3 - Vokabeltest
+   Southern life
+   ================================================================== */
+const e8ru3t1 = {
+  id: "e8r-u3-test1",
+  title: "Vokabeltest Unit 3 - Southern life",
+  unit: "Englisch 8R / Unit 3",
+  classLevel: "8R",
+  gradeScale: "8R",
+  direction: "mixed",
+  items: [
+    { prompt: "to get on sth", direction: "en-de", solutions: ["in etw. steigen", "in etw. einsteigen"] },
+    { prompt: "Dampfer", direction: "de-en", solutions: ["steamboat"] },
+    { prompt: "to enjoy", direction: "en-de", solutions: ["genießen", "Gefallen finden an"] },
+    { prompt: "Klima", direction: "de-en", solutions: ["climate"] },
+    { prompt: "Thanksgiving", direction: "en-de", solutions: ["Erntedankfest"] },
+    { prompt: "ein paar", direction: "de-en", solutions: ["a few"] },
+    { prompt: "I don't mind.", direction: "en-de", solutions: ["Es macht nichts."] },
+    { prompt: "froh", direction: "de-en", solutions: ["happy"] },
+    { prompt: "rice", direction: "en-de", solutions: ["Reis"] },
+    { prompt: "Erdbeere", direction: "de-en", solutions: ["strawberry"] },
+    { prompt: "plum", direction: "en-de", solutions: ["Pflaume"] },
+    { prompt: "Banane", direction: "de-en", solutions: ["banana"] },
+    { prompt: "nurse", direction: "en-de", solutions: ["Krankenpfleger, Krankenschwester"] },
+    { prompt: "anderer Meinung sein", direction: "de-en", solutions: ["to disagree"], hint: "Verb" },
+    { prompt: "forever", direction: "en-de", solutions: ["für immer", "ewig"] },
+    { prompt: "aus dem Weg gehen", direction: "de-en", solutions: ["to avoid"], hint: "Verb" },
+    { prompt: "to drive off", direction: "en-de", solutions: ["wegfahren"] },
+    { prompt: "von etw. stürzen", direction: "de-en", solutions: ["to fall off"], hint: "Verb" },
+    { prompt: "to find out", direction: "en-de", solutions: ["herausfinden"] },
+    { prompt: "sich setzen", direction: "de-en", solutions: ["to sit down"], hint: "Verb" },
+    { prompt: "so that", direction: "en-de", solutions: ["damit", "sodass"] },
+    { prompt: "Donner", direction: "de-en", solutions: ["boom"] },
+    { prompt: "smoke", direction: "en-de", solutions: ["Rauch"] },
+    { prompt: "Höhle", direction: "de-en", solutions: ["cave"] },
+    { prompt: "while", direction: "en-de", solutions: ["während"] },
+    { prompt: "bevor", direction: "de-en", solutions: ["before"] },
+    { prompt: "when", direction: "en-de", solutions: ["als", "wenn"] },
+    { prompt: "Ärger", direction: "de-en", solutions: ["trouble"] },
+    { prompt: "pie", direction: "en-de", solutions: ["Kuchen", "Pastete"] },
+    { prompt: "ehrenamtlich", direction: "de-en", solutions: ["volunteer"] }
+  ]
+};
+
+/* ==================================================================
+   Englisch 8R - Unit 4 - Vokabeltest
+   Working in Canada
+   ================================================================== */
+const e8ru4t1 = {
+  id: "e8r-u4-test1",
+  title: "Vokabeltest Unit 4 - Working in Canada",
+  unit: "Englisch 8R / Unit 4",
+  classLevel: "8R",
+  gradeScale: "8R",
+  direction: "mixed",
+  items: [
+    { prompt: "second", direction: "en-de", solutions: ["zweit-"] },
+    { prompt: "Grenze", direction: "de-en", solutions: ["border"] },
+    { prompt: "wilderness", direction: "en-de", solutions: ["Wildnis"] },
+    { prompt: "französisch", direction: "de-en", solutions: ["French"] },
+    { prompt: "language", direction: "en-de", solutions: ["Sprache"] },
+    { prompt: "Kanadier, Kanadierin", direction: "de-en", solutions: ["Canadian"] },
+    { prompt: "fair", direction: "en-de", solutions: ["fair", "gerecht"] },
+    { prompt: "App", direction: "de-en", solutions: ["app"] },
+    { prompt: "to mean, meant, meant", direction: "en-de", solutions: ["meinen", "bedeuten"] },
+    { prompt: "Selfie", direction: "de-en", solutions: ["selfie"] },
+    { prompt: "software", direction: "en-de", solutions: ["Software"] },
+    { prompt: "Tutorial", direction: "de-en", solutions: ["tutorial"] },
+    { prompt: "guest", direction: "en-de", solutions: ["Gast"] },
+    { prompt: "Ausbildung", direction: "de-en", solutions: ["training"] },
+    { prompt: "CV (curriculum vitae)", direction: "en-de", solutions: ["Lebenslauf"] },
+    { prompt: "Praktikum", direction: "de-en", solutions: ["internship"] },
+    { prompt: "confident", direction: "en-de", solutions: ["selbstsicher", "selbstbewusst", "sicher"] },
+    { prompt: "Mit freundlichen Grüßen", direction: "de-en", solutions: ["Yours sincerely,"] },
+    { prompt: "to plan", direction: "en-de", solutions: ["planen"] },
+    { prompt: "Tourismus", direction: "de-en", solutions: ["tourism"] },
+    { prompt: "address", direction: "en-de", solutions: ["Adresse"] },
+    { prompt: "Geburtsdatum", direction: "de-en", solutions: ["date of birth"] },
+    { prompt: "education", direction: "en-de", solutions: ["Ausbildung", "Erziehung", "Bildung"] },
+    { prompt: "Interesse", direction: "de-en", solutions: ["interest"] },
+    { prompt: "bed and breakfast (B&B)", direction: "en-de", solutions: ["Frühstückspension"] },
+    { prompt: "Hotel", direction: "de-en", solutions: ["hotel"] },
+    { prompt: "to travel", direction: "en-de", solutions: ["reisen"] },
+    { prompt: "in etw. steigen", direction: "de-en", solutions: ["to get on sth"], hint: "Verb" },
+    { prompt: "cable car", direction: "en-de", solutions: ["seilgezogene Straßenbahn", "Seilbahn"] },
+    { prompt: "wegfahren", direction: "de-en", solutions: ["to drive off"], hint: "Verb" }
+  ]
+};
+
 const TESTS = {
   [e7u1t1.id]: e7u1t1,
   [e7u1t2.id]: e7u1t2,
+  [e8ru1t1.id]: e8ru1t1,
+  [e8ru2t1.id]: e8ru2t1,
+  [e8ru3t1.id]: e8ru3t1,
+  [e8ru4t1.id]: e8ru4t1,
   [e9ru1t1.id]: e9ru1t1,
   [e9ru1t2.id]: e9ru1t2
 };

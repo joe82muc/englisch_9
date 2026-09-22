@@ -19,7 +19,14 @@ const path = require("path");
 const crypto = require("crypto");
 
 /* ------------------------------------------------------------------
-   Notenschluessel Mittelschule M-Zug (50 % = Note 4)
+   Notenschluessel
+
+   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7 und 9R
+   GRADE_SCALE_8R   milderer Schluessel (50 % = Note 3) - Englisch 8R
+
+   Welcher Schluessel gilt, steht an der Testdefinition im Feld
+   "gradeScale". Ohne Angabe bleibt es beim bisherigen M-Zug-Schluessel,
+   damit bereits gestellte Proben ihre Noten behalten.
    ------------------------------------------------------------------ */
 const GRADE_SCALE = [
   { grade: 1, min: 92 },
@@ -30,9 +37,21 @@ const GRADE_SCALE = [
   { grade: 6, min: 0 }
 ];
 
-function gradeFromPercent(percent) {
+const GRADE_SCALE_8R = [
+  { grade: 1, min: 87 },
+  { grade: 2, min: 73 },
+  { grade: 3, min: 50 },
+  { grade: 4, min: 37 },
+  { grade: 5, min: 20 },
+  { grade: 6, min: 0 }
+];
+
+const GRADE_SCALES = { "default": GRADE_SCALE, "8R": GRADE_SCALE_8R };
+
+function gradeFromPercent(percent, scaleName) {
   const p = Number(percent) || 0;
-  for (const step of GRADE_SCALE) {
+  const scale = GRADE_SCALES[scaleName] || GRADE_SCALE;
+  for (const step of scale) {
     if (p >= step.min) return step.grade;
   }
   return 6;
@@ -103,6 +122,72 @@ function checkAnswer(given, solutions) {
     }
   }
   return { correct: false, typo: false, matched: "" };
+}
+
+/* ------------------------------------------------------------------
+   KI-Zweitmeinung
+
+   Der exakte Vergleich oben kennt nur die hinterlegten Loesungen. Eine
+   sinngleiche Antwort ("Bezirk" statt "Stadtteil") faellt dort durch.
+   Deshalb gehen NUR die als falsch bewerteten Antworten an die KI - sie
+   kann eine Antwort noch als richtig anerkennen, aber nie eine richtige
+   Antwort abwerten. Faellt die KI aus, bleibt es beim exakten Ergebnis.
+
+   @param askAnthropic  Funktion (system, user, maxTokens) => Promise<string>
+   ------------------------------------------------------------------ */
+async function aiReview(pending, askAnthropic) {
+  if (!pending.length || typeof askAnthropic !== "function") return {};
+
+  const system = [
+    "Du korrigierst einen Vokabeltest im Fach Englisch, 8. Klasse Mittelschule (Regelklasse).",
+    "",
+    "Zu jeder Aufgabe bekommst du die Musterloesungen der Lehrkraft und die Antwort",
+    "der Schuelerin oder des Schuelers. Entscheide, ob die Antwort die Vokabel trifft.",
+    "",
+    "Als richtig gilt:",
+    "- ein Synonym oder eine gleichwertige Uebersetzung ('Bezirk' statt 'Stadtteil')",
+    "- eine andere, aber korrekte Wortform ('gehen' statt 'zu Fuss gehen')",
+    "- fehlendes 'to' beim Verb oder fehlender Artikel",
+    "- Gross- und Kleinschreibung, Tippfehler, fehlende Umlautpunkte",
+    "",
+    "Als falsch gilt:",
+    "- eine andere Vokabel, auch wenn sie thematisch passt",
+    "- eine Antwort in der falschen Sprache",
+    "- eine leere oder sinnlose Antwort",
+    "",
+    "Bewerte wohlwollend, aber nicht beliebig: Die Vokabel muss getroffen sein.",
+    "",
+    "Antworte NUR mit JSON in genau dieser Form, ohne weiteren Text:",
+    '{"results": [{"nr": <Zahl>, "correct": true|false, "reason": "<max. 8 Woerter>"}]}'
+  ].join("\n");
+
+  const user = pending.map((p) => [
+    "Aufgabe " + p.nr + " (" + (p.direction === "en-de" ? "Englisch -> Deutsch" : "Deutsch -> Englisch") + ")",
+    "Gefragtes Wort: " + p.prompt,
+    "Zugelassene Loesungen: " + p.solutions.join(" / "),
+    "Antwort: " + p.given
+  ].join("\n")).join("\n\n");
+
+  try {
+    const raw = await askAnthropic(system, user, 900);
+    const match = String(raw || "").match(/\{[\s\S]*\}/);
+    if (!match) return {};
+
+    const parsed = JSON.parse(match[0]);
+    const list = Array.isArray(parsed.results) ? parsed.results : [];
+    const out = {};
+    for (const r of list) {
+      const nr = Number(r && r.nr);
+      if (!Number.isFinite(nr)) continue;
+      // Die KI darf nur aufwerten, nie abwerten.
+      if (r.correct === true) {
+        out[nr] = { correct: true, reason: clean(r.reason).slice(0, 120) };
+      }
+    }
+    return out;
+  } catch (_e) {
+    return {};
+  }
 }
 
 /* ------------------------------------------------------------------
@@ -183,12 +268,14 @@ function deviceHash(req, secret) {
  * @param opts.teacherPassword  Passwort der Lehrkraft
  * @param opts.tests   Testdefinitionen (inkl. Loesungen, bleiben serverseitig)
  * @param opts.hashSecret Secret fuer die Geraetekennung
+ * @param opts.askAnthropic Funktion fuer die KI-Zweitmeinung (optional)
  */
 function registerVokabeltestRoutes(app, opts) {
   const store = createStore(opts.dataDir);
   const TESTS = opts.tests || {};
   const TEACHER_PASSWORD = opts.teacherPassword;
   const HASH_SECRET = opts.hashSecret || "grumi-fallback-secret";
+  const askAnthropic = opts.askAnthropic;
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
@@ -252,7 +339,7 @@ function registerVokabeltestRoutes(app, opts) {
   });
 
   /* ---------- Schueler: Abgabe ---------- */
-  app.post("/api/vokabeltest/submit", (req, res) => {
+  app.post("/api/vokabeltest/submit", async (req, res) => {
     const testId = clean(req.body?.testId);
     const firstName = clean(req.body?.firstName);
     const lastName = clean(req.body?.lastName);
@@ -283,7 +370,7 @@ function registerVokabeltestRoutes(app, opts) {
       });
     }
 
-    // ---- Auswertung ----
+    // ---- Auswertung: erst exakt, dann KI-Zweitmeinung ----
     const details = test.items.map((item, idx) => {
       const given = clean(answers[idx]);
       const result = checkAnswer(given, item.solutions);
@@ -293,15 +380,42 @@ function registerVokabeltestRoutes(app, opts) {
         given,
         correct: result.correct,
         typo: result.typo,
+        ai: false,
+        aiReason: "",
         expected: item.solutions.join(" / ")
       };
     });
 
+    // Nur die abgelehnten Antworten mit Inhalt der KI vorlegen.
+    const pending = details
+      .map((d, idx) => ({ d, item: test.items[idx] }))
+      .filter(({ d }) => !d.correct && d.given)
+      .map(({ d, item }) => ({
+        nr: d.nr,
+        prompt: d.prompt,
+        given: d.given,
+        direction: item.direction,
+        solutions: item.solutions
+      }));
+
+    if (pending.length) {
+      const verdicts = await aiReview(pending, askAnthropic);
+      for (const d of details) {
+        const v = verdicts[d.nr];
+        if (v && v.correct && !d.correct) {
+          d.correct = true;
+          d.ai = true;
+          d.aiReason = v.reason;
+        }
+      }
+    }
+
     const total = details.length;
     const score = details.filter((d) => d.correct).length;
     const typos = details.filter((d) => d.correct && d.typo).length;
+    const aiAccepted = details.filter((d) => d.correct && d.ai).length;
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const grade = gradeFromPercent(percent);
+    const grade = gradeFromPercent(percent, test.gradeScale);
 
     const record = {
       id: `vt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
@@ -311,7 +425,8 @@ function registerVokabeltestRoutes(app, opts) {
       firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
-      score, total, percent, grade, typos,
+      score, total, percent, grade, typos, aiAccepted,
+      gradeScale: test.gradeScale || "default",
       details,
       deviceHash: deviceHash(req, HASH_SECRET),
       submittedAt: new Date().toISOString()
@@ -323,10 +438,12 @@ function registerVokabeltestRoutes(app, opts) {
     res.json({
       ok: true,
       result: {
-        score, total, percent, grade, typos,
+        score, total, percent, grade, typos, aiAccepted,
         details: details.map((d) => ({
           nr: d.nr, prompt: d.prompt, given: d.given,
-          correct: d.correct, typo: d.typo, expected: d.expected
+          correct: d.correct, typo: d.typo,
+          ai: d.ai, aiReason: d.aiReason,
+          expected: d.expected
         })),
         submittedAt: record.submittedAt
       }
@@ -420,5 +537,6 @@ module.exports = {
   gradeFromPercent,
   checkAnswer,
   normalizeAnswer,
-  GRADE_SCALE
+  GRADE_SCALE,
+  GRADE_SCALE_8R
 };

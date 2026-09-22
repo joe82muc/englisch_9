@@ -44,7 +44,8 @@ registerVokabeltestRoutes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   tests: VOKABELTESTS,
-  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi"
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
+  askAnthropic: askAnthropic
 });
 
 // --- Netzwerktest-Modul (Informatik 9: Freischaltung, Abgabe, KI-Bewertung) ---
