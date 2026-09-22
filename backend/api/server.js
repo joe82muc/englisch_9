@@ -86,6 +86,17 @@ registerArgumentation7Routes(app, {
   askAnthropic
 });
 
+// --- Infoaustausch-Modul (Informatik 7 Lernbereich 1: Probe + KI-Rueckmeldung) ---
+const { registerInfoaustauschRoutes } = require("./infoaustausch");
+const { TESTS: INFOTESTS } = require("./infoaustausch-daten");
+registerInfoaustauschRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: INFOTESTS,
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
+  askAnthropic: askAnthropic
+});
+
 // Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
 app.use("/backend", (_req, res) => res.sendStatus(404));
 app.use(express.static(STATIC_ROOT));
@@ -122,7 +133,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-20-filius-de7-nt7",
+    version: "2026-09-22-infoaustausch-inf7",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
