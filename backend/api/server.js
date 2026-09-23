@@ -98,6 +98,10 @@ registerInfoaustauschRoutes(app, {
   askAnthropic: askAnthropic
 });
 
+// --- NT 9M/9R: KI-Rueckmeldung zu offenen Aufgaben ueber organische Rohstoffe ---
+const { registerKohlenstoffRoutes } = require("./kohlenstoff");
+registerKohlenstoffRoutes(app, { askAnthropic });
+
 // Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
 app.use("/backend", (_req, res) => res.sendStatus(404));
 app.use(express.static(STATIC_ROOT));
@@ -134,7 +138,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-22-infoaustausch-inf7",
+    version: "2026-09-23-organische-rohstoffe",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
