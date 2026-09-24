@@ -102,6 +102,10 @@ registerInfoaustauschRoutes(app, {
 const { registerKohlenstoffRoutes } = require("./kohlenstoff");
 registerKohlenstoffRoutes(app, { askAnthropic });
 
+// --- NT 7M: KI-Rueckmeldung zu offenen Uebungsaufgaben im Lernmodul Luft ---
+const { registerNt7UebungRoutes } = require("./nt7-uebung");
+registerNt7UebungRoutes(app, { askAnthropic });
+
 // Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
 app.use("/backend", (_req, res) => res.sendStatus(404));
 app.use(express.static(STATIC_ROOT));
