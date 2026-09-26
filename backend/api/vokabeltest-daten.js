@@ -426,6 +426,20 @@ const e8ru4t1 = {
   ]
 };
 
+/* ==================================================================
+   Englisch 9M - Unit 1 - Test 1 und 2
+   9M nutzt fuer Unit 1 denselben Vokabeltrainer wie 9R, deshalb auch
+   dieselben Woerter (nur Deutsch -> Englisch). Einziger Unterschied:
+   der M-Zug-Notenschluessel (50 % = Note 4, gradeScale "default").
+   ================================================================== */
+const asM = (t, id) => {
+  const copy = { ...t, id, unit: "Englisch 9M / Unit 1", classLevel: "9M" };
+  delete copy.gradeScale;
+  return copy;
+};
+const e9mu1t1 = asM(e9ru1t1, "e9m-u1-test1");
+const e9mu1t2 = asM(e9ru1t2, "e9m-u1-test2");
+
 const TESTS = {
   [e7u1t1.id]: e7u1t1,
   [e7u1t2.id]: e7u1t2,
@@ -434,7 +448,9 @@ const TESTS = {
   [e8ru3t1.id]: e8ru3t1,
   [e8ru4t1.id]: e8ru4t1,
   [e9ru1t1.id]: e9ru1t1,
-  [e9ru1t2.id]: e9ru1t2
+  [e9ru1t2.id]: e9ru1t2,
+  [e9mu1t1.id]: e9mu1t1,
+  [e9mu1t2.id]: e9mu1t2
 };
 
 module.exports = { TESTS };

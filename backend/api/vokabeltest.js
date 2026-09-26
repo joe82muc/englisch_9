@@ -21,7 +21,7 @@ const crypto = require("crypto");
 /* ------------------------------------------------------------------
    Notenschluessel
 
-   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7
+   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7 und 9M
    GRADE_SCALE_8R   milderer Schluessel (50 % = Note 3) - Englisch 8R
    GRADE_SCALE_9R   milderer Schluessel (50 % = Note 3) - Englisch 9R
 
