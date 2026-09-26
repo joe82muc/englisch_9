@@ -440,6 +440,129 @@ const asM = (t, id) => {
 const e9mu1t1 = asM(e9ru1t1, "e9m-u1-test1");
 const e9mu1t2 = asM(e9ru1t2, "e9m-u1-test2");
 
+/* ==================================================================
+   Englisch 7M und 7R - Unit 1 - Vokabeltests (Stand 26.09.2026)
+   Nur Deutsch -> Englisch: Deutsch ist vorgegeben, die Schueler
+   schreiben das englische Wort. Stehen zwei deutsche Bedeutungen da,
+   ist trotzdem nur EIN englisches Wort gesucht.
+
+   Test 1: Zoom in (British Isles) bis Numbers higher than 1,000
+   Test 2: Topic 2 bis Reading skills
+
+   7M und 7R schreiben dieselben Woerter, nur der Notenschluessel ist
+   verschieden: 7M = M-Zug (50 % = Note 4), 7R = "7R" (50 % = Note 3).
+   ================================================================== */
+const e7u1Words1 = [
+  // --- Zoom in: The British Isles ---
+  { prompt: "die Britischen Inseln", direction: "de-en", solutions: ["the British Isles; British Isles"] },
+  { prompt: "Nordirland", direction: "de-en", solutions: ["Northern Ireland"] },
+  { prompt: "Frankreich", direction: "de-en", solutions: ["France"] },
+  { prompt: "Alter; Zeitalter", direction: "de-en", solutions: ["age"] },
+
+  // --- Intro ---
+  { prompt: "unterwegs", direction: "de-en", solutions: ["out and about"] },
+  { prompt: "surfen gehen", direction: "de-en", solutions: ["to go surfing; go surfing"] },
+  { prompt: "Theater", direction: "de-en", solutions: ["theatre; theater"] },
+  { prompt: "Theaterstück", direction: "de-en", solutions: ["play"] },
+  { prompt: "Besuch; Besichtigung", direction: "de-en", solutions: ["visit"] },
+  { prompt: "Naturwissenschaft", direction: "de-en", solutions: ["science"] },
+  { prompt: "Ausstellung", direction: "de-en", solutions: ["exhibition"] },
+  { prompt: "Rakete", direction: "de-en", solutions: ["rocket"] },
+  { prompt: "Küste", direction: "de-en", solutions: ["coast"] },
+
+  // --- Topic 1: Manchester ---
+  { prompt: "im Nordwesten von", direction: "de-en", solutions: ["in the northwest of; in the north-west of"] },
+  { prompt: "Verkehr", direction: "de-en", solutions: ["traffic"], hint: "auf der Straße" },
+  { prompt: "laut", direction: "de-en", solutions: ["noisy; loud"] },
+  { prompt: "Vergangenheit", direction: "de-en", solutions: ["past; the past"] },
+  { prompt: "Fabrik", direction: "de-en", solutions: ["factory"] },
+  { prompt: "Kohle", direction: "de-en", solutions: ["coal"] },
+  { prompt: "Bergwerk", direction: "de-en", solutions: ["mine"] },
+  { prompt: "Ziege", direction: "de-en", solutions: ["goat"] },
+  { prompt: "Luft", direction: "de-en", solutions: ["air"] },
+  { prompt: "sauber", direction: "de-en", solutions: ["clean"] },
+
+  // --- Talking about places ---
+  { prompt: "leise; ruhig", direction: "de-en", solutions: ["quiet"] },
+  { prompt: "in der Nähe von", direction: "de-en", solutions: ["near"] },
+  { prompt: "weit weg sein", direction: "de-en", solutions: ["to be a long way away; be a long way away; to be far away; be far away"] },
+  { prompt: "Hauptstadt", direction: "de-en", solutions: ["capital; capital city"] },
+  { prompt: "Stadtzentrum", direction: "de-en", solutions: ["city centre; city center; town centre"] },
+
+  // --- Numbers higher than 1,000 ---
+  { prompt: "eintausendzweihundert", direction: "de-en", solutions: ["one thousand two hundred; a thousand two hundred; one thousand, two hundred"], hint: "in Worten" },
+  { prompt: "eine Million", direction: "de-en", solutions: ["a million; one million"], hint: "in Worten" }
+];
+
+const e7u1Words2 = [
+  // --- Topic 2: Free time ---
+  { prompt: "deine; eure", direction: "de-en", solutions: ["yours"], hint: "Is this pen ...?" },
+  { prompt: "ihre (von ihr)", direction: "de-en", solutions: ["hers"], hint: "The bag is ..." },
+  { prompt: "meine", direction: "de-en", solutions: ["mine"], hint: "The book is ..." },
+  { prompt: "unsere", direction: "de-en", solutions: ["ours"], hint: "The house is ..." },
+  { prompt: "ihre (von ihnen)", direction: "de-en", solutions: ["theirs"], hint: "The ball is ..." },
+  { prompt: "vormittags (Uhrzeit)", direction: "de-en", solutions: ["a.m.; am"] },
+  { prompt: "leider", direction: "de-en", solutions: ["I'm afraid; I am afraid; unfortunately"] },
+  { prompt: "gelegentlich", direction: "de-en", solutions: ["occasionally"] },
+  { prompt: "bestellen", direction: "de-en", solutions: ["to order; order"] },
+  { prompt: "klingen", direction: "de-en", solutions: ["to sound; sound"] },
+  { prompt: "gesund", direction: "de-en", solutions: ["healthy"] },
+  { prompt: "Kulissen; Bühnenbild", direction: "de-en", solutions: ["scenery"] },
+
+  // --- Text: The Globe Theatre ---
+  { prompt: "Schauspieler; Schauspielerin", direction: "de-en", solutions: ["actor"] },
+  { prompt: "besitzen", direction: "de-en", solutions: ["to own; own"] },
+  { prompt: "Miete", direction: "de-en", solutions: ["rent"] },
+  { prompt: "Bauarbeiter; Bauarbeiterin", direction: "de-en", solutions: ["builder"] },
+  { prompt: "tragen; befördern", direction: "de-en", solutions: ["to carry; carry"] },
+  { prompt: "verletzt", direction: "de-en", solutions: ["hurt; injured"] },
+
+  // --- Das kenne ich schon: jobs ---
+  { prompt: "Ingenieur; Ingenieurin", direction: "de-en", solutions: ["engineer"] },
+  { prompt: "Hausmeister; Hausmeisterin", direction: "de-en", solutions: ["caretaker"] },
+  { prompt: "Polizeibeamter; Polizeibeamtin", direction: "de-en", solutions: ["police officer; policeman; policewoman"] },
+  { prompt: "Zauberkünstler; Zauberkünstlerin", direction: "de-en", solutions: ["magician"] },
+  { prompt: "Bühne", direction: "de-en", solutions: ["stage"] },
+
+  // --- Film / Surfing ---
+  { prompt: "Welle", direction: "de-en", solutions: ["wave"] },
+  { prompt: "recht haben", direction: "de-en", solutions: ["to be right; be right"] },
+  { prompt: "großartig; hervorragend", direction: "de-en", solutions: ["brilliant; great"] },
+  { prompt: "Bis bald.", direction: "de-en", solutions: ["Bye for now; See you soon"] },
+
+  // --- More about ---
+  { prompt: "Kultur", direction: "de-en", solutions: ["culture"] },
+  { prompt: "Mode", direction: "de-en", solutions: ["fashion"] },
+  { prompt: "Erwachsener; Erwachsene", direction: "de-en", solutions: ["adult"] },
+  { prompt: "wichtig", direction: "de-en", solutions: ["important"] },
+  { prompt: "beliebt", direction: "de-en", solutions: ["popular"] },
+
+  // --- Reading skills ---
+  { prompt: "Werbung; Anzeige", direction: "de-en", solutions: ["advert; ad; advertisement"] },
+  { prompt: "Sammlung", direction: "de-en", solutions: ["collection"] },
+  { prompt: "Künstler; Künstlerin", direction: "de-en", solutions: ["artist"] }
+];
+
+function e7Test(klasse, nr, words, thema) {
+  const t = {
+    id: `e7${klasse.toLowerCase().slice(1)}-u1-test${nr}`,
+    title: `${klasse} · Vokabeltest ${nr} - ${thema}`,
+    unit: `Englisch ${klasse} / Unit 1`,
+    classLevel: klasse,
+    direction: "de-en",
+    items: words
+  };
+  // 7R: 50 % = Note 3. 7M: ohne Angabe = M-Zug-Schluessel (50 % = Note 4).
+  if (klasse === "7R") t.gradeScale = "7R";
+  return t;
+}
+const E7_THEMA1 = "Zoom in bis Numbers";
+const E7_THEMA2 = "Topic 2 bis Reading skills";
+const e7mu1t1 = e7Test("7M", 1, e7u1Words1, E7_THEMA1);
+const e7mu1t2 = e7Test("7M", 2, e7u1Words2, E7_THEMA2);
+const e7ru1t1 = e7Test("7R", 1, e7u1Words1, E7_THEMA1);
+const e7ru1t2 = e7Test("7R", 2, e7u1Words2, E7_THEMA2);
+
 const TESTS = {
   [e7u1t1.id]: e7u1t1,
   [e7u1t2.id]: e7u1t2,
@@ -450,7 +573,11 @@ const TESTS = {
   [e9ru1t1.id]: e9ru1t1,
   [e9ru1t2.id]: e9ru1t2,
   [e9mu1t1.id]: e9mu1t1,
-  [e9mu1t2.id]: e9mu1t2
+  [e9mu1t2.id]: e9mu1t2,
+  [e7mu1t1.id]: e7mu1t1,
+  [e7mu1t2.id]: e7mu1t2,
+  [e7ru1t1.id]: e7ru1t1,
+  [e7ru1t2.id]: e7ru1t2
 };
 
 module.exports = { TESTS };

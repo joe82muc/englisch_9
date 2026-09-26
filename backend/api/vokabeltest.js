@@ -21,9 +21,9 @@ const crypto = require("crypto");
 /* ------------------------------------------------------------------
    Notenschluessel
 
-   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7 und 9M
+   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7, 7M und 9M
    GRADE_SCALE_8R   milderer Schluessel (50 % = Note 3) - Englisch 8R
-   GRADE_SCALE_9R   milderer Schluessel (50 % = Note 3) - Englisch 9R
+   GRADE_SCALE_9R   milderer Schluessel (50 % = Note 3) - Englisch 9R und 7R ("7R")
 
    Welcher Schluessel gilt, steht an der Testdefinition im Feld
    "gradeScale". Ohne Angabe bleibt es beim bisherigen M-Zug-Schluessel,
@@ -56,7 +56,7 @@ const GRADE_SCALE_9R = [
   { grade: 6, min: 0 }
 ];
 
-const GRADE_SCALES = { "default": GRADE_SCALE, "8R": GRADE_SCALE_8R, "9R": GRADE_SCALE_9R };
+const GRADE_SCALES = { "default": GRADE_SCALE, "8R": GRADE_SCALE_8R, "9R": GRADE_SCALE_9R, "7R": GRADE_SCALE_9R };
 
 function gradeFromPercent(percent, scaleName) {
   const p = Number(percent) || 0;

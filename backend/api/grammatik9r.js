@@ -9,7 +9,8 @@
  *
  * Notenschluessel je Test (Feld "gradeScale"):
  *   "9R" (Standard) 50 Prozent = Note 3 - Englisch 9R
- *   "M"             50 Prozent = Note 4 - Englisch 9M (M-Zug)
+ *   "R"             wie "9R" - Englisch 7R
+ *   "M"             50 Prozent = Note 4 - Englisch 9M und 7M (M-Zug)
  * Englisch 9M Unit 1 nutzt dieselben Aufgaben wie 9R, nur mit "M".
  *
  * Aufgabentypen:
@@ -53,7 +54,7 @@ const GRADE_SCALE_M = [
   { grade: 6, min: 0 }
 ];
 
-const GRADE_SCALES = { "9R": GRADE_SCALE, "M": GRADE_SCALE_M };
+const GRADE_SCALES = { "9R": GRADE_SCALE, "R": GRADE_SCALE, "M": GRADE_SCALE_M };
 
 function gradeFromPercent(percent, scaleName) {
   const p = Number(percent) || 0;
@@ -125,34 +126,48 @@ function keywordScore(given, item) {
 /* ------------------------------------------------------------------
    KI-Regeln (gemeinsam fuer Luecken und Saetze)
    ------------------------------------------------------------------ */
-const KI_REGELN = [
-  "Du korrigierst eine Englisch-Grammatikarbeit einer 9. Klasse an einer",
-  "bayerischen Mittelschule. Themen: simple past, will-future, if-clauses Typ I,",
-  "present progressive.",
-  "",
-  "Es geht um die GRAMMATIK. Pruefe, ob die geforderte Zeitform richtig gebildet ist:",
+/* Klasse 9 (Unit 1 Blue Line 5): Standard, wenn ein Test nichts angibt */
+const KI_THEMEN_9 = [
   "- simple past: -ed bzw. richtige unregelmaessige Form, didn't + Grundform, was/were",
   "- will-future: will/won't + Grundform",
   "- if-clause I: simple present im if-Satz, will/can/Befehlsform im Hauptsatz",
-  "- present progressive: am/is/are + Verb-ing, richtige -ing-Schreibweise",
-  "",
-  "Kurzformen und Langformen sind gleichwertig (didn't = did not, I'll = I will).",
-  "Gross- und Kleinschreibung sowie Satzzeichen sind egal.",
-  "Rechtschreibfehler bei Vokabeln, die mit der Grammatik nichts zu tun haben, sind egal.",
-  "Fehler in der grammatischen Form selbst sind Fehler (z. B. 'goed', 'didn't went',",
-  "'swiming', 'If it will rain', fehlendes am/is/are, falsche Zeitform).",
-  "Die Schueler sind 14 bis 15 Jahre alt. Bewerte fair und im Zweifel wohlwollend."
-].join("\n");
+  "- present progressive: am/is/are + Verb-ing, richtige -ing-Schreibweise"
+];
+
+/**
+ * Bewertungsregeln fuer die KI. Klasse und Themen kommen aus der
+ * Testdefinition ("level", "kiThemen"), damit dasselbe Modul auch
+ * Tests anderer Jahrgangsstufen (z. B. Englisch 7) bewerten kann.
+ */
+function kiRegeln(test) {
+  const level = (test && test.level) || "9";
+  const themen = (test && test.kiThemen) || KI_THEMEN_9;
+  const alter = level === "7" ? "12 bis 13" : "14 bis 15";
+  return [
+    `Du korrigierst eine Englisch-Grammatikarbeit einer ${level}. Klasse an einer`,
+    "bayerischen Mittelschule.",
+    "",
+    "Es geht um die GRAMMATIK. Pruefe, ob die geforderte Form richtig gebildet ist:",
+    ...themen,
+    "",
+    "Kurzformen und Langformen sind gleichwertig (didn't = did not, I'll = I will).",
+    "Gross- und Kleinschreibung sowie Satzzeichen sind egal.",
+    "Rechtschreibfehler bei Vokabeln, die mit der Grammatik nichts zu tun haben, sind egal.",
+    "Fehler in der grammatischen Form selbst sind Fehler (z. B. 'goed', 'didn't went',",
+    "'he play', 'Does he likes', 'mine' vor einem Nomen, falsche Zeitform).",
+    `Die Schueler sind ${alter} Jahre alt. Bewerte fair und im Zweifel wohlwollend.`
+  ].join("\n");
+}
 
 /**
  * KI-Zweitmeinung fuer abgelehnte Luecken (Sammelaufruf).
  * Rueckgabe: { "<nr>-<gap>": { correct: true, reason } } - nur Aufwertungen.
  */
-async function aiReviewGaps(pending, askAnthropic) {
+async function aiReviewGaps(pending, askAnthropic, test) {
   if (!pending.length || typeof askAnthropic !== "function") return {};
 
   const system = [
-    KI_REGELN,
+    kiRegeln(test),
     "",
     "Du bekommst Luecken, die der exakte Vergleich abgelehnt hat. Entscheide je Luecke,",
     "ob die Antwort trotzdem grammatisch richtig ist und in den Satz passt",
@@ -187,14 +202,14 @@ async function aiReviewGaps(pending, askAnthropic) {
 }
 
 /** KI-Bewertung eines ganzen Satzes. Faellt bei Problemen auf keywordScore zurueck. */
-async function aiScoreText(given, item, askAnthropic) {
+async function aiScoreText(given, item, askAnthropic, test) {
   const max = Number(item.points) || 2;
   const text = clean(given);
   if (text.length < 4) return { points: 0, comment: "Keine Antwort abgegeben.", source: "leer" };
   if (typeof askAnthropic !== "function") return keywordScore(given, item);
 
   const system = [
-    KI_REGELN,
+    kiRegeln(test),
     "",
     `Vergib ganze Punkte von 0 bis ${max}:`,
     `- ${max} Punkte: Grammatik der geforderten Struktur stimmt und der Sinn ist getroffen.`,
@@ -446,7 +461,7 @@ function registerGrammatik9rRoutes(app, opts) {
     /* ---- 2. KI-Zweitmeinung fuer abgelehnte Luecken (nur Aufwertung) ---- */
     let aiUsed = false;
     if (pendingGaps.length) {
-      const verdicts = await aiReviewGaps(pendingGaps, askAnthropic);
+      const verdicts = await aiReviewGaps(pendingGaps, askAnthropic, test);
       for (const p of pendingGaps) {
         const v = verdicts[p.id];
         if (!v) continue;
@@ -467,7 +482,7 @@ function registerGrammatik9rRoutes(app, opts) {
       if (d.type !== "text") continue;
       const item = d.item;
       const max = Number(item.points) || 2;
-      const scored = await aiScoreText(d.given, item, askAnthropic);
+      const scored = await aiScoreText(d.given, item, askAnthropic, test);
       if (scored.source === "ki") aiUsed = true;
       if (scored.needsReview) needsReview = true;
       delete d.item;
@@ -615,6 +630,7 @@ module.exports = {
   normalize,
   checkGap,
   keywordScore,
+  kiRegeln,
   maxPoints,
   GRADE_SCALE,
   GRADE_SCALE_M
