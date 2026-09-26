@@ -21,8 +21,9 @@ const crypto = require("crypto");
 /* ------------------------------------------------------------------
    Notenschluessel
 
-   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7 und 9R
+   GRADE_SCALE      Mittelschule M-Zug (50 % = Note 4) - Englisch 7
    GRADE_SCALE_8R   milderer Schluessel (50 % = Note 3) - Englisch 8R
+   GRADE_SCALE_9R   milderer Schluessel (50 % = Note 3) - Englisch 9R
 
    Welcher Schluessel gilt, steht an der Testdefinition im Feld
    "gradeScale". Ohne Angabe bleibt es beim bisherigen M-Zug-Schluessel,
@@ -46,7 +47,16 @@ const GRADE_SCALE_8R = [
   { grade: 6, min: 0 }
 ];
 
-const GRADE_SCALES = { "default": GRADE_SCALE, "8R": GRADE_SCALE_8R };
+const GRADE_SCALE_9R = [
+  { grade: 1, min: 87 },
+  { grade: 2, min: 73 },
+  { grade: 3, min: 50 },
+  { grade: 4, min: 37 },
+  { grade: 5, min: 20 },
+  { grade: 6, min: 0 }
+];
+
+const GRADE_SCALES = { "default": GRADE_SCALE, "8R": GRADE_SCALE_8R, "9R": GRADE_SCALE_9R };
 
 function gradeFromPercent(percent, scaleName) {
   const p = Number(percent) || 0;
@@ -135,11 +145,11 @@ function checkAnswer(given, solutions) {
 
    @param askAnthropic  Funktion (system, user, maxTokens) => Promise<string>
    ------------------------------------------------------------------ */
-async function aiReview(pending, askAnthropic) {
+async function aiReview(pending, askAnthropic, classLevel) {
   if (!pending.length || typeof askAnthropic !== "function") return {};
 
   const system = [
-    "Du korrigierst einen Vokabeltest im Fach Englisch, 8. Klasse Mittelschule (Regelklasse).",
+    "Du korrigierst einen Vokabeltest im Fach Englisch, Klasse " + (classLevel || "8R") + " Mittelschule.",
     "",
     "Zu jeder Aufgabe bekommst du die Musterloesungen der Lehrkraft und die Antwort",
     "der Schuelerin oder des Schuelers. Entscheide, ob die Antwort die Vokabel trifft.",
@@ -399,7 +409,7 @@ function registerVokabeltestRoutes(app, opts) {
       }));
 
     if (pending.length) {
-      const verdicts = await aiReview(pending, askAnthropic);
+      const verdicts = await aiReview(pending, askAnthropic, test.classLevel);
       for (const d of details) {
         const v = verdicts[d.nr];
         if (v && v.correct && !d.correct) {
@@ -538,5 +548,6 @@ module.exports = {
   checkAnswer,
   normalizeAnswer,
   GRADE_SCALE,
-  GRADE_SCALE_8R
+  GRADE_SCALE_8R,
+  GRADE_SCALE_9R
 };

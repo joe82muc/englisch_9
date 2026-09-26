@@ -106,6 +106,17 @@ registerKohlenstoffRoutes(app, { askAnthropic });
 const { registerNt7UebungRoutes } = require("./nt7-uebung");
 registerNt7UebungRoutes(app, { askAnthropic });
 
+// --- Grammatik Englisch 9R (Grammatikprobe + Kurztests, KI-Bewertung, 50 % = Note 3) ---
+const { registerGrammatik9rRoutes } = require("./grammatik9r");
+const { TESTS: GRAMMATIK9R } = require("./grammatik9r-daten");
+registerGrammatik9rRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: GRAMMATIK9R,
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
+  askAnthropic: askAnthropic
+});
+
 // Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
 app.use("/backend", (_req, res) => res.sendStatus(404));
 app.use(express.static(STATIC_ROOT));
@@ -142,7 +153,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-23-organische-rohstoffe",
+    version: "2026-09-26-englisch9r-grammatik",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
