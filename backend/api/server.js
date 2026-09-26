@@ -106,7 +106,7 @@ registerKohlenstoffRoutes(app, { askAnthropic });
 const { registerNt7UebungRoutes } = require("./nt7-uebung");
 registerNt7UebungRoutes(app, { askAnthropic });
 
-// --- Grammatik Englisch 9R (Grammatikprobe + Kurztests, KI-Bewertung, 50 % = Note 3) ---
+// --- Grammatik Englisch 9R/9M (Grammatikprobe + Kurztests, KI-Bewertung; 9R 50 % = Note 3, 9M 50 % = Note 4) ---
 const { registerGrammatik9rRoutes } = require("./grammatik9r");
 const { TESTS: GRAMMATIK9R } = require("./grammatik9r-daten");
 registerGrammatik9rRoutes(app, {
@@ -153,7 +153,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-26-englisch9m-vokabeltests",
+    version: "2026-09-26-englisch9m-grammatik",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

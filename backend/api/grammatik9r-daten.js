@@ -209,6 +209,20 @@ const ktG4 = {
   ]
 };
 
+/* ==================================================================
+   Englisch 9M - Unit 1
+   Dieselben Aufgaben wie 9R (9M uebernimmt die Grammatikseiten von 9R),
+   aber mit M-Zug-Notenschluessel: 50 % = Note 4.
+   ================================================================== */
+const asM = (t) => ({
+  ...t,
+  id: t.id.replace(/^e9r-/, "e9m-"),
+  unit: "Englisch 9M / Unit 1",
+  classLevel: "9M",
+  gradeScale: "M"
+});
+const m9 = [probeU1, ktG1, ktG2, ktG3, ktG4].map(asM);
+
 const TESTS = {
   [probeU1.id]: probeU1,
   [ktG1.id]: ktG1,
@@ -216,5 +230,6 @@ const TESTS = {
   [ktG3.id]: ktG3,
   [ktG4.id]: ktG4
 };
+m9.forEach((t) => { TESTS[t.id] = t; });
 
 module.exports = { TESTS };

@@ -7,7 +7,10 @@
  * G2 will-future, G3 if-clauses I, G4 present progressive).
  * Aufgebaut wie das Infoaustausch-Modul (Informatik 7).
  *
- * Notenschluessel 9R: 50 Prozent = Note 3 (wie beim 9R-Vokabeltest).
+ * Notenschluessel je Test (Feld "gradeScale"):
+ *   "9R" (Standard) 50 Prozent = Note 3 - Englisch 9R
+ *   "M"             50 Prozent = Note 4 - Englisch 9M (M-Zug)
+ * Englisch 9M Unit 1 nutzt dieselben Aufgaben wie 9R, nur mit "M".
  *
  * Aufgabentypen:
  *   - "gap":    Luecken im Satz ("___"). Jede Luecke ist 1 Punkt.
@@ -28,7 +31,9 @@ const path = require("path");
 const crypto = require("crypto");
 
 /* ------------------------------------------------------------------
-   Notenschluessel 9R (50 % = Note 3)
+   Notenschluessel
+   GRADE_SCALE    9R (50 % = Note 3) - Standard, wenn ein Test nichts angibt
+   GRADE_SCALE_M  M-Zug (50 % = Note 4) - wie der M-Zug-Vokabeltest
    ------------------------------------------------------------------ */
 const GRADE_SCALE = [
   { grade: 1, min: 87 },
@@ -39,9 +44,21 @@ const GRADE_SCALE = [
   { grade: 6, min: 0 }
 ];
 
-function gradeFromPercent(percent) {
+const GRADE_SCALE_M = [
+  { grade: 1, min: 92 },
+  { grade: 2, min: 81 },
+  { grade: 3, min: 67 },
+  { grade: 4, min: 50 },
+  { grade: 5, min: 30 },
+  { grade: 6, min: 0 }
+];
+
+const GRADE_SCALES = { "9R": GRADE_SCALE, "M": GRADE_SCALE_M };
+
+function gradeFromPercent(percent, scaleName) {
   const p = Number(percent) || 0;
-  for (const step of GRADE_SCALE) {
+  const scale = GRADE_SCALES[scaleName] || GRADE_SCALE;
+  for (const step of scale) {
     if (p >= step.min) return step.grade;
   }
   return 6;
@@ -109,7 +126,7 @@ function keywordScore(given, item) {
    KI-Regeln (gemeinsam fuer Luecken und Saetze)
    ------------------------------------------------------------------ */
 const KI_REGELN = [
-  "Du korrigierst eine Englisch-Grammatikarbeit einer 9. Klasse (Regelklasse) an einer",
+  "Du korrigierst eine Englisch-Grammatikarbeit einer 9. Klasse an einer",
   "bayerischen Mittelschule. Themen: simple past, will-future, if-clauses Typ I,",
   "present progressive.",
   "",
@@ -465,7 +482,7 @@ function registerGrammatik9rRoutes(app, opts) {
     const total = maxPoints(test);
     const score = details.reduce((sum, d) => sum + d.points, 0);
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const grade = gradeFromPercent(percent);
+    const grade = gradeFromPercent(percent, test.gradeScale);
 
     const record = {
       id: `g9r_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
@@ -473,6 +490,7 @@ function registerGrammatik9rRoutes(app, opts) {
       firstName, lastName, className, studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade, aiUsed, needsReview,
+      gradeScale: test.gradeScale || "9R",
       details,
       deviceHash: deviceHash(req, HASH_SECRET),
       submittedAt: new Date().toISOString()
@@ -551,7 +569,7 @@ function registerGrammatik9rRoutes(app, opts) {
     det.scoredBy = "lehrkraft";
     rec.score = rec.details.reduce((sum, d) => sum + d.points, 0);
     rec.percent = rec.total ? Math.round((rec.score / rec.total) * 100) : 0;
-    rec.grade = gradeFromPercent(rec.percent);
+    rec.grade = gradeFromPercent(rec.percent, rec.gradeScale || TESTS[rec.testId]?.gradeScale);
     rec.needsReview = rec.details.some((d) => d.scoredBy === "keywords");
     store.saveSubmissions(db);
     res.json({ ok: true, score: rec.score, percent: rec.percent, grade: rec.grade });
@@ -598,5 +616,6 @@ module.exports = {
   checkGap,
   keywordScore,
   maxPoints,
-  GRADE_SCALE
+  GRADE_SCALE,
+  GRADE_SCALE_M
 };
