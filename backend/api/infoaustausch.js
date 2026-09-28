@@ -14,7 +14,13 @@
  *
  * Aufgabentypen der Probe:
  *   - "choice": Anklicken, serverseitig exakt ausgewertet
+ *   - "match":  Zuordnen, jede Zeile bekommt eine Option (1 Punkt je Zeile)
  *   - "text":   Freier Text, den die KI auf Sinnhaftigkeit prueft
+ *
+ * Mehrfach nutzbar: Informatik 8 registriert dieselben Routen ein zweites
+ * Mal mit eigenem Pfad (opts.prefix), eigenen Dateien (opts.storeName),
+ * eigenem Notenschluessel (opts.gradeScale) und eigenem KI-Text
+ * (opts.kiRegeln). Ohne diese Angaben gilt alles fuer Informatik 7.
  *
  * Bewertung des freien Textes (Absprache mit der Lehrkraft):
  *   WOHLWOLLEND. Bewertet wird, ob die Aussage fachlich richtig ist.
@@ -46,9 +52,9 @@ const GRADE_SCALE = [
   { grade: 6, min: 0 }
 ];
 
-function gradeFromPercent(percent) {
+function gradeFromPercent(percent, scale = GRADE_SCALE) {
   const p = Number(percent) || 0;
-  for (const step of GRADE_SCALE) {
+  for (const step of scale) {
     if (p >= step.min) return step.grade;
   }
   return 6;
@@ -129,7 +135,7 @@ function keywordScore(given, item) {
  *
  * @param askAnthropic  Funktion (system, user, maxTokens) => Promise<string>
  */
-async function aiScore(given, item, askAnthropic) {
+async function aiScore(given, item, askAnthropic, regeln = KI_REGELN) {
   const max = Number(item.points) || 2;
   const text = clean(given);
 
@@ -141,7 +147,7 @@ async function aiScore(given, item, askAnthropic) {
   }
 
   const system = [
-    KI_REGELN,
+    regeln,
     "",
     `Vergib ganze Punkte von 0 bis ${max}.`,
     "",
@@ -180,9 +186,9 @@ async function aiScore(given, item, askAnthropic) {
 /* ------------------------------------------------------------------
    Datenhaltung
    ------------------------------------------------------------------ */
-function createStore(dataDir) {
-  const UNLOCK_FILE = path.join(dataDir, "infoaustausch.json");
-  const SUBMISSIONS_FILE = path.join(dataDir, "infoaustausch_abgaben.json");
+function createStore(dataDir, name = "infoaustausch") {
+  const UNLOCK_FILE = path.join(dataDir, `${name}.json`);
+  const SUBMISSIONS_FILE = path.join(dataDir, `${name}_abgaben.json`);
 
   function ensure() {
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -245,9 +251,18 @@ function deviceHash(req, secret) {
  * @param opts.tests           Testdefinitionen (mit Loesungen, bleiben hier)
  * @param opts.hashSecret      Secret fuer die Geraetekennung
  * @param opts.askAnthropic    Funktion fuer die KI-Bewertung (optional)
+ * @param opts.prefix          Pfad der Routen (Standard /api/infoaustausch)
+ * @param opts.storeName       Name der JSON-Dateien (Standard infoaustausch)
+ * @param opts.gradeScale      eigener Notenschluessel (Standard GRADE_SCALE)
+ * @param opts.kiRegeln        eigener Bewertungstext fuer die KI (Standard KI_REGELN)
  */
 function registerInfoaustauschRoutes(app, opts) {
-  const store = createStore(opts.dataDir);
+  const P = opts.prefix || "/api/infoaustausch";
+  const NAME = opts.storeName || "infoaustausch";
+  const SCALE = opts.gradeScale || GRADE_SCALE;
+  const REGELN = opts.kiRegeln || KI_REGELN;
+  const grade = (percent) => gradeFromPercent(percent, SCALE);
+  const store = createStore(opts.dataDir, NAME);
   const TESTS = opts.tests || {};
   const TEACHER_PASSWORD = opts.teacherPassword;
   const HASH_SECRET = opts.hashSecret || "grumi-fallback-secret";
@@ -255,8 +270,10 @@ function registerInfoaustauschRoutes(app, opts) {
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
+  // Zuordnen: ein Punkt je Zeile
+  const itemPoints = (it) => it.type === "match" ? it.rows.length : (Number(it.points) || 1);
   const maxPoints = (test) =>
-    test.items.reduce((sum, it) => sum + (Number(it.points) || 1), 0);
+    test.items.reduce((sum, it) => sum + itemPoints(it), 0);
 
   /* ================================================================
      UEBUNGSMODULE: sofortige KI-Rueckmeldung zu freien Texten
@@ -265,7 +282,7 @@ function registerInfoaustauschRoutes(app, opts) {
      speichert nichts. Die acht Lernmodule rufen sie auf, damit die
      Schueler beim Ueben sofort erfahren, ob ihre Antwort stimmt.
      ================================================================ */
-  app.post("/api/infoaustausch/feedback", async (req, res) => {
+  app.post(P + "/feedback", async (req, res) => {
     const frage = clean(req.body?.frage);
     const erwartet = clean(req.body?.erwartet);
     const antwort = clean(req.body?.antwort);
@@ -290,7 +307,7 @@ function registerInfoaustauschRoutes(app, opts) {
     }
 
     const system = [
-      KI_REGELN,
+      REGELN,
       "",
       "Das hier ist eine UEBUNGSAUFGABE, keine Probe. Sei besonders ermutigend.",
       "Wenn die Antwort im Kern stimmt, ist sie richtig.",
@@ -337,7 +354,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Oeffentlich: Liste der Proben (OHNE Loesungen) ---------- */
-  app.get("/api/infoaustausch/list", (_req, res) => {
+  app.get(P + "/list", (_req, res) => {
     const unlocks = store.loadUnlocks();
     const list = Object.values(TESTS).map((t) => ({
       id: t.id,
@@ -352,7 +369,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Schueler: Probe starten ---------- */
-  app.post("/api/infoaustausch/start", (req, res) => {
+  app.post(P + "/start", (req, res) => {
     const testId = clean(req.body?.testId);
     const firstName = clean(req.body?.firstName);
     const lastName = clean(req.body?.lastName);
@@ -391,10 +408,11 @@ function registerInfoaustauschRoutes(app, opts) {
       nr: idx + 1,
       type: it.type,
       prompt: it.prompt,
-      options: it.type === "choice" ? it.options : undefined,
+      options: it.type === "choice" || it.type === "match" ? it.options : undefined,
+      rows: it.type === "match" ? it.rows.map((r) => r.text) : undefined,
       image: it.image || "",
       imageAlt: it.imageAlt || "",
-      points: Number(it.points) || 1,
+      points: itemPoints(it),
       lines: it.lines || 3
     }));
 
@@ -411,7 +429,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Schueler: Abgabe ---------- */
-  app.post("/api/infoaustausch/submit", async (req, res) => {
+  app.post(P + "/submit", async (req, res) => {
     const testId = clean(req.body?.testId);
     const firstName = clean(req.body?.firstName);
     const lastName = clean(req.body?.lastName);
@@ -449,10 +467,35 @@ function registerInfoaustauschRoutes(app, opts) {
 
     for (let idx = 0; idx < test.items.length; idx++) {
       const item = test.items[idx];
-      const max = Number(item.points) || 1;
+      const max = itemPoints(item);
       const raw = answers[idx];
 
-      if (item.type === "choice") {
+      if (item.type === "match") {
+        const picked = Array.isArray(raw) ? raw : [];
+        const optionText = (k) => {
+          const n = Number.isInteger(k) ? k : parseInt(k, 10);
+          return Number.isInteger(n) && item.options[n] !== undefined ? item.options[n] : "";
+        };
+        let hits = 0;
+        const given = [];
+        const expected = [];
+        item.rows.forEach((row, r) => {
+          const chosen = optionText(picked[r]);
+          if (chosen && chosen === item.options[row.answer]) hits++;
+          given.push(`${row.text} → ${chosen || "–"}`);
+          expected.push(`${row.text} → ${item.options[row.answer]}`);
+        });
+        details.push({
+          nr: idx + 1,
+          type: "match",
+          prompt: item.prompt,
+          given: given.join(" | "),
+          correct: hits === max,
+          points: hits,
+          maxPoints: max,
+          expected: expected.join(" | ")
+        });
+      } else if (item.type === "choice") {
         const picked = Number.isInteger(raw) ? raw : parseInt(raw, 10);
         const correct = picked === item.answer;
         details.push({
@@ -468,7 +511,7 @@ function registerInfoaustauschRoutes(app, opts) {
         });
       } else {
         const given = clean(raw);
-        const scored = await aiScore(given, item, askAnthropic);
+        const scored = await aiScore(given, item, askAnthropic, REGELN);
         if (scored.source === "ki") aiUsed = true;
         if (scored.needsReview) needsReview = true;
         details.push({
@@ -489,7 +532,7 @@ function registerInfoaustauschRoutes(app, opts) {
     const total = maxPoints(test);
     const score = details.reduce((sum, d) => sum + d.points, 0);
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const grade = gradeFromPercent(percent);
+    const note = grade(percent);
 
     const record = {
       id: `ia_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
@@ -499,7 +542,7 @@ function registerInfoaustauschRoutes(app, opts) {
       firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
-      score, total, percent, grade,
+      score, total, percent, grade: note,
       aiUsed, needsReview,
       details,
       deviceHash: deviceHash(req, HASH_SECRET),
@@ -512,7 +555,7 @@ function registerInfoaustauschRoutes(app, opts) {
     res.json({
       ok: true,
       result: {
-        score, total, percent, grade,
+        score, total, percent, grade: note,
         needsReview,
         details: details.map((d) => ({
           nr: d.nr, type: d.type, prompt: d.prompt, given: d.given,
@@ -525,7 +568,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Lehrkraft: Freischalten / Sperren ---------- */
-  app.post("/api/infoaustausch/unlock", (req, res) => {
+  app.post(P + "/unlock", (req, res) => {
     if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
 
     const testId = clean(req.body?.testId);
@@ -540,7 +583,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Lehrkraft: Ergebnisse ---------- */
-  app.post("/api/infoaustausch/results", (req, res) => {
+  app.post(P + "/results", (req, res) => {
     if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
 
     const testId = clean(req.body?.testId);
@@ -568,7 +611,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Lehrkraft: Punkte einer freien Antwort korrigieren ---------- */
-  app.post("/api/infoaustausch/override", (req, res) => {
+  app.post(P + "/override", (req, res) => {
     if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
 
     const id = clean(req.body?.submissionId);
@@ -591,7 +634,7 @@ function registerInfoaustauschRoutes(app, opts) {
 
     rec.score = rec.details.reduce((sum, d) => sum + d.points, 0);
     rec.percent = rec.total ? Math.round((rec.score / rec.total) * 100) : 0;
-    rec.grade = gradeFromPercent(rec.percent);
+    rec.grade = grade(rec.percent);
     rec.needsReview = rec.details.some((d) => d.scoredBy === "keywords");
 
     store.saveSubmissions(db);
@@ -599,7 +642,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Lehrkraft: Abgabe loeschen (Nachschreiben) ---------- */
-  app.post("/api/infoaustausch/delete-submission", (req, res) => {
+  app.post(P + "/delete-submission", (req, res) => {
     if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
 
     const id = clean(req.body?.submissionId);
@@ -614,7 +657,7 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Lehrkraft: Export als CSV (oeffnet sich in Excel) ---------- */
-  app.post("/api/infoaustausch/export", (req, res) => {
+  app.post(P + "/export", (req, res) => {
     if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
 
     const testId = clean(req.body?.testId);
@@ -632,7 +675,7 @@ function registerInfoaustauschRoutes(app, opts) {
     });
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="infoaustausch_${testId || "alle"}.csv"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${NAME}_${testId || "alle"}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
 }
@@ -642,5 +685,6 @@ module.exports = {
   gradeFromPercent,
   aiScore,
   keywordScore,
-  GRADE_SCALE
+  GRADE_SCALE,
+  KI_REGELN
 };

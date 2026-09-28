@@ -108,6 +108,22 @@ registerInfoaustauschRoutes(app, {
   askAnthropic: askAnthropic
 });
 
+// --- Informatik 8M/8R: Uebungsstunden mit KI-Rueckmeldung + Probe (50 % = Note 3) ---
+// Gleiche Routen wie Informatik 7, aber unter /api/informatik8 mit eigenem Schluessel.
+// Die KI faellt auf Azure OpenAI zurueck, wenn Anthropic nicht antwortet.
+const { TESTS: INF8TESTS, GRADE_SCALE: INF8_SCALE, KI_REGELN: INF8_REGELN } = require("./informatik8-daten");
+registerInfoaustauschRoutes(app, {
+  prefix: "/api/informatik8",
+  storeName: "informatik8",
+  gradeScale: INF8_SCALE,
+  kiRegeln: INF8_REGELN,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: INF8TESTS,
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
+  askAnthropic: askKiMitErsatz
+});
+
 // --- NT 9M/9R: KI-Rueckmeldung zu offenen Aufgaben ueber organische Rohstoffe ---
 const { registerKohlenstoffRoutes } = require("./kohlenstoff");
 registerKohlenstoffRoutes(app, { askAnthropic });
@@ -189,7 +205,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-28-deutsch7-module-aicheck",
+    version: "2026-09-28-informatik8-probe",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
@@ -1892,6 +1908,24 @@ function uniqueModels(models) {
     out.push(v);
   }
   return out;
+}
+
+// Erst Anthropic, bei Fehler oder leerer Antwort Azure OpenAI (z. B. wenn das Anthropic-Guthaben leer ist)
+async function askKiMitErsatz(system, user, maxTokens) {
+  let fehler = null;
+  if (ANTHROPIC_API_KEY) {
+    try {
+      const raw = await askAnthropic(system, user, maxTokens);
+      if (raw) return raw;
+    } catch (e) {
+      fehler = e;
+    }
+  }
+  if (AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT) {
+    return askAzureOpenAI(system, user, maxTokens);
+  }
+  if (fehler) throw fehler;
+  return "";
 }
 
 async function askAzureOpenAI(system, user, maxTokens) {
