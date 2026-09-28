@@ -660,4 +660,4 @@ function csvValue(value) {
   return `"${safe.replace(/"/g, '""')}"`;
 }
 
-module.exports = { registerArgumentation7Routes, TOPICS, STAGES };
+module.exports = { registerArgumentation7Routes, requireStudent, requireTeacher, TOPICS, STAGES };

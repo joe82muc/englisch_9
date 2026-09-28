@@ -79,12 +79,22 @@ registerNt7Routes(app, {
 });
 
 // --- Deutsch 7M: Argumentationstrainer mit revisionsfaehigem KI-Feedback ---
-const { registerArgumentation7Routes } = require("./argumentation7");
+const { registerArgumentation7Routes, requireStudent: requireDe7Student, requireTeacher: requireDe7Teacher } = require("./argumentation7");
+const DE7_SECRET = process.env.ARGUMENTATION7_SECRET || `${TEACHER_PASSWORD}|de7-argumentation`;
 registerArgumentation7Routes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
-  hashSecret: process.env.ARGUMENTATION7_SECRET || `${TEACHER_PASSWORD}|de7-argumentation`,
+  hashSecret: DE7_SECRET,
   askAnthropic
+});
+
+// --- Deutsch 7M/7R: Lernmodule Argumentieren und Diskutieren (Buch S. 22-25), gleiche Anmeldung wie der Trainer ---
+const { registerDeutsch7ModuleRoutes } = require("./deutsch7-module");
+registerDeutsch7ModuleRoutes(app, {
+  dataDir: DATA_DIR,
+  askAnthropic,
+  requireStudent: (req, res) => requireDe7Student(req, res, DE7_SECRET),
+  requireTeacher: (req, res) => requireDe7Teacher(req, res, TEACHER_PASSWORD)
 });
 
 // --- Infoaustausch-Modul (Informatik 7 Lernbereich 1: Probe + KI-Rueckmeldung) ---
@@ -154,7 +164,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-26-englisch7-tests",
+    version: "2026-09-28-deutsch7-module",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
