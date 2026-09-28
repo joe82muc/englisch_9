@@ -160,11 +160,36 @@ app.get("/", (_req, res) => {
   return res.send("Englisch 9 hint server laeuft. OK");
 });
 
+// Diagnose: prueft mit einer Mini-Anfrage, ob die Anthropic-KI antwortet (Ergebnis 10 min zwischengespeichert, ohne Schluessel)
+let aiCheckCache = null;
+app.get("/api/health/ai", async (_req, res) => {
+  if (aiCheckCache && Date.now() - aiCheckCache.at < 10 * 60 * 1000) return res.json(aiCheckCache.result);
+  const results = [];
+  for (const model of uniqueModels([ANTHROPIC_MODEL, "claude-haiku-4-5", "claude-sonnet-5"])) {
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({ model, max_tokens: 5, messages: [{ role: "user", content: "Antworte nur mit OK." }] })
+      });
+      const raw = await response.text();
+      let message = "";
+      try { const data = JSON.parse(raw); message = data?.error?.message || data?.error?.type || ""; } catch (_error) { message = raw.slice(0, 120); }
+      results.push({ model, status: response.status, ok: response.ok, error: response.ok ? "" : String(message).slice(0, 160) });
+    } catch (error) {
+      results.push({ model, status: 0, ok: false, error: String(error.message || error).slice(0, 160) });
+    }
+  }
+  const result = { ok: results.some((item) => item.ok), keyConfigured: Boolean(ANTHROPIC_API_KEY), results, time: new Date().toISOString() };
+  aiCheckCache = { at: Date.now(), result };
+  return res.json(result);
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-28-deutsch7-module",
+    version: "2026-09-28-deutsch7-module-aicheck",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
