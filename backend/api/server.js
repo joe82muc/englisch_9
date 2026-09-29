@@ -205,7 +205,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-28-informatik8-probe",
+    version: "2026-09-29-informatik8-probe-module-xlsx",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

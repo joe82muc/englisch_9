@@ -11,14 +11,21 @@
  *   type: "choice" -> Anklicken, answer = Index der richtigen Option
  *   type: "match"  -> Zuordnen, jede Zeile waehlt eine Option (1 Punkt je Zeile)
  *   type: "text"   -> Freier Text, die KI prueft den Inhalt (wohlwollend)
- *                     expected: Musterloesung, keywords: Notfall ohne KI
+ *                     expected: Musterloesung, kriterien: Punkteverteilung fuer die KI,
+ *                     keywords: Notfall ohne KI
  *
- * Aufbau: 40 Punkte, orientiert an den Aufgaben der sechs Stunden
- *   Teil A  Aufgabe  1-12  Anklicken               12 Punkte
- *   Teil B  Aufgabe 13-15  Zuordnen                12 Punkte
- *   Teil C  Aufgabe 16-23  Erklaeren (KI prueft)   16 Punkte
+ * Aufbau (Absprache mit der Lehrkraft, 29.09.2026): Die Probe ist bewusst
+ * einfach und fragt fast woertlich ab, was in den sechs Modulen geuebt wurde.
+ *   Modul 1-6    je 4 Aufgaben = je 6 Punkte   36 Punkte
+ *                (2x Anklicken, 1x Zuordnen mit 2 Zeilen, 1x Erklaeren)
+ *   Transfer     2 neue Situationen           4 Punkte
+ *   gesamt       26 Aufgaben                   40 Punkte
+ *
+ * Note 1 gibt es ab 35 Punkten. Wer ein ganzes Modul nicht kann (6 Punkte),
+ * kommt hoechstens auf 34 Punkte und damit nicht mehr auf die Note 1.
  *
  * Notenschluessel: 50 Prozent sind Note 3 (siehe GRADE_SCALE unten).
+ *   Punkte: 1 = 35-40, 2 = 29-34, 3 = 20-28, 4 = 15-19, 5 = 8-14, 6 = 0-7
  */
 
 const GRADE_SCALE = [
@@ -38,274 +45,337 @@ const KI_REGELN = [
   "Webseiten und Apps, Menue, Navigation, Impressum, Datenschutzerklaerung, Datenspuren,",
   "Cookies, personenbezogene Daten, Privatsphaere).",
   "",
+  "Bewerte SEHR WOHLWOLLEND. Die Probe ist bewusst einfach gehalten.",
   "Bewerte AUSSCHLIESSLICH, ob die Antwort inhaltlich sinnvoll und fachlich richtig ist.",
   "Rechtschreibung, Grammatik, Zeichensetzung und Ausdruck sind voellig egal.",
   "Umgangssprache, Stichworte und eigene Worte sind ausdruecklich erlaubt.",
   "Fachbegriffe muessen NICHT genannt werden, wenn die Sache richtig beschrieben ist.",
-  "Bewerte wohlwollend: Im Zweifel entscheide zugunsten der Schuelerin oder des Schuelers.",
+  "Wenn die Antwort im Kern stimmt, gib die volle Punktzahl.",
+  "Die Musterloesung ist nur ein Beispiel: Jede andere fachlich richtige Antwort zaehlt genauso.",
+  "Wenn die Lehrkraft eine Punkteverteilung angibt, halte dich daran.",
+  "Eine zusaetzliche ungenaue Nebenbemerkung zieht keine Punkte ab, solange das Richtige erkennbar ist.",
+  "Im Zweifel entscheide zugunsten der Schuelerin oder des Schuelers.",
   "Die Schueler sind 13 bis 14 Jahre alt - erwarte keine perfekten Formulierungen.",
   "Eine unvollstaendige, aber richtige Antwort bekommt Teilpunkte.",
-  "Falsche oder themenfremde Aussagen bekommen 0 Punkte."
+  "0 Punkte nur, wenn die Antwort leer, falsch oder themenfremd ist.",
+  "Die Rueckmeldung ist freundlich und direkt an die Schuelerin oder den Schueler gerichtet (per du)."
 ].join("\n");
+
+const M1 = "Modul 1 · Was sind Rechnernetze?";
+const M2 = "Modul 2 · Kommunikation in Rechnernetzen";
+const M3 = "Modul 3 · Digitale Informationssysteme";
+const M4 = "Modul 4 · Aufbau von Webseiten und Apps";
+const M5 = "Modul 5 · Datenschutz und Cookies";
+const M6 = "Modul 6 · Lernbilanz: Fachbegriffe anwenden";
+const TR = "Transfer · Wende dein Wissen an";
 
 const inf8Probe1 = {
   id: "inf8-probe1",
   title: "Probe Digitaler Informationsaustausch",
-  unit: "Informatik 8 · Rechnernetze, Informationssysteme, Datenschutz",
+  unit: "Informatik 8 · Module 1 bis 6 und Transfer",
   classLevel: "8",
   items: [
 
-    /* ================= Teil A: Anklicken ================= */
-
+    /* ================= Modul 1: Rechnernetze ================= */
     {
+      teil: M1,
       type: "choice",
-      prompt: "Was beschreibt ein Rechnernetz am besten?",
+      prompt: "Wann entsteht ein Rechnernetz?",
       options: [
-        "Mehrere digitale Geräte, die so verbunden sind, dass sie Daten austauschen können",
-        "Viele Computer, die im selben Raum stehen",
-        "Ein einzelner Computer mit sehr großem Bildschirm",
-        "Ein Drucker mit vielen Papierfächern"
+        "Wenn mehrere digitale Geräte so verbunden sind, dass sie Daten austauschen können.",
+        "Wenn viele Computer im selben Raum stehen.",
+        "Wenn ein Computer eingeschaltet ist.",
+        "Wenn ein Drucker genug Papier hat."
       ],
       answer: 0,
       points: 1
     },
     {
+      teil: M1,
       type: "choice",
-      prompt: "Welche Aufgabe hat ein Router?",
+      prompt: "Welche Aufgabe hat der Router zu Hause?",
       options: [
         "Er druckt Dateien aus.",
-        "Er leitet Daten zwischen Netzen weiter, zum Beispiel zwischen Heimnetz und Internet.",
-        "Er speichert alle Passwörter der Klasse.",
-        "Er ist das Programm, mit dem man Webseiten anschaut."
+        "Er verbindet die Geräte und leitet die Daten ins Internet weiter.",
+        "Er speichert alle Fotos der Familie.",
+        "Er lädt die Akkus der Handys auf."
       ],
       answer: 1,
       points: 1
     },
     {
+      teil: M1,
+      type: "match",
+      prompt: "Kabel oder Funk? Ordne zu.",
+      options: ["LAN (Kabel)", "WLAN (Funk)"],
+      rows: [
+        { text: "Der Schulcomputer steckt mit einem Netzwerkkabel in der Wanddose.", answer: 0 },
+        { text: "Dein Handy ist zu Hause im Netz, ohne dass ein Kabel steckt.", answer: 1 }
+      ]
+    },
+    {
+      teil: M1,
+      type: "text",
+      prompt: "Nenne zwei Dienste, die man über ein Rechnernetz nutzen kann.",
+      expected: "Zum Beispiel Drucken, Dateien speichern (Cloud, Schulserver), E-Mails versenden, Webseiten anzeigen, die Lernplattform nutzen, Videos schauen oder chatten.",
+      kriterien: "Je passender Dienst 1 Punkt (höchstens 2). Auch Beispiele wie „Videos streamen“, „WhatsApp“, „online spielen“ oder „im Internet suchen“ zählen.",
+      keywords: ["druck", "speicher", "cloud", "mail", "webseite", "internet", "lernplattform", "video", "chat", "spiel", "such"],
+      points: 2,
+      lines: 2
+    },
+
+    /* ================= Modul 2: Kommunikation ================= */
+    {
+      teil: M2,
       type: "choice",
-      prompt: "Was ist ein Protokoll?",
-      options: [
-        "ein Netzwerkkabel",
-        "ein gleichberechtigtes Gerät im Netz",
-        "eine Regel, wie Geräte im Netz Daten austauschen",
-        "eine Webseite mit Angaben zum Anbieter"
-      ],
+      prompt: "Wie nennt man die Regeln für den Datenaustausch in Netzen?",
+      options: ["Router", "Peers", "Protokolle", "Cookies"],
       answer: 2,
       points: 1
     },
     {
+      teil: M2,
       type: "choice",
       prompt: "Was ist typisch für ein Peer-to-Peer-Netz?",
       options: [
         "Ein zentraler Server verwaltet alles.",
-        "Nur ein einziges Gerät darf Daten senden.",
         "Es funktioniert nur mit Kabel.",
+        "Nur ein einziges Gerät darf Daten senden.",
         "Die Geräte sind gleichberechtigt und können Daten anbieten und anfordern."
       ],
       answer: 3,
       points: 1
     },
     {
-      type: "choice",
-      prompt: "Der Server der Lernplattform ist ausgefallen. Was bedeutet das?",
-      options: [
-        "Der Dienst ist für viele Nutzerinnen und Nutzer gleichzeitig nicht erreichbar.",
-        "Nur ein einziges Tablet ist betroffen.",
-        "Die Clients übernehmen automatisch die Aufgaben des Servers.",
-        "Das hat keine Folgen, weil Server nie gebraucht werden."
-      ],
-      answer: 0,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Welches Beispiel ist ein digitales Informationssystem?",
-      options: [
-        "ein Papierfahrplan an der Bushaltestelle",
-        "eine Fahrplan-App",
-        "ein gedrucktes Wörterbuch",
-        "eine Kreidetafel"
-      ],
-      answer: 1,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Was arbeitet im Hintergrund eines digitalen Informationssystems zusammen?",
-      options: [
-        "nur der Bildschirm",
-        "Tastatur und Maus",
-        "Programme, Datenbanken, Server und Netze",
-        "Drucker und Papier"
-      ],
-      answer: 2,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Welche Frage gehört zu den vier Fragen, mit denen man ein Informationssystem beurteilt?",
-      options: [
-        "Welche Farbe hat das Logo?",
-        "Wie schwer ist das Tablet?",
-        "Wie viele Likes hat die App?",
-        "Welche Informationen sind über das System bekannt?"
-      ],
-      answer: 3,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Wo findest du auf einer deutschen Webseite die Angaben zum Anbieter?",
-      options: [
-        "im Impressum",
-        "im Cookie-Banner",
-        "in der Suchleiste",
-        "im Browserverlauf"
-      ],
-      answer: 0,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Welche Beobachtung ist ein Warnzeichen bei einer Webseite?",
-      options: [
-        "Es gibt ein Impressum mit Adresse und Telefonnummer.",
-        "Das Menü ist übersichtlich.",
-        "Kein Anbieter ist zu finden, aber es werden viele persönliche Daten abgefragt.",
-        "Es gibt eine verständliche Datenschutzerklärung."
-      ],
-      answer: 2,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Was ist eine Datenspur?",
-      options: [
-        "ein Kratzer auf dem Bildschirm",
-        "eine Information, die beim Nutzen digitaler Dienste entsteht",
-        "ein Kabel zwischen zwei Geräten",
-        "eine Regel für den Datenaustausch"
-      ],
-      answer: 1,
-      points: 1
-    },
-    {
-      type: "choice",
-      prompt: "Ein Cookie-Banner hat einen großen Knopf „Alles akzeptieren“ und einen kleinen Link „Einstellungen“. Was ist klug?",
-      options: [
-        "Sofort auf „Alles akzeptieren“ tippen, dann ist das Banner weg.",
-        "Die Seite so lange neu laden, bis das Banner verschwindet.",
-        "Den Browser neu installieren.",
-        "In den Einstellungen die nicht notwendigen Cookies ablehnen."
-      ],
-      answer: 3,
-      points: 1
-    },
-
-    /* ================= Teil B: Zuordnen ================= */
-
-    {
-      type: "match",
-      prompt: "Ordne jeder Erklärung den passenden Fachbegriff zu. Ein Begriff bleibt übrig.",
-      options: ["Client", "Server", "Dienst", "Internet", "Navigation", "Router"],
-      rows: [
-        { text: "Gerät oder Programm, das eine Anfrage stellt", answer: 0 },
-        { text: "stellt einen Dienst bereit und antwortet auf Anfragen", answer: 1 },
-        { text: "Aufgabe, die ein Gerät oder Programm für andere erledigt, zum Beispiel Drucken", answer: 2 },
-        { text: "weltweites Netz aus sehr vielen verbundenen Netzen", answer: 3 },
-        { text: "Wegführung durch eine Webseite oder App", answer: 4 }
-      ]
-    },
-    {
+      teil: M2,
       type: "match",
       prompt: "Client oder Server? Ordne zu.",
       options: ["Client", "Server"],
       rows: [
         { text: "der Browser auf deinem Laptop", answer: 0 },
-        { text: "der Rechner, auf dem die Lernplattform läuft", answer: 1 },
-        { text: "die Wetter-App auf deinem Handy, die nach dem Wetter fragt", answer: 0 },
-        { text: "der Rechner, der die Webseite der Schule ausliefert", answer: 1 }
+        { text: "der Rechner, auf dem die Lernplattform läuft", answer: 1 }
       ]
     },
     {
+      teil: M2,
+      type: "text",
+      prompt: "Du rufst eine Webseite auf. Erkläre mit den Wörtern Anfrage und Antwort, was passiert.",
+      expected: "Mein Gerät (der Browser) schickt eine Anfrage an den Webserver. Der Server verarbeitet die Anfrage und schickt die Daten der Webseite als Antwort zurück. Dann wird die Seite angezeigt.",
+      kriterien: "1 Punkt: Mein Gerät / der Browser schickt eine Anfrage (fragt die Seite an). 1 Punkt: Der Server (oder „die Webseite“, „das Internet“) schickt die Seite / die Daten als Antwort zurück.",
+      keywords: ["anfrage", "antwort", "server", "zurück", "schick"],
+      points: 2,
+      lines: 3
+    },
+
+    /* ================= Modul 3: Informationssysteme ================= */
+    {
+      teil: M3,
+      type: "choice",
+      prompt: "Welches Beispiel ist ein digitales Informationssystem?",
+      options: [
+        "eine Fahrplan-App",
+        "ein Papierfahrplan an der Bushaltestelle",
+        "ein Wörterbuch aus Papier",
+        "eine Kreidetafel"
+      ],
+      answer: 0,
+      points: 1
+    },
+    {
+      teil: M3,
+      type: "choice",
+      prompt: "Welche Frage gehört zu den vier Fragen, mit denen man ein Informationssystem beurteilt?",
+      options: [
+        "Welche Farbe hat das Logo?",
+        "Welchen Nutzen ziehe ich daraus?",
+        "Wie viele Likes hat die App?",
+        "Wie schwer ist das Tablet?"
+      ],
+      answer: 1,
+      points: 1
+    },
+    {
+      teil: M3,
+      type: "match",
+      prompt: "Nutzen oder Grenze eines Informationssystems? Ordne zu.",
+      options: ["Nutzen", "Grenze"],
+      rows: [
+        { text: "Es spart Zeit, weil Informationen schnell verfügbar sind.", answer: 0 },
+        { text: "Informationen können falsch oder veraltet sein.", answer: 1 }
+      ]
+    },
+    {
+      teil: M3,
+      type: "text",
+      prompt: "Luca findet in einer App einen Text für seine Hausaufgabe. Warum sollte er den Text prüfen, bevor er ihn übernimmt?",
+      expected: "Weil nicht jede Information aus einem System richtig, aktuell oder passend ist. Der Text könnte falsch oder veraltet sein.",
+      kriterien: "2 Punkte: Er nennt einen Grund, z. B. der Text kann falsch, veraltet, unpassend oder nicht vertrauenswürdig sein. 1 Punkt: Er sagt nur, dass man prüfen oder vergleichen soll, ohne Grund.",
+      keywords: ["falsch", "veraltet", "aktuell", "stimmt", "richtig", "passend", "prüf", "vertrau"],
+      points: 2,
+      lines: 2
+    },
+
+    /* ================= Modul 4: Aufbau von Webseiten ================= */
+    {
+      teil: M4,
+      type: "choice",
+      prompt: "Wo findest du auf einer deutschen Webseite die Angaben zum Anbieter?",
+      options: ["im Cookie-Banner", "im Impressum", "in der Suchleiste", "im Browserverlauf"],
+      answer: 1,
+      points: 1
+    },
+    {
+      teil: M4,
+      type: "choice",
+      prompt: "Was zeigt dir das Menü einer Webseite oder App?",
+      options: [
+        "wie viel Akku dein Handy hat",
+        "wer die Seite gerade besucht",
+        "welche Cookies gespeichert sind",
+        "welche Hauptbereiche das System anbietet"
+      ],
+      answer: 3,
+      points: 1
+    },
+    {
+      teil: M4,
+      type: "match",
+      prompt: "Wo steht das meistens auf einer Webseite? Ordne zu. Ein Bereich bleibt übrig.",
+      options: ["Kopfbereich", "Inhaltsbereich", "Fußzeile"],
+      rows: [
+        { text: "das Logo der Schule", answer: 0 },
+        { text: "der Link zum Impressum und zur Datenschutzerklärung", answer: 2 }
+      ]
+    },
+    {
+      teil: M4,
+      type: "text",
+      prompt: "Eine Seite verlangt für ein Gewinnspiel deine Adresse und Handynummer. Ein Impressum gibt es nicht. Was tust du? Begründe.",
+      expected: "Ich gebe nichts ein und frage eine Lehrkraft oder meine Eltern. Es ist nicht zu erkennen, wer hinter der Seite steht, und es werden zu viele persönliche Daten verlangt. Das sind Warnzeichen.",
+      kriterien: "1 Punkt: eine vernünftige Handlung (nichts eingeben, Seite verlassen/schließen, Erwachsene fragen). 1 Punkt: eine Begründung (kein Impressum, Anbieter unbekannt, zu viele persönliche Daten, wirkt unseriös, Betrug möglich).",
+      keywords: ["nicht", "nichts", "eingeben", "impressum", "anbieter", "daten", "unseriös", "betrug", "fragen", "lehr", "eltern"],
+      points: 2,
+      lines: 3
+    },
+
+    /* ================= Modul 5: Datenschutz und Cookies ================= */
+    {
+      teil: M5,
+      type: "choice",
+      prompt: "Was ist eine Datenspur?",
+      options: [
+        "ein Kratzer auf dem Bildschirm",
+        "ein Kabel zwischen zwei Geräten",
+        "eine Information, die beim Nutzen digitaler Dienste entsteht",
+        "eine Regel für den Datenaustausch"
+      ],
+      answer: 2,
+      points: 1
+    },
+    {
+      teil: M5,
+      type: "choice",
+      prompt: "Ein Cookie-Banner hat einen großen Knopf „Alles akzeptieren“ und einen kleinen Link „Einstellungen“. Was ist klug?",
+      options: [
+        "Sofort auf „Alles akzeptieren“ tippen, dann ist das Banner weg.",
+        "In den Einstellungen die nicht notwendigen Cookies ablehnen.",
+        "Die Seite so lange neu laden, bis das Banner verschwindet.",
+        "Das Handy neu starten."
+      ],
+      answer: 1,
+      points: 1
+    },
+    {
+      teil: M5,
       type: "match",
       prompt: "Wofür wird der Cookie genutzt? Ordne zu.",
       options: ["technisch nötig", "zum Messen oder für Werbung"],
       rows: [
         { text: "Der Warenkorb im Online-Shop merkt sich deine Einkäufe.", answer: 0 },
-        { text: "Dir wird Werbung für Schuhe gezeigt, die du dir vorher angesehen hast.", answer: 1 },
-        { text: "Du bleibst angemeldet, wenn du auf eine andere Unterseite wechselst.", answer: 0 }
+        { text: "Dir wird Werbung für Schuhe gezeigt, die du dir vorher angesehen hast.", answer: 1 }
       ]
     },
+    {
+      teil: M5,
+      type: "text",
+      prompt: "Nenne zwei Dinge, mit denen du deine Privatsphäre im Netz schützen kannst.",
+      expected: "Zum Beispiel: nur nötige Daten angeben, starke Passwörter nutzen, Privatsphäre-Einstellungen prüfen, Cookie-Banner nicht blind wegklicken, Standort nicht teilen, vorsichtig mit Fotos und Klassenchats sein.",
+      kriterien: "Je sinnvolle Maßnahme 1 Punkt (höchstens 2). Alles, was persönliche Daten schützt, zählt, z. B. Profil auf privat stellen, keine Adresse posten, nicht notwendige Cookies ablehnen.",
+      keywords: ["passwort", "einstellung", "privat", "cookie", "standort", "foto", "daten", "adresse", "nummer", "ablehnen"],
+      points: 2,
+      lines: 2
+    },
 
-    /* ================= Teil C: Erklaeren (KI prueft) ================= */
+    /* ================= Modul 6: Lernbilanz ================= */
+    {
+      teil: M6,
+      type: "choice",
+      prompt: "Zu welchem Bereich gehört: „Nicht notwendige Cookies ablehnen“?",
+      options: ["Rechnernetze", "Informationssysteme", "Datenschutz"],
+      answer: 2,
+      points: 1
+    },
+    {
+      teil: M6,
+      type: "choice",
+      prompt: "Welche Aussage stimmt?",
+      options: [
+        "Ein Browser ist ein Server.",
+        "Protokolle sind besondere Kabel.",
+        "Peer bedeutet dasselbe wie Server.",
+        "Die Lernplattform ist ein digitales Informationssystem."
+      ],
+      answer: 3,
+      points: 1
+    },
+    {
+      teil: M6,
+      type: "match",
+      prompt: "Welcher Fachbegriff passt zur Situation? Ordne zu. Einige Begriffe bleiben übrig.",
+      options: ["Informationssystem", "Datenspur", "personenbezogene Daten", "Cookie", "Navigation"],
+      rows: [
+        { text: "Über das Menü kommst du zur Unterseite „Sportfest“.", answer: 4 },
+        { text: "dein Name, deine Klasse und dein Foto", answer: 2 }
+      ]
+    },
+    {
+      teil: M6,
+      type: "text",
+      prompt: "Wähle einen Begriff: Router, Server, Impressum oder Cookie. Erkläre ihn und nenne ein Beispiel aus deinem Alltag.",
+      expected: "Beispiel Router: Der Router leitet Daten zwischen Netzen weiter. Bei uns zu Hause verbindet er Handy, Laptop und Fernseher mit dem Internet.",
+      kriterien: "1 Punkt: Der gewählte Begriff ist richtig erklärt (Router leitet Daten zwischen Netzen/ins Internet weiter; Server stellt einen Dienst bereit und antwortet; Impressum nennt den Anbieter mit Kontakt; Cookie sind kleine Daten, die eine Webseite im Browser speichert). 1 Punkt: ein passendes Beispiel aus dem Alltag.",
+      keywords: ["router", "server", "impressum", "cookie", "internet", "anbieter", "browser", "weiter", "dienst", "zuhause", "zu hause"],
+      points: 2,
+      lines: 3
+    },
 
+    /* ================= Transfer: neue Situationen ================= */
     {
+      teil: TR,
       type: "text",
-      prompt: "Nenne zwei Dienste, die man über ein Rechnernetz nutzen kann. Erkläre bei einem, was er für dich erledigt.",
-      expected: "Zum Beispiel Drucken, Dateien speichern (Cloud, Schulserver), E-Mail, Webseiten anzeigen, Lernplattform. Beim Drucken schickt mein Gerät die Datei über das Netz an den Drucker, der sie für mich ausdruckt.",
-      keywords: ["drucken", "speicher", "cloud", "mail", "webseite", "lernplattform"],
+      prompt: "Bei einem beliebten Online-Spiel können am Abend plötzlich tausende Spielerinnen und Spieler nicht mehr spielen, obwohl ihr eigenes Internet funktioniert. Erkläre mit dem Client-Server-Modell, woran das liegen könnte.",
+      expected: "Wahrscheinlich ist der Server des Spiels ausgefallen oder überlastet. Alle Spieler sind Clients und schicken ihre Anfragen an denselben zentralen Server. Fällt er aus, ist das Spiel für alle gleichzeitig nicht erreichbar.",
+      kriterien: "1 Punkt: Der Server des Spiels ist ausgefallen, gestört, überlastet oder wird gewartet. 1 Punkt: Begründung, warum so viele gleichzeitig betroffen sind: Alle Spieler (Clients) hängen vom selben zentralen Server ab.",
+      keywords: ["server", "ausgefallen", "ausfall", "überlast", "kaputt", "alle", "zentral", "client"],
       points: 2,
       lines: 3
     },
     {
+      teil: TR,
       type: "text",
-      prompt: "Erkläre das Anfrage-Antwort-Prinzip am Beispiel einer Webseite.",
-      expected: "Mein Browser (Client) schickt eine Anfrage an den Webserver. Der Server verarbeitet die Anfrage und schickt die Daten der Webseite als Antwort zurück. Der Browser zeigt die Seite an.",
-      keywords: ["anfrage", "antwort", "server", "browser"],
-      points: 2,
-      lines: 3
-    },
-    {
-      type: "text",
-      prompt: "Nenne je einen Vorteil und einen Nachteil des Client-Server-Modells.",
-      expected: "Vorteil: übersichtlich, weil die Dienste zentral an einer Stelle bereitgestellt werden. Nachteil: Fällt der Server aus, ist der Dienst für viele Nutzer gleichzeitig nicht erreichbar.",
-      keywords: ["zentral", "übersicht", "ausf", "nicht erreichbar"],
-      points: 2,
-      lines: 3
-    },
-    {
-      type: "text",
-      prompt: "Nenne einen Nutzen und eine Grenze eines digitalen Informationssystems, zum Beispiel einer Suchmaschine oder Lernplattform.",
-      expected: "Nutzen: Es spart Zeit, macht Informationen schnell verfügbar und durchsucht große Datenmengen. Grenze: Nicht jede Information ist richtig, aktuell oder passend; manche Systeme sammeln viele Daten über die Nutzer.",
-      keywords: ["zeit", "schnell", "falsch", "aktuell", "daten"],
-      points: 2,
-      lines: 3
-    },
-    {
-      type: "text",
-      prompt: "Warum lohnt sich bei einer unbekannten Webseite ein Blick ins Impressum und in die Datenschutzerklärung?",
-      expected: "Im Impressum sehe ich, wer hinter der Seite steht und wie ich den Anbieter erreiche. Die Datenschutzerklärung sagt, welche persönlichen Daten verarbeitet werden. So kann ich einschätzen, ob die Seite vertrauenswürdig ist.",
-      keywords: ["anbieter", "wer", "daten", "kontakt", "vertrau", "seriös"],
-      points: 2,
-      lines: 3
-    },
-    {
-      type: "text",
-      prompt: "Erkläre, was Datenspuren sind und warum sie zusammengesetzt viel über eine Person verraten können.",
-      expected: "Datenspuren entstehen beim Suchen, Klicken, Anmelden, Posten oder Nutzen von Apps, teils automatisch (Uhrzeit, Standort, Gerät). Einzeln wirken sie harmlos, zusammengesetzt verraten sie Interessen, Gewohnheiten, Aufenthaltsorte und Kontakte.",
-      keywords: ["entsteh", "such", "klick", "standort", "interesse", "gewohnheit", "zusammen"],
-      points: 2,
-      lines: 3
-    },
-    {
-      type: "text",
-      prompt: "Erkläre den Unterschied zwischen einem technisch nötigen Cookie und einem Cookie für Werbung. Nenne je ein Beispiel.",
-      expected: "Ein technisch nötiger Cookie sorgt dafür, dass die Seite funktioniert, zum Beispiel beim Warenkorb oder bei der Anmeldung. Ein Werbe-Cookie misst mein Verhalten, damit mir passende Werbung gezeigt wird.",
-      keywords: ["warenkorb", "anmeld", "funktion", "werbung", "mess", "verhalten"],
-      points: 2,
-      lines: 3
-    },
-    {
-      type: "text",
-      prompt: "Nenne drei Dinge, mit denen du deine Privatsphäre im Netz schützen kannst.",
-      expected: "Nur nötige Daten angeben, starke Passwörter nutzen, Privatsphäre-Einstellungen prüfen, Cookie-Banner nicht blind wegklicken, vorsichtig mit Fotos, Standort und Klassenchats sein.",
-      keywords: ["passwort", "einstellung", "cookie", "standort", "foto", "daten"],
+      prompt: "Eine kostenlose Taschenlampen-App will Zugriff auf deinen Standort, deine Kontakte und deine Fotos. Wie entscheidest du dich? Begründe mit dem, was du über Datenschutz gelernt hast.",
+      expected: "Ich erlaube das nicht oder installiere die App nicht. Eine Taschenlampe braucht diese Daten nicht. Standort, Kontakte und Fotos sind personenbezogene Daten; zusammen verraten sie viel über mich und könnten weitergegeben oder für Werbung genutzt werden.",
+      kriterien: "1 Punkt: eine sinnvolle Entscheidung (Zugriff ablehnen, App nicht installieren/löschen, eine andere App nehmen). 1 Punkt: eine Begründung (die App braucht die Daten nicht, persönliche/personenbezogene Daten, Datenspuren, Privatsphäre, Weitergabe oder Werbung).",
+      keywords: ["ablehnen", "nicht", "braucht", "daten", "privat", "standort", "kontakt", "werbung", "weiter", "löschen"],
       points: 2,
       lines: 3
     }
   ]
 };
+
+// Notfall ohne KI: zwei passende Stichwoerter reichen fuer volle Punkte (wohlwollend,
+// die Abgabe wird der Lehrkraft trotzdem zur Pruefung markiert).
+inf8Probe1.items.forEach((it) => { if (it.type === "text") it.keywordsVoll = 2; });
 
 const TESTS = {
   [inf8Probe1.id]: inf8Probe1

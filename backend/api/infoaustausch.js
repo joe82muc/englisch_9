@@ -36,6 +36,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { buildXlsx } = require("./xlsx-mini");
 
 /* ------------------------------------------------------------------
    Notenschluessel Informatik 7
@@ -116,7 +117,8 @@ function keywordScore(given, item) {
   const hits = keys.filter((k) => text.includes(k)).length;
   const ratio = hits / keys.length;
   let points = 0;
-  if (ratio >= 0.4) points = max;
+  // keywordsVoll: so viele Treffer reichen fuer volle Punkte (lange, grosszuegige Listen)
+  if (ratio >= 0.4 || (item.keywordsVoll && hits >= item.keywordsVoll)) points = max;
   else if (hits >= 1) points = Math.max(1, Math.round(max / 2));
   return {
     points,
@@ -161,6 +163,7 @@ async function aiScore(given, item, askAnthropic, regeln = KI_REGELN) {
     "",
     "Musterloesung der Lehrkraft:",
     item.expected || "(keine hinterlegt)",
+    item.kriterien ? "\nSo verteilt die Lehrkraft die Punkte:\n" + item.kriterien : "",
     "",
     "Antwort der Schuelerin / des Schuelers:",
     text
@@ -224,6 +227,42 @@ function studentKey(firstName, lastName, className) {
     .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/\s+/g, " ").trim();
 }
+
+/**
+ * Punkte je Teil (z. B. "Modul 1 ...", "Transfer") in der Reihenfolge der Probe.
+ * Aufgaben ohne `teil` (Informatik 7) ergeben eine leere Liste.
+ */
+function teilSummen(details) {
+  const map = new Map();
+  (details || []).forEach((d) => {
+    if (!d.teil) return;
+    const t = map.get(d.teil) || { teil: d.teil, points: 0, maxPoints: 0 };
+    t.points += Number(d.points) || 0;
+    t.maxPoints += Number(d.maxPoints) || 0;
+    map.set(d.teil, t);
+  });
+  return [...map.values()];
+}
+
+// Kurzname fuer Tabellenkoepfe: "Modul 3 · Informationssysteme" -> "Modul 3"
+const teilKurz = (teil) => String(teil).split("·")[0].trim();
+
+// Datum und Uhrzeit wie in Deutschland ueblich, z. B. 29.09.2026 10:15
+function deutscheZeit(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  }).format(d).replace(",", "");
+}
+
+const BEWERTET_VON = {
+  ki: "KI",
+  lehrkraft: "Lehrkraft",
+  keywords: "Stichwörter (KI nicht erreichbar)",
+  leer: "keine Antwort"
+};
 
 function deviceHash(req, secret) {
   const raw = String(
@@ -407,6 +446,7 @@ function registerInfoaustauschRoutes(app, opts) {
     const items = test.items.map((it, idx) => ({
       nr: idx + 1,
       type: it.type,
+      teil: it.teil || "",
       prompt: it.prompt,
       options: it.type === "choice" || it.type === "match" ? it.options : undefined,
       rows: it.type === "match" ? it.rows.map((r) => r.text) : undefined,
@@ -488,6 +528,7 @@ function registerInfoaustauschRoutes(app, opts) {
         details.push({
           nr: idx + 1,
           type: "match",
+          teil: item.teil || "",
           prompt: item.prompt,
           given: given.join(" | "),
           correct: hits === max,
@@ -501,6 +542,7 @@ function registerInfoaustauschRoutes(app, opts) {
         details.push({
           nr: idx + 1,
           type: "choice",
+          teil: item.teil || "",
           prompt: item.prompt,
           given: Number.isInteger(picked) && item.options[picked] !== undefined
             ? item.options[picked] : "",
@@ -517,6 +559,7 @@ function registerInfoaustauschRoutes(app, opts) {
         details.push({
           nr: idx + 1,
           type: "text",
+          teil: item.teil || "",
           prompt: item.prompt,
           given,
           correct: scored.points >= max,
@@ -557,8 +600,9 @@ function registerInfoaustauschRoutes(app, opts) {
       result: {
         score, total, percent, grade: note,
         needsReview,
+        teile: teilSummen(details),
         details: details.map((d) => ({
-          nr: d.nr, type: d.type, prompt: d.prompt, given: d.given,
+          nr: d.nr, type: d.type, teil: d.teil, prompt: d.prompt, given: d.given,
           correct: d.correct, points: d.points, maxPoints: d.maxPoints,
           comment: d.comment || "", expected: d.expected
         })),
@@ -656,26 +700,138 @@ function registerInfoaustauschRoutes(app, opts) {
     res.json({ ok: true, removed: before - db.submissions.length });
   });
 
-  /* ---------- Lehrkraft: Export als CSV (oeffnet sich in Excel) ---------- */
+  /* ---------- Lehrkraft: Export fuer Excel ----------
+     format "xlsx": echte Excel-Datei mit drei Blaettern
+       Ergebnisse  – eine Zeile je Schueler, Punkte je Teil (Modul 1-6, Transfer)
+       Antworten   – jede Antwort mit Punkten, KI-Rueckmeldung und Loesung
+       Notenschluessel
+     sonst: CSV mit Semikolon (fuer die Seiten, die noch CSV laden) */
   app.post(P + "/export", (req, res) => {
     if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
 
     const testId = clean(req.body?.testId);
     let rows = store.loadSubmissions().submissions;
     if (testId) rows = rows.filter((r) => r.testId === testId);
+    rows = rows.slice().sort((a, b) =>
+      a.className.localeCompare(b.className, "de") ||
+      a.lastName.localeCompare(b.lastName, "de") ||
+      a.firstName.localeCompare(b.firstName, "de")
+    );
 
-    const esc = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
-    const header = ["Datum", "Probe", "Klasse", "Nachname", "Vorname", "Punkte", "Von", "Prozent", "Note", "Abgabe"];
+    // alle Teile in der Reihenfolge der Probe(n)
+    const teile = [];
+    const tests = testId && TESTS[testId] ? [TESTS[testId]] : Object.values(TESTS);
+    tests.forEach((t) => t.items.forEach((it) => {
+      if (it.teil && !teile.includes(it.teil)) teile.push(it.teil);
+    }));
+    const teilMax = (teil) => {
+      const t = tests.find((x) => x.items.some((it) => it.teil === teil));
+      return t ? t.items.filter((it) => it.teil === teil).reduce((s, it) => s + itemPoints(it), 0) : "";
+    };
+    const summenVon = (r) => {
+      const s = teilSummen(r.details);
+      return teile.map((teil) => {
+        const hit = s.find((x) => x.teil === teil);
+        return hit ? hit.points : "";
+      });
+    };
+    const stamp = new Date().toISOString().slice(0, 10);
+    const fileBase = `${NAME}_${testId || "alle"}_${stamp}`;
+
+    if (clean(req.body?.format) === "xlsx") {
+      const ergebnisse = {
+        name: "Ergebnisse",
+        columns: [
+          { header: "Klasse", width: 8 },
+          { header: "Nachname", width: 16 },
+          { header: "Vorname", width: 14 },
+          { header: "Datum", width: 11, type: "date" },
+          { header: "Punkte", width: 8, type: "number" },
+          { header: "von", width: 6, type: "number" },
+          { header: "Prozent", width: 8, type: "number" },
+          { header: "Note", width: 6, type: "number" },
+          ...teile.map((teil) => ({ header: `${teilKurz(teil)} (${teilMax(teil)} P)`, width: 11, type: "number" })),
+          { header: "Bitte prüfen", width: 12 },
+          { header: "Probe", width: 34 },
+          { header: "Abgabe", width: 16, type: "datetime" }
+        ],
+        rows: rows.map((r) => [
+          r.className, r.lastName, r.firstName, r.testDate,
+          r.score, r.total, r.percent, r.grade,
+          ...summenVon(r),
+          r.needsReview ? "ja – ohne KI bewertet" : "",
+          r.testTitle, r.submittedAt
+        ])
+      };
+
+      const antworten = {
+        name: "Antworten",
+        columns: [
+          { header: "Klasse", width: 8 },
+          { header: "Nachname", width: 16 },
+          { header: "Vorname", width: 14 },
+          { header: "Nr", width: 5, type: "number" },
+          { header: "Teil", width: 12 },
+          { header: "Aufgabe", width: 48, type: "wrap" },
+          { header: "Antwort", width: 48, type: "wrap" },
+          { header: "Punkte", width: 8, type: "number" },
+          { header: "von", width: 6, type: "number" },
+          { header: "bewertet von", width: 14 },
+          { header: "Rückmeldung", width: 36, type: "wrap" },
+          { header: "Lösung", width: 48, type: "wrap" }
+        ],
+        rows: []
+      };
+      rows.forEach((r) => (r.details || []).forEach((d) => {
+        antworten.rows.push([
+          r.className, r.lastName, r.firstName, d.nr, d.teil ? teilKurz(d.teil) : "",
+          d.prompt, d.given || "", d.points, d.maxPoints,
+          d.type === "text" ? (BEWERTET_VON[d.scoredBy] || d.scoredBy || "") : "automatisch",
+          d.comment || "", d.expected || ""
+        ]);
+      }));
+
+      // Notenschluessel mit Punktgrenzen, wenn genau eine Probe gewaehlt ist
+      const total = testId && TESTS[testId] ? maxPoints(TESTS[testId]) : 0;
+      const abPunkte = (min) => {
+        if (!total) return "";
+        for (let p = 0; p <= total; p++) if (Math.round((p / total) * 100) >= min) return p;
+        return total;
+      };
+      const schluessel = {
+        name: "Notenschlüssel",
+        columns: [
+          { header: "Note", width: 6, type: "number" },
+          { header: "ab Prozent", width: 11, type: "number" },
+          { header: total ? `ab Punkte (von ${total})` : "ab Punkte", width: 18, type: "number" }
+        ],
+        rows: SCALE.map((s) => [s.grade, s.min, abPunkte(s.min)])
+      };
+
+      const buf = buildXlsx([ergebnisse, antworten, schluessel]);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.xlsx"`);
+      return res.send(buf);
+    }
+
+    // CSV: Text, der mit = + - @ beginnt, wuerde Excel als Formel lesen
+    const esc = (v) => {
+      let s = String(v == null ? "" : v);
+      if (/^[=+\-@]/.test(s) && !/^-?\d+([.,]\d+)?$/.test(s)) s = "'" + s;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const header = ["Datum", "Probe", "Klasse", "Nachname", "Vorname", "Punkte", "Von", "Prozent", "Note",
+      ...teile.map((teil) => `${teilKurz(teil)} (${teilMax(teil)} P)`), "Abgabe"];
     const lines = [header.map(esc).join(";")];
     rows.forEach((r) => {
       lines.push([
         r.testDate, r.testTitle, r.className, r.lastName, r.firstName,
-        r.score, r.total, r.percent, r.grade, r.submittedAt
+        r.score, r.total, r.percent, r.grade, ...summenVon(r), deutscheZeit(r.submittedAt)
       ].map(esc).join(";"));
     });
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="${NAME}_${testId || "alle"}.csv"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
 }
