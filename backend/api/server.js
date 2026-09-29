@@ -90,9 +90,20 @@ registerArgumentation7Routes(app, {
 
 // --- Deutsch 7M/7R: Lernmodule Argumentieren und Diskutieren (Buch S. 22-25), gleiche Anmeldung wie der Trainer ---
 const { registerDeutsch7ModuleRoutes } = require("./deutsch7-module");
-registerDeutsch7ModuleRoutes(app, {
+const de7Module = registerDeutsch7ModuleRoutes(app, {
   dataDir: DATA_DIR,
   askAnthropic,
+  requireStudent: (req, res) => requireDe7Student(req, res, DE7_SECRET),
+  requireTeacher: (req, res) => requireDe7Teacher(req, res, TEACHER_PASSWORD)
+});
+
+// --- Deutsch 7M/7R Modul 6: Tisch-Duell, zwei Schueler pro Tisch, KI prueft jeden Beitrag vor dem Senden ---
+const { registerDeutsch7TischDuellRoutes } = require("./deutsch7-tischduell");
+const { TOPICS: DE7_TOPICS } = require("./argumentation7");
+registerDeutsch7TischDuellRoutes(app, {
+  askAnthropic,
+  topics: DE7_TOPICS,
+  storeEntry: de7Module.store,
   requireStudent: (req, res) => requireDe7Student(req, res, DE7_SECRET),
   requireTeacher: (req, res) => requireDe7Teacher(req, res, TEACHER_PASSWORD)
 });
@@ -205,7 +216,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-29-informatik8-probe-module-xlsx",
+    version: "2026-09-29-deutsch7-tischduell",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

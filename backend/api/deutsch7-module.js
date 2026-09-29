@@ -26,7 +26,8 @@ const MODULE = {
   "argumente-formulieren": "Argumente formulieren (S. 22)",
   "angemessen-ausdruecken": "Sich angemessen ausdrücken (S. 23)",
   "ueberzeugend-argumentieren": "Überzeugend argumentieren (S. 24)",
-  "sachlich-diskutieren": "Sachlich diskutieren (S. 25)"
+  "sachlich-diskutieren": "Sachlich diskutieren (S. 25)",
+  "tisch-duell": "Tisch-Duell zu zweit"
 };
 
 const CHECK_SYSTEM = [
@@ -225,6 +226,9 @@ function registerDeutsch7ModuleRoutes(app, options = {}) {
     writeData(data);
     return res.json({ ok: true });
   });
+
+  // Das Tisch-Duell speichert seine Beiträge in derselben Datei.
+  return { store };
 }
 
 function normalizeCheck(parsed, kriterien) {
