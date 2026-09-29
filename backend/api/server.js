@@ -143,7 +143,7 @@ registerKohlenstoffRoutes(app, { askAnthropic });
 const { registerNt7UebungRoutes } = require("./nt7-uebung");
 registerNt7UebungRoutes(app, { askAnthropic });
 // NT 9M/9R Modul 2 (Biodiesel, Stärke, Nachhaltigkeit): gleiche Rückmeldung mit Tipp, eigene Route
-registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", klasse: "Klasse 9", thema: "Organische Rohstoffe (Biodiesel, Stärke, Nachhaltigkeit)" });
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", klasse: "Klasse 9", thema: "Organische Rohstoffe (Kohlenstoff, Holz und Zellstoff, Raps, Biodiesel, Stärke, Nachhaltigkeit)" });
 
 // --- Grammatik Englisch 9R/9M und 7R/7M (Grammatikprobe + Kurztests, KI-Bewertung; R 50 % = Note 3, M 50 % = Note 4) ---
 const { registerGrammatik9rRoutes } = require("./grammatik9r");
@@ -218,7 +218,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-29-nt9-uebung",
+    version: "2026-09-29-nt9-modul1",
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
