@@ -7,6 +7,9 @@
  * Route: POST /api/nt7/uebung/feedback
  * Body:  { frage, erwartet, antwort, thema, keywords[] }
  * Antwort: { ok, richtig, teilweise, rueckmeldung, tipp, quelle }
+ *
+ * Mehrfach registrierbar (z. B. NT 9, Organische Rohstoffe):
+ * opts.route, opts.klasse ("Klasse 9"), opts.thema (Thema im Systemtext).
  */
 
 const { keywordFeedback } = require("./kohlenstoff");
@@ -15,8 +18,11 @@ const clean = (value) => String(value || "").trim();
 
 function registerNt7UebungRoutes(app, opts = {}) {
   const askAnthropic = opts.askAnthropic;
+  const route = opts.route || "/api/nt7/uebung/feedback";
+  const klasse = opts.klasse || "Klasse 7";
+  const themaSystem = opts.thema || "Luft";
 
-  app.post("/api/nt7/uebung/feedback", async (req, res) => {
+  app.post(route, async (req, res) => {
     const frage = clean(req.body?.frage).slice(0, 600);
     const erwartet = clean(req.body?.erwartet).slice(0, 1400);
     const antwort = clean(req.body?.antwort).slice(0, 1500);
@@ -31,7 +37,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
     if (typeof askAnthropic !== "function") return res.json(fallback());
 
     const system = [
-      "Du prüfst eine offene Übungsaufgabe in Natur und Technik, Klasse 7 einer bayerischen Mittelschule. Thema: Luft.",
+      `Du prüfst eine offene Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${themaSystem}.`,
       "Bewerte nur den fachlichen Inhalt. Rechtschreibung, Grammatik und Stil zählen nicht. Eigene Worte und Stichpunkte sind erlaubt.",
       "Sei wohlwollend, aber fachlich korrekt. Falsche Aussagen nicht belohnen.",
       "richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt.",
