@@ -2,7 +2,7 @@
 
 /**
  * Deutsch 7M/7R: KI-Kontrolle für die Lernmodule „Argumentieren und diskutieren“
- * (Schulbuch S. 22–25: Argumente formulieren, Sich angemessen ausdrücken,
+ * (Module 2–5: Argumente formulieren, Sich angemessen ausdrücken,
  * Überzeugend argumentieren, Sachlich diskutieren).
  *
  * Anmeldung mit demselben Token wie der Argumentationstrainer (/api/de7-argument/start).
@@ -23,10 +23,10 @@ const fs = require("fs");
 const path = require("path");
 
 const MODULE = {
-  "argumente-formulieren": "Argumente formulieren (S. 22)",
-  "angemessen-ausdruecken": "Sich angemessen ausdrücken (S. 23)",
-  "ueberzeugend-argumentieren": "Überzeugend argumentieren (S. 24)",
-  "sachlich-diskutieren": "Sachlich diskutieren (S. 25)",
+  "argumente-formulieren": "Modul 2: Argumente formulieren",
+  "angemessen-ausdruecken": "Modul 3: Sich angemessen ausdrücken",
+  "ueberzeugend-argumentieren": "Modul 4: Überzeugend argumentieren",
+  "sachlich-diskutieren": "Modul 5: Sachlich diskutieren",
   "tisch-duell": "Tisch-Duell zu zweit"
 };
 
@@ -212,7 +212,10 @@ function registerDeutsch7ModuleRoutes(app, options = {}) {
 
   app.post("/api/de7-argument/teacher/module-results", (req, res) => {
     if (!requireTeacher(req, res)) return;
-    const entries = readData().entries.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    // Titel beim Ausliefern frisch setzen, damit auch ältere Einträge den aktuellen Modulnamen tragen
+    const entries = readData().entries
+      .map((row) => (MODULE[row.modul] ? { ...row, modulTitel: MODULE[row.modul] } : row))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return res.json({ ok: true, entries, module: MODULE });
   });
 
