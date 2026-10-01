@@ -112,7 +112,23 @@ async function ablauf(t, api) {
   assert.deepEqual(Object.keys(l.module.m06.g).sort(), ["duell", "kreuz", "mc1-0"]);
   assert.equal(l.module.m06.t, 72);
   assert.deepEqual(liste.body.katalog.m06, { "mc1-0": ["Ankreuzen: Welcher Vorgang …", "1"], duell: ["Duell gegen den Klimaleugner", "7"] });
-  assert.equal(liste.body.module.length, 5);
+  assert.equal(liste.body.module.length, 9);
+  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt9", "e9"]);
+  assert.equal(liste.body.module.filter((m) => m.kurs === "e9").length, 4);
+
+  // Englisch: eigenes Modul, Teil-Namen als Station, Katalog beim Anmelden
+  const e = await post("/api/nt9/fortschritt/melden", {
+    code: lena, klasse: "9M", modul: "e9u1g1", geloest: ["a1", "c2"], gesamt: 25,
+    katalog: { a1: ["Test yourself · Aufgabe 1", "Test yourself"], a2: ["Test yourself · Aufgabe 2", "Test yourself"], c2: ["Was ist richtig? · Aufgabe 2", "Was ist <b>richtig?"] }
+  });
+  assert.equal(e.status, 200);
+  const mitKatalog = await post("/api/nt9/fortschritt/anmelden", { code: lena, klasse: "9M", kurs: "e9", katalog: true });
+  assert.deepEqual(mitKatalog.body.fortschritt.e9u1g1.g.sort(), ["a1", "c2"]);
+  assert.deepEqual(Object.keys(mitKatalog.body.katalog), ["e9u1g1"], "nur Module des Kurses");
+  assert.equal(mitKatalog.body.katalog.e9u1g1.c2[1], "Was ist brichtig?");
+  assert.equal(mitKatalog.body.katalog.e9u1g1.a1[1], "Test yourself");
+  const ohneKatalog = await post("/api/nt9/fortschritt/anmelden", { code: lena, klasse: "9M" });
+  assert.equal(ohneKatalog.body.katalog, undefined);
 
   assert.ok(liste.body.schueler.every((s) => !("name" in s)));
   assert.ok(!JSON.stringify(await api.store.get(`nt9:s:${lena}`)).includes("Lena"));

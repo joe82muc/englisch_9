@@ -1,7 +1,8 @@
 "use strict";
 
 /**
- * NT 9M/9R „Organische Rohstoffe“: Lernfortschritt für die Lehrkraft.
+ * Lernfortschritt Klasse 9M/9R für die Lehrkraft: NT 9 „Organische Rohstoffe“ und Englisch 9
+ * Grammatik Unit 1. Ein Code je Kind gilt für alle Kurse.
  *
  * Jedes Kind bekommt von der Lehrkraft einen 3-stelligen Code und meldet sich damit in den
  * Modulen an. Die Modulseiten melden, welche Aufgaben gelöst sind. Die Lehrkraft sieht den
@@ -20,10 +21,12 @@
  *   nt9:k:<modul>             { aufgabe: [Bezeichnung, Station] }  (Aufgabenkatalog, kommt von den Seiten)
  *
  * Routen (Schüler):
- *   POST /api/nt9/fortschritt/anmelden { code, klasse }  -> { ok, code, klasse, fortschritt: { modul: { g: [ids], t } } }
+ *   POST /api/nt9/fortschritt/anmelden { code, klasse, kurs?, katalog? }
+ *        -> { ok, code, klasse, fortschritt: { modul: { g: [ids], t } }, katalog? }  (katalog: true liefert die
+ *           Aufgabenliste der Module des Kurses mit – damit zeigt die Seite dem Kind, was noch fehlt)
  *   POST /api/nt9/fortschritt/melden   { code, klasse, modul, geloest: [ids], gesamt, katalog? } -> { ok, anzahl }
  * Routen (Lehrkraft, Passwort im Body):
- *   POST /api/nt9/fortschritt/lehrer/liste    { password }                   -> { ok, speicher, module, schueler, katalog }
+ *   POST /api/nt9/fortschritt/lehrer/liste    { password }                   -> { ok, speicher, kurse, module, schueler, katalog }
  *   POST /api/nt9/fortschritt/lehrer/anlegen  { password, klasse, anzahl }   -> { ok, neu: [{ code, klasse }] }
  *   POST /api/nt9/fortschritt/lehrer/loeschen { password, code }             -> { ok }
  *   GET  /api/nt9/fortschritt/status -> { ok, speicher, verbunden }
@@ -34,13 +37,24 @@ const fs = require("fs");
 const path = require("path");
 
 const KLASSEN = ["9M", "9R"];
-const MODULE = [
-  { id: "m01", nr: 1, titel: "Kohlenstoff, Holz und Raps" },
-  { id: "m02", nr: 2, titel: "Biodiesel, Stärke und Nachhaltigkeit" },
-  { id: "m04", nr: 3, titel: "Entstehung fossiler Rohstoffe" },
-  { id: "m05", nr: 4, titel: "Erdölaufbereitung und Fraktionen" },
-  { id: "m06", nr: 5, titel: "Kohlenstoffkreislauf und Treibhauseffekt" }
+// Kurse und ihre Module (Kennung = Speicherschlüssel, kurz = Spaltenkopf in der Lehreransicht)
+const KURSE = [
+  { id: "nt9", titel: "NT 9 · Organische Rohstoffe", module: [
+    { id: "m01", nr: 1, kurz: "Modul 1", titel: "Kohlenstoff, Holz und Raps" },
+    { id: "m02", nr: 2, kurz: "Modul 2", titel: "Biodiesel, Stärke und Nachhaltigkeit" },
+    { id: "m04", nr: 3, kurz: "Modul 3", titel: "Entstehung fossiler Rohstoffe" },
+    { id: "m05", nr: 4, kurz: "Modul 4", titel: "Erdölaufbereitung und Fraktionen" },
+    { id: "m06", nr: 5, kurz: "Modul 5", titel: "Kohlenstoffkreislauf und Treibhauseffekt" }
+  ] },
+  { id: "e9", titel: "Englisch 9 · Grammatik Unit 1", module: [
+    { id: "e9u1g1", nr: 1, kurz: "G1", titel: "Simple past" },
+    { id: "e9u1g2", nr: 2, kurz: "G2", titel: "Will-future" },
+    { id: "e9u1g3", nr: 3, kurz: "G3", titel: "If-clauses I" },
+    { id: "e9u1g4", nr: 4, kurz: "G4", titel: "Present progressive" }
+  ] }
 ];
+const MODULE = [];
+KURSE.forEach((k) => k.module.forEach((m) => MODULE.push({ ...m, kurs: k.id })));
 const MODUL_IDS = MODULE.map((m) => m.id);
 const MAX_CODES = 800;
 const MAX_AUFGABEN = 300;
@@ -225,7 +239,15 @@ function registerNt9FortschrittRoutes(app, options = {}) {
         const p = staende[i];
         if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0 };
       });
-      return res.json({ ok: true, code, klasse: s.klasse, fortschritt });
+      const antwort = { ok: true, code, klasse: s.klasse, fortschritt };
+      if (body.katalog === true) {
+        const kurs = KURSE.find((k) => k.id === body.kurs);
+        const ids = kurs ? kurs.module.map((m) => m.id) : MODUL_IDS;
+        const kataloge = await store.mget(ids.map(kKey));
+        antwort.katalog = {};
+        ids.forEach((m, i) => { if (kataloge[i]) antwort.katalog[m] = kataloge[i]; });
+      }
+      return res.json(antwort);
     } catch (error) { return fehler(res, error); }
   });
 
@@ -277,7 +299,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       });
       const katalog = {};
       MODUL_IDS.forEach((m, i) => { if (kataloge[i]) katalog[m] = kataloge[i]; });
-      return res.json({ ok: true, speicher: store.art, module: MODULE, klassen: KLASSEN, schueler, katalog });
+      return res.json({ ok: true, speicher: store.art, kurse: KURSE.map((k) => ({ id: k.id, titel: k.titel })), module: MODULE, klassen: KLASSEN, schueler, katalog });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -360,17 +382,17 @@ function aufgabenListe(v) {
   return [...out];
 }
 
-// Katalog { id: [Bezeichnung, Station] } – nur übernehmen, was harmlos und klein ist
+// Katalog { id: [Bezeichnung, Station oder Teil] } – nur übernehmen, was harmlos und klein ist
 function katalogPruefen(v) {
   if (!v || typeof v !== "object" || Array.isArray(v)) return null;
   const out = {};
   let n = 0;
   for (const [id, wert] of Object.entries(v)) {
     if (!/^[A-Za-z0-9_-]{1,60}$/.test(id) || !Array.isArray(wert)) continue;
-    out[id] = [String(wert[0] || id).replace(/[<>]/g, "").slice(0, 140), String(wert[1] || "").replace(/[^0-9]/g, "").slice(0, 2)];
+    out[id] = [String(wert[0] || id).replace(/[<>]/g, "").slice(0, 140), String(wert[1] || "").replace(/[<>"]/g, "").trim().slice(0, 30)];
     if (++n >= MAX_AUFGABEN) break;
   }
   return n ? out : null;
 }
 
-module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, MODULE };
+module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, MODULE, KURSE };
