@@ -145,6 +145,11 @@ registerNt7UebungRoutes(app, { askAnthropic });
 // NT 9M/9R Modul 2 (Biodiesel, Stärke, Nachhaltigkeit): gleiche Rückmeldung mit Tipp, eigene Route
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", klasse: "Klasse 9", thema: "Organische Rohstoffe (Kohlenstoff, Holz und Zellstoff, Raps, Biodiesel, Stärke, Nachhaltigkeit)" });
 
+// NT 9M/9R Organische Rohstoffe: Anmeldung mit Code und Lernfortschritt fuer die Lehrkraft
+// (dauerhaft in Upstash Redis, wenn UPSTASH_REDIS_REST_URL und UPSTASH_REDIS_REST_TOKEN gesetzt sind)
+const { registerNt9FortschrittRoutes } = require("./nt9-fortschritt");
+const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD });
+
 // --- Grammatik Englisch 9R/9M und 7R/7M (Grammatikprobe + Kurztests, KI-Bewertung; R 50 % = Note 3, M 50 % = Note 4) ---
 const { registerGrammatik9rRoutes } = require("./grammatik9r");
 const { TESTS: GRAMMATIK9R } = require("./grammatik9r-daten");
@@ -218,7 +223,8 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-09-30-deutsch7-titel",
+    version: "2026-10-01-nt9-fortschritt",
+    nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
