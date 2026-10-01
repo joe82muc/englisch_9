@@ -171,6 +171,13 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", 
 const { registerNt9FortschrittRoutes } = require("./nt9-fortschritt");
 const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD });
 
+// --- Deutsch 9M/9R Grammatik: KI-Zweitmeinung, wenn eine Umformung von der Lösung abweicht (nur mit Code) ---
+const { registerDeutsch9GrammatikRoutes } = require("./deutsch9-grammatik");
+registerDeutsch9GrammatikRoutes(app, {
+  askKi: askKiMitErsatz,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- Grammatik Englisch 9R/9M und 7R/7M (Grammatikprobe + Kurztests, KI-Bewertung; R 50 % = Note 3, M 50 % = Note 4) ---
 const { registerGrammatik9rRoutes } = require("./grammatik9r");
 const { TESTS: GRAMMATIK9R } = require("./grammatik9r-daten");
@@ -244,7 +251,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-vokabeln-3",
+    version: "2026-10-03-deutsch9-grammatik",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
