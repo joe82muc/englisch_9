@@ -135,7 +135,8 @@ test("Ablauf mit Upstash-REST (Attrappe)", async (t) => {
   const { server: up, anfragen } = upstashAttrappe();
   await new Promise((r) => up.listen(0, "127.0.0.1", r));
   const url = `http://127.0.0.1:${up.address().port}/`;
-  const api = await starte({ env: { UPSTASH_REDIS_REST_URL: url, UPSTASH_REDIS_REST_TOKEN: "geheim" } });
+  // Werte wie aus dem .env-Kasten kopiert: mit Anführungszeichen und Leerzeichen
+  const api = await starte({ env: { UPSTASH_REDIS_REST_URL: ` "${url}" `, UPSTASH_REDIS_REST_TOKEN: '"geheim"' } });
   try {
     assert.equal(api.store.art, "upstash");
     await ablauf(t, api);
@@ -150,10 +151,12 @@ test("Ablauf mit Upstash-REST (Attrappe)", async (t) => {
 test("Upstash nicht erreichbar oder falscher Token", async () => {
   const { server: up } = upstashAttrappe();
   await new Promise((r) => up.listen(0, "127.0.0.1", r));
-  const api = await starte({ env: { UPSTASH_REDIS_REST_URL: `http://127.0.0.1:${up.address().port}`, UPSTASH_REDIS_REST_TOKEN: "falsch" } });
+  const api = await starte({ env: { UPSTASH_REDIS_REST_URL: `http://127.0.0.1:${up.address().port}`, UPSTASH_REDIS_REST_TOKEN: "Xq7geheimZ9" } });
   try {
     const status = await api.get("/api/nt9/fortschritt/status");
     assert.equal(status.body.verbunden, false);
+    assert.match(status.body.grund, /Token wird abgelehnt/);
+    assert.ok(!JSON.stringify(status.body).includes("Xq7geheimZ9"), "der Token erscheint nicht in der Antwort");
     const an = await api.post("/api/nt9/fortschritt/anmelden", { code: "123", klasse: "9M" });
     assert.equal(an.status, 503);
   } finally {

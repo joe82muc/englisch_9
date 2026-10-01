@@ -124,8 +124,11 @@ function parse(raw) {
 function registerNt9FortschrittRoutes(app, options = {}) {
   const teacherPassword = String(options.teacherPassword || "2");
   const env = options.env || process.env;
-  const store = options.store || (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
-    ? upstashStore(env.UPSTASH_REDIS_REST_URL, env.UPSTASH_REDIS_REST_TOKEN, options.fetch)
+  // Werte aus dem Render-Dashboard: Leerzeichen und Anführungszeichen (aus dem .env-Kasten kopiert) entfernen
+  const envWert = (v) => String(v || "").trim().replace(/^["']+|["']+$/g, "").trim();
+  const upUrl = envWert(env.UPSTASH_REDIS_REST_URL), upToken = envWert(env.UPSTASH_REDIS_REST_TOKEN);
+  const store = options.store || (upUrl && upToken
+    ? upstashStore(upUrl, upToken, options.fetch)
     : dateiStore(path.join(options.dataDir || path.join(__dirname, "..", "data"), "nt9-fortschritt.json")));
   const now = options.now || (() => Date.now());
   const klasseVon = new Map(); // Code -> Klasse (Zwischenspeicher, spart Datenbankzugriffe)
@@ -195,9 +198,12 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   };
 
   app.get("/api/nt9/fortschritt/status", async (_req, res) => {
-    let verbunden = false;
-    try { verbunden = await store.ping(); } catch (error) { console.error("NT 9 Fortschritt status:", error.message); }
-    res.json({ ok: true, speicher: store.art, verbunden });
+    let verbunden = false, grund = "";
+    try { verbunden = await store.ping(); } catch (error) {
+      console.error("NT 9 Fortschritt status:", error.message);
+      grund = fehlerGrund(error);
+    }
+    res.json({ ok: true, speicher: store.art, verbunden, ...(grund ? { grund } : {}) });
   });
 
   app.post("/api/nt9/fortschritt/anmelden", async (req, res) => {
@@ -314,6 +320,17 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   });
 
   return { store };
+}
+
+// Kurzer Grund für die Statusseite, ohne Schlüssel oder Adresse preiszugeben
+function fehlerGrund(error) {
+  const text = String((error && error.message) || "");
+  const code = error && error.cause && error.cause.code ? String(error.cause.code) : "";
+  if (/WRONGPASS|Unauthorized|401|invalid.*token|auth/i.test(text)) return "Token wird abgelehnt (falscher oder schreibgeschützter Token?)";
+  if (/Invalid URL|Failed to parse URL/i.test(text)) return "Die Adresse (UPSTASH_REDIS_REST_URL) ist keine gültige URL";
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") return "Die Adresse (UPSTASH_REDIS_REST_URL) wird nicht gefunden";
+  if (code) return "Netzwerkfehler " + code;
+  return text.replace(/https?:\/\/\S+/g, "<Adresse>").replace(/Bearer\s+\S+/g, "").slice(0, 120) || "unbekannt";
 }
 
 function aufgabenListe(v) {
