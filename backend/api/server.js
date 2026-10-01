@@ -244,7 +244,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-vokabeln",
+    version: "2026-10-02-vokabeln-2",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
@@ -664,8 +664,9 @@ async function azureSprechen(text, voice, ip) {
     body: ssml
   });
   if (!response.ok) {
-    const err = new Error("azure_speech_error: " + (await response.text()).slice(0, 200));
+    const err = new Error("azure_speech_error");
     err.status = 502;
+    err.detail = "Azure HTTP " + response.status + ": " + (await response.text()).replace(/\s+/g, " ").slice(0, 200);
     throw err;
   }
   const buf = Buffer.from(await response.arrayBuffer());
@@ -685,8 +686,8 @@ async function sprechAntwort(req, res, text, voiceRaw, langCache) {
     return res.status(200).send(buf);
   } catch (error) {
     if (error.status === 429) return res.status(429).json({ error: "zu_viele_anfragen" });
-    console.error("Fehler bei /api/speech/speak:", error.message);
-    return res.status(error.status || 500).json({ error: "speech_failed" });
+    console.error("Fehler bei /api/speech/speak:", error.message, error.detail || "");
+    return res.status(error.status || 500).json({ error: "speech_failed", detail: error.detail || "" });
   }
 }
 app.post("/api/speech/speak", (req, res) => sprechAntwort(req, res, req.body?.text, req.body?.voice, false));
