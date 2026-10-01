@@ -351,3 +351,27 @@ test("Kind zum Code für andere Module", async () => {
     assert.equal(await api.kindZumCode(frei), null);
   } finally { await new Promise((r) => api.server.close(r)); }
 });
+
+test("Fehlerwörter der Vokabeltrainer", async () => {
+  const api = await starte({ store: dateiStore(null) });
+  try {
+    const code = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "8c", anzahl: 1 })).body.neu[0].code;
+    const meta = { bereich: "Vokabeln", titel: "Unit 1", nr: 1 };
+    let r = await api.post(P + "/melden", { code, modul: "e8-u1-vokabeln", geloest: ["w1"], gesamt: 100, meta, fehler: { w3: [2, 0], w7: [1, 1], "x y": [1, 0], w9: [0, 0] } });
+    assert.equal(r.status, 200);
+    let an = await api.post(P + "/anmelden", { code });
+    assert.deepEqual(an.body.fortschritt["e8-u1-vokabeln"].f, { w3: [2, 0], w7: [1, 1] }, "nur gültige Einträge mit Fehlern");
+    // nur die Fehlerliste ändert sich: wird trotzdem gespeichert
+    await api.post(P + "/melden", { code, modul: "e8-u1-vokabeln", geloest: ["w1"], gesamt: 100, fehler: { w3: [2, 1] } });
+    an = await api.post(P + "/anmelden", { code });
+    assert.deepEqual(an.body.fortschritt["e8-u1-vokabeln"].f, { w3: [2, 1] });
+    // ohne fehler-Feld bleibt die Liste
+    await api.post(P + "/melden", { code, modul: "e8-u1-vokabeln", geloest: ["w2"], gesamt: 100 });
+    const l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "e8", klasse: "8c" });
+    assert.deepEqual(l.body.schueler[0].module["e8-u1-vokabeln"].f, { w3: [2, 1] });
+    // leere Liste löscht
+    await api.post(P + "/melden", { code, modul: "e8-u1-vokabeln", geloest: [], gesamt: 100, fehler: {} });
+    an = await api.post(P + "/anmelden", { code });
+    assert.equal(an.body.fortschritt["e8-u1-vokabeln"].f, undefined);
+  } finally { await new Promise((r) => api.server.close(r)); }
+});

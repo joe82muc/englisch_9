@@ -13,119 +13,6 @@
  */
 
 /* ==================================================================
-   Englisch 7 - Unit 1 - Test 1
-   Out and about in England + Topic 1 + Numbers + Talking about places
-   ================================================================== */
-const e7u1t1 = {
-  id: "e7-u1-test1",
-  title: "Vokabeltest 1 - Out and about in England",
-  unit: "Englisch 7 / Unit 1",
-  classLevel: "7",
-  direction: "mixed",
-  items: [
-    // --- Intro: Out and about in England ---
-    { prompt: "unterwegs", direction: "de-en", solutions: ["out and about"] },
-    { prompt: "to go surfing", direction: "en-de", solutions: ["surfen gehen"] },
-    { prompt: "theatre", direction: "en-de", solutions: ["Theater"] },
-    { prompt: "Theaterstück", direction: "de-en", solutions: ["play"] },
-    { prompt: "science", direction: "en-de", solutions: ["Wissenschaft; Naturwissenschaft"] },
-    { prompt: "Ausstellung", direction: "de-en", solutions: ["exhibition"] },
-    { prompt: "rocket", direction: "en-de", solutions: ["Rakete"] },
-    { prompt: "fahren", direction: "de-en", solutions: ["to drive; drive"], hint: "Verb" },
-    { prompt: "coast", direction: "en-de", solutions: ["Küste"] },
-
-    // --- Topic 1: Manchester ---
-    { prompt: "Verkehr", direction: "de-en", solutions: ["traffic"] },
-    { prompt: "noisy", direction: "en-de", solutions: ["laut"] },
-    { prompt: "Vergangenheit", direction: "de-en", solutions: ["past"] },
-    { prompt: "factory", direction: "en-de", solutions: ["Fabrik; Werk"] },
-    { prompt: "Kohle", direction: "de-en", solutions: ["coal"] },
-    { prompt: "mine", direction: "en-de", solutions: ["Bergwerk; Mine"] },
-    { prompt: "Zentrum", direction: "de-en", solutions: ["centre; center"] },
-    { prompt: "before", direction: "en-de", solutions: ["vorher; zuvor; schon einmal"] },
-    { prompt: "Luft", direction: "de-en", solutions: ["air"] },
-    { prompt: "clean", direction: "en-de", solutions: ["sauber"] },
-
-    // --- Talking about places ---
-    { prompt: "im Nordwesten von", direction: "de-en", solutions: ["in the northwest of"] },
-    { prompt: "quiet", direction: "en-de", solutions: ["leise; ruhig; still"] },
-    { prompt: "in der Nähe von", direction: "de-en", solutions: ["near"] },
-    { prompt: "far", direction: "en-de", solutions: ["weit"] },
-    { prompt: "Hauptstadt", direction: "de-en", solutions: ["capital; capital city"] },
-    { prompt: "environment", direction: "en-de", solutions: ["Umgebung"] },
-    { prompt: "Süden", direction: "de-en", solutions: ["south"] },
-    { prompt: "east", direction: "en-de", solutions: ["Osten; Ost-"] },
-
-    // --- Numbers higher than 1,000 ---
-    { prompt: "eine halbe Million", direction: "de-en", solutions: ["half a million"] },
-    { prompt: "one hundred thousand", direction: "en-de", solutions: ["einhunderttausend; 100000; 100.000"] },
-    { prompt: "eine Million", direction: "de-en", solutions: ["a million; one million"] }
-  ]
-};
-
-/* ==================================================================
-   Englisch 7 - Unit 1 - Test 2
-   Topic 2 + Possessive pronouns + Text + Jobs + Theatre
-   + More about + Film
-   ================================================================== */
-const e7u1t2 = {
-  id: "e7-u1-test2",
-  title: "Vokabeltest 2 - Free time, Globe Theatre & more",
-  unit: "Englisch 7 / Unit 1",
-  classLevel: "7",
-  direction: "mixed",
-  items: [
-    // --- Topic 2: Free time ---
-    { prompt: "dauern; brauchen", direction: "de-en", solutions: ["to take; take"], hint: "It ... two hours." },
-    { prompt: "to catch (bus/train)", direction: "en-de", solutions: ["nehmen; bekommen"] },
-    { prompt: "vormittags", direction: "de-en", solutions: ["a.m.; am"], hint: "Uhrzeit" },
-    { prompt: "p.m.", direction: "en-de", solutions: ["nachmittags; abends"] },
-    { prompt: "Kulissen; Bühnenbild", direction: "de-en", solutions: ["scenery"] },
-    { prompt: "to design", direction: "en-de", solutions: ["entwerfen; gestalten"] },
-    { prompt: "gelegentlich", direction: "de-en", solutions: ["occasionally"] },
-    { prompt: "to order", direction: "en-de", solutions: ["bestellen"] },
-    { prompt: "gesund", direction: "de-en", solutions: ["healthy"] },
-    { prompt: "I'm afraid", direction: "en-de", solutions: ["leider"] },
-
-    // --- Possessive pronouns ---
-    { prompt: "meine", direction: "de-en", solutions: ["mine"] },
-    { prompt: "yours", direction: "en-de", solutions: ["deine; eure; Ihre"] },
-    { prompt: "hers", direction: "en-de", solutions: ["ihre; ihrs"], hint: "von ihr" },
-    { prompt: "unsere", direction: "de-en", solutions: ["ours"] },
-    { prompt: "theirs", direction: "en-de", solutions: ["ihre; ihrs"], hint: "von ihnen" },
-
-    // --- Text: The Globe Theatre ---
-    { prompt: "besitzen", direction: "de-en", solutions: ["to own; own"] },
-    { prompt: "landlord", direction: "en-de", solutions: ["Grundstückseigentümer; Vermieter"] },
-    { prompt: "Miete", direction: "de-en", solutions: ["rent"] },
-    { prompt: "builder", direction: "en-de", solutions: ["Bauarbeiter; Bauarbeiterin"] },
-    { prompt: "tragen; befördern", direction: "de-en", solutions: ["to carry; carry"] },
-    { prompt: "hurt", direction: "en-de", solutions: ["verletzt"] },
-    { prompt: "Feuer", direction: "de-en", solutions: ["fire"] },
-
-    // --- Jobs & theatre ---
-    { prompt: "actor", direction: "en-de", solutions: ["Schauspieler; Schauspielerin; Darsteller; Darstellerin"] },
-    { prompt: "Hausmeister", direction: "de-en", solutions: ["caretaker"] },
-    { prompt: "engineer", direction: "en-de", solutions: ["Ingenieur; Ingenieurin; Techniker; Technikerin"] },
-    { prompt: "Bauer; Landwirt", direction: "de-en", solutions: ["farmer"] },
-    { prompt: "stage", direction: "en-de", solutions: ["Bühne"] },
-
-    // --- More about ---
-    { prompt: "Kultur", direction: "de-en", solutions: ["culture"] },
-    { prompt: "important", direction: "en-de", solutions: ["wichtig"] },
-    { prompt: "beliebt", direction: "de-en", solutions: ["popular"] },
-    { prompt: "advert", direction: "en-de", solutions: ["Werbung; Anzeige"] },
-    { prompt: "Sammlung", direction: "de-en", solutions: ["collection"] },
-    { prompt: "artist", direction: "en-de", solutions: ["Künstler; Künstlerin"] },
-
-    // --- Film: Surfing ---
-    { prompt: "Welle", direction: "de-en", solutions: ["wave"] },
-    { prompt: "brilliant", direction: "en-de", solutions: ["großartig; hervorragend; toll"] },
-    { prompt: "recht haben", direction: "de-en", solutions: ["to be right; be right"] }
-  ]
-};
-
-/* ==================================================================
    Englisch 9R - Unit 1 - Test 1
    Zoom in (A world language) + Intro (Australia) + Topic 1 (Uluru)
    + adjectives for talking about experiences
@@ -250,7 +137,7 @@ const e9ru1t2 = {
    Englisch 8R - Unit 1 - Vokabeltest
    Welcome to New York!
    ================================================================== */
-const e8ru1t1 = {
+const e8ru1quelle = {
   id: "e8r-u1-test1",
   title: "Vokabeltest Unit 1 - Welcome to New York!",
   unit: "Englisch 8R / Unit 1",
@@ -295,7 +182,7 @@ const e8ru1t1 = {
    Englisch 8R - Unit 2 - Vokabeltest
    One country - different states
    ================================================================== */
-const e8ru2t1 = {
+const e8ru2quelle = {
   id: "e8r-u2-test1",
   title: "Vokabeltest Unit 2 - One country - different states",
   unit: "Englisch 8R / Unit 2",
@@ -340,7 +227,7 @@ const e8ru2t1 = {
    Englisch 8R - Unit 3 - Vokabeltest
    Southern life
    ================================================================== */
-const e8ru3t1 = {
+const e8ru3quelle = {
   id: "e8r-u3-test1",
   title: "Vokabeltest Unit 3 - Southern life",
   unit: "Englisch 8R / Unit 3",
@@ -385,7 +272,7 @@ const e8ru3t1 = {
    Englisch 8R - Unit 4 - Vokabeltest
    Working in Canada
    ================================================================== */
-const e8ru4t1 = {
+const e8ru4quelle = {
   id: "e8r-u4-test1",
   title: "Vokabeltest Unit 4 - Working in Canada",
   unit: "Englisch 8R / Unit 4",
@@ -563,13 +450,114 @@ const e7mu1t2 = e7Test("7M", 2, e7u1Words2, E7_THEMA2);
 const e7ru1t1 = e7Test("7R", 1, e7u1Words1, E7_THEMA1);
 const e7ru1t2 = e7Test("7R", 2, e7u1Words2, E7_THEMA2);
 
+/* ==================================================================
+   Englisch 8R - Unit 1 bis 4: neue Vokabeltests, nur Deutsch -> Englisch
+   Grundlage sind die Wörter der früheren gemischten Tests (e8r-uN-test1):
+   Englisch -> Deutsch-Aufgaben stehen jetzt auf Deutsch, bei mehrdeutigen
+   deutschen Wörtern hilft ein Hinweis.
+   ================================================================== */
+const E8R_DE = {
+  // Unit 1
+  "island": { prompt: "Insel", solutions: ["island"] },
+  "messenger": { prompt: "Bote, Botin; Kurier, Kurierin", solutions: ["messenger"] },
+  "population (no pl)": { prompt: "Bevölkerung; Einwohnerzahl", solutions: ["population"] },
+  "for": { prompt: "seit", hint: "seit zwei Jahren = … two years", solutions: ["for; since"] },
+  "poor": { prompt: "arm", hint: "nicht reich", solutions: ["poor"] },
+  "to be a long way away": { prompt: "weit weg sein", solutions: ["to be a long way away; to be far away"] },
+  "culture": { prompt: "Kultur", solutions: ["culture"] },
+  "to move": { prompt: "umziehen", hint: "in eine andere Wohnung", solutions: ["to move"] },
+  "to be born": { prompt: "geboren werden", solutions: ["to be born"] },
+  "Turkish": { prompt: "türkisch", solutions: ["Turkish"] },
+  "capital (city)": { prompt: "Hauptstadt", solutions: ["capital; capital city"] },
+  "noisy": { prompt: "laut", hint: "Die Straße ist …", solutions: ["noisy; loud"] },
+  "tower": { prompt: "Turm", solutions: ["tower"] },
+  "to knock sb off sth": { prompt: "jemanden von etwas stoßen", solutions: ["to knock sb off sth; to knock somebody off something; to knock sb off; knock off"] },
+  "to lie": { prompt: "lügen", hint: "nicht die Wahrheit sagen", solutions: ["to lie"] },
+  // Unit 2
+  "surfing": { prompt: "Surfen; Wellenreiten", solutions: ["surfing"] },
+  "earthquake": { prompt: "Erdbeben", solutions: ["earthquake"] },
+  "to produce": { prompt: "herstellen; erzeugen", solutions: ["to produce"] },
+  "water": { prompt: "Wasser", solutions: ["water"] },
+  "canoeing": { prompt: "Kanufahren", solutions: ["canoeing"] },
+  "to sit, sat, sat": { prompt: "sitzen", solutions: ["to sit"] },
+  "how to …": { prompt: "wie man (etwas macht)", hint: "… to swim", solutions: ["how to"] },
+  "itself": { prompt: "sich selbst", hint: "für Dinge und Tiere (it)", solutions: ["itself"] },
+  "boarding card": { prompt: "Bordkarte", solutions: ["boarding card; boarding pass"] },
+  "another": { prompt: "noch ein; ein anderer", solutions: ["another"] },
+  "ticket": { prompt: "Ticket; Fahrkarte", solutions: ["ticket"] },
+  "to arrive": { prompt: "ankommen", solutions: ["to arrive"] },
+  "to design": { prompt: "entwerfen; gestalten", solutions: ["to design"] },
+  "blanket": { prompt: "Decke", hint: "zum Zudecken", solutions: ["blanket"] },
+  "sense of smell": { prompt: "Geruchssinn", solutions: ["sense of smell"] },
+  // Unit 3
+  "to get on sth": { prompt: "in etwas einsteigen", hint: "Bus, Zug", solutions: ["to get on; to get on sth; to get on something"] },
+  "to enjoy": { prompt: "genießen", solutions: ["to enjoy"] },
+  "Thanksgiving": { prompt: "Erntedankfest (in den USA)", solutions: ["Thanksgiving"] },
+  "I don't mind.": { prompt: "Es macht mir nichts aus.", solutions: ["I don't mind; I do not mind"] },
+  "rice": { prompt: "Reis", solutions: ["rice"] },
+  "plum": { prompt: "Pflaume", solutions: ["plum"] },
+  "nurse": { prompt: "Krankenpfleger, Krankenschwester", solutions: ["nurse"] },
+  "forever": { prompt: "für immer; ewig", solutions: ["forever; for ever"] },
+  "to drive off": { prompt: "wegfahren", solutions: ["to drive off; to drive away"] },
+  "to find out": { prompt: "herausfinden", solutions: ["to find out"] },
+  "so that": { prompt: "damit; sodass", solutions: ["so that"] },
+  "smoke": { prompt: "Rauch", solutions: ["smoke"] },
+  "while": { prompt: "während", hint: "… ich schlief", solutions: ["while"] },
+  "when": { prompt: "als; wenn", hint: "zeitlich", solutions: ["when"] },
+  "pie": { prompt: "Pastete; gefüllter Kuchen", solutions: ["pie"] },
+  // Unit 4
+  "second": { prompt: "zweit-", hint: "der … Tag", solutions: ["second"] },
+  "wilderness": { prompt: "Wildnis", solutions: ["wilderness"] },
+  "language": { prompt: "Sprache", solutions: ["language"] },
+  "fair": { prompt: "fair; gerecht", solutions: ["fair"] },
+  "to mean, meant, meant": { prompt: "meinen; bedeuten", solutions: ["to mean"] },
+  "software": { prompt: "Software", solutions: ["software"] },
+  "guest": { prompt: "Gast", solutions: ["guest"] },
+  "CV (curriculum vitae)": { prompt: "Lebenslauf", solutions: ["CV; curriculum vitae"] },
+  "confident": { prompt: "selbstbewusst; selbstsicher", solutions: ["confident"] },
+  "to plan": { prompt: "planen", solutions: ["to plan"] },
+  "address": { prompt: "Adresse", solutions: ["address"] },
+  "education": { prompt: "Bildung; Erziehung", solutions: ["education"] },
+  "bed and breakfast (B&B)": { prompt: "Frühstückspension", solutions: ["bed and breakfast; B&B"] },
+  "to travel": { prompt: "reisen", solutions: ["to travel"] },
+  "cable car": { prompt: "Seilbahn", solutions: ["cable car"] }
+};
+// Deutsch -> Englisch, die schon so gefragt waren: eindeutiger machen
+const E8R_KLARER = {
+  "sich selbst": { prompt: "sich selbst", hint: "für eine Frau oder ein Mädchen (she)" },
+  "fliegen": { solutions: ["to fly"] },
+  "leider": { solutions: ["I'm afraid; I am afraid; unfortunately"] }
+};
+function e8rDeutschEnglisch(quelle) {
+  const items = quelle.items.map((it) => {
+    if (it.direction === "en-de") {
+      const neu = E8R_DE[it.prompt];
+      if (!neu) throw new Error("Vokabeltest 8R: keine deutsche Fassung für " + it.prompt);
+      return { prompt: neu.prompt, direction: "de-en", solutions: neu.solutions, ...(neu.hint ? { hint: neu.hint } : {}) };
+    }
+    const k = E8R_KLARER[it.prompt];
+    return k ? { ...it, ...k, direction: "de-en" } : { ...it };
+  });
+  return {
+    id: quelle.id.replace(/-test1$/, "-test2"),
+    title: quelle.title,
+    unit: quelle.unit,
+    classLevel: "8R",
+    gradeScale: "8R",
+    direction: "de-en",
+    items
+  };
+}
+const e8ru1t2 = e8rDeutschEnglisch(e8ru1quelle);
+const e8ru2t2 = e8rDeutschEnglisch(e8ru2quelle);
+const e8ru3t2 = e8rDeutschEnglisch(e8ru3quelle);
+const e8ru4t2 = e8rDeutschEnglisch(e8ru4quelle);
+
 const TESTS = {
-  [e7u1t1.id]: e7u1t1,
-  [e7u1t2.id]: e7u1t2,
-  [e8ru1t1.id]: e8ru1t1,
-  [e8ru2t1.id]: e8ru2t1,
-  [e8ru3t1.id]: e8ru3t1,
-  [e8ru4t1.id]: e8ru4t1,
+  [e8ru1t2.id]: e8ru1t2,
+  [e8ru2t2.id]: e8ru2t2,
+  [e8ru3t2.id]: e8ru3t2,
+  [e8ru4t2.id]: e8ru4t2,
   [e9ru1t1.id]: e9ru1t1,
   [e9ru1t2.id]: e9ru1t2,
   [e9mu1t1.id]: e9mu1t1,

@@ -33,7 +33,9 @@
  *        -> { ok, code, klasse, zug, fortschritt: { modul: { g: [ids], t } }, katalog?, module?, modulOk? }
  *        (klasse: Zug der Seite, z. B. „9M“ in NT 9 – passt der Code nicht dazu: 409;
  *         modul: modulOk sagt, ob der Server das Modul samt Aufgabenliste schon kennt)
- *   POST /api/nt9/fortschritt/melden   { code, klasse?, modul, geloest: [ids], gesamt, katalog?, meta? } -> { ok, anzahl }
+ *   POST /api/nt9/fortschritt/melden   { code, klasse?, modul, geloest: [ids], gesamt, katalog?, meta?, fehler? } -> { ok, anzahl }
+ *        (fehler: Fehlerwörter der Vokabeltrainer { wort: [wie oft falsch, wie oft hintereinander richtig] },
+ *         immer die ganze Liste des Moduls; anmelden liefert sie als fortschritt[modul].f zurück)
  * Routen (Lehrkraft, Passwort im Body):
  *   POST …/lehrer/liste       { password, kurs?, klasse? } -> { ok, speicher, kurse, module, klassen, klassenInfo, schueler, katalog }
  *   POST …/lehrer/anlegen     { password, klasse, anzahl } -> { ok, neu: [{ code, klasse }] }
@@ -429,7 +431,10 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const kind = await kindPruefen(req, res, String(body.code || "").trim(), String(body.klasse || "").trim());
       if (!kind) return;
       const fortschritt = {};
-      Object.keys(kind.p).forEach((m) => { const p = kind.p[m]; if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0 }; });
+      Object.keys(kind.p).forEach((m) => {
+        const p = kind.p[m];
+        if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0, ...(p.f ? { f: p.f } : {}) };
+      });
       const antwort = { ok: true, code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), fortschritt };
       const modul = String(body.modul || "");
       if (modul && kursVon(modul)) {
@@ -462,8 +467,10 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       let neu = 0;
       geloest.forEach((id) => { if (!g[id] && Object.keys(g).length < MAX_AUFGABEN) { g[id] = zeit; neu++; } });
       const t = gesamt || alt.t || 0;
-      if (neu || t !== alt.t || !kind.p[modul]) {
-        kind.p[modul] = { g, t, z: neu ? zeit : alt.z || zeit };
+      const fehlerNeu = body.fehler !== undefined ? fehlerPruefen(body.fehler) : alt.f;
+      const fehlerAnders = JSON.stringify(fehlerNeu || null) !== JSON.stringify(alt.f || null);
+      if (neu || t !== alt.t || !kind.p[modul] || fehlerAnders) {
+        kind.p[modul] = { g, t, z: neu || fehlerAnders ? zeit : alt.z || zeit, ...(fehlerNeu && Object.keys(fehlerNeu).length ? { f: fehlerNeu } : {}) };
         await geaendert(kind.code);
       }
       const katalog = katalogPruefen(body.katalog);
@@ -495,7 +502,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const info = klassenUebersicht(kinder);
       const schueler = kinder.filter((k) => !klasse || k.klasse === klasse).sort((a, b) => a.code.localeCompare(b.code)).map((k) => {
         const m = {};
-        ids.forEach((id) => { const p = k.p[id]; if (p) m[id] = { g: p.g || {}, t: p.t || 0, z: p.z || 0 }; });
+        ids.forEach((id) => { const p = k.p[id]; if (p) m[id] = { g: p.g || {}, t: p.t || 0, z: p.z || 0, ...(p.f ? { f: p.f } : {}) }; });
         return { code: k.code, klasse: k.klasse, angelegt: k.angelegt || 0, module: m };
       });
       const katalog = await katalogeHolen(ids);
@@ -619,6 +626,22 @@ function aufgabenListe(v) {
     if (out.size >= MAX_AUFGABEN) break;
   }
   return [...out];
+}
+
+// Fehlerwörter { wort: [falsch, richtig hintereinander] } – Kennungen wie bei den Aufgaben, Zahlen begrenzt
+function fehlerPruefen(v) {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  const out = {};
+  let n = 0;
+  for (const [id, wert] of Object.entries(v)) {
+    if (!/^[A-Za-z0-9_-]{1,60}$/.test(id) || !Array.isArray(wert)) continue;
+    const falsch = Math.max(0, Math.min(999, parseInt(wert[0], 10) || 0));
+    const richtig = Math.max(0, Math.min(9, parseInt(wert[1], 10) || 0));
+    if (!falsch) continue;
+    out[id] = [falsch, richtig];
+    if (++n >= 400) break;
+  }
+  return out;
 }
 
 // Katalog { id: [Bezeichnung, Station oder Teil] } – nur übernehmen, was harmlos und klein ist

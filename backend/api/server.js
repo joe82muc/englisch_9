@@ -244,7 +244,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-deutsch7-code",
+    version: "2026-10-02-vokabeln",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
@@ -632,43 +632,65 @@ app.post("/api/vocab/example", async (req, res) => {
   }
 });
 
-app.post("/api/speech/speak", async (req, res) => {
+/* ---------- Sprachausgabe (Azure) mit Zwischenspeicher ----------
+   Jedes Wort wird nur einmal bei Azure erzeugt und danach aus dem Arbeitsspeicher geliefert
+   (spart das Azure-Kontingent und ist sofort da). GET liefert dieselbe Datei mit langer
+   Browser-Zwischenspeicherung. Erlaubt sind nur einige englische Stimmen und kurze Texte. */
+const SPRECH_STIMMEN = new Set(["en-GB-SoniaNeural", "en-GB-RyanNeural", "en-US-JennyNeural", "en-US-GuyNeural", "en-GB-LibbyNeural"]);
+const SPRECH_CACHE = new Map(); // "stimme|text" -> Buffer (älteste fliegen zuerst raus)
+const SPRECH_CACHE_MAX = 2500;
+const SPRECH_NEU_JE_IP = new Map(); // IP -> { n, bis } – neue Azure-Anfragen je Stunde
+function sprechStimme(v) {
+  const voice = clean(v || AZURE_SPEECH_VOICE || "en-GB-SoniaNeural");
+  return SPRECH_STIMMEN.has(voice) ? voice : "en-GB-SoniaNeural";
+}
+async function azureSprechen(text, voice, ip) {
+  const key = voice + "|" + text;
+  const alt = SPRECH_CACHE.get(key);
+  if (alt) { SPRECH_CACHE.delete(key); SPRECH_CACHE.set(key, alt); return alt; }
+  const jetzt = Date.now(), e = SPRECH_NEU_JE_IP.get(ip);
+  if (!e || e.bis < jetzt) SPRECH_NEU_JE_IP.set(ip, { n: 1, bis: jetzt + 3600000 });
+  else if (++e.n > 400) { const err = new Error("zu_viele"); err.status = 429; throw err; }
+  const ssml = `<speak version='1.0' xml:lang='en-US'><voice name='${escapeXml(voice)}'>${escapeXml(text)}</voice></speak>`;
+  const endpoint = `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
+      "Content-Type": "application/ssml+xml",
+      "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
+      "User-Agent": "englisch_9"
+    },
+    body: ssml
+  });
+  if (!response.ok) {
+    const err = new Error("azure_speech_error: " + (await response.text()).slice(0, 200));
+    err.status = 502;
+    throw err;
+  }
+  const buf = Buffer.from(await response.arrayBuffer());
+  SPRECH_CACHE.set(key, buf);
+  if (SPRECH_CACHE.size > SPRECH_CACHE_MAX) SPRECH_CACHE.delete(SPRECH_CACHE.keys().next().value);
+  return buf;
+}
+async function sprechAntwort(req, res, text, voiceRaw, langCache) {
   try {
-    const text = clean(req.body?.text);
-    const voice = clean(req.body?.voice || AZURE_SPEECH_VOICE || "en-US-JennyNeural");
-    if (!text) return res.status(400).json({ error: "text fehlt." });
-    if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) {
-      return res.status(503).json({ error: "azure_speech_not_configured" });
-    }
-
-    const ssml = `<speak version='1.0' xml:lang='en-US'><voice name='${escapeXml(voice)}'>${escapeXml(text)}</voice></speak>`;
-    const endpoint = `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
-        "User-Agent": "englisch_9"
-      },
-      body: ssml
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      return res.status(502).json({ error: "azure_speech_error", detail: errText.slice(0, 300) });
-    }
-
-    const arr = await response.arrayBuffer();
-    const buf = Buffer.from(arr);
+    const t = clean(text).slice(0, 220);
+    if (!t) return res.status(400).json({ error: "text fehlt." });
+    if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) return res.status(503).json({ error: "azure_speech_not_configured" });
+    const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "?";
+    const buf = await azureSprechen(t, sprechStimme(voiceRaw), ip);
     res.setHeader("Content-Type", "audio/mpeg");
-    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Cache-Control", langCache ? "public, max-age=2592000, immutable" : "no-store");
     return res.status(200).send(buf);
   } catch (error) {
+    if (error.status === 429) return res.status(429).json({ error: "zu_viele_anfragen" });
     console.error("Fehler bei /api/speech/speak:", error.message);
-    return res.status(500).json({ error: "speech_failed" });
+    return res.status(error.status || 500).json({ error: "speech_failed" });
   }
-});
+}
+app.post("/api/speech/speak", (req, res) => sprechAntwort(req, res, req.body?.text, req.body?.voice, false));
+app.get("/api/speech/speak", (req, res) => sprechAntwort(req, res, req.query.text, req.query.voice, true));
 
 const SYSTEM_PROMPT = `Du bist ein freundlicher Englischlehrer fuer eine 9. Klasse (Gymnasium, Bayern).
 
