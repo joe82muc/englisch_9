@@ -9,7 +9,26 @@ const cors = require("cors");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
+// Alle KI-Rückmeldungen dieses Servers (NT, Deutsch, Englisch, Informatik) laufen über Haiku 4.5.
+// ANTHROPIC_MODEL bleibt nur als Ersatz, falls Haiku einmal nicht antwortet. (Mathe: eigener Dienst grumi-mathe-ki.)
+const ANTHROPIC_MODEL_HAIKU = process.env.ANTHROPIC_MODEL_HAIKU || "claude-haiku-4-5";
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
+
+// Gilt für jede KI-Bewertung in NT, Deutsch, Englisch und Informatik (Mathe hat einen eigenen Dienst):
+// Die Musterlösung ist ein Beispiel, keine Checkliste – Kinder können selten alles aufschreiben, was dort steht.
+const KI_MILDE = [
+  "Allgemein für jede Bewertung von Schülerantworten:",
+  "- Die Schülerinnen und Schüler sind 12 bis 16 Jahre alt (bayerische Mittelschule). Bewerte wohlwollend wie eine freundliche Lehrkraft, nicht wie ein Prüfer.",
+  "- Eine Musterlösung, Kriterienliste oder Stichwortliste ist ein Beispiel, keine Checkliste. Es ist für Schüler oft unmöglich, alles aufzuschreiben, was dort steht.",
+  "- Trifft die Antwort den Kern der Frage, gilt sie als richtig bzw. bekommt volle oder fast volle Punkte – auch wenn Einzelheiten der Musterlösung fehlen.",
+  "- Eigene Worte, kurze Antworten, Stichpunkte, Alltagssprache und andere sinnvolle Beispiele sind erlaubt.",
+  "- Ziehe nur ab, wenn etwas fachlich falsch ist oder der Kern fehlt. Rechtschreib- und Grammatikfehler zählen nur, wenn genau das geprüft wird (z. B. Englisch-Grammatik oder Vokabeln).",
+  "- Im Zweifel entscheide zugunsten der Schülerin oder des Schülers. Rückmeldungen sind ermutigend und nennen höchstens einen konkreten nächsten Schritt."
+].join("\n");
+function mitMilde(system) {
+  if (Array.isArray(system)) return system.concat([{ type: "text", text: KI_MILDE }]);
+  return String(system || "") + "\n\n" + KI_MILDE;
+}
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "2";
 const SITE_USERNAME = process.env.SITE_USERNAME || "1";
 const SITE_PASSWORD = process.env.SITE_PASSWORD || "2";
@@ -199,7 +218,7 @@ let aiCheckCache = null;
 app.get("/api/health/ai", async (_req, res) => {
   if (aiCheckCache && Date.now() - aiCheckCache.at < 10 * 60 * 1000) return res.json(aiCheckCache.result);
   const results = [];
-  for (const model of uniqueModels([ANTHROPIC_MODEL, "claude-haiku-4-5", "claude-sonnet-5"])) {
+  for (const model of uniqueModels([ANTHROPIC_MODEL_HAIKU, "claude-haiku-4-5", ANTHROPIC_MODEL])) {
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -223,13 +242,14 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-01-nt9-fortschritt",
+    version: "2026-10-02-klassen-haiku",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {
       keyConfigured: Boolean(ANTHROPIC_API_KEY),
-      model: ANTHROPIC_MODEL,
+      model: ANTHROPIC_MODEL_HAIKU,
+      ersatzModell: ANTHROPIC_MODEL,
       azureOpenAiConfigured: Boolean(AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT),
       azureSpeechConfigured: Boolean(AZURE_SPEECH_KEY && AZURE_SPEECH_REGION)
     }
@@ -861,7 +881,7 @@ app.post("/api/check-quality", async (req, res) => {
       });
     }
 
-    const system = `Du bist Englischlehrer (9. Klasse).\nBewerte eine Schuelerantwort streng.\nAntworte NUR als JSON: {"correct":true|false,"reason":"...","spelling":0-100}.\nRegeln:\n- correct=true NUR wenn Inhalt/Aufgabe passt, Zeitform stimmt und Rechtschreibung mindestens bei minSpelling liegt.\n- Wenn Zeitform falsch ist (z.B. when ... come statt came), dann correct=false.\n- spelling ist deine geschaetzte Rechtschreib-Qualitaet in Prozent.`;
+    const system = `Du bist Englischlehrer (9. Klasse).\nBewerte eine Schuelerantwort fair und wohlwollend.\nAntworte NUR als JSON: {"correct":true|false,"reason":"...","spelling":0-100}.\nRegeln:\n- correct=true, wenn die Antwort zur Aufgabe passt, die geforderte Zeitform stimmt und die Rechtschreibung ungefaehr bei minSpelling liegt. Einzelne Tippfehler sind kein Grund fuer correct=false.\n- Wenn Zeitform falsch ist (z.B. when ... come statt came), dann correct=false.\n- spelling ist deine geschaetzte Rechtschreib-Qualitaet in Prozent.`;
 
     const user = `Aufgabe: ${task || "Freie Antwort"}\nAntwort: ${answer}\nMindestwoerter: ${minWords}\nMindestrechtschreibung: ${minSpelling}%`;
     const raw = await askAnthropic(system, user, 180);
@@ -985,13 +1005,14 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
     }
 
     const system = [
-      "Du bist ein strenger, aber fairer NT-Lehrer (9. Klasse, Bayern).",
-      "Pruefe eine Schuelerantwort gegen die Musterloesung.",
+      "Du bist ein freundlicher, fairer NT-Lehrer (9. Klasse, bayerische Mittelschule).",
+      "Pruefe eine Schuelerantwort gegen die Musterloesung. Die Musterloesung ist ein Beispiel, keine Checkliste: Die Antwort muss nicht alles enthalten, was dort steht.",
       "Wichtig: Begriffe aufzuzaehlen reicht NICHT. Der inhaltliche Zusammenhang und die Logik sind entscheidend.",
       "Bewerte mit diesem Rubriksystem: pro Kriterium sind nur 2, 1 oder 0 Punkte erlaubt.",
-      "2 Punkte = vollstaendige, logische Erklaerung mit passendem Fachbegriff.",
-      "1 Punkt = Fachbegriff vorhanden, aber Erklaerung ungenau/zu knapp.",
-      "0 Punkte = nur Fachbegriff ohne Erklaerung ODER fachlich falsch.",
+      "2 Punkte = der Kern ist richtig und nachvollziehbar erklaert (eigene Worte, auch kurz).",
+      "1 Punkt = richtiger Ansatz, aber noch ungenau oder nur angedeutet.",
+      "0 Punkte = fachlich falsch oder gar keine Erklaerung.",
+      "Kriterien, die fuer diese Frage nebensaechlich sind oder die die Antwort sinngemaess schon abdeckt, bekommen 2 Punkte. Eine Antwort, die den Kern trifft, ist mindestens Teilweise, meist Richtig.",
       "Ignoriere Rechtschreibung und Grammatik komplett; bewerte nur Fachinhalt + Logik.",
       "Es gibt 5 Kriterien, also max. 10 Punkte pro Aufgabe.",
       "Antworte nur als JSON ohne Markdown.",
@@ -1675,7 +1696,7 @@ app.post("/api/picture-description/rewrite-sentence", async (req, res) => {
       "Du bist ein Englischlehrer fuer Klasse 9 (A2/B1).",
       "Korrigiere NUR Grammatik und Rechtschreibung, ohne Inhalt stark zu veraendern.",
       "Pruefe ausserdem, ob der Satz logisch zum Bildkontext passt.",
-      "Pruefe streng, ob der Satz zum erwarteten Schritt passt.",
+      "Pruefe wohlwollend, ob der Satz zum erwarteten Schritt passt: Es reicht, wenn die wichtigste Information sinngemaess enthalten ist.",
       "Antworte NUR als valides JSON in diesem Format:",
       "{",
       "  \"correctedText\": \"...\",",
@@ -1686,7 +1707,7 @@ app.post("/api/picture-description/rewrite-sentence", async (req, res) => {
       "}",
       "Regeln:",
       "- correctedText muss genau ein korrekter englischer Satz sein.",
-      "- Wenn der Satz die Schritt-Erwartung nicht erfuellt, setze status auf 'passt_nicht' oder 'unsicher'.",
+      "- Nur wenn die wichtigste Information des Schritts fehlt oder falsch ist, setze status auf 'passt_nicht'; wenn du unsicher bist, auf 'passt'.",
       "- Keine Erklaerungen ausserhalb des JSON.",
       "- Wenn unklar, nimm status=unsicher."
     ].join("\n");
@@ -1873,10 +1894,11 @@ async function askAnthropic(system, user, maxTokens) {
   if (!apiKey) return "";
 
   const modelCandidates = uniqueModels([
-    ANTHROPIC_MODEL,
+    ANTHROPIC_MODEL_HAIKU,
     "claude-haiku-4-5",
-    "claude-sonnet-5"
+    ANTHROPIC_MODEL
   ]);
+  system = mitMilde(system);
 
   let lastError = null;
 
@@ -1948,6 +1970,7 @@ async function askKiMitErsatz(system, user, maxTokens) {
 }
 
 async function askAzureOpenAI(system, user, maxTokens) {
+  system = mitMilde(system);
   if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_API_KEY || !AZURE_OPENAI_DEPLOYMENT) return "";
   const base = AZURE_OPENAI_ENDPOINT.replace(/\/+$/, "");
   const url = `${base}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OPENAI_API_VERSION}`;

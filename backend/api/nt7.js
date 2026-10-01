@@ -33,7 +33,7 @@ function registerNt7Routes(app, opts) {
   const DATA_DIR = opts.dataDir;
   const DATA_FILE = path.join(DATA_DIR, "nt7-proben.json");
   const TEACHER_PASSWORD = opts.teacherPassword || "";
-  const MODEL = opts.model || process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
+  const MODEL = opts.model || process.env.ANTHROPIC_MODEL_HAIKU || "claude-haiku-4-5";
   /* Der Hauptserver reicht seine askAnthropic-Funktion herein. Sie probiert
      mehrere Modelle durch - wichtig, weil das in ANTHROPIC_MODEL gesetzte
      Modell abgekuendigt sein kann. Fehlt sie, fragen wir direkt an. */
@@ -120,6 +120,7 @@ function registerNt7Routes(app, opts) {
           "Du korrigierst eine Natur-und-Technik-Probe der 7. Klasse einer bayerischen Mittelschule.",
           "Bewerte fachlichen Sinn wohlwollend anhand der drei Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
           "Gib für jedes erfüllte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
+          "Die erwartete Antwort ist ein Beispiel, keine Checkliste: Trifft das Kind den Kern, gibt es volle oder fast volle Punkte, auch wenn Einzelheiten fehlen. Im Zweifel für das Kind.",
           "Antworte ausschließlich mit JSON: {\"points\":0,\"comment\":\"Kurze konkrete Rückmeldung auf Deutsch\"}."
         ].join("\n"),messages:[{role:"user",content:JSON.stringify({question:item.prompt,expected:item.expected,criteria:item.criteria,studentAnswer:answer})}]})
       });
