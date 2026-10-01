@@ -124,9 +124,7 @@ function parse(raw) {
 function registerNt9FortschrittRoutes(app, options = {}) {
   const teacherPassword = String(options.teacherPassword || "2");
   const env = options.env || process.env;
-  // Werte aus dem Render-Dashboard: Leerzeichen und Anführungszeichen (aus dem .env-Kasten kopiert) entfernen
-  const envWert = (v) => String(v || "").trim().replace(/^["']+|["']+$/g, "").trim();
-  const upUrl = envWert(env.UPSTASH_REDIS_REST_URL), upToken = envWert(env.UPSTASH_REDIS_REST_TOKEN);
+  const { url: upUrl, token: upToken, hinweis: upHinweis } = upstashZugang(env);
   const store = options.store || (upUrl && upToken
     ? upstashStore(upUrl, upToken, options.fetch)
     : dateiStore(path.join(options.dataDir || path.join(__dirname, "..", "data"), "nt9-fortschritt.json")));
@@ -201,7 +199,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     let verbunden = false, grund = "";
     try { verbunden = await store.ping(); } catch (error) {
       console.error("NT 9 Fortschritt status:", error.message);
-      grund = fehlerGrund(error);
+      grund = fehlerGrund(error) + (upHinweis ? ". " + upHinweis : "");
     }
     res.json({ ok: true, speicher: store.art, verbunden, ...(grund ? { grund } : {}) });
   });
@@ -322,6 +320,24 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   return { store };
 }
 
+// Zugangsdaten aus dem Render-Dashboard großzügig lesen: ganze .env-Zeile, Anführungszeichen,
+// Leerzeichen, Adresse ohne https:// (so steht sie im Feld „Endpoint“) und vertauschte Werte
+function upstashZugang(env) {
+  const wert = (v, name) => {
+    let s = String(v || "").trim();
+    if (s.toUpperCase().startsWith(name + "=")) s = s.slice(name.length + 1);
+    return s.trim().replace(/^["']+|["']+$/g, "").trim();
+  };
+  const adresse = (v) => (v && !/^https?:\/\//i.test(v) && /^[a-z0-9.-]+\.upstash\.io\/?$/i.test(v) ? "https://" + v : v);
+  let url = adresse(wert(env.UPSTASH_REDIS_REST_URL, "UPSTASH_REDIS_REST_URL"));
+  let token = wert(env.UPSTASH_REDIS_REST_TOKEN, "UPSTASH_REDIS_REST_TOKEN");
+  if (url && token && !/upstash\.io/i.test(url) && /upstash\.io/i.test(token)) [url, token] = [adresse(token), url];
+  let hinweis = "";
+  if (url && !/upstash\.io/i.test(url)) hinweis = "In UPSTASH_REDIS_REST_URL steht keine Upstash-Adresse (…upstash.io)";
+  else if (/\s/.test(url)) hinweis = "UPSTASH_REDIS_REST_URL enthält Leerzeichen";
+  return { url, token, hinweis };
+}
+
 // Kurzer Grund für die Statusseite, ohne Schlüssel oder Adresse preiszugeben
 function fehlerGrund(error) {
   const text = String((error && error.message) || "");
@@ -357,4 +373,4 @@ function katalogPruefen(v) {
   return n ? out : null;
 }
 
-module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, MODULE };
+module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, MODULE };

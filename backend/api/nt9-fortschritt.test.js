@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const test = require("node:test");
 const express = require("express");
-const { registerNt9FortschrittRoutes, dateiStore } = require("./nt9-fortschritt");
+const { registerNt9FortschrittRoutes, dateiStore, upstashZugang } = require("./nt9-fortschritt");
 
 // Nachbau der Upstash-REST-Schnittstelle (nur die Befehle, die das Modul benutzt)
 function upstashAttrappe() {
@@ -178,4 +178,16 @@ test("Sperre nach vielen falschen Codes", async () => {
     jetzt += 11 * 60 * 1000;
     assert.equal((await api.post("/api/nt9/fortschritt/anmelden", { code: "555", klasse: "9M" }, { "X-Forwarded-For": "10.0.0.1" })).status, 404, "nach 10 Minuten wieder frei");
   } finally { await new Promise((r) => api.server.close(r)); }
+});
+
+test("Zugangsdaten werden großzügig gelesen", () => {
+  const ziel = { url: "https://grand-raccoon-1.upstash.io", token: "AbC123=", hinweis: "" };
+  const fall = (url, token) => upstashZugang({ UPSTASH_REDIS_REST_URL: url, UPSTASH_REDIS_REST_TOKEN: token });
+  assert.deepEqual(fall("https://grand-raccoon-1.upstash.io", "AbC123="), ziel);
+  assert.deepEqual(fall(' "https://grand-raccoon-1.upstash.io" ', '"AbC123="'), ziel, "Anführungszeichen");
+  assert.deepEqual(fall("grand-raccoon-1.upstash.io", "AbC123="), ziel, "Endpoint ohne https://");
+  assert.deepEqual(fall('UPSTASH_REDIS_REST_URL="https://grand-raccoon-1.upstash.io"', 'UPSTASH_REDIS_REST_TOKEN="AbC123="'), ziel, "ganze .env-Zeile");
+  assert.deepEqual(fall("AbC123=", "https://grand-raccoon-1.upstash.io"), ziel, "vertauscht");
+  assert.match(fall("AbC123=", "AbC123=").hinweis, /keine Upstash-Adresse/);
+  assert.equal(fall("", "").url, "");
 });
