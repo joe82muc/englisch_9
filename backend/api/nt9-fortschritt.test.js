@@ -113,7 +113,7 @@ async function ablauf(t, api) {
   assert.equal(l.module.m06.t, 72);
   assert.deepEqual(liste.body.katalog.m06, { "mc1-0": ["Ankreuzen: Welcher Vorgang …", "1"], duell: ["Duell gegen den Klimaleugner", "7"] });
   assert.equal(liste.body.module.length, 9);
-  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt9", "e9"]);
+  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt9", "e9", "d9"]);
   assert.equal(liste.body.module.filter((m) => m.kurs === "e9").length, 4);
 
   // Englisch: eigenes Modul, Teil-Namen als Station, Katalog beim Anmelden
@@ -129,6 +129,34 @@ async function ablauf(t, api) {
   assert.equal(mitKatalog.body.katalog.e9u1g1.a1[1], "Test yourself");
   const ohneKatalog = await post("/api/nt9/fortschritt/anmelden", { code: lena, klasse: "9M" });
   assert.equal(ohneKatalog.body.katalog, undefined);
+
+  // Selbst angemeldete Übungsseiten (Deutsch/Englisch)
+  assert.equal((await post("/api/nt9/fortschritt/melden", { code: lena, klasse: "9M", modul: "d9-rs-01", geloest: ["ex-s1-1"] })).status, 400, "ohne meta unbekannt");
+  assert.equal((await post("/api/nt9/fortschritt/melden", { code: lena, klasse: "9M", modul: "x9-quatsch", geloest: ["a"], meta: { titel: "x" } })).status, 400, "falsches Präfix");
+  const d = await post("/api/nt9/fortschritt/melden", {
+    code: lena, klasse: "9M", modul: "d9-rs-01", geloest: ["ex-s1-1", "ex-s1-3"], gesamt: 10,
+    meta: { bereich: "Rechtschreibung: Strategien", bnr: 1, titel: "Strategie 1: <b>Wortart</b>", kurz: "S1", nr: 1 },
+    katalog: { "ex-s1-1": ["Aufgabe 1", "Aufgaben"], "ex-s1-3": ["Aufgabe 3", "Aufgaben"] }
+  });
+  assert.equal(d.status, 200);
+  assert.equal(d.body.anzahl, 2);
+  // danach geht es ohne meta, die Klasse des zweiten Kindes kommt dazu
+  assert.equal((await post("/api/nt9/fortschritt/melden", { code: r9, klasse: "9R", modul: "d9-rs-01", geloest: ["ex-s1-2"] })).status, 200);
+  // Anmeldung ohne Klasse (Seiten ohne Klassenordner): die Klasse kommt vom Code
+  const ohneKlasse = await post("/api/nt9/fortschritt/anmelden", { code: r9, kurs: "d9", katalog: true });
+  assert.equal(ohneKlasse.status, 200);
+  assert.equal(ohneKlasse.body.klasse, "9R");
+  assert.deepEqual(ohneKlasse.body.fortschritt["d9-rs-01"].g, ["ex-s1-2"]);
+  assert.deepEqual(Object.keys(ohneKlasse.body.katalog), ["d9-rs-01"]);
+  assert.equal(ohneKlasse.body.module[0].titel, "Strategie 1: bWortart/b");
+  const nurDeutsch = await post("/api/nt9/fortschritt/lehrer/liste", { password: "2", kurs: "d9" });
+  const mod = nurDeutsch.body.module.find((m) => m.id === "d9-rs-01");
+  assert.deepEqual(mod.klassen, ["9M", "9R"]);
+  assert.equal(mod.bereich, "Rechtschreibung: Strategien");
+  assert.equal(mod.kurs, "d9");
+  const lenaD = nurDeutsch.body.schueler.find((x) => x.code === lena);
+  assert.deepEqual(Object.keys(lenaD.module), ["d9-rs-01"], "nur Module des Kurses");
+  assert.deepEqual(Object.keys(nurDeutsch.body.katalog), ["d9-rs-01"]);
 
   assert.ok(liste.body.schueler.every((s) => !("name" in s)));
   assert.ok(!JSON.stringify(await api.store.get(`nt9:s:${lena}`)).includes("Lena"));

@@ -986,7 +986,7 @@ app.post("/api/nt/app8/evaluate", async (req, res) => {
 
     const system = [
       "Du bist ein strenger, aber fairer NT-Lehrer (9. Klasse, Bayern).",
-      "Pruefe eine Schuelerantwort gegen die Musterloesung aus dem Schulbuch.",
+      "Pruefe eine Schuelerantwort gegen die Musterloesung.",
       "Wichtig: Begriffe aufzuzaehlen reicht NICHT. Der inhaltliche Zusammenhang und die Logik sind entscheidend.",
       "Bewerte mit diesem Rubriksystem: pro Kriterium sind nur 2, 1 oder 0 Punkte erlaubt.",
       "2 Punkte = vollstaendige, logische Erklaerung mit passendem Fachbegriff.",

@@ -1,8 +1,12 @@
 "use strict";
 
 /**
- * Lernfortschritt Klasse 9M/9R für die Lehrkraft: NT 9 „Organische Rohstoffe“ und Englisch 9
- * Grammatik Unit 1. Ein Code je Kind gilt für alle Kurse.
+ * Lernfortschritt Klasse 9M/9R für die Lehrkraft: NT 9 „Organische Rohstoffe“, Englisch 9 und Deutsch 9.
+ * Ein Code je Kind gilt für alle Kurse.
+ *
+ * Feste Module stehen in KURSE (NT 9, Englisch-Grammatik Unit 1). Alle anderen Übungsseiten melden sich
+ * beim ersten Melden selbst an: Kennung "e9-…" oder "d9-…" plus meta { bereich, bnr, titel, kurz, nr }.
+ * Der Server merkt sich dazu, in welchen Klassen die Seite benutzt wurde (klassen).
  *
  * Jedes Kind bekommt von der Lehrkraft einen 3-stelligen Code und meldet sich damit in den
  * Modulen an. Die Modulseiten melden, welche Aufgaben gelöst sind. Die Lehrkraft sieht den
@@ -19,14 +23,16 @@
  *   nt9:s:<code>              { code, klasse, angelegt }
  *   nt9:p:<code>:<modul>      { g: { aufgabe: Zeitpunkt }, t: Aufgaben gesamt, z: letzte Meldung }
  *   nt9:k:<modul>             { aufgabe: [Bezeichnung, Station] }  (Aufgabenkatalog, kommt von den Seiten)
+ *   nt9:mods / nt9:mm:<modul> selbst angemeldete Module { id, kurs, bereich, bnr, titel, kurz, nr, klassen }
  *
  * Routen (Schüler):
- *   POST /api/nt9/fortschritt/anmelden { code, klasse, kurs?, katalog? }
+ *   POST /api/nt9/fortschritt/anmelden { code, klasse?, kurs?, katalog? }   (ohne klasse: Klasse des Codes)
  *        -> { ok, code, klasse, fortschritt: { modul: { g: [ids], t } }, katalog? }  (katalog: true liefert die
  *           Aufgabenliste der Module des Kurses mit – damit zeigt die Seite dem Kind, was noch fehlt)
- *   POST /api/nt9/fortschritt/melden   { code, klasse, modul, geloest: [ids], gesamt, katalog? } -> { ok, anzahl }
+ *   POST /api/nt9/fortschritt/melden   { code, klasse, modul, geloest: [ids], gesamt, katalog?, meta? } -> { ok, anzahl }
  * Routen (Lehrkraft, Passwort im Body):
- *   POST /api/nt9/fortschritt/lehrer/liste    { password }                   -> { ok, speicher, kurse, module, schueler, katalog }
+ *   POST /api/nt9/fortschritt/lehrer/liste    { password, kurs? }            -> { ok, speicher, kurse, module, schueler, katalog }
+ *        (mit kurs: Stand und Katalog nur für die Module dieses Kurses)
  *   POST /api/nt9/fortschritt/lehrer/anlegen  { password, klasse, anzahl }   -> { ok, neu: [{ code, klasse }] }
  *   POST /api/nt9/fortschritt/lehrer/loeschen { password, code }             -> { ok }
  *   GET  /api/nt9/fortschritt/status -> { ok, speicher, verbunden }
@@ -45,17 +51,22 @@ const KURSE = [
     { id: "m04", nr: 3, kurz: "Modul 3", titel: "Entstehung fossiler Rohstoffe" },
     { id: "m05", nr: 4, kurz: "Modul 4", titel: "Erdölaufbereitung und Fraktionen" },
     { id: "m06", nr: 5, kurz: "Modul 5", titel: "Kohlenstoffkreislauf und Treibhauseffekt" }
-  ] },
-  { id: "e9", titel: "Englisch 9 · Grammatik Unit 1", module: [
+  ].map((m) => ({ ...m, bereich: "Organische Rohstoffe", bnr: 1 })) },
+  { id: "e9", titel: "Englisch 9", module: [
     { id: "e9u1g1", nr: 1, kurz: "G1", titel: "Simple past" },
     { id: "e9u1g2", nr: 2, kurz: "G2", titel: "Will-future" },
     { id: "e9u1g3", nr: 3, kurz: "G3", titel: "If-clauses I" },
     { id: "e9u1g4", nr: 4, kurz: "G4", titel: "Present progressive" }
-  ] }
+  ].map((m) => ({ ...m, bereich: "Unit 1 · Grammatik", bnr: 1 })) },
+  { id: "d9", titel: "Deutsch 9", module: [] }
 ];
+const KURS_IDS = KURSE.map((k) => k.id);
 const MODULE = [];
 KURSE.forEach((k) => k.module.forEach((m) => MODULE.push({ ...m, kurs: k.id })));
 const MODUL_IDS = MODULE.map((m) => m.id);
+// Selbst angemeldete Übungsseiten
+const DYN_MUSTER = /^(e9|d9)-[a-z0-9-]{2,50}$/;
+const MAX_DYN = 400;
 const MAX_CODES = 800;
 const MAX_AUFGABEN = 300;
 // Fehlversuche bei der Anmeldung: die ganze Schule hat oft nur eine IP, darum großzügig
@@ -150,6 +161,55 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   const sKey = (code) => `nt9:s:${code}`;
   const pKey = (code, modul) => `nt9:p:${code}:${modul}`;
   const kKey = (modul) => `nt9:k:${modul}`;
+  const mmKey = (modul) => `nt9:mm:${modul}`;
+
+  // Selbst angemeldete Module (im Speicher zwischengespeichert, der Server läuft als eine Instanz)
+  let dynCache = null;
+  async function dynLaden() {
+    if (dynCache) return dynCache;
+    const ids = (await store.smembers("nt9:mods")).filter((id) => DYN_MUSTER.test(id));
+    const metas = await store.mget(ids.map(mmKey));
+    const karte = new Map();
+    ids.forEach((id, i) => { if (metas[i]) karte.set(id, metas[i]); });
+    dynCache = karte;
+    return karte;
+  }
+  function metaSaeubern(id, meta) {
+    const zahl = (v, max) => Math.max(0, Math.min(max, parseInt(v, 10) || 0));
+    const text = (v, n) => String(v || "").replace(/[<>"]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+    return { id, kurs: id.slice(0, 2), bereich: text(meta.bereich, 60) || "Weitere Übungen", bnr: zahl(meta.bnr, 99),
+      titel: text(meta.titel, 90) || id, kurz: text(meta.kurz, 24), nr: zahl(meta.nr, 999), klassen: [] };
+  }
+  // true, wenn das Modul bekannt ist (fest oder selbst angemeldet); meldet es bei Bedarf an
+  async function modulBekannt(id, meta, klasse) {
+    if (MODUL_IDS.includes(id)) return true;
+    if (!DYN_MUSTER.test(id)) return false;
+    const dyn = await dynLaden();
+    const alt = dyn.get(id);
+    if (!alt && !(meta && typeof meta === "object")) return false;
+    if (!alt && dyn.size >= MAX_DYN) return false;
+    const neu = meta && typeof meta === "object" ? metaSaeubern(id, meta) : { ...alt };
+    neu.klassen = [...new Set([...(alt ? alt.klassen || [] : []), ...(klasse ? [klasse] : [])])].sort();
+    if (JSON.stringify(neu) !== JSON.stringify(alt)) {
+      await store.set(mmKey(id), neu);
+      if (!alt) await store.sadd("nt9:mods", id);
+      dyn.set(id, neu);
+    }
+    return true;
+  }
+  async function alleModule() {
+    const dyn = await dynLaden();
+    const ordnung = (m) => [KURS_IDS.indexOf(m.kurs), m.bnr || 0, m.bereich || "", m.nr || 0, m.titel || ""];
+    const liste = [...MODULE, ...dyn.values()];
+    return liste.sort((a, b) => {
+      const x = ordnung(a), y = ordnung(b);
+      for (let i = 0; i < x.length; i++) {
+        if (x[i] < y[i]) return -1;
+        if (x[i] > y[i]) return 1;
+      }
+      return 0;
+    });
+  }
 
   function lehrerOk(req, res) {
     const given = Buffer.from(String((req.body && req.body.password) || "").slice(0, 200));
@@ -224,28 +284,31 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const body = req.body || {};
       const code = String(body.code || "").trim(), klasse = String(body.klasse || "").trim().toUpperCase();
       if (!/^\d{3}$/.test(code)) return res.status(400).json({ ok: false, error: "Der Code hat genau 3 Ziffern." });
-      if (!KLASSEN.includes(klasse)) return res.status(400).json({ ok: false, error: "Die Klasse fehlt." });
+      if (klasse && !KLASSEN.includes(klasse)) return res.status(400).json({ ok: false, error: "Unbekannte Klasse." });
       const s = await schuelerHolen(code);
       if (!s) {
         fehlversuch(req);
         return res.status(404).json({ ok: false, error: "Diesen Code gibt es nicht. Frag deine Lehrkraft." });
       }
-      if (s.klasse !== klasse) {
+      if (klasse && s.klasse !== klasse) {
         return res.status(409).json({ ok: false, klasse: s.klasse, error: `Dieser Code gehört zur Klasse ${s.klasse}. Öffne die Seite deiner Klasse.` });
       }
-      const staende = await store.mget(MODUL_IDS.map((m) => pKey(code, m)));
+      const module = await alleModule();
+      const alleIds = module.map((m) => m.id);
+      const staende = await store.mget(alleIds.map((m) => pKey(code, m)));
       const fortschritt = {};
-      MODUL_IDS.forEach((m, i) => {
+      alleIds.forEach((m, i) => {
         const p = staende[i];
         if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0 };
       });
       const antwort = { ok: true, code, klasse: s.klasse, fortschritt };
       if (body.katalog === true) {
-        const kurs = KURSE.find((k) => k.id === body.kurs);
-        const ids = kurs ? kurs.module.map((m) => m.id) : MODUL_IDS;
+        const imKurs = KURS_IDS.includes(body.kurs) ? module.filter((m) => m.kurs === body.kurs) : module;
+        const ids = imKurs.map((m) => m.id);
         const kataloge = await store.mget(ids.map(kKey));
         antwort.katalog = {};
         ids.forEach((m, i) => { if (kataloge[i]) antwort.katalog[m] = kataloge[i]; });
+        antwort.module = imKurs.map(({ id, kurs, bereich, titel, kurz, nr }) => ({ id, kurs, bereich, titel, kurz, nr }));
       }
       return res.json(antwort);
     } catch (error) { return fehler(res, error); }
@@ -256,8 +319,9 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const body = req.body || {};
       const code = String(body.code || "").trim(), klasse = String(body.klasse || "").trim().toUpperCase();
       const modul = String(body.modul || "");
-      if (!MODUL_IDS.includes(modul)) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
+      if (!MODUL_IDS.includes(modul) && !DYN_MUSTER.test(modul)) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
       if (!(await pruefen(req, res, code, klasse))) return;
+      if (!(await modulBekannt(modul, body.meta, klasse))) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
       const geloest = aufgabenListe(body.geloest);
       const gesamt = Math.max(0, Math.min(MAX_AUFGABEN, parseInt(body.gesamt, 10) || 0));
       const alt = (await store.get(pKey(code, modul))) || { g: {}, t: 0 };
@@ -280,26 +344,29 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   app.post("/api/nt9/fortschritt/lehrer/liste", async (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
+      const kurs = KURS_IDS.includes(req.body.kurs) ? req.body.kurs : null;
+      const alle = await alleModule();
+      const ids = alle.filter((m) => !kurs || m.kurs === kurs).map((m) => m.id);
       const codes = (await store.smembers("nt9:codes")).filter((c) => /^\d{3}$/.test(c)).sort();
       const stamm = await store.mget(codes.map(sKey));
       const pKeys = [];
-      codes.forEach((c) => MODUL_IDS.forEach((m) => pKeys.push(pKey(c, m))));
-      const [staende, kataloge] = await Promise.all([store.mget(pKeys), store.mget(MODUL_IDS.map(kKey))]);
+      codes.forEach((c) => ids.forEach((m) => pKeys.push(pKey(c, m))));
+      const [staende, kataloge] = await Promise.all([pKeys.length ? store.mget(pKeys) : [], store.mget(ids.map(kKey))]);
       const schueler = [];
       codes.forEach((code, i) => {
         const s = stamm[i];
         if (!s) return;
         klasseVon.set(code, s.klasse);
         const module = {};
-        MODUL_IDS.forEach((m, j) => {
-          const p = staende[i * MODUL_IDS.length + j];
+        ids.forEach((m, j) => {
+          const p = staende[i * ids.length + j];
           if (p) module[m] = { g: p.g || {}, t: p.t || 0, z: p.z || 0 };
         });
         schueler.push({ code, klasse: s.klasse, angelegt: s.angelegt || 0, module });
       });
       const katalog = {};
-      MODUL_IDS.forEach((m, i) => { if (kataloge[i]) katalog[m] = kataloge[i]; });
-      return res.json({ ok: true, speicher: store.art, kurse: KURSE.map((k) => ({ id: k.id, titel: k.titel })), module: MODULE, klassen: KLASSEN, schueler, katalog });
+      ids.forEach((m, i) => { if (kataloge[i]) katalog[m] = kataloge[i]; });
+      return res.json({ ok: true, speicher: store.art, kurs, kurse: KURSE.map((k) => ({ id: k.id, titel: k.titel })), module: alle, klassen: KLASSEN, schueler, katalog });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -332,7 +399,8 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     try {
       const code = String((req.body && req.body.code) || "");
       if (!/^\d{3}$/.test(code)) return res.status(400).json({ ok: false, error: "Ungültiger Code." });
-      await store.del([sKey(code), ...MODUL_IDS.map((m) => pKey(code, m))]);
+      const alle = await alleModule();
+      await store.del([sKey(code), ...alle.map((m) => pKey(code, m.id))]);
       await store.srem("nt9:codes", code);
       klasseVon.delete(code);
       return res.json({ ok: true });

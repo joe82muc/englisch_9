@@ -126,7 +126,7 @@ function keywordScore(given, item) {
 /* ------------------------------------------------------------------
    KI-Regeln (gemeinsam fuer Luecken und Saetze)
    ------------------------------------------------------------------ */
-/* Klasse 9 (Unit 1 Blue Line 5): Standard, wenn ein Test nichts angibt */
+/* Klasse 9 (Unit 1): Standard, wenn ein Test nichts angibt */
 const KI_THEMEN_9 = [
   "- simple past: -ed bzw. richtige unregelmaessige Form, didn't + Grundform, was/were",
   "- will-future: will/won't + Grundform",

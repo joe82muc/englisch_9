@@ -18,12 +18,12 @@
  */
 
 /* ==================================================================
-   Grammatikprobe Unit 1 - Around Australia (G1 bis G4)
+   Grammatikprobe Unit 1 (G1 bis G4)
    ================================================================== */
 const probeU1 = {
   id: "e9r-u1-probe",
   kind: "probe",
-  title: "Grammatikprobe Unit 1 - Around Australia",
+  title: "Grammatikprobe Unit 1",
   unit: "Englisch 9R / Unit 1",
   classLevel: "9R",
   items: [
@@ -31,11 +31,11 @@ const probeU1 = {
     { type: "gap", section: "A · Simple past (G1)", instruction: "Setze die Verben im simple past ein.",
       prompt: "Last year my family ___ (travel) to Australia.", solutions: [["travelled", "traveled"]] },
     { type: "gap", prompt: "We ___ (fly) to Sydney first.", solutions: [["flew"]] },
-    { type: "gap", prompt: "I ___ (not / eat) kangaroo meat.", solutions: [["didn't eat"]] },
+    { type: "gap", prompt: "I ___ (not / eat) any fish at the barbecue.", solutions: [["didn't eat"]] },
     { type: "gap", prompt: "The tour guide ___ (be) very friendly.", solutions: [["was"]] },
     { type: "gap", prompt: "The Dreamtime stories ___ (be) really interesting.", solutions: [["were"]] },
     { type: "gap", prompt: "___ you ___ (see) any koalas?", solutions: [["Did"], ["see"]] },
-    { type: "gap", prompt: "Where ___ you ___ (meet) the Aboriginal people?", solutions: [["did"], ["meet"]] },
+    { type: "gap", prompt: "Where ___ you ___ (meet) your new friends?", solutions: [["did"], ["meet"]] },
 
     // --- B: Kurzantworten ---
     { type: "gap", section: "B · Kurzantworten (G1)", instruction: "Gib Kurzantworten. (+) = Yes, (–) = No.",
@@ -47,7 +47,7 @@ const probeU1 = {
     { type: "gap", section: "C · Will-future (G2)", instruction: "Setze die Verben im will-future ein.",
       prompt: "I hope I ___ (find) a good job after school.", solutions: [["will find"]] },
     { type: "gap", prompt: "Maybe we ___ (visit) the Great Barrier Reef next year.", solutions: [["will visit"]] },
-    { type: "gap", prompt: "I'm sure it ___ (not rain) tomorrow.", solutions: [["won't rain"]] },
+    { type: "gap", prompt: "I'm sure the bus ___ (not be) late.", solutions: [["won't be"]] },
     { type: "gap", prompt: "___ your parents ___ (come) with you?", solutions: [["Will"], ["come"]] },
     { type: "gap", prompt: "I think Tom ___ (be) a great tour guide one day.", solutions: [["will be"]] },
 
@@ -61,13 +61,13 @@ const probeU1 = {
       prompt: "If it ___ (rain) tomorrow, we ___ (stay) at the hotel.", solutions: [["rains"], ["will stay"]] },
     { type: "gap", prompt: "If you ___ (not wear) a hat, you ___ (get) a sunburn.", solutions: [["don't wear"], ["will get"]] },
     { type: "gap", prompt: "If you feel ill, ___ (go) to the doctor's!", solutions: [["go"]] },
-    { type: "gap", prompt: "If you ask the doctor, she ___ (can give) you a prescription.", solutions: [["can give"]] },
+    { type: "gap", prompt: "If you ask the coach, he ___ (can give) you a new shirt.", solutions: [["can give"]] },
 
     // --- F: present progressive ---
     { type: "gap", section: "F · Present progressive (G4)", instruction: "Setze die Verben im present progressive ein.",
       prompt: "Look! The kangaroos ___ (jump) over the road.", solutions: [["are jumping"]] },
     { type: "gap", prompt: "Listen! Somebody ___ (play) the didgeridoo.", solutions: [["is playing"]] },
-    { type: "gap", prompt: "Come in. I ___ (not sleep), I ___ (read).", solutions: [["am not sleeping"], ["am reading"]] },
+    { type: "gap", prompt: "Sorry, I can't talk now. I ___ (not sleep), I ___ (study).", solutions: [["am not sleeping"], ["am studying"]] },
     { type: "gap", prompt: "What ___ you ___ (do) at the moment?", solutions: [["are"], ["doing"]] },
     { type: "gap", prompt: "Tom ___ (swim) in the sea right now.", solutions: [["is swimming"]] },
 
@@ -80,16 +80,16 @@ const probeU1 = {
 
     // --- H: Uebersetzen ---
     { type: "text", section: "H · Übersetze ins Englische", instruction: "Schreibe ganze Sätze. Es kommt auf die richtige Zeitform an.",
-      prompt: "Wir haben letzte Woche den Uluru besucht.", points: 2,
-      expected: "We visited Uluru last week.", focus: "simple past (visited)",
+      prompt: "Wir haben letzte Woche das Museum besucht.", points: 2,
+      expected: "We visited the museum last week.", focus: "simple past (visited)",
       keywords: ["visited", "last week"] },
-    { type: "text", prompt: "Ich bin sicher, dass es morgen nicht regnen wird.", points: 2,
-      expected: "I'm sure it won't rain tomorrow.", focus: "will-future verneint (won't rain)",
-      keywords: ["will not rain", "tomorrow"] },
-    { type: "text", prompt: "Wenn du Zeit hast, rufe ich dich an.", points: 2,
-      expected: "If you have time, I'll call you. / I'll call you if you have time.",
-      focus: "if-clause Typ I: simple present im if-Satz (have), will-future im Hauptsatz (will call)",
-      keywords: ["if you have", "will call|will phone|will ring"] },
+    { type: "text", prompt: "Ich bin sicher, dass der Test morgen nicht schwer sein wird.", points: 2,
+      expected: "I'm sure the test won't be difficult tomorrow.", focus: "will-future verneint (won't be)",
+      keywords: ["will not be", "tomorrow"] },
+    { type: "text", prompt: "Wenn du mir hilfst, bin ich schneller fertig.", points: 2,
+      expected: "If you help me, I'll be finished faster. / I'll be finished faster if you help me.",
+      focus: "if-clause Typ I: simple present im if-Satz (help), will-future im Hauptsatz (will be)",
+      keywords: ["if you help", "will be"] },
     { type: "text", prompt: "Schau mal! Die Kinder spielen im Park.", points: 2,
       expected: "Look! The children are playing in the park.", focus: "present progressive (are playing)",
       keywords: ["are playing"] }
@@ -148,9 +148,9 @@ const ktG2 = {
     { type: "choice", prompt: "Which sentence is correct?",
       options: ["I hope I will get the job.", "I hope I will to get the job.", "I hope I wills get the job."], answer: 0 },
     { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch.",
-      prompt: "Ich hoffe, dass ich schnell einen Job bekomme.", points: 2,
-      expected: "I hope I'll get a job quickly.", focus: "will-future nach I hope (I'll get)",
-      keywords: ["i hope", "will get|will find"] }
+      prompt: "Ich hoffe, dass wir das Spiel gewinnen.", points: 2,
+      expected: "I hope we'll win the game.", focus: "will-future nach I hope (we'll win)",
+      keywords: ["i hope", "will win"] }
   ]
 };
 
@@ -165,20 +165,20 @@ const ktG3 = {
   classLevel: "9R",
   items: [
     { type: "gap", section: "If-clauses Typ I", instruction: "Ergänze die if-Sätze.",
-      prompt: "If I ___ (have) time, I ___ (call) you.", solutions: [["have"], ["will call"]] },
+      prompt: "If I ___ (get) home early, I ___ (cook) dinner.", solutions: [["get"], ["will cook"]] },
     { type: "gap", prompt: "If it ___ (not rain), we ___ (go) to the beach.", solutions: [["doesn't rain"], ["will go"]] },
-    { type: "gap", prompt: "You ___ (not feel) cold if you wear warm clothes.", solutions: [["won't feel"]] },
+    { type: "gap", prompt: "You ___ (not get) lost if you take a map.", solutions: [["won't get"]] },
     { type: "gap", prompt: "If you feel sick, ___ (stay) in bed!", solutions: [["stay"]] },
     { type: "gap", prompt: "If you heat water to 100 degrees, it ___ (boil).", solutions: [["boils"]] },
     { type: "choice", section: "Was ist richtig?", instruction: "Kreuze an.",
       prompt: "Which sentence is correct?",
       options: ["If it will rain, we stay at home.", "If it rains, we will stay at home.", "If it rain, we will stay at home."], answer: 1 },
     { type: "choice", prompt: "Which sentence is correct?",
-      options: ["I'll call you, if I have time.", "I'll call you if I have time.", "I call you if I will have time."], answer: 1 },
+      options: ["I'll help you, if I have time.", "I'll help you if I have time.", "I help you if I will have time."], answer: 1 },
     { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch.",
-      prompt: "Wenn du mich fragst, kann ich dir helfen.", points: 2,
-      expected: "If you ask me, I can help you.", focus: "if-clause Typ I mit can im Hauptsatz",
-      keywords: ["if you ask", "can help"] }
+      prompt: "Wenn du mich anrufst, kann ich dich abholen.", points: 2,
+      expected: "If you call me, I can pick you up.", focus: "if-clause Typ I mit can im Hauptsatz",
+      keywords: ["if you call", "can pick"] }
   ]
 };
 
@@ -196,16 +196,16 @@ const ktG4 = {
       prompt: "Look! The dog ___ (run) after the ball.", solutions: [["is running"]] },
     { type: "gap", prompt: "I ___ (write) an email at the moment.", solutions: [["am writing"]] },
     { type: "gap", prompt: "The children ___ (not / sit) in the classroom.", solutions: [["aren't sitting", "are not sitting"]] },
-    { type: "gap", prompt: "___ you ___ (listen) to me?", solutions: [["Are"], ["listening"]] },
-    { type: "gap", prompt: "Who ___ she ___ (talk) to?", solutions: [["is"], ["talking"]] },
+    { type: "gap", prompt: "___ you ___ (watch) TV?", solutions: [["Are"], ["watching"]] },
+    { type: "gap", prompt: "Who ___ she ___ (text)?", solutions: [["is"], ["texting"]] },
     { type: "gap", section: "Kurzantwort", instruction: "Antworte mit einer Kurzantwort. (+) = Yes",
       prompt: "Are you reading? (+) ___", solutions: [["Yes, I am"]] },
     { type: "choice", section: "Schreibweise", instruction: "Kreuze die richtige -ing-Form an.",
       prompt: "swim + ing = ?", options: ["swiming", "swimming", "swimmming"], answer: 1 },
     { type: "text", section: "Bildbeschreibung", instruction: "Schreibe den Satz auf Englisch.",
-      prompt: "Einige Leute stehen um ein Feuer herum.", points: 2,
-      expected: "Some people are standing around the fire.", focus: "present progressive (are standing)",
-      keywords: ["are standing"] }
+      prompt: "Zwei Mädchen sitzen auf einer Bank.", points: 2,
+      expected: "Two girls are sitting on a bench.", focus: "present progressive (are sitting)",
+      keywords: ["are sitting"] }
   ]
 };
 
