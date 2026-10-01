@@ -52,7 +52,7 @@ async function starte(optionen) {
     return { status: r.status, body: await r.json() };
   };
   const get = async (route) => { const r = await fetch(base + route); return { status: r.status, body: await r.json() }; };
-  return { server, post, get, store: out.store, flush: out.flush };
+  return { server, post, get, store: out.store, flush: out.flush, kindZumCode: out.kindZumCode };
 }
 const P = "/api/nt9/fortschritt";
 
@@ -339,4 +339,15 @@ test("Zugangsdaten werden großzügig gelesen", () => {
   assert.deepEqual(fall("AbC123=", "https://grand-raccoon-1.upstash.io"), ziel, "vertauscht");
   assert.match(fall("AbC123=", "AbC123=").hinweis, /keine Upstash-Adresse/);
   assert.equal(fall("", "").url, "");
+});
+
+test("Kind zum Code für andere Module", async () => {
+  const api = await starte({ store: dateiStore(null) });
+  try {
+    const code = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 1 })).body.neu[0].code;
+    assert.deepEqual(await api.kindZumCode(code), { code, klasse: "7aM", zug: "7M" });
+    assert.equal(await api.kindZumCode("1"), null);
+    const frei = ["100", "101", "102"].find((c) => c !== code);
+    assert.equal(await api.kindZumCode(frei), null);
+  } finally { await new Promise((r) => api.server.close(r)); }
 });

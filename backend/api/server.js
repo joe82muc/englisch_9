@@ -104,7 +104,9 @@ registerArgumentation7Routes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   hashSecret: DE7_SECRET,
-  askAnthropic
+  askAnthropic,
+  // Anmeldung mit dem Code aus dem Lernfortschritt (nt9Fortschritt wird weiter unten angelegt)
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
 // --- Deutsch 7M/7R: Lernmodule Argumentieren und Diskutieren (Buch S. 22-25), gleiche Anmeldung wie der Trainer ---
@@ -242,7 +244,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-klassen-haiku",
+    version: "2026-10-02-deutsch7-code",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,

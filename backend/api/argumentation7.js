@@ -153,8 +153,21 @@ function registerArgumentation7Routes(app, options = {}) {
     });
   });
 
-  app.post("/api/de7-argument/start", (req, res) => {
-    const student = readIdentity(req.body);
+  app.post("/api/de7-argument/start", async (req, res) => {
+    let student = null;
+    // Anmeldung mit dem 3-stelligen Code (Lernfortschritt): kein Name auf dem Server, die Lehrkraft
+    // ordnet Code und Name in ihrem Browser zu. Ohne Code wie bisher mit Vor- und Nachname.
+    if (req.body && req.body.code !== undefined && typeof options.kindZumCode === "function") {
+      let kind = null;
+      try { kind = await options.kindZumCode(String(req.body.code), req); } catch (_error) {
+        return res.status(503).json({ ok: false, error: "Der Server ist gerade nicht erreichbar. Versuch es gleich noch einmal." });
+      }
+      if (kind && kind.gesperrt) return res.status(429).json({ ok: false, error: "Zu viele falsche Codes. Warte ein paar Minuten." });
+      if (!kind) return res.status(404).json({ ok: false, error: "Diesen Code gibt es nicht. Frag deine Lehrkraft." });
+      student = { firstName: "Code " + kind.code, lastName: "", className: kind.klasse, code: kind.code, key: "code|" + kind.code };
+    } else {
+      student = readIdentity(req.body);
+    }
     if (!student) {
       return res.status(400).json({ ok: false, error: "Bitte Vorname, Nachname und Klasse vollständig angeben." });
     }
@@ -643,7 +656,7 @@ function publicTopic(topic) {
 }
 
 function withoutKey(student) {
-  return { firstName: student.firstName, lastName: student.lastName, className: student.className };
+  return { firstName: student.firstName, lastName: student.lastName, className: student.className, ...(student.code ? { code: student.code } : {}) };
 }
 
 function clean(value, max = 240) {

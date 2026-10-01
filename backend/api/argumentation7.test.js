@@ -20,6 +20,7 @@ test.before(async () => {
     dataDir,
     teacherPassword: "2",
     hashSecret: "test-secret",
+    kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "7aM", zug: "7M" } : code === "999" ? { gesperrt: true } : null),
     askAnthropic: async (system) => {
       if (system.includes("Diskussionspartner")) {
         return JSON.stringify({ counterArgument: "Bowling ist wetterunabhängig, deshalb kann der Ausflug sicher stattfinden." });
@@ -148,3 +149,20 @@ async function post(route, body, token) {
   });
   return { response, body: await response.json() };
 }
+
+test("start accepts a progress code instead of a name", async () => {
+  const post = (body) => fetch(`${baseUrl}/api/de7-argument/start`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  let response = await post({ code: "123" });
+  let body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.student, { firstName: "Code 123", lastName: "", className: "7aM", code: "123" });
+  assert.ok(body.token);
+  const progress = await fetch(`${baseUrl}/api/de7-argument/progress`, { headers: { authorization: "Bearer " + body.token } });
+  assert.equal(progress.status, 200);
+  response = await post({ code: "456" });
+  assert.equal(response.status, 404);
+  response = await post({ code: "999" });
+  assert.equal(response.status, 429);
+  response = await post({ firstName: "Lea", lastName: "Muster", className: "7M" });
+  assert.equal(response.status, 200, "Anmeldung mit Namen geht weiter");
+});

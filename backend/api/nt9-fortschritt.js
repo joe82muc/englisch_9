@@ -567,7 +567,18 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     } catch (error) { return fehler(res, error); }
   });
 
-  return { store, flush };
+  // Für andere Module (z. B. Deutsch 7): Kind zum Code, mit derselben Sperre bei vielen falschen Codes.
+  // -> { code, klasse, zug } | { gesperrt: true } | null
+  async function kindZumCode(code, req) {
+    if (req && gesperrt(req)) return { gesperrt: true };
+    const c = String(code || "").trim();
+    if (!/^\d{3}$/.test(c)) return null;
+    const kind = (await kinderLaden()).get(c);
+    if (!kind) { if (req) fehlversuch(req); return null; }
+    return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse) };
+  }
+
+  return { store, flush, kindZumCode };
 }
 
 // Zugangsdaten aus dem Render-Dashboard großzügig lesen: ganze .env-Zeile, Anführungszeichen,
