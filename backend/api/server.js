@@ -244,7 +244,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-vokabeln-2",
+    version: "2026-10-02-vokabeln-3",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
@@ -253,7 +253,8 @@ app.get("/api/health", (_req, res) => {
       model: ANTHROPIC_MODEL_HAIKU,
       ersatzModell: ANTHROPIC_MODEL,
       azureOpenAiConfigured: Boolean(AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT),
-      azureSpeechConfigured: Boolean(AZURE_SPEECH_KEY && AZURE_SPEECH_REGION)
+      azureSpeechConfigured: Boolean(AZURE_SPEECH_KEY && AZURE_SPEECH_REGION),
+      azureSpeechRegion: AZURE_SPEECH_REGION
     }
   });
 });
