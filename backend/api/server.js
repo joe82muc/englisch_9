@@ -251,7 +251,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-03-versuchsprobe-9r",
+    version: "2026-10-02-abgaben-ueberschreiben-fix",
     nt9Fortschritt: nt9Fortschritt.store.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,

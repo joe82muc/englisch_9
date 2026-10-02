@@ -442,8 +442,14 @@ function registerVokabeltestRoutes(app, opts) {
       submittedAt: new Date().toISOString()
     };
 
-    db.submissions.push(record);
-    store.saveSubmissions(db);
+    // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
+    // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+    const fresh = store.loadSubmissions();
+    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
+      return res.status(409).json({ ok: false, error: "already_submitted", message: "Fuer diesen Namen wurde bereits abgegeben." });
+    }
+    fresh.submissions.push(record);
+    store.saveSubmissions(fresh);
 
     res.json({
       ok: true,
