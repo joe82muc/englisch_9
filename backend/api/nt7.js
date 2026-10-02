@@ -22,7 +22,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const tests = require("./nt7-fragen");
-const { probeKindPruefer, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+const { probeKindPruefer, probeOffen, verlassenZahl, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 
 /**
  * @param app            Express-App
@@ -138,12 +138,12 @@ function registerNt7Routes(app, opts) {
   app.get("/api/nt7/health", (_req,res) => res.json({ok:true,service:"nt7-proben",aiConfigured:Boolean(process.env.ANTHROPIC_API_KEY),storageConfigured:Boolean(process.env.NT_DATA_DIR)}));
   app.get("/api/nt7/list", (_req,res) => {
     const data = readData();
-    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),unlocked:Boolean(data.unlocked[test.id])}))});
+    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),unlocked:probeOffen(data.unlocked[test.id])}))});
   });
   app.post("/api/nt7/start", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
-    if (!readData().unlocked[test.id]) return res.status(403).json({ok:false,error:"locked"});
+    if (!probeOffen(readData().unlocked[test.id])) return res.status(403).json({ok:false,error:"locked"});
     const student = await probeKind(req, res);
     if (!student) return;
     const data = readData();
@@ -161,7 +161,7 @@ function registerNt7Routes(app, opts) {
     pending.add(submissionKey);
     try {
       let data = readData();
-      if (!data.unlocked[test.id]) return res.status(403).json({ok:false,error:"locked"});
+      if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ok:false,error:"locked"});
       if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
       const details = [];
       for (let i=0; i<test.items.length; i++) {
@@ -182,9 +182,9 @@ function registerNt7Routes(app, opts) {
         }
       }
       const score = details.reduce((sum,d) => sum+d.points,0), total = maxPoints(test), percent = Math.round(score/total*100);
-      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,score,total,percent,grade:grade(score/total*100,student.zug),needsReview:details.some(d => d.needsReview),details,submittedAt:new Date().toISOString()};
+      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),score,total,percent,grade:grade(score/total*100,student.zug),needsReview:details.some(d => d.needsReview),details,submittedAt:new Date().toISOString()};
       data = readData();
-      if (!data.unlocked[test.id]) return res.status(403).json({ok:false,error:"locked"});
+      if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ok:false,error:"locked"});
       if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
       data.submissions.push(record); writeData(data);
       return res.json({ok:true,result:{score,total,percent,grade:record.grade,needsReview:record.needsReview,details,submittedAt:record.submittedAt}});
@@ -197,8 +197,8 @@ function registerNt7Routes(app, opts) {
     if (!teacher(req,res)) return;
     const id = clean(req.body.testId);
     if (!tests[id]) return res.status(404).json({ok:false,error:"test_not_found"});
-    const data = readData(); data.unlocked[id] = req.body.open === true; writeData(data);
-    res.json({ok:true,testId:id,unlocked:data.unlocked[id]});
+    const data = readData(); data.unlocked[id] = {open:req.body.open === true,changedAt:new Date().toISOString()}; writeData(data);
+    res.json({ok:true,testId:id,unlocked:data.unlocked[id].open});
   });
   app.post("/api/nt7/teacher/results", (req,res) => {
     if (!teacher(req,res)) return;

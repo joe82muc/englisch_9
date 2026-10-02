@@ -17,8 +17,9 @@ const TESTS = {
   ] }
 };
 // Wie im Lernfortschritt: Code -> aktuelle Klasse (umbenennbar)
-const klassen = new Map([["123", "7aM"], ["456", "7aM"], ["789", "7b"], ["321", "7b"]]);
-const kindZumCode = async (code) => (klassen.has(code) ? { code, klasse: klassen.get(code) } : null);
+const klassen = new Map([["123", "7aM"], ["456", "7aM"], ["789", "7b"], ["321", "7b"], ["555", "7dM"], ["556", "7dM"]]);
+const lrs = new Set(["555"]);
+const kindZumCode = async (code) => (klassen.has(code) ? { code, klasse: klassen.get(code), lrs: lrs.has(code) } : null);
 
 let server, basis, dataDir;
 test.before(async () => {
@@ -76,6 +77,28 @@ test("Notenschlüssel nach Zug des Kindes: M 50 % = Note 4, R 50 % = Note 3", as
   const r = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "321", answers: ["", "cat"] });
   assert.equal(r.data.result.percent, 50);
   assert.equal(r.data.result.grade, 3);
+});
+
+test("LRS: Rechtschreibfehler zählen nicht, Verlassen wird gezählt", async () => {
+  const mitLrs = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "555", answers: ["dag", "kat"], verlassen: 3 });
+  assert.equal(mitLrs.data.result.grade, 1, "LRS: dag/kat gelten als dog/cat");
+  const ohne = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "556", answers: ["dag", "kat"] });
+  assert.equal(ohne.data.result.score, 0, "ohne LRS bleiben dag/kat falsch");
+  const rec = JSON.parse(fs.readFileSync(path.join(dataDir, "vokabeltest_abgaben.json"), "utf8")).submissions.find((s) => s.code === "555");
+  assert.equal(rec.lrs, true);
+  assert.equal(rec.verlassen, 3);
+});
+
+test("Freigeschaltete Proben schließen sich nach 3 Stunden, Abgabe geht 1 Stunde länger", () => {
+  const { probeOffen } = require("./probe-kind");
+  const jetzt = Date.parse("2026-10-05T12:00:00Z");
+  const vor = (min) => ({ open: true, changedAt: new Date(jetzt - min * 60000).toISOString() });
+  assert.equal(probeOffen(vor(170), false, jetzt), true);
+  assert.equal(probeOffen(vor(190), false, jetzt), false);
+  assert.equal(probeOffen(vor(190), true, jetzt), true, "Abgabe nach 3 h 10 min geht noch");
+  assert.equal(probeOffen(vor(250), true, jetzt), false);
+  assert.equal(probeOffen({ open: false, changedAt: new Date(jetzt).toISOString() }, false, jetzt), false);
+  assert.equal(probeOffen(undefined), false);
 });
 
 test("Notenübersicht je Klasse, folgt dem Umbenennen der Klasse", async () => {

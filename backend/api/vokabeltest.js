@@ -17,7 +17,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { probeKindPruefer } = require("./probe-kind");
+const { probeKindPruefer, probeOffen, verlassenZahl } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel
@@ -110,8 +110,10 @@ function editDistance(a, b, max) {
  * Rueckgabe: { correct, typo, matched }
  * Ein kleiner Tippfehler (Distanz 1) gilt ab 5 Zeichen noch als richtig,
  * wird aber als "typo" markiert, damit die Lehrkraft es sieht.
+ * lrs (Notenschutz LRS): mehr Toleranz, ab 3 Zeichen 1 Fehler, ab 6 Zeichen 2 Fehler.
+ * Lautgetreue Schreibungen ("wenzday") erkennt danach die KI.
  */
-function checkAnswer(given, solutions) {
+function checkAnswer(given, solutions, lrs) {
   const g = normalizeAnswer(given);
   if (!g) return { correct: false, typo: false, matched: "" };
 
@@ -128,7 +130,8 @@ function checkAnswer(given, solutions) {
     if (g === a.norm) return { correct: true, typo: false, matched: a.raw };
   }
   for (const a of accepted) {
-    if (a.norm.length >= 5 && editDistance(g, a.norm, 1) <= 1) {
+    const erlaubt = lrs ? (a.norm.length >= 6 ? 2 : a.norm.length >= 3 ? 1 : 0) : (a.norm.length >= 5 ? 1 : 0);
+    if (erlaubt && editDistance(g, a.norm, erlaubt) <= erlaubt) {
       return { correct: true, typo: true, matched: a.raw };
     }
   }
@@ -146,7 +149,7 @@ function checkAnswer(given, solutions) {
 
    @param askAnthropic  Funktion (system, user, maxTokens) => Promise<string>
    ------------------------------------------------------------------ */
-async function aiReview(pending, askAnthropic, classLevel) {
+async function aiReview(pending, askAnthropic, classLevel, lrs) {
   if (!pending.length || typeof askAnthropic !== "function") return {};
 
   const system = [
@@ -160,6 +163,11 @@ async function aiReview(pending, askAnthropic, classLevel) {
     "- eine andere, aber korrekte Wortform ('gehen' statt 'zu Fuss gehen')",
     "- fehlendes 'to' beim Verb oder fehlender Artikel",
     "- Gross- und Kleinschreibung, Tippfehler, fehlende Umlautpunkte",
+    ...(lrs ? [
+      "- NOTENSCHUTZ LRS (Lese-Rechtschreib-Stoerung): Rechtschreibung zaehlt nicht. Richtig ist auch",
+      "  lautgetreue, verdrehte oder lueckenhafte Schreibung, wenn eindeutig die richtige Vokabel gemeint",
+      "  ist (z. B. 'frend' fuer 'friend', 'bycicle' fuer 'bicycle', 'wenzday' fuer 'Wednesday')."
+    ] : []),
     "",
     "Als falsch gilt:",
     "- eine andere Vokabel, auch wenn sie thematisch passt",
@@ -296,7 +304,7 @@ function registerVokabeltestRoutes(app, opts) {
       unit: t.unit,
       classLevel: t.classLevel,
       itemCount: t.items.length,
-      unlocked: Boolean(unlocks.unlocked[t.id]?.open)
+      unlocked: probeOffen(unlocks.unlocked[t.id])
     }));
     res.json({ ok: true, tests: list });
   });
@@ -309,7 +317,7 @@ function registerVokabeltestRoutes(app, opts) {
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
 
     const unlocks = store.loadUnlocks();
-    if (!unlocks.unlocked[testId]?.open) {
+    if (!probeOffen(unlocks.unlocked[testId])) {
       return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist noch nicht freigeschaltet." });
     }
     const kind = await probeKind(req, res);
@@ -352,7 +360,7 @@ function registerVokabeltestRoutes(app, opts) {
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
 
     const unlocks = store.loadUnlocks();
-    if (!unlocks.unlocked[testId]?.open) {
+    if (!probeOffen(unlocks.unlocked[testId], true)) {
       return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist nicht freigeschaltet." });
     }
     const kind = await probeKind(req, res);
@@ -374,7 +382,7 @@ function registerVokabeltestRoutes(app, opts) {
     // ---- Auswertung: erst exakt, dann KI-Zweitmeinung ----
     const details = test.items.map((item, idx) => {
       const given = clean(answers[idx]);
-      const result = checkAnswer(given, item.solutions);
+      const result = checkAnswer(given, item.solutions, kind.lrs);
       return {
         nr: idx + 1,
         prompt: item.prompt,
@@ -400,7 +408,7 @@ function registerVokabeltestRoutes(app, opts) {
       }));
 
     if (pending.length) {
-      const verdicts = await aiReview(pending, askAnthropic, test.classLevel);
+      const verdicts = await aiReview(pending, askAnthropic, test.classLevel, kind.lrs);
       for (const d of details) {
         const v = verdicts[d.nr];
         if (v && v.correct && !d.correct) {
@@ -427,7 +435,8 @@ function registerVokabeltestRoutes(app, opts) {
       testId,
       testTitle: test.title,
       unit: test.unit,
-      code, firstName, lastName, className,
+      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen),
+      firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade, typos, aiAccepted,

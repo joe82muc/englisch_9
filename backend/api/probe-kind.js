@@ -7,7 +7,8 @@
  * (Namensliste in ihrem Browser). Gleiche Form wie im Deutsch-7-Trainer (argumentation7.js).
  *
  * probeKindPruefer(kindZumCode) -> async probeKind(req, res)
- *   liefert { code, klasse, zug: "M"|"R", firstName: "Code 123", lastName: "", className: klasse, key: "code|123" }
+ *   liefert { code, klasse, zug: "M"|"R", lrs, firstName: "Code 123", lastName: "", className: klasse, key: "code|123" }
+ *   (lrs: Notenschutz LRS, von der Lehrkraft beim Code gesetzt -> Rechtschreibung zählt nicht)
  *   oder schreibt selbst die Fehlerantwort und liefert null.
  *
  * Notenschlüssel nach dem Zug des Kindes: M-Klassen 50 % = Note 4, R-Klassen 50 % = Note 3.
@@ -23,6 +24,28 @@ const GRADE_SCALE_R = [
 ];
 // „7aM“, „9M“ -> M; „7b“, „9R“ -> R
 const zugVonKlasse = (klasse) => (/M$/.test(String(klasse || "")) ? "M" : "R");
+
+/* Freigeschaltete Proben schließen sich 3 Stunden nach dem Freischalten von selbst, falls das Sperren
+   vergessen wird (sonst ginge die Probe zu Hause). Abgeben geht eine Stunde länger, damit niemand
+   mitten in der Probe seine Arbeit verliert. eintrag: { open, changedAt } aus der Freischalt-Datei. */
+const OFFEN_MS = 3 * 60 * 60 * 1000;
+const ABGABE_MS = 4 * 60 * 60 * 1000;
+function probeOffen(eintrag, zurAbgabe, jetzt = Date.now()) {
+  if (!eintrag) return false;
+  if (eintrag === true) return true; // ältere Form ohne Zeitpunkt (NT 7)
+  if (!eintrag.open) return false;
+  const seit = Date.parse(eintrag.changedAt || "");
+  if (!Number.isFinite(seit)) return true;
+  return jetzt - seit < (zurAbgabe ? ABGABE_MS : OFFEN_MS);
+}
+
+// Wie oft das Kind die Probe verlassen hat (Tab oder App gewechselt), zählt der Browser mit
+const verlassenZahl = (v) => Math.max(0, Math.min(999, parseInt(v, 10) || 0));
+
+/* Notenschutz LRS: Rechtschreibung zählt nicht. Text für die KI-Bewertung freier Antworten. */
+const LRS_REGEL = "WICHTIG: Dieses Kind hat Notenschutz wegen LRS (Lese-Rechtschreib-Störung). Rechtschreibung zählt " +
+  "überhaupt nicht – auch nicht Groß- und Kleinschreibung, vertauschte, fehlende oder lautgetreu geschriebene Buchstaben. " +
+  "Bewerte nur, ob der Inhalt stimmt und ob erkennbar das richtige Wort gemeint ist.";
 
 function probeKindPruefer(kindZumCode) {
   return async function probeKind(req, res) {
@@ -50,10 +73,10 @@ function probeKindPruefer(kindZumCode) {
       return null;
     }
     return {
-      code: kind.code, klasse: kind.klasse, zug: zugVonKlasse(kind.klasse),
+      code: kind.code, klasse: kind.klasse, zug: zugVonKlasse(kind.klasse), lrs: Boolean(kind.lrs),
       firstName: "Code " + kind.code, lastName: "", className: kind.klasse, key: "code|" + kind.code
     };
   };
 }
 
-module.exports = { probeKindPruefer, zugVonKlasse, GRADE_SCALE_M, GRADE_SCALE_R };
+module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R };

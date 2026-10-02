@@ -7,7 +7,8 @@
  *
  * POST /api/proben/noten { password, klasse }
  *   -> { ok, klasse, noten: [{ id, modul, fach, testId, titel, code, note, punkte, max, prozent,
- *                              datum, abgabe, nachpruefen }] }
+ *                              datum, abgabe, nachpruefen, lrs, verlassen }] }
+ *   (lrs: mit Notenschutz LRS gewertet; verlassen: so oft hat das Kind die Probe verlassen)
  */
 const crypto = require("crypto");
 
@@ -46,7 +47,7 @@ function registerProbenNotenRoutes(app, options) {
             id: r.id, modul: q.modul, fach: q.fach, testId: r.testId, titel: r.testTitle || r.testId,
             code: r.code, note: r.grade, punkte: r.score, max: r.total, prozent: r.percent,
             datum: r.testDate || String(r.submittedAt || "").slice(0, 10), abgabe: r.submittedAt,
-            nachpruefen: Boolean(r.needsReview)
+            nachpruefen: Boolean(r.needsReview), lrs: Boolean(r.lrs), verlassen: Number(r.verlassen) || 0
           });
         }
       }

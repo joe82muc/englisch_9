@@ -23,7 +23,8 @@
  *
  * Schlüssel:
  *   nt9:codes                 Menge aller Codes
- *   nt9:c:<code>              { code, klasse, angelegt, p: { modul: { g: { aufgabe: Zeitpunkt }, t, z } } }
+ *   nt9:c:<code>              { code, klasse, angelegt, lrs?, p: { modul: { g: { aufgabe: Zeitpunkt }, t, z } } }
+ *                             (lrs: Notenschutz LRS, Rechtschreibung zählt in Proben nicht – setzt die Lehrkraft)
  *   nt9:k:<modul>             { aufgabe: [Bezeichnung, Station oder Teil] }  (Aufgabenkatalog von den Seiten)
  *   nt9:mods / nt9:mm:<modul> selbst angemeldete Module { id, kurs, bereich, bnr, titel, kurz, nr, klassen }
  *   (alt, wird beim ersten Laden übernommen und gelöscht: nt9:s:<code>, nt9:p:<code>:<modul>)
@@ -41,6 +42,7 @@
  *   POST …/lehrer/anlegen     { password, klasse, anzahl } -> { ok, neu: [{ code, klasse }] }
  *   POST …/lehrer/loeschen    { password, code } oder { password, klasse }  -> { ok, anzahl }
  *   POST …/lehrer/umbenennen  { password, von, nach }    -> { ok, anzahl }   (z. B. 9M -> 9aM)
+ *   POST …/lehrer/lrs         { password, code, lrs }    -> { ok, code, lrs } (Notenschutz LRS an/aus)
  *   GET  …/status -> { ok, speicher, verbunden }
  */
 
@@ -309,7 +311,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     return ladeVersprechen;
   }
   function satzSaeubern(code, s) {
-    return { code, klasse: klasseNorm(s.klasse) || "9M", angelegt: s.angelegt || 0, p: s.p && typeof s.p === "object" ? s.p : {} };
+    return { code, klasse: klasseNorm(s.klasse) || "9M", angelegt: s.angelegt || 0, ...(s.lrs ? { lrs: true } : {}), p: s.p && typeof s.p === "object" ? s.p : {} };
   }
   // Ältere Speicherform (je Kind und Modul ein Schlüssel) in einen Satz je Kind übernehmen
   async function uebernehmen(codes, karte) {
@@ -499,7 +501,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const schueler = kinder.filter((k) => !klasse || k.klasse === klasse).sort((a, b) => a.code.localeCompare(b.code)).map((k) => {
         const m = {};
         ids.forEach((id) => { const p = k.p[id]; if (p) m[id] = { g: p.g || {}, t: p.t || 0, z: p.z || 0, ...(p.f ? { f: p.f } : {}) }; });
-        return { code: k.code, klasse: k.klasse, angelegt: k.angelegt || 0, module: m };
+        return { code: k.code, klasse: k.klasse, angelegt: k.angelegt || 0, ...(k.lrs ? { lrs: true } : {}), module: m };
       });
       const katalog = await katalogeHolen(ids);
       return res.json({ ok: true, speicher: store.art, kurs, kurse: kursInfo(), module: kurs ? module : alle,
@@ -556,6 +558,19 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     } catch (error) { return fehler(res, error); }
   });
 
+  // Notenschutz LRS: Rechtschreibung zählt in Proben nicht. Nur Code und Merkmal, kein Name.
+  app.post("/api/nt9/fortschritt/lehrer/lrs", async (req, res) => {
+    if (!lehrerOk(req, res)) return;
+    try {
+      const body = req.body || {};
+      const kind = (await kinderLaden()).get(String(body.code || "").trim());
+      if (!kind) return res.status(404).json({ ok: false, error: "Diesen Code gibt es nicht." });
+      if (body.lrs === true) kind.lrs = true; else delete kind.lrs;
+      schmutzig.delete(kind.code);
+      await msetStuecke(store, [[cKey(kind.code), kind]]);
+      return res.json({ ok: true, code: kind.code, lrs: Boolean(kind.lrs) });
+    } catch (error) { return fehler(res, error); }
+  });
   app.post("/api/nt9/fortschritt/lehrer/umbenennen", async (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
@@ -578,7 +593,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     if (!/^\d{3}$/.test(c)) return null;
     const kind = (await kinderLaden()).get(c);
     if (!kind) { if (req) fehlversuch(req); return null; }
-    return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse) };
+    return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), lrs: Boolean(kind.lrs) };
   }
 
   return { store, flush, kindZumCode };

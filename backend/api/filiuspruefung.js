@@ -24,7 +24,7 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 const crypto = require("crypto");
-const { probeKindPruefer, GRADE_SCALE_R } = require("./probe-kind");
+const { probeKindPruefer, GRADE_SCALE_R, probeOffen, verlassenZahl } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel (wie bei den anderen Proben)
@@ -429,7 +429,7 @@ function registerFiliusPruefungRoutes(app, opts) {
         id: t.id, title: t.title, unit: t.unit, classLevel: t.classLevel,
         itemCount: t.items.length,
         maxPoints: maxA(t) + maxB(t),
-        unlocked: Boolean(u.unlocked[t.id]?.open)
+        unlocked: probeOffen(u.unlocked[t.id])
       }))
     });
   });
@@ -439,7 +439,7 @@ function registerFiliusPruefungRoutes(app, opts) {
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
 
-    if (!store.loadUnlocks().unlocked[testId]?.open) {
+    if (!probeOffen(store.loadUnlocks().unlocked[testId])) {
       return res.status(403).json({ ok: false, error: "locked", message: "Diese Pruefung ist noch nicht freigeschaltet." });
     }
     const kind = await probeKind(req, res);
@@ -466,7 +466,7 @@ function registerFiliusPruefungRoutes(app, opts) {
 
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
-    if (!store.loadUnlocks().unlocked[testId]?.open) {
+    if (!probeOffen(store.loadUnlocks().unlocked[testId], true)) {
       return res.status(403).json({ ok: false, error: "locked" });
     }
     const kind = await probeKind(req, res);
@@ -522,7 +522,8 @@ function registerFiliusPruefungRoutes(app, opts) {
     const record = {
       id: `fp_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId, testTitle: test.title, unit: test.unit,
-      code, zug: kind.zug, firstName, lastName, className, studentKey: key,
+      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen),
+      firstName, lastName, className, studentKey: key,
       testDate: clean(req.body?.testDate) || new Date().toISOString().slice(0, 10),
       score, total, percent, grade,
       teilA, teilB, dateiName,

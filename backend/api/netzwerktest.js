@@ -21,7 +21,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { probeKindPruefer, GRADE_SCALE_R } = require("./probe-kind");
+const { probeKindPruefer, GRADE_SCALE_R, probeOffen, verlassenZahl } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel Mittelschule (identisch zum Vokabeltest)
@@ -243,7 +243,7 @@ function registerNetzwerktestRoutes(app, opts) {
       classLevel: t.classLevel,
       itemCount: t.items.length,
       maxPoints: maxPoints(t),
-      unlocked: Boolean(unlocks.unlocked[t.id]?.open)
+      unlocked: probeOffen(unlocks.unlocked[t.id])
     }));
     res.json({ ok: true, tests: list });
   });
@@ -256,7 +256,7 @@ function registerNetzwerktestRoutes(app, opts) {
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
 
     const unlocks = store.loadUnlocks();
-    if (!unlocks.unlocked[testId]?.open) {
+    if (!probeOffen(unlocks.unlocked[testId])) {
       return res.status(403).json({
         ok: false, error: "locked",
         message: "Diese Probe ist noch nicht freigeschaltet."
@@ -310,7 +310,7 @@ function registerNetzwerktestRoutes(app, opts) {
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
 
     const unlocks = store.loadUnlocks();
-    if (!unlocks.unlocked[testId]?.open) {
+    if (!probeOffen(unlocks.unlocked[testId], true)) {
       return res.status(403).json({ ok: false, error: "locked", message: "Diese Probe ist nicht freigeschaltet." });
     }
     const kind = await probeKind(req, res);
@@ -383,7 +383,8 @@ function registerNetzwerktestRoutes(app, opts) {
       testId,
       testTitle: test.title,
       unit: test.unit,
-      code, zug: kind.zug, firstName, lastName, className,
+      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen),
+      firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade,

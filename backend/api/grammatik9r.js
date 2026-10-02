@@ -30,7 +30,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { probeKindPruefer } = require("./probe-kind");
+const { probeKindPruefer, probeOffen, verlassenZahl } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel
@@ -140,7 +140,8 @@ const KI_THEMEN_9 = [
  * Testdefinition ("level", "kiThemen"), damit dasselbe Modul auch
  * Tests anderer Jahrgangsstufen (z. B. Englisch 7) bewerten kann.
  */
-function kiRegeln(test) {
+// lrs: Notenschutz LRS - Rechtschreibung zaehlt nicht, nur die grammatische Form
+function kiRegeln(test, lrs) {
   const level = (test && test.level) || "9";
   const themen = (test && test.kiThemen) || KI_THEMEN_9;
   const alter = level === "7" ? "12 bis 13" : "14 bis 15";
@@ -156,7 +157,14 @@ function kiRegeln(test) {
     "Rechtschreibfehler bei Vokabeln, die mit der Grammatik nichts zu tun haben, sind egal.",
     "Fehler in der grammatischen Form selbst sind Fehler (z. B. 'goed', 'didn't went',",
     "'he play', 'Does he likes', 'mine' vor einem Nomen, falsche Zeitform).",
-    `Die Schueler sind ${alter} Jahre alt. Bewerte fair und im Zweifel wohlwollend.`
+    `Die Schueler sind ${alter} Jahre alt. Bewerte fair und im Zweifel wohlwollend.`,
+    ...(lrs ? [
+      "",
+      "NOTENSCHUTZ LRS (Lese-Rechtschreib-Stoerung): Bei diesem Kind zaehlt Rechtschreibung gar nicht,",
+      "auch nicht in der geforderten Form selbst, solange erkennbar die richtige Form gemeint ist",
+      "(z. B. 'wendt' fuer 'went', 'hapend' fuer 'happened', 'dosnt' fuer 'doesn't').",
+      "Falsch bleibt eine falsche grammatische Form ('goed', 'he play', falsche Zeitform)."
+    ] : [])
   ].join("\n");
 }
 
@@ -164,11 +172,11 @@ function kiRegeln(test) {
  * KI-Zweitmeinung fuer abgelehnte Luecken (Sammelaufruf).
  * Rueckgabe: { "<nr>-<gap>": { correct: true, reason } } - nur Aufwertungen.
  */
-async function aiReviewGaps(pending, askAnthropic, test) {
+async function aiReviewGaps(pending, askAnthropic, test, lrs) {
   if (!pending.length || typeof askAnthropic !== "function") return {};
 
   const system = [
-    kiRegeln(test),
+    kiRegeln(test, lrs),
     "",
     "Du bekommst Luecken, die der exakte Vergleich abgelehnt hat. Entscheide je Luecke,",
     "ob die Antwort trotzdem grammatisch richtig ist und in den Satz passt",
@@ -203,14 +211,14 @@ async function aiReviewGaps(pending, askAnthropic, test) {
 }
 
 /** KI-Bewertung eines ganzen Satzes. Faellt bei Problemen auf keywordScore zurueck. */
-async function aiScoreText(given, item, askAnthropic, test) {
+async function aiScoreText(given, item, askAnthropic, test, lrs) {
   const max = Number(item.points) || 2;
   const text = clean(given);
   if (text.length < 4) return { points: 0, comment: "Keine Antwort abgegeben.", source: "leer" };
   if (typeof askAnthropic !== "function") return keywordScore(given, item);
 
   const system = [
-    kiRegeln(test),
+    kiRegeln(test, lrs),
     "",
     `Vergib ganze Punkte von 0 bis ${max}:`,
     `- ${max} Punkte: Grammatik der geforderten Struktur stimmt und der Sinn ist getroffen.`,
@@ -332,7 +340,7 @@ function registerGrammatik9rRoutes(app, opts) {
         classLevel: t.classLevel,
         itemCount: t.items.length,
         maxPoints: maxPoints(t),
-        unlocked: Boolean(unlocks.unlocked[t.id]?.open)
+        unlocked: probeOffen(unlocks.unlocked[t.id])
       }))
     });
   });
@@ -343,7 +351,7 @@ function registerGrammatik9rRoutes(app, opts) {
 
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
-    if (!store.loadUnlocks().unlocked[testId]?.open) {
+    if (!probeOffen(store.loadUnlocks().unlocked[testId])) {
       return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist noch nicht freigeschaltet." });
     }
     const kind = await probeKind(req, res);
@@ -384,7 +392,7 @@ function registerGrammatik9rRoutes(app, opts) {
 
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
-    if (!store.loadUnlocks().unlocked[testId]?.open) {
+    if (!probeOffen(store.loadUnlocks().unlocked[testId], true)) {
       return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist nicht freigeschaltet." });
     }
     const kind = await probeKind(req, res);
@@ -452,7 +460,7 @@ function registerGrammatik9rRoutes(app, opts) {
     /* ---- 2. KI-Zweitmeinung fuer abgelehnte Luecken (nur Aufwertung) ---- */
     let aiUsed = false;
     if (pendingGaps.length) {
-      const verdicts = await aiReviewGaps(pendingGaps, askAnthropic, test);
+      const verdicts = await aiReviewGaps(pendingGaps, askAnthropic, test, kind.lrs);
       for (const p of pendingGaps) {
         const v = verdicts[p.id];
         if (!v) continue;
@@ -473,7 +481,7 @@ function registerGrammatik9rRoutes(app, opts) {
       if (d.type !== "text") continue;
       const item = d.item;
       const max = Number(item.points) || 2;
-      const scored = await aiScoreText(d.given, item, askAnthropic, test);
+      const scored = await aiScoreText(d.given, item, askAnthropic, test, kind.lrs);
       if (scored.source === "ki") aiUsed = true;
       if (scored.needsReview) needsReview = true;
       delete d.item;
@@ -495,7 +503,8 @@ function registerGrammatik9rRoutes(app, opts) {
     const record = {
       id: `g9r_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId, testTitle: test.title, unit: test.unit,
-      code, firstName, lastName, className, studentKey: key,
+      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen),
+      firstName, lastName, className, studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade, aiUsed, needsReview,
       gradeScale: scaleName,

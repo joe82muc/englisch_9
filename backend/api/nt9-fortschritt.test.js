@@ -345,10 +345,20 @@ test("Kind zum Code für andere Module", async () => {
   const api = await starte({ store: dateiStore(null) });
   try {
     const code = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 1 })).body.neu[0].code;
-    assert.deepEqual(await api.kindZumCode(code), { code, klasse: "7aM", zug: "7M" });
+    assert.deepEqual(await api.kindZumCode(code), { code, klasse: "7aM", zug: "7M", lrs: false });
     assert.equal(await api.kindZumCode("1"), null);
     const frei = ["100", "101", "102"].find((c) => c !== code);
     assert.equal(await api.kindZumCode(frei), null);
+
+    // Notenschutz LRS: nur die Lehrkraft setzt ihn, er steht in der Liste und kommt bei den Proben an
+    assert.equal((await api.post(P + "/lehrer/lrs", { password: "falsch", code, lrs: true })).status, 401);
+    assert.equal((await api.post(P + "/lehrer/lrs", { password: "2", code: frei, lrs: true })).status, 404);
+    assert.deepEqual((await api.post(P + "/lehrer/lrs", { password: "2", code, lrs: true })).body, { ok: true, code, lrs: true });
+    assert.equal((await api.kindZumCode(code)).lrs, true);
+    const liste = (await api.post(P + "/lehrer/liste", { password: "2", nurKlassen: true })).body;
+    assert.equal(liste.schueler.find((s) => s.code === code).lrs, true);
+    await api.post(P + "/lehrer/lrs", { password: "2", code, lrs: false });
+    assert.equal((await api.kindZumCode(code)).lrs, false);
   } finally { await new Promise((r) => api.server.close(r)); }
 });
 
