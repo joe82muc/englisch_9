@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Probe „Organische Rohstoffe“ für NT 9 (Module 1 bis 6), je eine Fassung für 9M und 9R.
+ * Probe „Organische Rohstoffe“ für NT 9 (Module 1 bis 7), je eine Fassung für 9M und 9R.
  *
  * Diese Datei bleibt auf dem Server: Sie enthält die Lösungen.
  * Die Routen kommen aus infoaustausch.js und laufen unter /api/nt9probe.
@@ -54,6 +54,7 @@ const M3 = "Modul 3 · Entstehung fossiler Rohstoffe";
 const M4 = "Modul 4 · Erdölaufbereitung und Fraktionen";
 const M5 = "Modul 5 · Kohlenstoffkreislauf und Treibhauseffekt";
 const M6 = "Modul 6 · Erdöl – Rohstoff mit Zukunft?";
+const M7 = "Modul 7 · Ohne Erdöl – geht das?";
 const TR = "Transfer · Nimm Stellung";
 
 const BILD = {
@@ -67,7 +68,7 @@ const BILD = {
 const probeM = {
   id: "nt9m-probe1",
   title: "Probe Organische Rohstoffe (9M)",
-  unit: "NT 9M · Module 1 bis 6",
+  unit: "NT 9M · Module 1 bis 7",
   classLevel: "9M",
   items: [
     { teil: M1, type: "choice", prompt: "Man erhitzt ein Stück Holz, Zucker oder Brot sehr stark. Was bleibt als schwarzer Rest übrig?",
@@ -124,7 +125,7 @@ const probeM = {
       expected: "Im Preis sind die Umweltkosten nicht enthalten, zum Beispiel Schäden durch den Klimawandel, Krankheiten durch Abgase oder Kosten für Ölunfälle und Plastikmüll. Diese Kosten bezahlen alle später. Würde man sie einrechnen, wäre Erdöl deutlich teurer.",
       kriterien: "1 Punkt: Umweltkosten/Umweltschäden sind nicht im Preis enthalten. 1 Punkt: ein Beispiel für solche Kosten oder: sie werden später von allen bezahlt / Erdöl wäre sonst teurer.",
       keywords: ["umweltkosten", "nicht im preis", "schäden", "klima", "später", "teurer"], points: 2, lines: 3 },
-    { teil: M6, type: "text", prompt: "Nenne zwei Möglichkeiten, Erdöl zu ersetzen oder einzusparen.",
+    { teil: M7, type: "text", prompt: "Nenne zwei Möglichkeiten, Erdöl zu ersetzen oder einzusparen.",
       expected: "Zum Beispiel eine Wärmepumpe statt Ölheizung, Elektroauto mit Strom aus Wind und Sonne, Bahn oder Fahrrad statt Auto, Bioplastik aus Maisstärke statt Kunststoff aus Erdöl, Biodiesel aus Raps, Recycling und Kreislaufwirtschaft.",
       kriterien: "Je 1 Punkt für eine sinnvolle Möglichkeit (erneuerbare Energien, Wärmepumpe, E-Auto, Bahn/Rad, Bioplastik, Biodiesel, Naturfasern, Recycling, Energie sparen, Dämmen).",
       keywords: ["wärmepumpe", "elektro", "wind", "sonne", "bahn", "fahrrad", "bioplastik", "stärke", "biodiesel", "recycl", "sparen"], points: 2, lines: 3 },
@@ -140,7 +141,7 @@ const probeM = {
 const probeR = {
   id: "nt9r-probe1",
   title: "Probe Organische Rohstoffe (9R)",
-  unit: "NT 9R · Module 1 bis 6",
+  unit: "NT 9R · Module 1 bis 7",
   classLevel: "9R",
   items: [
     { teil: M1, type: "choice", prompt: "Man erhitzt Holz, Zucker oder Brot sehr stark. Was bleibt als schwarzer Rest übrig?",
@@ -189,7 +190,7 @@ const probeR = {
       options: ["aus anderen Ländern (Import)", "aus Bayern", "aus Recycling", "aus Rapsfeldern"], answer: 0, points: 1 },
     { teil: M6, type: "match", prompt: "Welcher Blickwinkel passt? Ordne zu.", options: ["Nachhaltigkeit", "Ökologie (Umwelt)", "Ökonomie (Wirtschaft)"],
       rows: [{ text: "Erdöl wächst nicht nach.", answer: 0 }, { text: "Beim Verbrennen entsteht CO₂.", answer: 1 }, { text: "Die Umweltkosten fehlen im Preis.", answer: 2 }] },
-    { teil: M6, type: "text", prompt: "Nenne zwei Möglichkeiten, Erdöl zu ersetzen oder einzusparen.",
+    { teil: M7, type: "text", prompt: "Nenne zwei Möglichkeiten, Erdöl zu ersetzen oder einzusparen.",
       expected: "Zum Beispiel Wärmepumpe statt Ölheizung, Elektroauto, Bahn oder Fahrrad, Bioplastik aus Stärke, Biodiesel aus Raps, Recycling, Energie sparen.",
       kriterien: "Je 1 Punkt für eine sinnvolle Möglichkeit.",
       keywords: ["wärmepumpe", "elektro", "wind", "sonne", "bahn", "fahrrad", "bioplastik", "stärke", "biodiesel", "recycl", "sparen"], points: 2, lines: 3 },

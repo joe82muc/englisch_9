@@ -206,7 +206,7 @@ registerDeutsch9GrammatikRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
-// --- NT 9M/9R Modul 6: Diskussionsrunde zum Erdöl (allein gegen KI-Rollen oder 2 bis 4 Kinder am Tisch) ---
+// --- NT 9M/9R Modul 7: Diskussionsrunde zum Erdöl (allein gegen KI-Rollen oder 2 bis 4 Kinder am Tisch) ---
 const { registerNt9DiskussionRoutes } = require("./nt9-diskussion");
 registerNt9DiskussionRoutes(app, {
   askAnthropic: askKiMitErsatz,
@@ -304,7 +304,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-diskussion-protokoll",
+    version: "2026-10-02-nt9-modul7",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

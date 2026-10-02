@@ -1,6 +1,6 @@
 "use strict";
 
-// NT 9 Modul 6: Diskussionsrunde allein und am Tisch
+// NT 9 Modul 7: Diskussionsrunde allein und am Tisch
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const express = require("express");
