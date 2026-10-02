@@ -21,9 +21,10 @@ async function askAnthropic(system, user) {
   }
   if (system.includes("Schreibe das Protokoll")) {
     const { verlauf } = JSON.parse(user);
+    // absichtlich in falscher Reihenfolge: Die Zuordnung muss über nr laufen
     return JSON.stringify({
-      kern: verlauf.map((v) => "KERN " + v.nr),
-      pruefung: verlauf.filter((v) => v.vonSchueler).map((v) => ({ schuelerNr: v.nr, bewertung: "teilweise", pruefung: "Ergänze eine Zahl." })),
+      kern: verlauf.filter((v) => !v.vonSchueler).map((v) => ({ nr: v.nr, text: "KERN " + v.nr })).reverse(),
+      pruefung: verlauf.filter((v) => v.vonSchueler).map((v) => ({ nr: v.nr, bewertung: "teilweise", text: "Ergänze eine Zahl." })),
       ergebnis: "Die Runde war sich uneinig.", staerken: "Gute Gründe.", tipp: "Nenne Fakten."
     });
   }
