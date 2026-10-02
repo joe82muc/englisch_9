@@ -56,6 +56,11 @@ const PICTURE_BASED_TALK_ROOT = resolveFirstExistingDir([
 
 ensureDataFiles();
 
+// --- Proben dauerhaft in Upstash (Datenbank grumiproben: UPSTASH_grumiproben, UPSTASH_grumiproben_token) ---
+// Muss vor den Proben-Modulen stehen: holt nach Neustart und Deploy die Dateien in data/ zurueck.
+const { registerProbenSpeicher } = require("./proben-speicher");
+const probenSpeicher = registerProbenSpeicher(app, { dataDir: DATA_DIR });
+
 // --- Vokabeltest-Modul (Freischaltung, Abgabe, Auswertung) ---
 const { registerVokabeltestRoutes } = require("./vokabeltest");
 const { TESTS: VOKABELTESTS } = require("./vokabeltest-daten");
@@ -251,8 +256,9 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-abgaben-ueberschreiben-fix",
+    version: "2026-10-02-proben-upstash",
     nt9Fortschritt: nt9Fortschritt.store.art,
+    probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

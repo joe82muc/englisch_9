@@ -47,6 +47,7 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { beimBeenden } = require("./beenden");
 
 const FAECHER = { nt: "Natur und Technik", d: "Deutsch", e: "Englisch", i: "Informatik" };
 // Kurse je Fach und Stufe; zuege = Züge, für die es Inhalte gibt
@@ -360,13 +361,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   // Beim Beenden (Render schickt SIGTERM) noch alles schreiben
   if (options.beimBeendenSichern !== false && !beendenAngemeldet) {
     beendenAngemeldet = true;
-    const ende = (signal) => {
-      const fertig = () => process.exit(signal === "SIGINT" ? 130 : 0);
-      setTimeout(fertig, 8000).unref();
-      flush().catch(() => {}).then(fertig);
-    };
-    process.once("SIGTERM", () => ende("SIGTERM"));
-    process.once("SIGINT", () => ende("SIGINT"));
+    beimBeenden(flush);
   }
 
   /* --- Hilfen --- */
@@ -590,30 +585,33 @@ function registerNt9FortschrittRoutes(app, options = {}) {
 }
 
 // Zugangsdaten aus dem Render-Dashboard großzügig lesen: ganze .env-Zeile, Anführungszeichen,
-// Leerzeichen, Adresse ohne https:// (so steht sie im Feld „Endpoint“) und vertauschte Werte
-function upstashZugang(env) {
-  const wert = (v, name) => {
+// Leerzeichen, Adresse ohne https:// (so steht sie im Feld „Endpoint“) und vertauschte Werte.
+// Andere Variablennamen (z. B. für die Proben-Datenbank) über urlName/tokenName.
+function upstashZugang(env, urlName = "UPSTASH_REDIS_REST_URL", tokenName = "UPSTASH_REDIS_REST_TOKEN") {
+  // Auch eine ganze .env-Zeile aus der Upstash-Konsole (die heißt immer UPSTASH_REDIS_REST_…)
+  const wert = (v, ...namen) => {
     let s = String(v || "").trim();
-    if (s.toUpperCase().startsWith(name + "=")) s = s.slice(name.length + 1);
+    const name = namen.find((n) => s.toUpperCase().startsWith(n.toUpperCase() + "="));
+    if (name) s = s.slice(name.length + 1);
     return s.trim().replace(/^["']+|["']+$/g, "").trim();
   };
   const adresse = (v) => (v && !/^https?:\/\//i.test(v) && /^[a-z0-9.-]+\.upstash\.io\/?$/i.test(v) ? "https://" + v : v);
-  let url = adresse(wert(env.UPSTASH_REDIS_REST_URL, "UPSTASH_REDIS_REST_URL"));
-  let token = wert(env.UPSTASH_REDIS_REST_TOKEN, "UPSTASH_REDIS_REST_TOKEN");
+  let url = adresse(wert(env[urlName], urlName, "UPSTASH_REDIS_REST_URL"));
+  let token = wert(env[tokenName], tokenName, "UPSTASH_REDIS_REST_TOKEN");
   if (url && token && !/upstash\.io/i.test(url) && /upstash\.io/i.test(token)) [url, token] = [adresse(token), url];
   let hinweis = "";
-  if (url && !/upstash\.io/i.test(url)) hinweis = "In UPSTASH_REDIS_REST_URL steht keine Upstash-Adresse (…upstash.io)";
-  else if (/\s/.test(url)) hinweis = "UPSTASH_REDIS_REST_URL enthält Leerzeichen";
+  if (url && !/upstash\.io/i.test(url)) hinweis = `In ${urlName} steht keine Upstash-Adresse (…upstash.io)`;
+  else if (/\s/.test(url)) hinweis = `${urlName} enthält Leerzeichen`;
   return { url, token, hinweis };
 }
 
 // Kurzer Grund für die Statusseite, ohne Schlüssel oder Adresse preiszugeben
-function fehlerGrund(error) {
+function fehlerGrund(error, urlName = "UPSTASH_REDIS_REST_URL") {
   const text = String((error && error.message) || "");
   const code = error && error.cause && error.cause.code ? String(error.cause.code) : "";
   if (/WRONGPASS|Unauthorized|401|invalid.*token|auth/i.test(text)) return "Token wird abgelehnt (falscher oder schreibgeschützter Token?)";
-  if (/Invalid URL|Failed to parse URL/i.test(text)) return "Die Adresse (UPSTASH_REDIS_REST_URL) ist keine gültige URL";
-  if (code === "ENOTFOUND" || code === "EAI_AGAIN") return "Die Adresse (UPSTASH_REDIS_REST_URL) wird nicht gefunden";
+  if (/Invalid URL|Failed to parse URL/i.test(text)) return `Die Adresse (${urlName}) ist keine gültige URL`;
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") return `Die Adresse (${urlName}) wird nicht gefunden`;
   if (code) return "Netzwerkfehler " + code;
   return text.replace(/https?:\/\/\S+/g, "<Adresse>").replace(/Bearer\s+\S+/g, "").slice(0, 120) || "unbekannt";
 }
@@ -658,4 +656,4 @@ function katalogPruefen(v) {
   return n ? out : null;
 }
 
-module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, klasseNorm, zugVon, MODULE, KURSE };
+module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, fehlerGrund, klasseNorm, zugVon, MODULE, KURSE };
