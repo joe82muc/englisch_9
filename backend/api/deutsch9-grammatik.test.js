@@ -73,3 +73,11 @@ test("Grenze je Code und Stunde", async () => {
   const r = await frage(gut);
   assert.equal(r.status, 429);
 });
+
+test("auch Deutsch 7 und 8 (Grammatik und Rechtschreibung) sind erlaubt", async () => {
+  // eigene Kinder-Grenze: Code 123 ist schon aufgebraucht, darum nur die Prüfung der Kennung (400 vs. 429)
+  assert.notEqual((await frage({ ...gut, modul: "d7-gr-03", aufgabe: "d7-gr-03-b2-1" })).status, 400);
+  assert.notEqual((await frage({ ...gut, modul: "d8-rs-02", aufgabe: "d8-rs-02-p1" })).status, 400);
+  assert.equal((await frage({ ...gut, modul: "d6-gr-01", aufgabe: "d6-gr-01-b1" })).status, 400);
+  assert.equal((await frage({ ...gut, modul: "d7-xy-01", aufgabe: "d7-xy-01-b1" })).status, 400);
+});

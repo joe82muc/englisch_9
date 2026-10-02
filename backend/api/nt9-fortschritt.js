@@ -60,6 +60,7 @@ const KURSE = [
     { id: "m06", nr: 5, kurz: "Modul 5", titel: "Kohlenstoffkreislauf und Treibhauseffekt" }
   ].map((m) => ({ ...m, bereich: "Organische Rohstoffe", bnr: 1 })) },
   { id: "d7", fach: "d", stufe: 7, zuege: ["M", "R"], titel: "Deutsch 7", module: [] },
+  { id: "d8", fach: "d", stufe: 8, zuege: ["M", "R"], titel: "Deutsch 8", module: [] },
   { id: "d9", fach: "d", stufe: 9, zuege: ["M", "R"], titel: "Deutsch 9", module: [] },
   { id: "e7", fach: "e", stufe: 7, zuege: ["M", "R"], titel: "Englisch 7", module: [] },
   { id: "e8", fach: "e", stufe: 8, zuege: ["R"], titel: "Englisch 8", module: [] },

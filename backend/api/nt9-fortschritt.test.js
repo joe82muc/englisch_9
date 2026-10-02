@@ -135,7 +135,7 @@ async function ablauf(api) {
   assert.equal(l.module.m06.t, 72);
   assert.deepEqual(liste.body.katalog.m06, { "mc1-0": ["Ankreuzen: Welcher Vorgang …", "1"], duell: ["Duell gegen den Klimaleugner", "7"] });
   assert.equal(liste.body.module.length, 9);
-  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt7", "nt9", "d7", "d9", "e7", "e8", "e9", "i7", "i8", "i9"]);
+  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt7", "nt9", "d7", "d8", "d9", "e7", "e8", "e9", "i7", "i8", "i9"]);
   assert.deepEqual(liste.body.kurse.find((k) => k.id === "e8").zuege, ["R"]);
   assert.equal(liste.body.kurse.find((k) => k.id === "i9").fachName, "Informatik");
   const nur9aM = await post(P + "/lehrer/liste", { password: "2", klasse: "9aM", kurs: "nt9" });

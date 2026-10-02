@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Deutsch 9 (M und R): KI-Zweitmeinung für die Grammatik-Seiten (9/Deutsch/Sprachbetrachtung).
+ * Deutsch 7, 8 und 9 (M und R): KI-Zweitmeinung für die Grammatik- und Rechtschreibseiten (js/grammatik.js).
  *
  * Die Seiten prüfen Umformungen zuerst selbst gegen ihre Lösungen. Nur wenn eine Antwort davon abweicht
  * (andere Wortstellung, Synonym, eigener Satz), fragen sie hier nach. Gespeichert wird nichts.
@@ -12,7 +12,7 @@
  */
 
 const SYSTEM = [
-  "Du prüfst eine Grammatik-Übung im Fach Deutsch, Klasse 9 einer bayerischen Mittelschule (Vorbereitung auf den Quali).",
+  "Du prüfst eine Übung zu Grammatik oder Rechtschreibung im Fach Deutsch an einer bayerischen Mittelschule (Klasse 7 bis 9, die Klassenstufe steht in der Anfrage).",
   "Du bekommst den Arbeitsauftrag, eventuell einen Ausgangssatz, eine oder mehrere Beispiellösungen und die Antwort des Kindes.",
   "Entscheide nur, ob die Antwort den Auftrag grammatisch richtig erfüllt. Andere Wortstellung, andere passende Wörter oder ein eigener Satz sind erlaubt, wenn die verlangte Form stimmt.",
   "Genau die verlangte grammatische Form zählt (z. B. Zeitform, Passiv, Konjunktiv, Satzart, Komma). Ist sie falsch oder fehlt sie, ist die Antwort nicht richtig.",
@@ -22,8 +22,8 @@ const SYSTEM = [
   "Antworte nur als JSON: {\"richtig\":true,\"rueckmeldung\":\"...\"}"
 ].join("\n");
 
-const MODUL = /^d9-sb-(0[1-9]|10)$/;
-const AUFGABE = /^d9-sb-(0[1-9]|10)-[bp]\d{1,2}(-\d{1,2})?$/;
+const MODUL = /^d[789]-(sb|gr|rs)-\d{2}$/;
+const AUFGABE = /^d[789]-(sb|gr|rs)-\d{2}-[bp]\d{1,2}(-\d{1,2})?$/;
 
 function text(v, max) {
   return String(v == null ? "" : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, " ").trim().slice(0, max);
@@ -66,6 +66,7 @@ function registerDeutsch9GrammatikRoutes(app, options = {}) {
     if (zuViele(kind.code)) return res.status(429).json({ ok: false, error: "Für heute hast du die KI schon oft gefragt. Vergleiche mit der Lösung." });
 
     const user = [
+      `Klassenstufe: ${modul.charAt(1)}`,
       `Arbeitsauftrag: ${auftrag}`,
       satz ? `Ausgangssatz: ${satz}` : "",
       loesungen.length ? `Beispiellösung(en):\n- ${loesungen.join("\n- ")}` : "",
