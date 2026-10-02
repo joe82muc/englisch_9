@@ -62,6 +62,9 @@ test("Klassennamen", () => {
   assert.equal(klasseNorm("7B"), "7b");
   assert.equal(klasseNorm("9m"), "9M");
   assert.equal(klasseNorm("9R"), "9R");
+  assert.equal(klasseNorm("9dR"), "9d", "R-Klasse mit R am Ende");
+  assert.equal(klasseNorm("9 d r"), "9d");
+  assert.equal(zugVon("9dR"), "9R");
   assert.equal(klasseNorm("12a"), "");
   assert.equal(klasseNorm("9ab"), "");
   assert.equal(zugVon("7aM"), "7M");

@@ -99,8 +99,9 @@ function klasseNorm(v) {
   const s = String(v || "").replace(/\s+/g, "");
   let m = /^(5|6|7|8|9|10)([MR])$/i.exec(s);
   if (m) return m[1] + m[2].toUpperCase();
-  m = /^(5|6|7|8|9|10)([a-z])(m?)$/i.exec(s);
-  if (m) return m[1] + m[2].toLowerCase() + (m[3] ? "M" : "");
+  // „9dR“ ist dieselbe Klasse wie „9d“: R-Klassen stehen ohne Endung, M-Klassen mit „M“
+  m = /^(5|6|7|8|9|10)([a-z])([mr]?)$/i.exec(s);
+  if (m) return m[1] + m[2].toLowerCase() + (/m/i.test(m[3]) ? "M" : "");
   return "";
 }
 // Zug einer Klasse: „7aM“ -> „7M“, „7b“ -> „7R“, „9R“ -> „9R“
