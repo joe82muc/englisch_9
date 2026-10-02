@@ -501,6 +501,59 @@ const e7ru1t1 = e7Test("7R", 1, e7u1Words1, E7_THEMA1);
 const e7ru1t2 = e7Test("7R", 2, e7u1Words2, E7_THEMA2);
 
 /* ==================================================================
+   Englisch 7M - Unit 1 - Probe (Stand 02.10.2026)
+   Zoom in bis einschliesslich Topic 1 (Manchester), 30 Woerter.
+   Nur Deutsch -> Englisch, M-Zug-Notenschluessel (50 % = Note 4).
+   Ausgelassen: Woerter, die im Deutschen gleich sind (Wales, Plan,
+   Roboter), "about" (hier: an) und Grundwortschatz aus Klasse 5
+   (Kuh, Milch).
+   ================================================================== */
+const e7mu1probe1 = {
+  id: "e7m-u1-probe1",
+  title: "7M · Probe - Zoom in bis Topic 1 Manchester",
+  unit: "Englisch 7M / Unit 1",
+  classLevel: "7M",
+  direction: "de-en",
+  items: [
+    // --- Zoom in: The British Isles ---
+    { prompt: "die Britischen Inseln", direction: "de-en", solutions: ["the British Isles; British Isles"] },
+    { prompt: "Nordirland", direction: "de-en", solutions: ["Northern Ireland"] },
+    { prompt: "die Republik Irland", direction: "de-en", solutions: ["the Republic of Ireland; Republic of Ireland"] },
+    { prompt: "Frankreich", direction: "de-en", solutions: ["France"] },
+    { prompt: "Alter; Zeitalter", direction: "de-en", solutions: ["age"] },
+
+    // --- Intro ---
+    { prompt: "unterwegs", direction: "de-en", solutions: ["out and about"] },
+    { prompt: "surfen gehen", direction: "de-en", solutions: ["to go surfing; go surfing"] },
+    { prompt: "Theater", direction: "de-en", solutions: ["theatre; theater"], hint: "das Gebäude" },
+    { prompt: "Theaterstück", direction: "de-en", solutions: ["play"] },
+    { prompt: "Besuch; Besichtigung", direction: "de-en", solutions: ["visit"] },
+    { prompt: "Naturwissenschaft", direction: "de-en", solutions: ["science"] },
+    { prompt: "Ausstellung", direction: "de-en", solutions: ["exhibition"] },
+    { prompt: "Rakete", direction: "de-en", solutions: ["rocket"] },
+    { prompt: "fahren (mit dem Auto)", direction: "de-en", solutions: ["to drive; drive"], hint: "Verb" },
+    { prompt: "Süden; Süd-", direction: "de-en", solutions: ["south"] },
+    { prompt: "Küste", direction: "de-en", solutions: ["coast"] },
+
+    // --- Topic 1: Manchester ---
+    { prompt: "im Nordwesten von", direction: "de-en", solutions: ["in the northwest of; in the north-west of"] },
+    { prompt: "eine halbe Million", direction: "de-en", solutions: ["half a million"], hint: "in Worten" },
+    { prompt: "Verkehr", direction: "de-en", solutions: ["traffic"], hint: "auf der Straße" },
+    { prompt: "laut", direction: "de-en", solutions: ["noisy; loud"] },
+    { prompt: "Vergangenheit", direction: "de-en", solutions: ["past; the past"] },
+    { prompt: "Fabrik; Werk", direction: "de-en", solutions: ["factory"] },
+    { prompt: "Kohle", direction: "de-en", solutions: ["coal"] },
+    { prompt: "Bergwerk; Mine", direction: "de-en", solutions: ["mine"] },
+    { prompt: "Westen; West-", direction: "de-en", solutions: ["west"] },
+    { prompt: "Zentrum; Mitte", direction: "de-en", solutions: ["centre; center"], hint: "... of town" },
+    { prompt: "vorher; zuvor", direction: "de-en", solutions: ["before"] },
+    { prompt: "Ziege", direction: "de-en", solutions: ["goat"] },
+    { prompt: "Luft", direction: "de-en", solutions: ["air"] },
+    { prompt: "sauber", direction: "de-en", solutions: ["clean"] }
+  ]
+};
+
+/* ==================================================================
    Englisch 8R - Unit 1 bis 4: neue Vokabeltests, nur Deutsch -> Englisch
    Grundlage sind die Wörter der früheren gemischten Tests (e8r-uN-test1):
    Englisch -> Deutsch-Aufgaben stehen jetzt auf Deutsch, bei mehrdeutigen
@@ -615,6 +668,7 @@ const TESTS = {
   [e9mu1t2.id]: e9mu1t2,
   [e7mu1t1.id]: e7mu1t1,
   [e7mu1t2.id]: e7mu1t2,
+  [e7mu1probe1.id]: e7mu1probe1,
   [e7ru1t1.id]: e7ru1t1,
   [e7ru1t2.id]: e7ru1t2
 };
