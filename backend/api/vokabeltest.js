@@ -117,6 +117,13 @@ function checkAnswer(given, solutions, lrs) {
   const g = normalizeAnswer(given);
   if (!g) return { correct: false, typo: false, matched: "" };
 
+  // Unregelmäßige Verben („drive, drove, driven“): alle drei Formen müssen dastehen
+  const verben = verbFormen(solutions);
+  if (verben.length) {
+    const versuche = verben.map((formen) => checkVerbFormen(given, formen, lrs));
+    return versuche.find((v) => v.correct) || versuche[0];
+  }
+
   const accepted = [];
   for (const sol of solutions) {
     // ";" trennt gleichwertige Bedeutungen ("Norden; Nord-")
@@ -126,16 +133,120 @@ function checkAnswer(given, solutions, lrs) {
     });
   }
 
+  // Englische Eigennamen (France, Northern Ireland, CV …) müssen großgeschrieben sein – außer bei Notenschutz LRS
+  const mitGross = (ergebnis, a) => {
+    const fehler = lrs ? [] : grossFehler(given, a.raw);
+    return fehler.length ? { correct: false, typo: false, matched: a.raw, gross: fehler } : ergebnis;
+  };
   for (const a of accepted) {
-    if (g === a.norm) return { correct: true, typo: false, matched: a.raw };
+    if (g === a.norm) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
   }
   for (const a of accepted) {
     const erlaubt = lrs ? (a.norm.length >= 6 ? 2 : a.norm.length >= 3 ? 1 : 0) : (a.norm.length >= 5 ? 1 : 0);
     if (erlaubt && editDistance(g, a.norm, erlaubt) <= erlaubt) {
-      return { correct: true, typo: true, matched: a.raw };
+      return mitGross({ correct: true, typo: true, matched: a.raw }, a);
     }
   }
   return { correct: false, typo: false, matched: "" };
+}
+
+/* ------------------------------------------------------------------
+   Großschreibung englischer Eigennamen
+
+   Pflicht sind Wörter, die in der Lösung als Name großgeschrieben sind:
+   Länder, Sprachen, Nationalitäten, Feiertage, Namen („France“, „Turkish“,
+   „Northern Ireland“, „the British Isles“, „Thanksgiving“, „Richter scale“)
+   und Abkürzungen („CV“, „B&B“). Der Großbuchstabe am Anfang einer Wendung
+   („Get well soon“, „Have a good flight!“) und „I“ zählen nicht.
+   ------------------------------------------------------------------ */
+const SATZANFANG = new Set(["have", "what", "what's", "get", "you", "you're", "bye", "see", "yours", "how", "good",
+  "excuse", "thank", "thanks", "nice", "let's", "it's", "that's", "can", "could", "would", "do", "don't", "is", "are",
+  "where", "when", "why", "who", "welcome", "sorry", "please", "hello", "hi", "goodbye", "happy", "enjoy", "take", "come",
+  "go", "be", "look", "listen", "wait", "help", "well", "oh", "no", "yes", "here", "there", "best", "kind", "dear",
+  "cheers", "congratulations", "merry", "all", "my", "your", "say", "tell", "keep", "make", "give", "never", "the", "a", "an"]);
+const woerterVon = (text) => String(text || "").replace(/\([^)]*\)/g, " ").split(/\s+/)
+  .map((w) => w.replace(/^[^\p{L}&]+|[^\p{L}&]+$/gu, "")).filter(Boolean);
+const istGross = (w) => /^\p{Lu}/u.test(w);
+const istAbkuerzung = (w) => /\p{Lu}.*\p{Lu}/u.test(w);
+const istIch = (w) => /^I(['’]|$)/.test(w);
+
+function grossPflicht(loesung) {
+  const woerter = woerterVon(loesung);
+  const weitereGross = woerter.slice(1).some((w) => istGross(w) && !istIch(w));
+  return woerter.filter((w, i) => {
+    if (!istGross(w) || istIch(w)) return false;
+    if (istAbkuerzung(w) || i > 0 || woerter.length === 1 || weitereGross) return true;
+    return !SATZANFANG.has(w.toLowerCase());
+  });
+}
+// Liefert die Pflicht-Wörter, die in der Antwort kleingeschrieben sind (leer = alles in Ordnung)
+function grossFehler(given, loesung) {
+  const pflicht = grossPflicht(loesung);
+  if (!pflicht.length) return [];
+  const woerter = woerterVon(given);
+  return pflicht.filter((p) => {
+    const pl = p.toLowerCase();
+    const w = woerter.find((x) => x.toLowerCase() === pl) || woerter.find((x) => editDistance(x.toLowerCase(), pl, 1) <= 1);
+    if (!w) return false;
+    return istAbkuerzung(p) ? w !== w.toUpperCase() : !istGross(w);
+  });
+}
+
+/* ------------------------------------------------------------------
+   Unregelmäßige Verben: Lösung „drive, drove, driven“ (auch „be, was/were, been“).
+   Alle drei Formen müssen in dieser Reihenfolge dastehen; Trennzeichen sind egal.
+   Die Testseite zeigt dazu den Hinweis VERB_HINWEIS.
+   ------------------------------------------------------------------ */
+const VERB_HINWEIS = "alle drei Formen: Grundform, simple past, past participle";
+function verbFormen(solutions) {
+  const liste = [];
+  for (const sol of solutions || []) {
+    for (const part of String(sol).split(";")) {
+      const formen = part.split(",").map((f) => f.trim());
+      if (formen.length === 3 && formen.every((f) => /^[A-Za-z']+(\s*\/\s*[A-Za-z']+)*$/.test(f))) {
+        liste.push(formen.map((f) => f.split("/").map((x) => x.trim().toLowerCase())));
+      }
+    }
+  }
+  return liste;
+}
+function checkVerbFormen(given, formen, lrs) {
+  const teile = String(given || "").replace(/\([^)]*\)/g, " ").toLowerCase().replace(/^\s*to\s+/, "")
+    .split(/[\s,;\/\-–]+/).map((x) => x.replace(/[.!?"'`´]/g, "")).filter(Boolean);
+  const alleFormen = new Set([].concat(...formen));
+  const passt = (w, alts) => {
+    if (alts.includes(w)) return "exakt";
+    if (alleFormen.has(w)) return ""; // eine andere Form desselben Verbs ist kein Tippfehler („driven“ statt „drive“)
+    for (const a of alts) {
+      const erlaubt = lrs ? (a.length >= 6 ? 2 : a.length >= 3 ? 1 : 0) : (a.length >= 5 ? 1 : 0);
+      if (erlaubt && editDistance(w, a, erlaubt) <= erlaubt) return "typo";
+    }
+    return "";
+  };
+  const fehlend = [], falsch = [];
+  let i = 0, typo = false;
+  for (const alts of formen) {
+    if (teile[i] === undefined) { fehlend.push(alts.join("/")); continue; }
+    const r = passt(teile[i], alts);
+    i++;
+    if (!r) { falsch.push(alts.join("/")); continue; }
+    if (r === "typo") typo = true;
+    while (alts.length > 1 && teile[i] !== undefined && passt(teile[i], alts)) i++; // „was, were“
+  }
+  const matched = formen.map((a) => a.join("/")).join(", ");
+  if (fehlend.length || falsch.length) return { correct: false, typo: false, matched, formen: { fehlend, falsch } };
+  return { correct: true, typo, matched };
+}
+
+/** Kurzer Hinweis für die Lehrkraft und den Elternausdruck, warum eine Antwort nicht zählt. */
+function regelHinweis(result) {
+  if (result.gross && result.gross.length) return "Großschreibung: " + result.gross.join(", ");
+  if (result.formen) {
+    const f = result.formen;
+    return "Alle drei Formen nötig" + (f.fehlend.length ? " – es fehlt: " + f.fehlend.join(", ") : "") +
+      (f.falsch.length ? " – nicht richtig: " + f.falsch.join(", ") : "");
+  }
+  return "";
 }
 
 /* ------------------------------------------------------------------
@@ -162,17 +273,19 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
     "- ein Synonym oder eine gleichwertige Uebersetzung ('Bezirk' statt 'Stadtteil')",
     "- eine andere, aber korrekte Wortform ('gehen' statt 'zu Fuss gehen')",
     "- fehlendes 'to' beim Verb oder fehlender Artikel",
-    "- Gross- und Kleinschreibung, Tippfehler, fehlende Umlautpunkte",
+    "- Kleinschreibung gewoehnlicher Woerter, Tippfehler, fehlende Umlautpunkte",
     ...(lrs ? [
-      "- NOTENSCHUTZ LRS (Lese-Rechtschreib-Stoerung): Rechtschreibung zaehlt nicht. Richtig ist auch",
-      "  lautgetreue, verdrehte oder lueckenhafte Schreibung, wenn eindeutig die richtige Vokabel gemeint",
-      "  ist (z. B. 'frend' fuer 'friend', 'bycicle' fuer 'bicycle', 'wenzday' fuer 'Wednesday')."
+      "- NOTENSCHUTZ LRS (Lese-Rechtschreib-Stoerung): Rechtschreibung zaehlt nicht, auch nicht Gross- und",
+      "  Kleinschreibung. Richtig ist auch lautgetreue, verdrehte oder lueckenhafte Schreibung, wenn eindeutig",
+      "  die richtige Vokabel gemeint ist (z. B. 'frend' fuer 'friend', 'bycicle' fuer 'bicycle', 'wenzday' fuer 'Wednesday')."
     ] : []),
     "",
     "Als falsch gilt:",
     "- eine andere Vokabel, auch wenn sie thematisch passt",
     "- eine Antwort in der falschen Sprache",
     "- eine leere oder sinnlose Antwort",
+    ...(lrs ? [] : ["- ein englischer Eigenname kleingeschrieben (Laender, Sprachen, Nationalitaeten, Feiertage, Namen), z. B. 'france' statt 'France'"]),
+    "- bei unregelmaessigen Verben fehlt eine der drei Formen (z. B. nur 'drive' statt 'drive, drove, driven')",
     "",
     "Bewerte wohlwollend, aber nicht beliebig: Die Vokabel muss getroffen sein.",
     "",
@@ -340,7 +453,8 @@ function registerVokabeltestRoutes(app, opts) {
       nr: idx + 1,
       prompt: it.prompt,
       direction: it.direction,
-      hint: it.hint || ""
+      // Bei unregelmäßigen Verben („drive, drove, driven“) sieht das Kind, dass alle drei Formen gefragt sind
+      hint: [it.hint, verbFormen(it.solutions).length ? VERB_HINWEIS : ""].filter(Boolean).join(" · ")
     }));
 
     res.json({
@@ -383,6 +497,7 @@ function registerVokabeltestRoutes(app, opts) {
     const details = test.items.map((item, idx) => {
       const given = clean(answers[idx]);
       const result = checkAnswer(given, item.solutions, kind.lrs);
+      const regel = regelHinweis(result);
       return {
         nr: idx + 1,
         prompt: item.prompt,
@@ -391,14 +506,17 @@ function registerVokabeltestRoutes(app, opts) {
         typo: result.typo,
         ai: false,
         aiReason: "",
+        // regel: Eigenname kleingeschrieben oder Verbformen fehlen – das darf die KI nicht durchwinken
+        regel: Boolean(regel),
+        comment: regel,
         expected: item.solutions.join(" / ")
       };
     });
 
-    // Nur die abgelehnten Antworten mit Inhalt der KI vorlegen.
+    // Nur die abgelehnten Antworten mit Inhalt der KI vorlegen (ohne Verstöße gegen Großschreibung/Verbformen).
     const pending = details
       .map((d, idx) => ({ d, item: test.items[idx] }))
-      .filter(({ d }) => !d.correct && d.given)
+      .filter(({ d }) => !d.correct && d.given && !d.regel)
       .map(({ d, item }) => ({
         nr: d.nr,
         prompt: d.prompt,
@@ -462,7 +580,7 @@ function registerVokabeltestRoutes(app, opts) {
         details: details.map((d) => ({
           nr: d.nr, prompt: d.prompt, given: d.given,
           correct: d.correct, typo: d.typo,
-          ai: d.ai, aiReason: d.aiReason,
+          ai: d.ai, aiReason: d.aiReason, comment: d.comment || "",
           expected: d.expected
         })),
         submittedAt: record.submittedAt
@@ -559,6 +677,8 @@ module.exports = {
   gradeFromPercent,
   checkAnswer,
   normalizeAnswer,
+  grossPflicht,
+  verbFormen,
   GRADE_SCALE,
   GRADE_SCALE_8R,
   GRADE_SCALE_9R
