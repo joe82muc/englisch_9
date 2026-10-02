@@ -60,12 +60,15 @@ ensureDataFiles();
 // Muss vor den Proben-Modulen stehen: holt nach Neustart und Deploy die Dateien in data/ zurueck.
 const { registerProbenSpeicher } = require("./proben-speicher");
 const probenSpeicher = registerProbenSpeicher(app, { dataDir: DATA_DIR });
+// Proben: Anmeldung mit dem Code aus dem Lernfortschritt (nt9Fortschritt wird weiter unten angelegt)
+const probeKindZumCode = (code, req) => nt9Fortschritt.kindZumCode(code, req);
 
 // --- Vokabeltest-Modul (Freischaltung, Abgabe, Auswertung) ---
 const { registerVokabeltestRoutes } = require("./vokabeltest");
 const { TESTS: VOKABELTESTS } = require("./vokabeltest-daten");
-registerVokabeltestRoutes(app, {
+const vokabeltest = registerVokabeltestRoutes(app, {
   dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   tests: VOKABELTESTS,
   hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
@@ -75,8 +78,9 @@ registerVokabeltestRoutes(app, {
 // --- Netzwerktest-Modul (Informatik 9: Freischaltung, Abgabe, KI-Bewertung) ---
 const { registerNetzwerktestRoutes } = require("./netzwerktest");
 const { TESTS: NETZWERKTESTS } = require("./netzwerktest-daten");
-registerNetzwerktestRoutes(app, {
+const netzwerktest = registerNetzwerktestRoutes(app, {
   dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   tests: NETZWERKTESTS,
   hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
@@ -86,8 +90,9 @@ registerNetzwerktestRoutes(app, {
 // --- Filius-Pruefung (Informatik 9: praktische Pruefung mit Dateiabgabe) ---
 const { registerFiliusPruefungRoutes } = require("./filiuspruefung");
 const { TESTS: FILIUSPRUEFUNGEN } = require("./filiuspruefung-daten");
-registerFiliusPruefungRoutes(app, {
+const filiuspruefung = registerFiliusPruefungRoutes(app, {
   dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   tests: FILIUSPRUEFUNGEN,
   askAnthropic: askAnthropic,
@@ -96,8 +101,9 @@ registerFiliusPruefungRoutes(app, {
 
 // --- NT-Proben Klasse 7M (eigener Server war nirgends deployt) ---
 const { registerNt7Routes } = require("./nt7");
-registerNt7Routes(app, {
+const nt7Proben = registerNt7Routes(app, {
   dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   askAnthropic: askAnthropic
 });
@@ -137,8 +143,9 @@ registerDeutsch7TischDuellRoutes(app, {
 // --- Infoaustausch-Modul (Informatik 7 Lernbereich 1: Probe + KI-Rueckmeldung) ---
 const { registerInfoaustauschRoutes } = require("./infoaustausch");
 const { TESTS: INFOTESTS } = require("./infoaustausch-daten");
-registerInfoaustauschRoutes(app, {
+const infoaustausch = registerInfoaustauschRoutes(app, {
   dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   tests: INFOTESTS,
   hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
@@ -149,8 +156,9 @@ registerInfoaustauschRoutes(app, {
 // Gleiche Routen wie Informatik 7, aber unter /api/informatik8 mit eigenem Schluessel.
 // Die KI faellt auf Azure OpenAI zurueck, wenn Anthropic nicht antwortet.
 const { TESTS: INF8TESTS, GRADE_SCALE: INF8_SCALE, KI_REGELN: INF8_REGELN } = require("./informatik8-daten");
-registerInfoaustauschRoutes(app, {
+const informatik8 = registerInfoaustauschRoutes(app, {
   prefix: "/api/informatik8",
+  kindZumCode: probeKindZumCode,
   storeName: "informatik8",
   gradeScale: INF8_SCALE,
   kiRegeln: INF8_REGELN,
@@ -187,12 +195,29 @@ registerDeutsch9GrammatikRoutes(app, {
 const { registerGrammatik9rRoutes } = require("./grammatik9r");
 const { TESTS: GRAMMATIK9R } = require("./grammatik9r-daten");
 const { TESTS: GRAMMATIK7 } = require("./grammatik7-daten");
-registerGrammatik9rRoutes(app, {
+const grammatik = registerGrammatik9rRoutes(app, {
   dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   tests: { ...GRAMMATIK9R, ...GRAMMATIK7 },
   hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
   askAnthropic: askAnthropic
+});
+
+// --- Notenuebersicht je Klasse: alle Proben mit Code (fuer proben-verwalten.html) ---
+const { registerProbenNotenRoutes } = require("./proben-noten");
+registerProbenNotenRoutes(app, {
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code) => nt9Fortschritt.kindZumCode(code),
+  quellen: [
+    { modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben },
+    { modul: "grammatik9r", fach: "Englisch", abgaben: grammatik.abgaben },
+    { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
+    { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
+    { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
+    { modul: "netzwerktest", fach: "Informatik", abgaben: netzwerktest.abgaben },
+    { modul: "filiuspruefung", fach: "Informatik", abgaben: filiuspruefung.abgaben }
+  ]
 });
 
 // Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
@@ -256,7 +281,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-proben-upstash",
+    version: "2026-10-02-proben-code",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

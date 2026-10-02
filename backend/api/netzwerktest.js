@@ -21,6 +21,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { probeKindPruefer, GRADE_SCALE_R } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel Mittelschule (identisch zum Vokabeltest)
@@ -34,9 +35,10 @@ const GRADE_SCALE = [
   { grade: 6, min: 0 }
 ];
 
-function gradeFromPercent(percent) {
+// zug "R": R-Klassen (50 % = Note 3), sonst M-Klassen (50 % = Note 4)
+function gradeFromPercent(percent, zug) {
   const p = Number(percent) || 0;
-  for (const step of GRADE_SCALE) {
+  for (const step of zug === "R" ? GRADE_SCALE_R : GRADE_SCALE) {
     if (p >= step.min) return step.grade;
   }
   return 6;
@@ -189,12 +191,6 @@ function createStore(dataDir) {
   return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions };
 }
 
-function studentKey(firstName, lastName, className) {
-  return `${clean(firstName)}|${clean(lastName)}|${clean(className)}`
-    .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ").trim();
-}
-
 function deviceHash(req, secret) {
   const raw = String(
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
@@ -221,6 +217,8 @@ function deviceHash(req, secret) {
  * @param opts.tests           Testdefinitionen (mit Loesungen, bleiben hier)
  * @param opts.hashSecret      Secret fuer die Geraetekennung
  * @param opts.askAnthropic    Funktion fuer die KI-Bewertung (optional)
+ * @param opts.kindZumCode     Anmeldung mit dem Code aus dem Lernfortschritt (statt Namen)
+ * @returns { abgaben }        alle Abgaben (fuer die Notenuebersicht je Klasse)
  */
 function registerNetzwerktestRoutes(app, opts) {
   const store = createStore(opts.dataDir);
@@ -228,6 +226,7 @@ function registerNetzwerktestRoutes(app, opts) {
   const TEACHER_PASSWORD = opts.teacherPassword;
   const HASH_SECRET = opts.hashSecret || "grumi-fallback-secret";
   const askAnthropic = opts.askAnthropic;
+  const probeKind = probeKindPruefer(opts.kindZumCode);
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
@@ -250,11 +249,8 @@ function registerNetzwerktestRoutes(app, opts) {
   });
 
   /* ---------- Schueler: Probe starten ---------- */
-  app.post("/api/netzwerktest/start", (req, res) => {
+  app.post("/api/netzwerktest/start", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
 
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
@@ -266,20 +262,16 @@ function registerNetzwerktestRoutes(app, opts) {
         message: "Diese Probe ist noch nicht freigeschaltet."
       });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({
-        ok: false, error: "missing_fields",
-        message: "Vorname, Nachname und Klasse sind erforderlich."
-      });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const existing = store.loadSubmissions().submissions
       .find((s) => s.testId === testId && s.studentKey === key);
     if (existing) {
       return res.status(409).json({
         ok: false, error: "already_submitted",
-        message: "Fuer diesen Namen wurde die Probe bereits abgegeben.",
+        message: "Mit diesem Code wurde die Probe bereits abgegeben.",
         submittedAt: existing.submittedAt
       });
     }
@@ -311,9 +303,6 @@ function registerNetzwerktestRoutes(app, opts) {
   /* ---------- Schueler: Abgabe ---------- */
   app.post("/api/netzwerktest/submit", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
     const testDate = clean(req.body?.testDate);
     const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
 
@@ -324,11 +313,11 @@ function registerNetzwerktestRoutes(app, opts) {
     if (!unlocks.unlocked[testId]?.open) {
       return res.status(403).json({ ok: false, error: "locked", message: "Diese Probe ist nicht freigeschaltet." });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({ ok: false, error: "missing_fields" });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const { code, firstName, lastName, className } = kind;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const db = store.loadSubmissions();
     const existing = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
     if (existing) {
@@ -387,14 +376,14 @@ function registerNetzwerktestRoutes(app, opts) {
     const total = maxPoints(test);
     const score = details.reduce((sum, d) => sum + d.points, 0);
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const grade = gradeFromPercent(percent);
+    const grade = gradeFromPercent(percent, kind.zug);
 
     const record = {
       id: `nt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId,
       testTitle: test.title,
       unit: test.unit,
-      firstName, lastName, className,
+      code, zug: kind.zug, firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade,
@@ -408,7 +397,7 @@ function registerNetzwerktestRoutes(app, opts) {
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
     const fresh = store.loadSubmissions();
     if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
-      return res.status(409).json({ ok: false, error: "already_submitted", message: "Fuer diesen Namen wurde bereits abgegeben." });
+      return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
     fresh.submissions.push(record);
     store.saveSubmissions(fresh);
@@ -495,7 +484,7 @@ function registerNetzwerktestRoutes(app, opts) {
 
     rec.score = rec.details.reduce((sum, d) => sum + d.points, 0);
     rec.percent = rec.total ? Math.round((rec.score / rec.total) * 100) : 0;
-    rec.grade = gradeFromPercent(rec.percent);
+    rec.grade = gradeFromPercent(rec.percent, rec.zug);
     rec.needsReview = rec.details.some((d) => d.scoredBy === "keywords");
 
     store.saveSubmissions(db);
@@ -539,6 +528,8 @@ function registerNetzwerktestRoutes(app, opts) {
     res.setHeader("Content-Disposition", `attachment; filename="netzwerktest_${testId || "alle"}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
+
+  return { abgaben: () => store.loadSubmissions().submissions };
 }
 
 module.exports = {

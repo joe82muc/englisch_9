@@ -5,8 +5,9 @@
  * -------------------------------------------------
  * Aufgebaut wie das Netzwerktest-Modul aus Informatik 9, mit zwei Unterschieden:
  *
- *   1. EIGENER NOTENSCHLUESSEL: 50 Prozent sind hier Note 3 (Absprache mit der
- *      Lehrkraft). Der Schluessel steht unten in GRADE_SCALE.
+ *   1. NOTENSCHLUESSEL NACH ZUG: R-Klassen 50 Prozent = Note 3 (GRADE_SCALE unten),
+ *      M-Klassen 50 Prozent = Note 4 (GRADE_SCALE_M aus probe-kind.js). Den Zug
+ *      kennt der Server aus dem Code des Kindes.
  *   2. ZUSAETZLICHE ROUTE /api/infoaustausch/feedback: Damit holen sich die
  *      acht Lernmodule sofort eine KI-Rueckmeldung zu frei geschriebenen
  *      Antworten. Diese Route vergibt KEINE Noten und speichert nichts -
@@ -37,6 +38,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { buildXlsx } = require("./xlsx-mini");
+const { probeKindPruefer, GRADE_SCALE_M } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel Informatik 7
@@ -222,12 +224,6 @@ function createStore(dataDir, name = "infoaustausch") {
   return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions };
 }
 
-function studentKey(firstName, lastName, className) {
-  return `${clean(firstName)}|${clean(lastName)}|${clean(className)}`
-    .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ").trim();
-}
-
 /**
  * Punkte je Teil (z. B. "Modul 1 ...", "Transfer") in der Reihenfolge der Probe.
  * Aufgaben ohne `teil` (Informatik 7) ergeben eine leere Liste.
@@ -294,18 +290,23 @@ function deviceHash(req, secret) {
  * @param opts.storeName       Name der JSON-Dateien (Standard infoaustausch)
  * @param opts.gradeScale      eigener Notenschluessel (Standard GRADE_SCALE)
  * @param opts.kiRegeln        eigener Bewertungstext fuer die KI (Standard KI_REGELN)
+ * @param opts.kindZumCode     Anmeldung mit dem Code aus dem Lernfortschritt (statt Namen)
+ * @returns { abgaben }        alle Abgaben (fuer die Notenuebersicht je Klasse)
  */
 function registerInfoaustauschRoutes(app, opts) {
   const P = opts.prefix || "/api/infoaustausch";
   const NAME = opts.storeName || "infoaustausch";
+  // R-Klassen: eigener Schluessel (50 % = Note 3), M-Klassen: 50 % = Note 4 (Zug kommt vom Code)
   const SCALE = opts.gradeScale || GRADE_SCALE;
+  const SCALE_M = opts.gradeScaleM || GRADE_SCALE_M;
   const REGELN = opts.kiRegeln || KI_REGELN;
-  const grade = (percent) => gradeFromPercent(percent, SCALE);
+  const grade = (percent, zug) => gradeFromPercent(percent, zug === "M" ? SCALE_M : SCALE);
   const store = createStore(opts.dataDir, NAME);
   const TESTS = opts.tests || {};
   const TEACHER_PASSWORD = opts.teacherPassword;
   const HASH_SECRET = opts.hashSecret || "grumi-fallback-secret";
   const askAnthropic = opts.askAnthropic;
+  const probeKind = probeKindPruefer(opts.kindZumCode);
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
@@ -408,11 +409,8 @@ function registerInfoaustauschRoutes(app, opts) {
   });
 
   /* ---------- Schueler: Probe starten ---------- */
-  app.post(P + "/start", (req, res) => {
+  app.post(P + "/start", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
 
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
@@ -424,20 +422,16 @@ function registerInfoaustauschRoutes(app, opts) {
         message: "Diese Probe ist noch nicht freigeschaltet."
       });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({
-        ok: false, error: "missing_fields",
-        message: "Vorname, Nachname und Klasse sind erforderlich."
-      });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const existing = store.loadSubmissions().submissions
       .find((s) => s.testId === testId && s.studentKey === key);
     if (existing) {
       return res.status(409).json({
         ok: false, error: "already_submitted",
-        message: "Fuer diesen Namen wurde die Probe bereits abgegeben.",
+        message: "Mit diesem Code wurde die Probe bereits abgegeben.",
         submittedAt: existing.submittedAt
       });
     }
@@ -471,9 +465,6 @@ function registerInfoaustauschRoutes(app, opts) {
   /* ---------- Schueler: Abgabe ---------- */
   app.post(P + "/submit", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
     const testDate = clean(req.body?.testDate);
     const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
 
@@ -484,11 +475,11 @@ function registerInfoaustauschRoutes(app, opts) {
     if (!unlocks.unlocked[testId]?.open) {
       return res.status(403).json({ ok: false, error: "locked", message: "Diese Probe ist nicht freigeschaltet." });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({ ok: false, error: "missing_fields" });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const { code, firstName, lastName, className } = kind;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const db = store.loadSubmissions();
     const existing = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
     if (existing) {
@@ -575,14 +566,14 @@ function registerInfoaustauschRoutes(app, opts) {
     const total = maxPoints(test);
     const score = details.reduce((sum, d) => sum + d.points, 0);
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const note = grade(percent);
+    const note = grade(percent, kind.zug);
 
     const record = {
       id: `ia_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId,
       testTitle: test.title,
       unit: test.unit,
-      firstName, lastName, className,
+      code, zug: kind.zug, firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade: note,
@@ -596,7 +587,7 @@ function registerInfoaustauschRoutes(app, opts) {
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
     const fresh = store.loadSubmissions();
     if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
-      return res.status(409).json({ ok: false, error: "already_submitted", message: "Fuer diesen Namen wurde bereits abgegeben." });
+      return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
     fresh.submissions.push(record);
     store.saveSubmissions(fresh);
@@ -684,7 +675,7 @@ function registerInfoaustauschRoutes(app, opts) {
 
     rec.score = rec.details.reduce((sum, d) => sum + d.points, 0);
     rec.percent = rec.total ? Math.round((rec.score / rec.total) * 100) : 0;
-    rec.grade = grade(rec.percent);
+    rec.grade = grade(rec.percent, rec.zug);
     rec.needsReview = rec.details.some((d) => d.scoredBy === "keywords");
 
     store.saveSubmissions(db);
@@ -808,10 +799,12 @@ function registerInfoaustauschRoutes(app, opts) {
         name: "Notenschlüssel",
         columns: [
           { header: "Note", width: 6, type: "number" },
-          { header: "ab Prozent", width: 11, type: "number" },
-          { header: total ? `ab Punkte (von ${total})` : "ab Punkte", width: 18, type: "number" }
+          { header: "R-Klassen ab Prozent", width: 18, type: "number" },
+          { header: total ? `R-Klassen ab Punkte (von ${total})` : "R-Klassen ab Punkte", width: 26, type: "number" },
+          { header: "M-Klassen ab Prozent", width: 18, type: "number" },
+          { header: total ? `M-Klassen ab Punkte (von ${total})` : "M-Klassen ab Punkte", width: 26, type: "number" }
         ],
-        rows: SCALE.map((s) => [s.grade, s.min, abPunkte(s.min)])
+        rows: SCALE.map((s, i) => [s.grade, s.min, abPunkte(s.min), SCALE_M[i].min, abPunkte(SCALE_M[i].min)])
       };
 
       const buf = buildXlsx([ergebnisse, antworten, schluessel]);
@@ -840,6 +833,8 @@ function registerInfoaustauschRoutes(app, opts) {
     res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
+
+  return { abgaben: () => store.loadSubmissions().submissions };
 }
 
 module.exports = {

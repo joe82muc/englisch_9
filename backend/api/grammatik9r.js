@@ -30,6 +30,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { probeKindPruefer } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel
@@ -273,12 +274,6 @@ function createStore(dataDir) {
   };
 }
 
-function studentKey(firstName, lastName, className) {
-  return `${clean(firstName)}|${clean(lastName)}|${clean(className)}`
-    .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ").trim();
-}
-
 function deviceHash(req, secret) {
   const raw = String(
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
@@ -312,12 +307,15 @@ function gapExpected(item) {
 /* ------------------------------------------------------------------
    Routen
    ------------------------------------------------------------------ */
+// opts.kindZumCode: Anmeldung mit dem Code aus dem Lernfortschritt (statt Namen)
+// Rueckgabe { abgaben }: alle Abgaben (fuer die Notenuebersicht je Klasse)
 function registerGrammatik9rRoutes(app, opts) {
   const store = createStore(opts.dataDir);
   const TESTS = opts.tests || {};
   const TEACHER_PASSWORD = opts.teacherPassword;
   const HASH_SECRET = opts.hashSecret || "grumi-fallback-secret";
   const askAnthropic = opts.askAnthropic;
+  const probeKind = probeKindPruefer(opts.kindZumCode);
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
@@ -340,28 +338,24 @@ function registerGrammatik9rRoutes(app, opts) {
   });
 
   /* ---------- Schueler: starten ---------- */
-  app.post("/api/grammatik9r/start", (req, res) => {
+  app.post("/api/grammatik9r/start", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
 
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
     if (!store.loadUnlocks().unlocked[testId]?.open) {
       return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist noch nicht freigeschaltet." });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({ ok: false, error: "missing_fields", message: "Vorname, Nachname und Klasse sind erforderlich." });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const existing = store.loadSubmissions().submissions
       .find((s) => s.testId === testId && s.studentKey === key);
     if (existing) {
       return res.status(409).json({
         ok: false, error: "already_submitted",
-        message: "Fuer diesen Namen wurde der Test bereits abgegeben.",
+        message: "Mit diesem Code wurde der Test bereits abgegeben.",
         submittedAt: existing.submittedAt
       });
     }
@@ -385,9 +379,6 @@ function registerGrammatik9rRoutes(app, opts) {
   /* ---------- Schueler: Abgabe ---------- */
   app.post("/api/grammatik9r/submit", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
     const testDate = clean(req.body?.testDate);
     const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
 
@@ -396,11 +387,11 @@ function registerGrammatik9rRoutes(app, opts) {
     if (!store.loadUnlocks().unlocked[testId]?.open) {
       return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist nicht freigeschaltet." });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({ ok: false, error: "missing_fields" });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const { code, firstName, lastName, className } = kind;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const db = store.loadSubmissions();
     const existing = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
     if (existing) {
@@ -497,15 +488,17 @@ function registerGrammatik9rRoutes(app, opts) {
     const total = maxPoints(test);
     const score = details.reduce((sum, d) => sum + d.points, 0);
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const grade = gradeFromPercent(percent, test.gradeScale);
+    // Schluessel nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3)
+    const scaleName = kind.zug === "M" ? "M" : "R";
+    const grade = gradeFromPercent(percent, scaleName);
 
     const record = {
       id: `g9r_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId, testTitle: test.title, unit: test.unit,
-      firstName, lastName, className, studentKey: key,
+      code, firstName, lastName, className, studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade, aiUsed, needsReview,
-      gradeScale: test.gradeScale || "9R",
+      gradeScale: scaleName,
       details,
       deviceHash: deviceHash(req, HASH_SECRET),
       submittedAt: new Date().toISOString()
@@ -514,7 +507,7 @@ function registerGrammatik9rRoutes(app, opts) {
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
     const fresh = store.loadSubmissions();
     if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
-      return res.status(409).json({ ok: false, error: "already_submitted", message: "Fuer diesen Namen wurde bereits abgegeben." });
+      return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
     fresh.submissions.push(record);
     store.saveSubmissions(fresh);
@@ -628,6 +621,8 @@ function registerGrammatik9rRoutes(app, opts) {
     res.setHeader("Content-Disposition", `attachment; filename="grammatik9r_${testId || "alle"}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
+
+  return { abgaben: () => store.loadSubmissions().submissions };
 }
 
 module.exports = {

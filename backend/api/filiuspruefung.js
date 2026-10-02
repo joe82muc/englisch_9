@@ -24,6 +24,7 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 const crypto = require("crypto");
+const { probeKindPruefer, GRADE_SCALE_R } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel (wie bei den anderen Proben)
@@ -33,9 +34,10 @@ const GRADE_SCALE = [
   { grade: 4, min: 50 }, { grade: 5, min: 30 }, { grade: 6, min: 0 }
 ];
 
-function gradeFromPercent(percent) {
+// zug "R": R-Klassen (50 % = Note 3), sonst M-Klassen (50 % = Note 4)
+function gradeFromPercent(percent, zug) {
   const p = Number(percent) || 0;
-  for (const step of GRADE_SCALE) if (p >= step.min) return step.grade;
+  for (const step of zug === "R" ? GRADE_SCALE_R : GRADE_SCALE) if (p >= step.min) return step.grade;
   return 6;
 }
 
@@ -402,19 +404,17 @@ function createStore(dataDir) {
   return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions };
 }
 
-function studentKey(f, l, k) {
-  return `${clean(f)}|${clean(l)}|${clean(k)}`.toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
-}
-
 /* ------------------------------------------------------------------
    Routen
+   opts.kindZumCode: Anmeldung mit dem Code aus dem Lernfortschritt (statt Namen)
+   Rueckgabe { abgaben }: alle Abgaben (fuer die Notenuebersicht je Klasse)
    ------------------------------------------------------------------ */
 function registerFiliusPruefungRoutes(app, opts) {
   const store = createStore(opts.dataDir);
   const TESTS = opts.tests || {};
   const PW = opts.teacherPassword;
   const askAnthropic = opts.askAnthropic;
+  const probeKind = probeKindPruefer(opts.kindZumCode);
 
   const isTeacher = (req) => clean(req.body?.password) === PW;
   const maxA = (t) => t.items.reduce((s, i) => s + (Number(i.points) || 1), 0);
@@ -434,24 +434,20 @@ function registerFiliusPruefungRoutes(app, opts) {
     });
   });
 
-  app.post("/api/filiuspruefung/start", (req, res) => {
+  app.post("/api/filiuspruefung/start", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
     const test = TESTS[testId];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
 
     if (!store.loadUnlocks().unlocked[testId]?.open) {
       return res.status(403).json({ ok: false, error: "locked", message: "Diese Pruefung ist noch nicht freigeschaltet." });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({ ok: false, error: "missing_fields", message: "Vorname, Nachname und Klasse sind erforderlich." });
-    }
-    const key = studentKey(firstName, lastName, className);
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const key = kind.key;
     const da = store.loadSubmissions().submissions.find((s) => s.testId === testId && s.studentKey === key);
     if (da) {
-      return res.status(409).json({ ok: false, error: "already_submitted", message: "Fuer diesen Namen wurde die Pruefung bereits abgegeben.", submittedAt: da.submittedAt });
+      return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde die Pruefung bereits abgegeben.", submittedAt: da.submittedAt });
     }
 
     res.json({
@@ -464,9 +460,6 @@ function registerFiliusPruefungRoutes(app, opts) {
 
   app.post("/api/filiuspruefung/submit", async (req, res) => {
     const testId = clean(req.body?.testId);
-    const firstName = clean(req.body?.firstName);
-    const lastName = clean(req.body?.lastName);
-    const className = clean(req.body?.className);
     const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
     const dateiB64 = clean(req.body?.datei);      // Base64 der .fls-Datei
     const dateiName = clean(req.body?.dateiName);
@@ -476,11 +469,11 @@ function registerFiliusPruefungRoutes(app, opts) {
     if (!store.loadUnlocks().unlocked[testId]?.open) {
       return res.status(403).json({ ok: false, error: "locked" });
     }
-    if (!firstName || !lastName || !className) {
-      return res.status(400).json({ ok: false, error: "missing_fields" });
-    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const { code, firstName, lastName, className } = kind;
 
-    const key = studentKey(firstName, lastName, className);
+    const key = kind.key;
     const db = store.loadSubmissions();
     const da = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
     if (da) {
@@ -524,12 +517,12 @@ function registerFiliusPruefungRoutes(app, opts) {
     const score = teilA.reduce((s, d) => s + d.points, 0) + teilB.punkte;
     const total = maxA(test) + maxB(test);
     const percent = total ? Math.round((score / total) * 100) : 0;
-    const grade = gradeFromPercent(percent);
+    const grade = gradeFromPercent(percent, kind.zug);
 
     const record = {
       id: `fp_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId, testTitle: test.title, unit: test.unit,
-      firstName, lastName, className, studentKey: key,
+      code, zug: kind.zug, firstName, lastName, className, studentKey: key,
       testDate: clean(req.body?.testDate) || new Date().toISOString().slice(0, 10),
       score, total, percent, grade,
       teilA, teilB, dateiName,
@@ -539,7 +532,7 @@ function registerFiliusPruefungRoutes(app, opts) {
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
     const fresh = store.loadSubmissions();
     if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
-      return res.status(409).json({ ok: false, error: "already_submitted", message: "Fuer diesen Namen wurde bereits abgegeben." });
+      return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
     fresh.submissions.push(record);
     store.saveSubmissions(fresh);
@@ -652,6 +645,8 @@ function registerFiliusPruefungRoutes(app, opts) {
     res.setHeader("Content-Disposition", `attachment; filename="filiuspruefung.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
+
+  return { abgaben: () => store.loadSubmissions().submissions };
 }
 
 module.exports = {

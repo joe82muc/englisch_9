@@ -22,6 +22,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const tests = require("./nt7-fragen");
+const { probeKindPruefer, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 
 /**
  * @param app            Express-App
@@ -53,14 +54,8 @@ function registerNt7Routes(app, opts) {
     fs.renameSync(temp, DATA_FILE);
   }
   const clean = (v, max = 120) => String(v ?? "").trim().slice(0, max);
-  function identity(body) {
-    const firstName = clean(body.firstName, 60);
-    const lastName = clean(body.lastName, 60);
-    const className = clean(body.className, 30);
-    if (!firstName || !lastName || !className) return null;
-    const key = [firstName,lastName,className].join("|").toLocaleLowerCase("de").normalize("NFKC").replace(/\s+/g," ");
-    return {firstName,lastName,className,key};
-  }
+  // Anmeldung mit dem Code aus dem Lernfortschritt (opts.kindZumCode) statt mit Namen
+  const probeKind = probeKindPruefer(opts.kindZumCode);
   function teacher(req, res) {
     if (!TEACHER_PASSWORD) { res.status(503).json({ok:false,error:"teacher_password_not_configured"}); return false; }
     const given = Buffer.from(clean(req.body?.password, 200));
@@ -71,7 +66,8 @@ function registerNt7Routes(app, opts) {
     return true;
   }
   function maxPoints(test) { return test.items.reduce((sum, item) => sum + item.points, 0); }
-  function grade(percent) { return percent >= 92 ? 1 : percent >= 81 ? 2 : percent >= 67 ? 3 : percent >= 50 ? 4 : percent >= 30 ? 5 : 6; }
+  // Notenschluessel nach dem Zug des Kindes: M-Klassen 50 % = Note 4, R-Klassen 50 % = Note 3
+  function grade(percent, zug) { return ((zug === "R" ? GRADE_SCALE_R : GRADE_SCALE_M).find(s => percent >= s.min) || {grade:6}).grade; }
   function publicItem(item, index) {
     return {nr:index+1,type:item.type,prompt:item.prompt,points:item.points,
       options:item.options || undefined, labels:item.pairs?.map(pair => pair[0]),
@@ -144,21 +140,21 @@ function registerNt7Routes(app, opts) {
     const data = readData();
     res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),unlocked:Boolean(data.unlocked[test.id])}))});
   });
-  app.post("/api/nt7/start", (req,res) => {
+  app.post("/api/nt7/start", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
-    const student = identity(req.body || {});
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
-    if (!student) return res.status(400).json({ok:false,error:"missing_identity"});
+    if (!readData().unlocked[test.id]) return res.status(403).json({ok:false,error:"locked"});
+    const student = await probeKind(req, res);
+    if (!student) return;
     const data = readData();
-    if (!data.unlocked[test.id]) return res.status(403).json({ok:false,error:"locked"});
     if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
     return res.json({ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test)},items:test.items.map(publicItem)});
   });
   app.post("/api/nt7/submit", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
-    const student = identity(req.body || {});
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
-    if (!student) return res.status(400).json({ok:false,error:"missing_identity"});
+    const student = await probeKind(req, res);
+    if (!student) return;
     if (!Array.isArray(req.body.answers) || req.body.answers.length !== test.items.length) return res.status(400).json({ok:false,error:"bad_answers"});
     const submissionKey = `${test.id}|${student.key}`;
     if (pending.has(submissionKey)) return res.status(409).json({ok:false,error:"submission_in_progress"});
@@ -186,7 +182,7 @@ function registerNt7Routes(app, opts) {
         }
       }
       const score = details.reduce((sum,d) => sum+d.points,0), total = maxPoints(test), percent = Math.round(score/total*100);
-      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,score,total,percent,grade:grade(score/total*100),needsReview:details.some(d => d.needsReview),details,submittedAt:new Date().toISOString()};
+      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,score,total,percent,grade:grade(score/total*100,student.zug),needsReview:details.some(d => d.needsReview),details,submittedAt:new Date().toISOString()};
       data = readData();
       if (!data.unlocked[test.id]) return res.status(403).json({ok:false,error:"locked"});
       if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
@@ -218,7 +214,7 @@ function registerNt7Routes(app, opts) {
     if (!row || !item) return res.status(404).json({ok:false,error:"not_found"});
     if (item.type !== "text" || !Number.isInteger(points) || points < 0 || points > item.maxPoints) return res.status(400).json({ok:false,error:"invalid_override"});
     item.points = points; item.source = "lehrkraft"; item.needsReview = false; item.comment = clean(req.body.comment,220) || item.comment;
-    row.score = row.details.reduce((sum,d) => sum+d.points,0); row.percent = Math.round(row.score/row.total*100); row.grade = grade(row.score/row.total*100); row.needsReview = row.details.some(d => d.needsReview);
+    row.score = row.details.reduce((sum,d) => sum+d.points,0); row.percent = Math.round(row.score/row.total*100); row.grade = grade(row.score/row.total*100,row.zug); row.needsReview = row.details.some(d => d.needsReview);
     writeData(data); res.json({ok:true,score:row.score,percent:row.percent,grade:row.grade});
   });
   app.post("/api/nt7/teacher/delete", (req,res) => {
@@ -239,6 +235,9 @@ function registerNt7Routes(app, opts) {
     const csv = ["Probe;Klasse;Nachname;Vorname;Punkte;Gesamt;Prozent;Note;Nachpruefen;Abgabe", ...rows.map(r => [r.testTitle,r.className,r.lastName,r.firstName,r.score,r.total,r.percent,r.grade,r.needsReview ? "ja":"nein",r.submittedAt].map(quote).join(";"))].join("\r\n");
     res.type("text/csv; charset=utf-8").attachment("nt7-proben.csv").send("\ufeff"+csv);
   });
+
+  // Fuer die Notenuebersicht je Klasse
+  return { abgaben: () => readData().submissions };
 }
 
 module.exports = { registerNt7Routes };

@@ -31,7 +31,9 @@ test.before(async () => {
     const points = user.includes("FALSCH") ? 0 : textPoints;
     return JSON.stringify({ points, comment: "passt" });
   };
-  const common = { dataDir, teacherPassword: "2", hashSecret: "x", askAnthropic };
+  // Codes 100-199: R-Klasse 8b, 200-299: M-Klasse 8aM (Anmeldung wie im Lernfortschritt)
+  const kindZumCode = async (code) => (/^1\d\d$/.test(code) ? { code, klasse: "8b" } : /^2\d\d$/.test(code) ? { code, klasse: "8aM" } : null);
+  const common = { dataDir, teacherPassword: "2", hashSecret: "x", askAnthropic, kindZumCode };
   registerInfoaustauschRoutes(app, { ...common, tests: INF7 });
   registerInfoaustauschRoutes(app, {
     ...common, tests: INF8, prefix: "/api/informatik8", storeName: "informatik8",
@@ -50,7 +52,7 @@ const post = async (route, body) => {
   return { status: res.status, data: await res.json() };
 };
 const probe = INF8["inf8-probe1"];
-const student = (n) => ({ testId: "inf8-probe1", firstName: "Test" + n, lastName: "Kind", className: "8M" });
+const student = (n) => ({ testId: "inf8-probe1", code: String(100 + n) });
 
 /* Antworten, die genau `wrong` Anklick-Punkte verschenken; freie Texte bekommen textPoints. */
 function answers(wrongChoices = 0) {
@@ -179,6 +181,16 @@ test("50 Prozent sind Note 3, 48 Prozent Note 4", async () => {
   textPoints = 2;
 });
 
+test("M-Klassen: 50 Prozent sind Note 4, 92 Prozent Note 1", async () => {
+  textPoints = 0;
+  const m = await post("/api/informatik8/submit", { ...student(103), answers: answers(4) }); // Code 203, 20/40
+  assert.equal(m.data.result.percent, 50);
+  assert.equal(m.data.result.grade, 4);
+  textPoints = 2;
+  const rec = (await post("/api/informatik8/results", { password: "2", testId: "inf8-probe1" })).data.submissions.find((r) => r.code === "203");
+  assert.equal(rec.zug, "M");
+});
+
 test("KI bekommt Punkteverteilung und wohlwollende Regeln", async () => {
   const kiPrompt = users.find((u) => u.includes("Nenne zwei Dienste"));
   assert.ok(kiPrompt.includes("So verteilt die Lehrkraft die Punkte"));
@@ -204,7 +216,7 @@ test("Zweite Abgabe unter gleichem Namen wird abgewiesen, Lehrkraft kann korrigi
   assert.equal(again.status, 409);
 
   const results = await post("/api/informatik8/results", { password: "2", testId: "inf8-probe1" });
-  const rec = results.data.submissions.find((r) => r.firstName === "Test3");
+  const rec = results.data.submissions.find((r) => r.code === "103");
   const fix = await post("/api/informatik8/override", { password: "2", submissionId: rec.id, nr: 16, points: 2 });
   assert.equal(fix.data.score, 22);
   assert.equal(fix.data.grade, 3);
@@ -227,7 +239,7 @@ test("Export: echte Excel-Datei mit Ergebnissen, Punkten je Modul und allen Antw
   const ergebnisse = files["xl/worksheets/sheet1.xml"];
   assert.ok(ergebnisse.includes("Modul 1 (6 P)"));
   assert.ok(ergebnisse.includes("Transfer (4 P)"));
-  assert.ok(ergebnisse.includes("Test1"));
+  assert.ok(ergebnisse.includes("Code 101"));
   const antworten = files["xl/worksheets/sheet2.xml"];
   assert.ok(antworten.includes("Nenne zwei Dienste"));
   assert.ok(antworten.includes("Lösung"));
