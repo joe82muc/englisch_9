@@ -60,7 +60,8 @@ const KURSE = [
     { id: "m02", nr: 2, kurz: "Modul 2", titel: "Biodiesel, Stärke und Nachhaltigkeit" },
     { id: "m04", nr: 3, kurz: "Modul 3", titel: "Entstehung fossiler Rohstoffe" },
     { id: "m05", nr: 4, kurz: "Modul 4", titel: "Erdölaufbereitung und Fraktionen" },
-    { id: "m06", nr: 5, kurz: "Modul 5", titel: "Kohlenstoffkreislauf und Treibhauseffekt" }
+    { id: "m06", nr: 5, kurz: "Modul 5", titel: "Kohlenstoffkreislauf und Treibhauseffekt" },
+    { id: "m07", nr: 6, kurz: "Modul 6", titel: "Erdöl – Rohstoff mit Zukunft?" }
   ].map((m) => ({ ...m, bereich: "Organische Rohstoffe", bnr: 1 })) },
   { id: "d7", fach: "d", stufe: 7, zuege: ["M", "R"], titel: "Deutsch 7", module: [] },
   { id: "d8", fach: "d", stufe: 8, zuege: ["M", "R"], titel: "Deutsch 8", module: [] },

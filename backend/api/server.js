@@ -169,6 +169,21 @@ const informatik8 = registerInfoaustauschRoutes(app, {
   askAnthropic: askKiMitErsatz
 });
 
+// --- NT 9M/9R: Probe Organische Rohstoffe (Module 1 bis 6), gleiche Routen wie Informatik 7/8 unter /api/nt9probe ---
+const { TESTS: NT9PROBEN, GRADE_SCALE: NT9_SCALE, KI_REGELN: NT9_REGELN } = require("./nt9-probe-daten");
+const nt9Probe = registerInfoaustauschRoutes(app, {
+  prefix: "/api/nt9probe",
+  storeName: "nt9probe",
+  kindZumCode: probeKindZumCode,
+  gradeScale: NT9_SCALE,
+  kiRegeln: NT9_REGELN,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  tests: NT9PROBEN,
+  hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
+  askAnthropic: askKiMitErsatz
+});
+
 // --- NT 9M/9R: KI-Rueckmeldung zu offenen Aufgaben ueber organische Rohstoffe ---
 const { registerKohlenstoffRoutes } = require("./kohlenstoff");
 registerKohlenstoffRoutes(app, { askAnthropic });
@@ -188,6 +203,13 @@ const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, te
 const { registerDeutsch9GrammatikRoutes } = require("./deutsch9-grammatik");
 registerDeutsch9GrammatikRoutes(app, {
   askKi: askKiMitErsatz,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
+// --- NT 9M/9R Modul 6: Diskussionsrunde zum Erdöl (allein gegen KI-Rollen oder 2 bis 4 Kinder am Tisch) ---
+const { registerNt9DiskussionRoutes } = require("./nt9-diskussion");
+registerNt9DiskussionRoutes(app, {
+  askAnthropic: askKiMitErsatz,
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
@@ -215,6 +237,7 @@ registerProbenNotenRoutes(app, {
     { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
+    { modul: "nt9probe", fach: "NT", abgaben: nt9Probe.abgaben },
     { modul: "netzwerktest", fach: "Informatik", abgaben: netzwerktest.abgaben },
     { modul: "filiuspruefung", fach: "Informatik", abgaben: filiuspruefung.abgaben }
   ]
@@ -281,7 +304,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-lrs-schutz",
+    version: "2026-10-02-nt9-modul6-probe",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
