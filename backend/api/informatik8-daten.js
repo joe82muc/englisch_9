@@ -381,4 +381,7 @@ const TESTS = {
   [inf8Probe1.id]: inf8Probe1
 };
 
+// Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
+require("./proben-mischen").mischeAlle(TESTS);
+
 module.exports = { TESTS, GRADE_SCALE, KI_REGELN };

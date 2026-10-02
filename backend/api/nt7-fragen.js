@@ -33,3 +33,6 @@ module.exports = {
     ]
   }
 };
+
+// Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
+require("./proben-mischen").mischeAlle(module.exports);

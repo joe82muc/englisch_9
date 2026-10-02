@@ -207,4 +207,7 @@ for (const klasse of ["7M", "7R"]) {
   }
 }
 
+// Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
+require("./proben-mischen").mischeAlle(TESTS);
+
 module.exports = { TESTS };

@@ -137,7 +137,8 @@ test("Volle Punktzahl ergibt Note 1, Punkte je Modul werden zurueckgegeben", asy
 
   // Zuordnen zaehlt je Zeile
   const a = answers(0);
-  a[2] = [1, 1]; // erste Zeile falsch
+  const wlan = probe.items[2].options.indexOf("WLAN (Funk)"); // Optionen sind gemischt (proben-mischen.js)
+  a[2] = [wlan, wlan]; // erste Zeile falsch (gehört zu LAN), zweite richtig
   const part = await post("/api/informatik8/submit", { ...student(2), answers: a });
   const m = part.data.result.details[2];
   assert.equal(m.points, 1);

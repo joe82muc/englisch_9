@@ -341,4 +341,7 @@ const TESTS = {
   [inf9FiliusPruefung1.id]: inf9FiliusPruefung1
 };
 
+// Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
+require("./proben-mischen").mischeAlle(TESTS);
+
 module.exports = { TESTS };

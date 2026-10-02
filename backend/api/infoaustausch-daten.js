@@ -380,4 +380,7 @@ const TESTS = {
   [inf7InfoProbe1.id]: inf7InfoProbe1
 };
 
+// Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
+require("./proben-mischen").mischeAlle(TESTS);
+
 module.exports = { TESTS };

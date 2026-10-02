@@ -303,52 +303,8 @@ const probeR = {
   if (it.type === "match") it.points = it.rows.length;
 }));
 
-// Antwortreihenfolge fest mischen: Oben steht die richtige Antwort immer zuerst, das dürfen die Kinder nicht merken.
-// Der Zufall hängt nur an Proben-Kennung und Aufgabentext, die Reihenfolge ist nach jedem Neustart gleich.
-function zufall(text) {
-  let h = 2166136261;
-  for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
-  return () => {
-    h = (h + 0x6D2B79F5) | 0;
-    let t = Math.imul(h ^ (h >>> 15), 1 | h);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function reihenfolge(test, it, nr, salz) {
-  const rnd = zufall(test.id + "|" + salz + "|" + nr + "|" + it.prompt);
-  const idx = it.options.map((_, i) => i);
-  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
-  return idx;
-}
-function mischen(test) {
-  const misch = (it) => it.type === "choice" || it.type === "match";
-  // Salz so wählen, dass die richtige Antwort beim Ankreuzen etwa gleich oft auf A, B, C und D liegt
-  let salz = 0;
-  for (let s = 0; s < 500; s++) {
-    const zahl = [0, 0, 0, 0];
-    test.items.forEach((it, nr) => { if (it.type === "choice") zahl[reihenfolge(test, it, nr, s).indexOf(it.answer)]++; });
-    if (Math.max(...zahl) - Math.min(...zahl) <= 1) { salz = s; break; }
-  }
-  test.items.forEach((it, nr) => {
-    if (!misch(it)) return;
-    const idx = reihenfolge(test, it, nr, salz);
-    it.options = idx.map((i) => it.options[i]);
-    if (it.type === "choice") it.answer = idx.indexOf(it.answer);
-    else it.rows = it.rows.map((r) => ({ ...r, answer: idx.indexOf(r.answer) }));
-  });
-}
-// GLEICH-Objekte werden in beiden Fassungen benutzt: vorher kopieren, damit jede Fassung eigen gemischt wird
-[probeM, probeR].forEach((p) => {
-  p.items = p.items.map((it) => {
-    const kopie = { ...it };
-    if (it.options) kopie.options = [...it.options];
-    if (it.rows) kopie.rows = it.rows.map((r) => ({ ...r }));
-    return kopie;
-  });
-  mischen(p);
-});
-
-const TESTS = { [probeM.id]: probeM, [probeR.id]: probeR };
+// Antwortreihenfolge fest mischen (die richtige Antwort steht oben immer zuerst), siehe proben-mischen.js
+const { mischeAlle } = require("./proben-mischen");
+const TESTS = mischeAlle({ [probeM.id]: probeM, [probeR.id]: probeR });
 
 module.exports = { TESTS, GRADE_SCALE, KI_REGELN };
