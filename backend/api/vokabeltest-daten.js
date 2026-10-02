@@ -134,10 +134,10 @@ const e9ru1t2 = {
 
 
 /* ==================================================================
-   Englisch 9R - Unit 1 - Versuchsprobe
-   Alle Wörter von „Englisch weltweit“ (Zoom in) bis „Uluru und Kultur“
-   (Topic 1) aus dem Vokabeltrainer 9R/Englisch/unit1/vokabular.
-   Ohne reine Gleichschreibungen (international, koala, didgeridoo).
+   Englisch 9R - Unit 1 - Versuchsprobe (26 Wörter)
+   Auswahl von „Englisch weltweit“ (Zoom in) bis „Uluru und Kultur“
+   (Topic 1) aus dem Vokabeltrainer 9R/Englisch/unit1/vokabular:
+   8 Zoom in, 9 Intro, 9 Topic 1.
    Nur Deutsch -> Englisch, Notenschluessel "9R".
    ================================================================== */
 const e9ru1versuch = {
@@ -152,51 +152,33 @@ const e9ru1versuch = {
     { prompt: "Milliarde", direction: "de-en", solutions: ["billion"] },
     { prompt: "Amtssprache", direction: "de-en", solutions: ["official language"] },
     { prompt: "Mehrheit; Mehrzahl", direction: "de-en", solutions: ["majority"] },
-    { prompt: "Sprecher; Sprecherin; Redner", direction: "de-en", solutions: ["speaker"] },
-    { prompt: "(Software)Programm", direction: "de-en", solutions: ["program; software program; programme"] },
     { prompt: "die Hälfte", direction: "de-en", solutions: ["half"] },
     { prompt: "Wettbewerb", direction: "de-en", solutions: ["competition"] },
     { prompt: "kommunizieren; sich verständigen", direction: "de-en", solutions: ["to communicate; communicate"] },
     { prompt: "englischsprachig", direction: "de-en", solutions: ["English-speaking; English speaking"] },
-    { prompt: "Geschäftswelt; Geschäft", direction: "de-en", solutions: ["business"], hint: "international ..." },
-    { prompt: "(einen Vortrag) halten", direction: "de-en", solutions: ["to give; give"], hint: "to ... a talk" },
     { prompt: "Aufgabe; Auftrag", direction: "de-en", solutions: ["task"] },
 
-    // --- Unit 1: Around Australia ---
-    { prompt: "unterwegs (in)", direction: "de-en", solutions: ["around"], hint: "... Australia" },
-
     // --- Intro: Australien ---
-    { prompt: "Hallo! (so grüßt man in Australien)", direction: "de-en", solutions: ["G'day; Gday; Good day"] },
     { prompt: "beginnen; anfangen", direction: "de-en", solutions: ["to begin; begin; to start; start"] },
-    { prompt: "Australier; Australierin; australisch", direction: "de-en", solutions: ["Australian"] },
     { prompt: "Lebewesen; Geschöpf", direction: "de-en", solutions: ["creature"] },
     { prompt: "brechen; zerbrechen", direction: "de-en", solutions: ["to break; break"], hint: "Verb" },
-    { prompt: "Känguru", direction: "de-en", solutions: ["kangaroo"] },
-    { prompt: "die Aborigines", direction: "de-en", solutions: ["Aboriginal people; Aborigines"] },
-    { prompt: "britisch", direction: "de-en", solutions: ["British"] },
     { prompt: "Siedler; Siedlerin", direction: "de-en", solutions: ["settler"] },
     { prompt: "töten", direction: "de-en", solutions: ["to kill; kill"] },
     { prompt: "kämpfen; Mühe haben", direction: "de-en", solutions: ["to struggle; struggle"] },
     { prompt: "Recht", direction: "de-en", solutions: ["right"], hint: "z. B. die Rechte der Aborigines" },
     { prompt: "flach; eben", direction: "de-en", solutions: ["flat"] },
-    { prompt: "das Outback (australisches Hinterland)", direction: "de-en", solutions: ["the outback; outback"] },
     { prompt: "weit", direction: "de-en", solutions: ["long"], hint: "It's a ... way to the next town." },
 
     // --- Topic 1: Uluru und Kultur ---
     { prompt: "Fels; Stein", direction: "de-en", solutions: ["rock; stone"], hint: "Uluru ist ein riesiger ..." },
-    { prompt: "zur Aborigine-Kultur gehörend", direction: "de-en", solutions: ["Aboriginal"], hint: "... art" },
     { prompt: "Stamm; Volksstamm", direction: "de-en", solutions: ["tribe"] },
     { prompt: "Lebensstil; Lebensweise", direction: "de-en", solutions: ["lifestyle; life style"] },
     { prompt: "enttäuscht", direction: "de-en", solutions: ["disappointed"] },
     { prompt: "Hubschrauber", direction: "de-en", solutions: ["helicopter"] },
     { prompt: "bunt", direction: "de-en", solutions: ["colourful; colorful"] },
-    { prompt: "Punkt", direction: "de-en", solutions: ["dot"], hint: "in einem Aborigine-Gemälde" },
     { prompt: "Gemälde", direction: "de-en", solutions: ["painting"] },
     { prompt: "ängstlich", direction: "de-en", solutions: ["afraid; scared"] },
-    { prompt: "riesig; Riesen-", direction: "de-en", solutions: ["giant; huge"] },
-    { prompt: "davon halten", direction: "de-en", solutions: ["to think of; think of"], hint: "What do you ... the film?" },
-    { prompt: "lecker; köstlich", direction: "de-en", solutions: ["delicious; tasty"] },
-    { prompt: "erfahren; herausfinden", direction: "de-en", solutions: ["to learn; learn; to find out; find out"] }
+    { prompt: "lecker; köstlich", direction: "de-en", solutions: ["delicious; tasty"] }
   ]
 };
 
