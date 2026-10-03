@@ -28,6 +28,7 @@ test.before(async () => {
       if (kiModus === "murks") return "keine Ahnung";
       if (kiModus === "nein") return JSON.stringify({ annehmen: false, hinweis: "Bitte ohne Namen schreiben.", vorschlag: "In der Klasse wird oft gestört.", wichtig: false });
       if (kiModus === "ernst") return "Antwort: " + JSON.stringify({ annehmen: true, hinweis: "", vorschlag: "", wichtig: true });
+      if (kiModus === "ernstName") return JSON.stringify({ annehmen: false, hinweis: "Du nennst einen Namen.", vorschlag: "Ein Mitschüler schlägt mich in der Pause.", wichtig: true });
       return JSON.stringify({ annehmen: true, hinweis: "", vorschlag: "", wichtig: false });
     }
   });
@@ -193,6 +194,33 @@ test("Klassenrat: Lehrkraft setzt Status, ergänzt eigenes Thema und löscht", a
   assert.equal(neu.find((e) => e.id === id).status, "agenda");
   assert.equal((await post("/api/klasse/lehrer/rat/loeschen", { password: PW, id })).status, 200);
   assert.equal((await post("/api/klasse/lehrer/rat/liste", { password: PW, klasse: "7aM" })).data.eintraege.some((e) => e.id === id), false);
+});
+
+test("Klassenrat: ernstes Anliegen mit Namen kommt trotzdem an – nur für die Lehrkraft, nie auf die Tagesordnung", async () => {
+  kiModus = "ernstName";
+  const r = await post("/api/klasse/rat/senden", { code: "123", kategorie: "Pause", text: "Tim schlägt mich jeden Tag in der Pause und ich habe Angst." });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.angenommen, true);
+  assert.equal(r.data.privat, true);
+  assert.match(r.data.hilfe, /116 111/);
+  assert.equal("vorschlag" in r.data, false);
+  const liste = (await post("/api/klasse/lehrer/rat/liste", { password: PW, klasse: "7aM" })).data.eintraege;
+  const eintrag = liste[0];
+  assert.match(eintrag.text, /Tim schlägt mich/);
+  assert.equal(eintrag.privat, true);
+  assert.equal(eintrag.wichtig, true);
+  assert.equal("code" in eintrag, false, "ohne Freigabe bleibt auch diese Nachricht ohne Code");
+  const agenda = await post("/api/klasse/lehrer/rat/status", { password: PW, id: eintrag.id, status: "agenda" });
+  assert.equal(agenda.status, 400);
+  assert.match(agenda.data.error, /nicht auf die Tagesordnung/);
+  assert.equal((await post("/api/klasse/lehrer/rat/status", { password: PW, id: eintrag.id, status: "done" })).status, 200);
+  // Nicht ernst und mit Namen: weiter abgelehnt und nicht gespeichert
+  kiModus = "nein";
+  const vorher = modul.rat().length;
+  const laestern = await post("/api/klasse/rat/senden", { code: "456", text: "Max nervt einfach nur, das ist alles." });
+  assert.equal(laestern.data.angenommen, false);
+  assert.equal("hilfe" in laestern.data, false);
+  assert.equal(modul.rat().length, vorher);
 });
 
 test("Löschfristen: Heft 60 Tage nach dem Termin, Klassenrat mit dem neuen Schuljahr", async () => {
