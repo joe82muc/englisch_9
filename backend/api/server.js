@@ -16,6 +16,7 @@ const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 
 // Gilt für jede KI-Bewertung in NT, Deutsch, Englisch und Informatik (Mathe hat einen eigenen Dienst):
 // Die Musterlösung ist ein Beispiel, keine Checkliste – Kinder können selten alles aufschreiben, was dort steht.
+// Ausnahme: Aufrufe mit optionen.milde === false (Klassenrat – dort wird nichts bewertet, sondern geprüft).
 const KI_MILDE = [
   "Allgemein für jede Bewertung von Schülerantworten:",
   "- Die Schülerinnen und Schüler sind 12 bis 16 Jahre alt (bayerische Mittelschule). Bewerte wohlwollend wie eine freundliche Lehrkraft, nicht wie ein Prüfer.",
@@ -199,6 +200,15 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", 
 const { registerNt9FortschrittRoutes } = require("./nt9-fortschritt");
 const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD });
 
+// --- Klassenbereich der Startseite: Hausaufgabenheft und Klassenrat-Briefkasten (die KI prüft jede Nachricht) ---
+const { registerKlasseRoutes } = require("./klasse");
+registerKlasseRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  askKi: (system, user, maxTokens) => askKiMitErsatz(system, user, maxTokens, { milde: false }),
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- Deutsch 9M/9R Grammatik: KI-Zweitmeinung, wenn eine Umformung von der Lösung abweicht (nur mit Code) ---
 const { registerDeutsch9GrammatikRoutes } = require("./deutsch9-grammatik");
 registerDeutsch9GrammatikRoutes(app, {
@@ -243,9 +253,10 @@ registerProbenNotenRoutes(app, {
   ]
 });
 
-// Aufgabenloesungen und Schuelerdaten duerfen nicht ueber den statischen Dateiserver erreichbar sein.
-app.use("/backend", (_req, res) => res.sendStatus(404));
-app.use(express.static(STATIC_ROOT));
+// Aufgabenlösungen und Schülerdaten dürfen nicht über den statischen Dateiserver erreichbar sein – auch nicht über
+// Umwege in der Adresse wie /%62ackend/… (statisch.js prüft den Ort der Datei, nicht die Schreibweise der Adresse).
+const { geschuetzterDateiserver } = require("./statisch");
+app.use(geschuetzterDateiserver(STATIC_ROOT, path.join(__dirname, "..")));
 
 if (PICTURE_BASED_TALK_ROOT) {
   app.use("/picture-based-talk", express.static(PICTURE_BASED_TALK_ROOT));
@@ -304,7 +315,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-02-vokabeln-gross-verben",
+    version: "2026-10-04-klassenbereich",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
@@ -1976,7 +1987,7 @@ function clampNtPoints10(value) {
   return Math.round(clamped);
 }
 
-async function askAnthropic(system, user, maxTokens) {
+async function askAnthropic(system, user, maxTokens, optionen) {
   const apiKey = ANTHROPIC_API_KEY;
   if (!apiKey) return "";
 
@@ -1985,7 +1996,7 @@ async function askAnthropic(system, user, maxTokens) {
     "claude-haiku-4-5",
     ANTHROPIC_MODEL
   ]);
-  system = mitMilde(system);
+  if (!optionen || optionen.milde !== false) system = mitMilde(system);
 
   let lastError = null;
 
@@ -2039,25 +2050,25 @@ function uniqueModels(models) {
 }
 
 // Erst Anthropic, bei Fehler oder leerer Antwort Azure OpenAI (z. B. wenn das Anthropic-Guthaben leer ist)
-async function askKiMitErsatz(system, user, maxTokens) {
+async function askKiMitErsatz(system, user, maxTokens, optionen) {
   let fehler = null;
   if (ANTHROPIC_API_KEY) {
     try {
-      const raw = await askAnthropic(system, user, maxTokens);
+      const raw = await askAnthropic(system, user, maxTokens, optionen);
       if (raw) return raw;
     } catch (e) {
       fehler = e;
     }
   }
   if (AZURE_OPENAI_ENDPOINT && AZURE_OPENAI_API_KEY && AZURE_OPENAI_DEPLOYMENT) {
-    return askAzureOpenAI(system, user, maxTokens);
+    return askAzureOpenAI(system, user, maxTokens, optionen);
   }
   if (fehler) throw fehler;
   return "";
 }
 
-async function askAzureOpenAI(system, user, maxTokens) {
-  system = mitMilde(system);
+async function askAzureOpenAI(system, user, maxTokens, optionen) {
+  if (!optionen || optionen.milde !== false) system = mitMilde(system);
   if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_API_KEY || !AZURE_OPENAI_DEPLOYMENT) return "";
   const base = AZURE_OPENAI_ENDPOINT.replace(/\/+$/, "");
   const url = `${base}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OPENAI_API_VERSION}`;
