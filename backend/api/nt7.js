@@ -1,8 +1,11 @@
 "use strict";
 
 /**
- * NT-Proben Klasse 7M
- * -------------------
+ * NT-Proben Klasse 7 (7M und 7R)
+ * -----------------------------
+ * Proben mit zug: "M" oder "R" sind Fassungen für M- bzw. R-Klassen (nt7-p1-m, nt7-p1-r …). Die Liste nennt den
+ * Zug, und nur Kinder dieses Zugs können sie beginnen. Die beiden ersten Proben (nt7-luft-1/-2) haben keinen
+ * Zug und bleiben, wie sie waren.
  * Urspruenglich ein eigenstaendiger Express-Server (7M/NT/backend/server.js).
  * Der war aber nirgends deployt - die Lehrerseite rief ins Leere und meldete
  * "Failed to fetch". Deshalb hier als Modul, das seine Routen in den
@@ -87,7 +90,7 @@ function registerNt7Routes(app, opts) {
 
     const systemText = [
       "Du korrigierst eine Natur-und-Technik-Probe der 7. Klasse einer bayerischen Mittelschule.",
-      "Bewerte fachlichen Sinn wohlwollend anhand der drei Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
+      "Bewerte fachlichen Sinn wohlwollend anhand der Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
       "Gib fuer jedes erfuellte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
       "Antworte ausschliesslich mit JSON: {\"points\":0,\"comment\":\"Kurze konkrete Rueckmeldung auf Deutsch\"}."
     ].join("\n");
@@ -114,7 +117,7 @@ function registerNt7Routes(app, opts) {
         headers:{"content-type":"application/json","x-api-key":process.env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
         body:JSON.stringify({model:MODEL,max_tokens:220,system:[
           "Du korrigierst eine Natur-und-Technik-Probe der 7. Klasse einer bayerischen Mittelschule.",
-          "Bewerte fachlichen Sinn wohlwollend anhand der drei Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
+          "Bewerte fachlichen Sinn wohlwollend anhand der Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
           "Gib für jedes erfüllte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
           "Die erwartete Antwort ist ein Beispiel, keine Checkliste: Trifft das Kind den Kern, gibt es volle oder fast volle Punkte, auch wenn Einzelheiten fehlen. Im Zweifel für das Kind.",
           "Antworte ausschließlich mit JSON: {\"points\":0,\"comment\":\"Kurze konkrete Rückmeldung auf Deutsch\"}."
@@ -138,7 +141,7 @@ function registerNt7Routes(app, opts) {
   app.get("/api/nt7/health", (_req,res) => res.json({ok:true,service:"nt7-proben",aiConfigured:Boolean(process.env.ANTHROPIC_API_KEY),storageConfigured:Boolean(process.env.NT_DATA_DIR)}));
   app.get("/api/nt7/list", (_req,res) => {
     const data = readData();
-    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),unlocked:probeOffen(data.unlocked[test.id])}))});
+    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),zug:test.zug || "",thema:test.thema || "",unlocked:probeOffen(data.unlocked[test.id])}))});
   });
   app.post("/api/nt7/start", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
@@ -146,6 +149,8 @@ function registerNt7Routes(app, opts) {
     if (!probeOffen(readData().unlocked[test.id])) return res.status(403).json({ok:false,error:"locked"});
     const student = await probeKind(req, res);
     if (!student) return;
+    // Fassung für den anderen Zug: R-Kinder schreiben die R-Probe, M-Kinder die M-Probe
+    if (test.zug && test.zug !== student.zug) return res.status(403).json({ok:false,error:"falscher_zug",message:`Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.`});
     const data = readData();
     if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
     return res.json({ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test)},items:test.items.map(publicItem)});

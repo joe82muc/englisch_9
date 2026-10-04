@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * NT 7M: KI-Rueckmeldung zu offenen Uebungsaufgaben (Lernmodul "Luft").
+ * NT 7M/7R: KI-Rueckmeldung zu offenen Uebungsaufgaben (alle Lernmodule; das Thema schickt das Modul mit).
  * Keine Speicherung, keine Noten - nur eine kurze Rueckmeldung fuers Ueben.
  *
  * Route: POST /api/nt7/uebung/feedback
@@ -44,7 +44,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
 
     if (kriterien.length) {
       const systemQuali = [
-        `Du korrigierst eine Quali-Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${themaSystem}.`,
+        `Du korrigierst eine Quali-Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
         "Für jeden Bewertungspunkt gibt es 1 Punkt, wenn sein Inhalt in der Antwort sinngemäß vorkommt –",
         "auch mit eigenen Worten, in Stichpunkten, in anderer Reihenfolge oder mit Rechtschreibfehlern (auch bei Lese-Rechtschreib-Störung).",
         "Fachbegriffe müssen nicht fallen, wenn die Sache richtig beschrieben ist. Im Zweifel entscheide für das Kind.",
@@ -81,7 +81,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
     }
 
     const system = [
-      `Du prüfst eine offene Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${themaSystem}.`,
+      `Du prüfst eine offene Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
       "Bewerte nur den fachlichen Inhalt. Rechtschreibung, Grammatik und Stil zählen nicht. Eigene Worte und Stichpunkte sind erlaubt.",
       "Sei wohlwollend, aber fachlich korrekt. Falsche Aussagen nicht belohnen.",
       "richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt.",

@@ -200,6 +200,14 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", 
 const { registerNt9FortschrittRoutes } = require("./nt9-fortschritt");
 const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD });
 
+// --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
+const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
+registerNt7FreigabeRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- Klassenbereich der Startseite: Hausaufgabenheft und Klassenrat-Briefkasten (die KI prüft jede Nachricht) ---
 const { registerKlasseRoutes } = require("./klasse");
 registerKlasseRoutes(app, {
@@ -315,7 +323,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-04-klassenrat-ernst",
+    version: "2026-10-04-nt7-ausbau",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

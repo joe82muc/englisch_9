@@ -34,5 +34,9 @@ module.exports = {
   }
 };
 
+// Proben 1 bis 4 nach dem LehrplanPLUS, je eine Fassung für R- und M-Klassen (nt7-p1-r, nt7-p1-m …)
+// (als Kopie: Das Mischen verändert die Aufgaben, die Vorlage in nt7-fragen-ausbau.js bleibt unberührt)
+Object.assign(module.exports, JSON.parse(JSON.stringify(require("./nt7-fragen-ausbau"))));
+
 // Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
 require("./proben-mischen").mischeAlle(module.exports);
