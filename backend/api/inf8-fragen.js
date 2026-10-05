@@ -94,6 +94,76 @@ const PROBEN = {
         ["die Daten liegen auf dem Server bzw. in einer Datenbank (nicht auf dem Handy)", "das Gerät holt oder lädt die Daten von dort (Anfrage an den Server)"],
         ["server|datenbank|zentral|im internet|online|cloud|nicht auf dem handy|nicht im handy", "hol|lad|läd|abruf|ruft|anfrag|bekomm|schick|übertrag"])
     ]
+  },
+
+  /* ================= Probe 2: Datenschutz und Big Data (Modul 2) ================= */
+  "inf8-p2-r": {
+    id: "inf8-p2-r", zug: "R", thema: "daten", minutes: 20,
+    title: "Probe 2 (8R): Datenschutz und Big Data",
+    scope: "Datenspuren, Datenschutzbedingungen, Big Data, Schutzmaßnahmen",
+    items: [
+      c("Welche Angabe gehört zu den personenbezogenen Daten?",
+        ["deine Wohnadresse", "die Öffnungszeiten des Freibads", "die Hauptstadt von Bayern", "der Preis einer Kinokarte"], 0),
+      m("Ordne jedem Begriff die passende Erklärung zu.",
+        [["Datenspur", "alles, was du bei der Nutzung im Netz hinterlässt"], ["Pflichtfeld", "muss in einem Formular ausgefüllt werden"], ["Einwilligung", "dein Ja zu den Bedingungen eines Dienstes"], ["Cookie", "legt eine Internetseite in deinem Browser ab"]]),
+      c("Mert meldet sich in einem Forum für Angelfreunde an. Das Formular hat Felder mit und ohne Sternchen. Was ist am sparsamsten?",
+        ["nur die Felder mit Sternchen ausfüllen", "alle Felder ausfüllen, das wirkt höflicher", "nur die Felder ohne Sternchen ausfüllen", "das Formular von einem Freund ausfüllen lassen"], 0),
+      c("Eine Taschenrechner-App will auf dein Mikrofon und deinen Standort zugreifen. Was machst du?",
+        ["beides ablehnen – zum Rechnen braucht sie das nicht", "beides erlauben – sonst rechnet sie vielleicht falsch", "nur den Standort erlauben – der ist immer harmlos", "beides erlauben – man kann es später nie mehr ändern"], 0),
+      c("Du hast bei einer Hörbuch-App auf „Akzeptieren“ getippt. Eine Woche später willst du dein Ja zurücknehmen. Geht das?",
+        ["Ja – eine Einwilligung darf ich jederzeit widerrufen.", "Nein – ein einmal gegebenes Ja gilt dann für immer.", "Nur, wenn ich mir dafür ein neues Handy kaufe.", "Nur noch am selben Tag bis genau Mitternacht."], 0),
+      m("In den Bedingungen einer Wander-App steht: „Wir speichern deine Routen (1), um dir Touren vorzuschlagen (2), und geben sie an Sportgeschäfte weiter (3).“ Welche Frage beantwortet jede Stelle?",
+        [["Stelle (1): deine Routen", "Welche Daten?"], ["Stelle (2): um dir Touren vorzuschlagen", "Wozu?"], ["Stelle (3): an Sportgeschäfte", "Wer bekommt sie?"]]),
+      c("Bei welchem Beispiel steckt Big Data dahinter?",
+        ["Eine Bahn-App zeigt an, welche Züge heute besonders voll sind.", "Du misst mit einem Lineal, wie lang und wie breit dein Heft ist.", "Du speicherst die neue Telefonnummer deiner Oma in deinem Handy.", "Du machst mit dem Handy ein Foto vom Tafelbild der letzten Stunde."], 0),
+      c("Ein Supermarkt wertet aus, was eine Kundin mit ihrer Kundenkarte kauft: Windeln, Babybrei, Schnuller. Was kann der Computer daraus schließen?",
+        ["Im Haushalt lebt wahrscheinlich ein Baby.", "Die Kundin ist von Beruf bestimmt Lehrerin.", "Die Kundin hat sicher keinen Führerschein.", "Der Supermarkt ist bald ganz ausverkauft."], 0),
+      c("Eine Rätsel-App kostet nichts. Trotzdem verdient der Anbieter Geld. Wer bezahlt ihn?",
+        ["Firmen, die in der App ihre Werbung zeigen", "der Hersteller, der dein Handy gebaut hat", "die Schule, in der du die App benutzt", "niemand – er arbeitet völlig umsonst"], 0),
+      m("Welche Schutzmaßnahme passt zu welcher Situation?",
+        [["Eine Schnitzeljagd-App soll Karlas Ort nur kennen, solange sie geöffnet ist.", "Standort nur beim Verwenden erlauben"], ["Selin will, dass nur ihre Freundinnen ihre Urlaubsbilder sehen.", "Profil auf privat stellen"], ["Ben will nach einer Suche nicht überall Skateboard-Werbung sehen.", "Werbe-Cookies ablehnen"], ["Eine Mal-App fragt beim ersten Start nach dem Adressbuch.", "Zugriff auf die Kontakte ablehnen"]]),
+      c("Ein Cookie-Fenster hat einen großen Knopf „Alle akzeptieren“ und einen kleinen Link „Anpassen“. Wie kommst du zu den wenigsten Cookies?",
+        ["über „Anpassen“ und dann nur die notwendigen erlauben", "über „Alle akzeptieren“, weil das am schnellsten geht", "indem du das Fenster einfach lange genug anschaust", "indem du die Seite in einem zweiten Tab öffnest"], 0),
+      t("Die App einer Pizzeria fragt nach deiner Adresse und will auf deine Fotos zugreifen. Schreibe zu beidem: Braucht die App das? Begründe kurz. Stichworte genügen.",
+        "Adresse: ja, sonst kann die Pizza nicht geliefert werden. Fotos: nein, zum Bestellen braucht die App meine Fotos nicht. Den Zugriff lehne ich ab.",
+        ["Adresse: wird gebraucht, mit passendem Grund (Lieferung)", "Fotos: werden nicht gebraucht bzw. Zugriff ablehnen, mit passendem Grund"],
+        ["liefer|bring|gebracht|komm|zustell|wohin|fahr|fähr|schick|wohn|find", "unnötig|nicht nötig|nicht notwendig|überflüssig|lehn|nein|verweiger|nichts an|braucht die app nicht|braucht sie nicht|braucht man nicht|braucht es nicht|brauche ich nicht|keine fotos|fotos nicht|egal"])
+    ]
+  },
+  "inf8-p2-m": {
+    id: "inf8-p2-m", zug: "M", thema: "daten", minutes: 20,
+    title: "Probe 2 (8M): Datenschutz und Big Data",
+    scope: "Personenbezogene Daten, Datenschutzbedingungen auswerten, Big Data, Schutzmaßnahmen bewerten",
+    items: [
+      c("Welche Aussage über personenbezogene Daten stimmt?",
+        ["Auch dein Standort und dein Suchverlauf gehören dazu.", "Dazu zählt nur, was in deinem Ausweis steht.", "Dazu zählt nur, was du selbst eingetippt hast.", "Sie entstehen nur bei der Anmeldung in einer App."], 0),
+      m("Ordne jedem Begriff die passende Erklärung zu.",
+        [["Widerruf", "ein gegebenes Ja wieder zurücknehmen"], ["Dritte", "andere Firmen, die deine Daten bekommen"], ["Zweck", "sagt, wofür ein Anbieter Daten haben will"], ["Profil", "Bild einer Person aus vielen Einzeldaten"]]),
+      t("In den Bedingungen einer Hausaufgaben-App steht: „Wir speichern deine Klasse und deine Fotos von Arbeitsblättern, um dir Lösungswege zu zeigen. Wir geben diese Daten an Nachhilfe-Firmen weiter.“ Beantworte in Stichworten: Welche Daten? Wozu? Wer bekommt sie?",
+        "Welche Daten: die Klasse und die Fotos der Arbeitsblätter. Wozu: um Lösungswege zu zeigen. Wer bekommt sie: Nachhilfe-Firmen.",
+        ["Daten richtig genannt (Klasse und/oder Fotos der Arbeitsblätter)", "Zweck richtig genannt (Lösungswege zeigen)", "Empfänger richtig genannt (Nachhilfe-Firmen)"],
+        ["klasse|foto|arbeitsbl", "lösungsweg|lösung|zeigen|helfen|hilf|erklär", "nachhilfe|firmen|dritte"]),
+      c("Noch einmal die Hausaufgaben-App: „Wir speichern deine Klasse und deine Fotos von Arbeitsblättern, um dir Lösungswege zu zeigen. Wir geben diese Daten an Nachhilfe-Firmen weiter.“ Was davon nützt vor allem dem Anbieter und nicht dir?",
+        ["die Weitergabe an Nachhilfe-Firmen", "das Zeigen von Lösungswegen", "das Speichern der Klasse", "das Hochladen eines Arbeitsblatts"], 0),
+      c("Ein Streamingdienst schlägt dir eine Serie vor. Woher weiß er, was zu dir passen könnte?",
+        ["Er vergleicht dein Verhalten mit dem sehr vieler anderer Nutzer.", "Ein Mitarbeiter sucht für jeden Nutzer einzeln etwas heraus.", "Er zeigt allen Menschen auf der Welt dieselben Vorschläge.", "Er liest heimlich alle deine Nachrichten an Freunde mit."], 0),
+      t("Ein Computer berechnet aus den Einkäufen eines Kunden: „Dieser Kunde zieht wahrscheinlich bald um.“ Nenne einen Vorteil und einen Nachteil solcher Berechnungen für den Kunden.",
+        "Vorteil: Er bekommt passende Angebote, zum Beispiel für Umzugskartons. Nachteil: Das Unternehmen weiß sehr viel über ihn, und die Vermutung kann auch falsch sein.",
+        ["ein passender Vorteil (z. B. passende Angebote, Rabatte, Vorschläge)", "ein passender Nachteil (z. B. das Unternehmen weiß viel, die Vermutung kann falsch sein, viel Werbung, Weitergabe der Daten)"],
+        ["angebot|rabatt|passend|vorschl|empfehl|günstig|billig|spar|gutschein|praktisch|hilf|tipp", "weiß sehr viel|weiß viel|weiß alles|viel über|kennt|falsch|stimmt nicht|irr|weiter|privat|überwach|ausspion|beobacht|unheimlich|geht niemanden|nerv|mehr werbung|viel werbung"]),
+      c("Nora hat ihr Profil auf privat gestellt. Trotzdem schickt ihr die App eine Übersicht: „Du warst diese Woche 9 Stunden online, meistens abends.“ Was zeigt das?",
+        ["Der Anbieter sammelt weiter Daten – „privat“ gilt nur gegenüber anderen Nutzern.", "Das private Profil ist kaputt und muss von ihr ganz neu eingestellt werden.", "Fremde Nutzer können ihre Beiträge trotz der Einstellung doch noch sehen.", "Die App hat diese Zahl nur geraten – gespeichert wird bei ihr gar nichts."], 0),
+      m("Welche Schutzmaßnahme passt zu welcher Situation?",
+        [["Eine Angel-App soll Emres Angelplatz nur kennen, solange er sie benutzt.", "Standort nur beim Verwenden erlauben"], ["Paula will, dass Unbekannte ihre Zeichnungen nicht sehen.", "Profil auf privat stellen"], ["Nach dem Kauf von Inlinern will Tim nicht wochenlang Inliner-Werbung sehen.", "Werbe-Cookies ablehnen"], ["Ein Kartenspiel will beim Start die Telefonnummern deiner Freunde lesen.", "Zugriff auf die Kontakte ablehnen"]]),
+      c("Ein Cookie-Fenster zeigt nur „Alle akzeptieren“ und „Einstellungen“. Luis sagt: „Dann muss ich wohl zustimmen.“ Was stimmt?",
+        ["Nein – über „Einstellungen“ kann er fast alle Cookies abschalten.", "Ja – ohne seine Zustimmung darf er die Seite gar nicht ansehen.", "Ja – über „Einstellungen“ ändert man nur die Farben der Seite.", "Nein – das Fenster verschwindet, wenn er lange genug wartet."], 0),
+      t("Eine kostenlose Würfel-App für Brettspiele verlangt Zugriff auf Kamera, Kontakte und Standort. Würdest du sie installieren? Bewerte die App und begründe mit zwei Punkten.",
+        "Nein, ich würde sie nicht installieren. Zum Würfeln braucht die App weder meine Kamera noch meine Kontakte oder meinen Standort. Sie will offenbar vor allem Daten sammeln, vermutlich für Werbung.",
+        ["klare Bewertung (nicht installieren bzw. nur ohne diese Berechtigungen)", "Begründung: die Berechtigungen sind für die Aufgabe der App nicht nötig", "weiterer Punkt (z. B. die App sammelt Daten, Werbung, Kontakte sind Daten anderer)"],
+        ["nein|nicht installier|würde sie nicht|würde ich nicht|lieber nicht|nicht runterlad|nicht herunterlad|auf keinen fall|lehn", "brauch|nötig|unnötig|wozu|zum würfeln", "sammel|werbung|weiter|verkauf|daten anderer|daten von|nummern|misstrau|datenhungrig|ausspion|abhör|zuhör"]),
+      c("Du willst wissen, welche Daten ein Shop über dich gespeichert hat. Was darfst du tun?",
+        ["beim Shop Auskunft verlangen", "gar nichts – das ist ein Geschäftsgeheimnis", "nichts – das dürfen nur Erwachsene fragen", "die Daten selbst vom Server des Shops holen"], 0)
+    ]
   }
 };
 
