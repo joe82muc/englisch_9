@@ -223,8 +223,9 @@ function rueckmeldungAusKi(roh, max = 380) {
   const ganz = s.match(/\{[\s\S]*\}/);
   if (ganz) { try { text = clean(JSON.parse(ganz[0]).rueckmeldung); } catch (_e) { text = ""; } }
   if (!text) {
-    const m = s.match(/"rueckmeldung"\s*:\s*"((?:[^"\\]|\\.)*)/);
-    if (m) { try { text = clean(JSON.parse('"' + m[1].replace(/\\$/, "") + '"')); } catch (_e) { text = clean(m[1].replace(/\\n/g, " ").replace(/\\"/g, "“")); } }
+    // ungültiges JSON: entweder abgeschnitten oder mit geraden Anführungszeichen mitten im Text ("Standard")
+    const m = s.match(/"rueckmeldung"\s*:\s*"([\s\S]*?)"\s*\}\s*(?:```)?\s*$/) || s.match(/"rueckmeldung"\s*:\s*"([\s\S]*)$/);
+    if (m) text = clean(m[1].replace(/\\n/g, " ").replace(/\\"/g, '"').replace(/\\\\/g, "\\").replace(/\\$/, ""));
   }
   text = text.replace(/\s+/g, " ");
   if (text.length <= max && /[.!?…“"]$/.test(text)) return text;
@@ -252,6 +253,7 @@ async function kiRueckmeldung(aufgabe, x, punkte, erfuellt, askAnthropic, klasse
     "Ist alles erfüllt: Lobe kurz und genau (was an dieser Tabelle gut ist). Fällt dir in der Tabelle noch eine Kleinigkeit auf,",
     "zum Beispiel ein Tippfehler in einer Überschrift, darfst du sie freundlich erwähnen.",
     "Sei freundlich und ermutigend. Keine Noten, keine Punkte, keine Emojis. Erfinde nichts, was nicht in der Tabelle steht.",
+    "Benutze im Text keine geraden Anführungszeichen. Namen von Schaltflächen schreibst du so: „Standard“.",
     'Antworte nur als JSON: {"rueckmeldung": "..."}'
   ].join("\n");
   const user = [

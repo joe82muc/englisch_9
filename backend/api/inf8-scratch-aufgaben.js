@@ -8,6 +8,7 @@
  * scratchProjekt(json) macht daraus eine einfache Baumform:
  *   x.skripte   [{ figur, bloecke: [knoten] }]      knoten = { op, feld: {NAME: Text}, ein: {NAME: Text | knoten}, innen: [[knoten], [knoten]] }
  *   x.variablen ["name", "alter"]                   x.alle = alle Knoten (auch Werte-Blöcke)      x.hat(op)
+ *   x.figuren   ["Sprite1", "Ball"]                 die Objekte auf der Bühne (ohne die Bühne selbst)
  *   x.text()    das Programm als Text mit den deutschen Blocknamen (für die KI)
  * Geprüft wird nur, was im Skript „Wenn (Fahne) angeklickt wird“ hängt – lose herumliegende Blöcke zählen nicht.
  *
@@ -19,8 +20,9 @@
 function scratchProjekt(json) {
   const p = typeof json === "string" ? JSON.parse(json) : json;
   if (!p || !Array.isArray(p.targets)) throw new Error("kein_projekt");
-  const skripte = [], variablen = [];
+  const skripte = [], variablen = [], figuren = [];
   for (const t of p.targets) {
+    if (!t.isStage) figuren.push(String(t.name));
     Object.values(t.variables || {}).forEach((v) => { if (Array.isArray(v)) variablen.push(String(v[0])); });
     const B = t.blocks || {};
     const istBlock = (id) => typeof id === "string" && B[id] && typeof B[id] === "object" && !Array.isArray(B[id]);
@@ -49,7 +51,7 @@ function scratchProjekt(json) {
     };
     for (const id of Object.keys(B)) if (istBlock(id) && B[id].topLevel && !B[id].shadow) skripte.push({ figur: String(t.name), bloecke: kette(id, 0) });
   }
-  const x = { skripte, variablen };
+  const x = { skripte, variablen, figuren };
   x.alle = flach([].concat(...skripte.map((s) => s.bloecke)));
   x.hat = (op) => x.alle.some((k) => k.op === op);
   x.text = () => skripte.map((s) => zeilen(s.bloecke, 0).join("\n")).filter(Boolean).slice(0, 12).join("\n\n").split("\n").slice(0, 90).join("\n") || "(Im Projekt sind keine Blöcke.)";
@@ -115,12 +117,23 @@ const eigeneVariablen = (x) => x.variablen.filter((n) => !/^(meine variable|my v
 const sagtAntwort = (k) => istSage(k) && (drin(k, "sensing_answer") || (k.ein.MESSAGE && k.ein.MESSAGE.op === "sensing_answer"));
 const sagtVariable = (k) => istSage(k) && (drin(k, "data_variable") || (k.ein.MESSAGE && k.ein.MESSAGE.op === "data_variable"));
 const texteVon = (k) => Object.keys(k.ein).map((n) => k.ein[n]).filter((w) => typeof w === "string");
+// der Block-Stapel (Liste von Geschwistern), in dem ein passender Block hängt – auch im Inneren einer Klammer; dazu seine Stelle
+function stapelMit(bloecke, test) {
+  const i = (bloecke || []).findIndex(test);
+  if (i >= 0) return { liste: bloecke, i };
+  for (const k of bloecke || []) for (const innen of k.innen) { const r = stapelMit(innen, test); if (r) return r; }
+  return null;
+}
+// was im selben Stapel unter dem passenden Block hängt (über alle Fahnen-Skripte gesucht), als flache Liste
+const danach = (x, test) => { for (const f of fahnen(x)) { const r = stapelMit(f, test); if (r) return flach(r.liste.slice(r.i + 1)); } return []; };
+const VORGABE = /^(apfel|banane|apple|banana|hallo!|hello!|hmm\.\.\.)$/i;   // Texte, die Scratch selbst in neue Blöcke schreibt
 
 /* ---------- Einheit 1: Wieder da – Scratch ---------- */
 function pruefeStart(x) {
-  const f = fahnen(x), oben = f.length ? f[0] : [], da = f.length > 0;
-  const sagt = oben.some(istSage), geht = oben.some((k) => /^motion_/.test(k.op));
-  const folge = nacheinander(oben, istSage, (k) => /^motion_/.test(k.op), istSage);
+  // jedes Fahnen-Skript zählt: Wer beim Ausprobieren ein zweites Skript gebaut hat, fällt deshalb nicht durch
+  const f = fahnen(x).map(flach), da = f.length > 0, bewegt = (k) => /^motion_/.test(k.op);
+  const sagt = f.some((s) => s.some(istSage)), geht = f.some((s) => s.some(bewegt));
+  const folge = f.some((s) => nacheinander(s, istSage, bewegt, istSage));
   return [
     { ok: da, text: da ? "Dein Programm startet mit der grünen Fahne." : ohneFahne },
     { ok: sagt, text: sagt ? "Die Figur sagt etwas." : "Unter der Fahne fehlt noch ein Block, mit dem die Figur etwas sagt (Bereich „Aussehen“)." },
@@ -132,13 +145,15 @@ function pruefeStart(x) {
 /* ---------- Einheit 2: Objekte und Eigenschaften ---------- */
 function pruefeObjekte(x) {
   const alle = fahnenKnoten(x), da = fahnen(x).length > 0;
-  const ort = alle.some((k) => k.op === "motion_gotoxy"), gross = alle.find((k) => k.op === "looks_setsizeto"), dreh = alle.some((k) => k.op === "motion_pointindirection");
-  const andereGroesse = !!gross && String(gross.ein.SIZE) !== "100";
+  const ort = alle.some((k) => k.op === "motion_gotoxy"), gross = alle.filter((k) => k.op === "looks_setsizeto"), dreh = alle.filter((k) => k.op === "motion_pointindirection");
+  const andereGroesse = gross.some((k) => String(k.ein.SIZE) !== "100"), andereRichtung = dreh.some((k) => String(k.ein.DIRECTION) !== "90");
+  const zwei = x.figuren.length >= 2;
   return [
     { ok: da, text: da ? "Dein Programm startet mit der grünen Fahne." : ohneFahne },
     { ok: ort, text: ort ? "Der Block „gehe zu x: … y: …“ legt die Position fest." : "Es fehlt der Block „gehe zu x: … y: …“. Er ändert die Eigenschaften x und y." },
-    { ok: andereGroesse, text: andereGroesse ? "Der Block „setze Größe auf …“ ändert die Größe." : gross ? "Die Größe steht noch auf 100. Trage eine andere Zahl ein." : "Es fehlt der Block „setze Größe auf …“ (Bereich „Aussehen“)." },
-    { ok: dreh, text: dreh ? "Der Block „setze Richtung auf … Grad“ ändert die Richtung." : "Es fehlt der Block „setze Richtung auf … Grad“ (Bereich „Bewegung“)." }
+    { ok: andereGroesse, text: andereGroesse ? "Der Block „setze Größe auf …“ ändert die Größe." : gross.length ? "Die Größe steht noch auf 100. Trage eine andere Zahl ein." : "Es fehlt der Block „setze Größe auf …“ (Bereich „Aussehen“)." },
+    { ok: andereRichtung, text: andereRichtung ? "Der Block „setze Richtung auf … Grad“ ändert die Richtung." : dreh.length ? "Die Richtung steht noch auf 90 Grad. Trage eine andere Zahl ein, zum Beispiel 180." : "Es fehlt der Block „setze Richtung auf … Grad“ (Bereich „Bewegung“)." },
+    { ok: zwei, text: zwei ? "Du hast ein zweites Objekt erstellt: " + x.figuren.slice(1, 4).join(", ") + "." : "Erstelle ein zweites Objekt: Klicke unten rechts auf den runden Knopf „Figur wählen“ und suche dir eine Figur aus." }
   ];
 }
 
@@ -159,37 +174,44 @@ function pruefeEingabe(x) {
 function pruefeAusgabe(x) {
   const alle = fahnenKnoten(x), da = fahnen(x).length > 0;
   const fragt = alle.some((k) => k.op === "sensing_askandwait");
-  const verbinder = alle.filter((k) => k.op === "operator_join" && (drin(k, "sensing_answer") || ["STRING1", "STRING2"].some((n) => k.ein[n] && k.ein[n].op === "sensing_answer")));
-  const inSage = alle.some((k) => istSage(k) && (drin(k, "operator_join") || (k.ein.MESSAGE && k.ein.MESSAGE.op === "operator_join"))) && verbinder.length > 0;
-  const mitText = verbinder.find((k) => texteVon(k).some((t) => t.trim() !== ""));
-  // Leerzeichen zwischen Text und Antwort: Text vorne endet mit Leerzeichen oder Text hinten beginnt mit einem
+  const verbinder = alle.filter((k) => k.op === "operator_join" && drin(k, "sensing_answer"));
+  const sagtSatz = (k) => istSage(k) && drin(k, "operator_join") && flach([k]).some((i) => verbinder.includes(i));
+  const inSage = alle.some(sagtSatz), folge = nacheinander(alle, "sensing_askandwait", sagtSatz);
+  // Die Vorgabe „Apfel “ und „Banane“ ist kein eigener Text
+  const eigen = (s) => s.trim() !== "" && !VORGABE.test(s.trim());
+  const mitText = verbinder.find((k) => texteVon(k).some(eigen)), vorgabe = verbinder.some((k) => texteVon(k).some((s) => VORGABE.test(s.trim())));
+  // Leerzeichen zwischen Text und Antwort: Text vorne endet mit Leerzeichen oder Text hinten beginnt mit einem (oder mit einem Satzzeichen)
   const abstand = !!mitText && ((typeof mitText.ein.STRING1 === "string" && typeof mitText.ein.STRING2 !== "string" && /\s$/.test(mitText.ein.STRING1)) || (typeof mitText.ein.STRING2 === "string" && typeof mitText.ein.STRING1 !== "string" && /^(\s|[!?.,])/.test(mitText.ein.STRING2)) || (typeof mitText.ein.STRING1 !== "string" && typeof mitText.ein.STRING2 !== "string"));
   return [
     { ok: da, text: da ? "Dein Programm startet mit der grünen Fahne." : ohneFahne },
     { ok: fragt, text: fragt ? "Die Figur stellt eine Frage." : "Es fehlt der Block „frage … und warte“." },
-    { ok: inSage, text: inSage ? "Ein „verbinde“-Block steckt im „sage“-Block und enthält die Antwort." : "Baue die Ausgabe so: In den „sage“-Block kommt ein „verbinde“-Block, und in eines seiner Felder der Block „Antwort“." },
-    { ok: !!mitText, text: mitText ? "Im „verbinde“-Block steht dein eigener Text." : "In das andere Feld des „verbinde“-Blocks gehört dein eigener Text, zum Beispiel „Hallo “." },
-    { ok: abstand, text: abstand ? "Zwischen deinem Text und der Antwort ist ein Leerzeichen." : "Dein Text und die Antwort kleben zusammen. Tippe ein Leerzeichen ans Ende deines Textes." }
+    { ok: inSage && folge, text: inSage && folge ? "Nach der Frage sagt die Figur einen Satz aus „verbinde“ und „Antwort“." : inSage ? "Der „sage“-Block mit „verbinde“ muss unter dem Frage-Block hängen. Vorher gibt es noch keine Antwort." : "Baue die Ausgabe so: In den „sage“-Block kommt ein „verbinde“-Block, und in eines seiner Felder der Block „Antwort“." },
+    { ok: !!mitText, text: mitText ? "Im „verbinde“-Block steht dein eigener Text." : vorgabe ? "Im „verbinde“-Block steht noch der Text, den Scratch vorgibt. Klicke in das Feld und schreibe deinen eigenen Text, zum Beispiel „Hallo “." : "In das andere Feld des „verbinde“-Blocks gehört dein eigener Text, zum Beispiel „Hallo “." },
+    { ok: abstand, text: abstand ? "Zwischen deinem Text und der Antwort ist ein Leerzeichen." : mitText ? "Dein Text und die Antwort kleben zusammen. Tippe ein Leerzeichen zwischen deinen Text und die Antwort." : "Das Leerzeichen lässt sich erst prüfen, wenn dein eigener Text im „verbinde“-Block steht." }
   ];
 }
 
 /* ---------- Einheit 5: Variablen ---------- */
 function pruefeVariablen(x) {
   const alle = fahnenKnoten(x), da = fahnen(x).length > 0, eigene = eigeneVariablen(x);
-  const merkt = alle.filter((k) => k.op === "data_setvariableto" && k.ein.VALUE && k.ein.VALUE.op === "sensing_answer");
+  const merkeAntwort = (k) => k.op === "data_setvariableto" && !!k.ein.VALUE && k.ein.VALUE.op === "sensing_answer";
+  const merkt = alle.filter(merkeAntwort);
   const zwei = new Set(merkt.map((k) => k.feld.VARIABLE)).size >= 2;
+  // Kernfehler: erst beide Fragen, dann beide „setze“-Blöcke – dann steckt in beiden Variablen die zweite Antwort
+  const sofort = nacheinander(alle, "sensing_askandwait", merkeAntwort, "sensing_askandwait", merkeAntwort);
   const zeigt = alle.some(sagtVariable);
   return [
     { ok: da, text: da ? "Dein Programm startet mit der grünen Fahne." : ohneFahne },
     { ok: eigene.length >= 2, text: eigene.length >= 2 ? "Du hast eigene Variablen angelegt: " + eigene.slice(0, 4).join(", ") + "." : "Lege zwei eigene Variablen an (Bereich „Variablen“, Knopf „Neue Variable“). Bisher: " + (eigene.length ? eigene.join(", ") : "keine") + "." },
     { ok: merkt.length >= 1, text: merkt.length >= 1 ? "Ein „setze … auf Antwort“-Block merkt sich eine Eingabe." : "Nach einer Frage fehlt der Block „setze … auf …“ mit dem Block „Antwort“ darin." },
-    { ok: zwei, text: zwei ? "Zwei Eingaben landen in zwei verschiedenen Variablen." : "Stelle zwei Fragen und speichere jede Antwort in einer eigenen Variablen." },
+    { ok: zwei && sofort, text: zwei && sofort ? "Zwei Eingaben landen in zwei verschiedenen Variablen." : zwei ? "Nach jeder Frage muss sofort „setze … auf Antwort“ kommen. Sonst steckt in beiden Variablen die zweite Antwort." : "Stelle zwei Fragen und speichere jede Antwort in einer eigenen Variablen." },
     { ok: zeigt, text: zeigt ? "Die Figur benutzt eine Variable in ihrer Ausgabe." : "Lass die Figur etwas mit einer Variablen sagen: Ziehe den runden Variablen-Block in einen „sage“- oder „verbinde“-Block." }
   ];
 }
 
 /* ---------- Einheit 6: Verzweigung ---------- */
-const vergleichtEingabe = (k) => { const b = k.ein.CONDITION; return !!b && typeof b === "object" && VERGLEICH.includes(b.op) && (drin(b, "sensing_answer") || drin(b, "data_variable") || ["OPERAND1", "OPERAND2"].some((n) => b.ein[n] && (b.ein[n].op === "sensing_answer" || b.ein[n].op === "data_variable"))); };
+// die Bedingung enthält einen Vergleich mit der Eingabe – auch wenn er in „und“, „oder“ oder „nicht“ steckt
+const vergleichtEingabe = (k) => { const b = k.ein.CONDITION; return !!b && typeof b === "object" && flach([b]).some((v) => VERGLEICH.includes(v.op) && (drin(v, "sensing_answer") || drin(v, "data_variable"))); };
 function pruefeVerzweigung(x) {
   const alle = fahnenKnoten(x), da = fahnen(x).length > 0;
   const fragt = alle.some((k) => k.op === "sensing_askandwait"), wenn = alle.filter((k) => k.op === "control_if_else");
@@ -201,16 +223,16 @@ function pruefeVerzweigung(x) {
     { ok: fragt, text: fragt ? "Die Figur stellt eine Frage." : "Es fehlt der Block „frage … und warte“." },
     { ok: wenn.length > 0 && folge, text: wenn.length > 0 && folge ? "Nach der Frage kommt der Block „falls …, dann … sonst“." : wenn.length ? "Der Block „falls …, dann … sonst“ muss unter dem Frage-Block hängen." : "Es fehlt der Block „falls …, dann … sonst“ (Bereich „Steuerung“)." },
     { ok: bed, text: bed ? "Die Bedingung vergleicht die Eingabe." : "In das sechseckige Feld gehört ein Vergleich (Bereich „Operatoren“) mit dem Block „Antwort“, zum Beispiel Antwort = 7." },
-    { ok: beide, text: beide ? "In beiden Zweigen sagt die Figur etwas." : "Bei „dann“ und bei „sonst“ soll die Figur jeweils etwas sagen. Ein Zweig ist noch leer." }
+    { ok: beide, text: beide ? "In beiden Zweigen sagt die Figur etwas." : "Bei „dann“ und bei „sonst“ soll die Figur jeweils etwas sagen. In einem Zweig fehlt noch ein „sage“-Block." }
   ];
 }
 function pruefeVerschachtelt(x) {
   const alle = fahnenKnoten(x);
   const aussen = alle.find((k) => k.op === "control_if_else" && k.innen.some((liste) => flach(liste).some((i) => i.op === "control_if_else" || i.op === "control_if")));
   const ausgaben = new Set(alle.filter((k) => /^control_if/.test(k.op)).reduce((s, k) => s.concat(...k.innen.map((liste) => (liste || []).filter(istSage).map((i) => JSON.stringify(i.ein.MESSAGE)))), []));
-  const basis = pruefeVerzweigung(x).every((p) => p.ok);
+  const offen = pruefeVerzweigung(x).find((p) => !p.ok), basis = !offen;
   return [
-    { ok: basis, text: basis ? "Die erste Verzweigung stimmt." : "Zuerst muss die einfache Verzweigung stimmen: Frage, „falls …, dann … sonst“ mit Vergleich, zwei Ausgaben." },
+    { ok: basis, text: basis ? "Die erste Verzweigung stimmt." : "Zuerst muss die einfache Verzweigung stimmen. " + offen.text },
     { ok: !!aussen, text: aussen ? "In einem Zweig steckt eine zweite Verzweigung." : "Setze in den „sonst“-Zweig einen zweiten Block „falls …, dann … sonst“. So unterscheidest du drei Fälle." },
     { ok: ausgaben.size >= 3, text: ausgaben.size >= 3 ? "Die Figur hat drei verschiedene Ausgaben." : "Für drei Fälle braucht die Figur drei verschiedene Sätze. Bisher: " + ausgaben.size + "." }
   ];
@@ -220,30 +242,37 @@ function pruefeVerschachtelt(x) {
 function pruefeRaten(x) {
   const alle = fahnenKnoten(x), da = fahnen(x).length > 0;
   const geheim = alle.find((k) => k.op === "data_setvariableto" && k.ein.VALUE && k.ein.VALUE.op === "operator_random");
-  const schleife = alle.find((k) => k.op === "control_repeat_until");
-  const bed = !!schleife && !!schleife.ein.CONDITION && schleife.ein.CONDITION.op === "operator_equals" && (drin(schleife, "sensing_answer")) && (drin(schleife, "data_variable"));
+  const zahlName = geheim ? geheim.feld.VARIABLE : "geheimzahl";
+  const istSchleife = (k) => k.op === "control_repeat_until", schleife = alle.find(istSchleife);
   const innen = schleife ? flach(schleife.innen[0]) : [];
-  const hinweis = innen.some((k) => /^control_if/.test(k.op) && k.ein.CONDITION && ["operator_gt", "operator_lt"].includes(k.ein.CONDITION.op)) && innen.some(istSage);
-  const neu = innen.some((k) => k.op === "sensing_askandwait");
+  // Zwei Wege sind richtig: Antwort = geheimzahl – oder der Tipp wird erst in einer eigenen Variablen gespeichert (tipp = geheimzahl)
+  const b = schleife && schleife.ein.CONDITION && schleife.ein.CONDITION.op === "operator_equals" ? schleife.ein.CONDITION : null;
+  const namen = b ? ["OPERAND1", "OPERAND2"].map((n) => b.ein[n] && b.ein[n].op === "data_variable" ? b.ein[n].feld.VARIABLE : "") : [];
+  const merktTipp = (k) => k.op === "data_setvariableto" && !!k.ein.VALUE && k.ein.VALUE.op === "sensing_answer" && namen.includes(k.feld.VARIABLE) && k.feld.VARIABLE !== zahlName;
+  const mitTipp = !!b && !drin(schleife, "sensing_answer") && namen[0] !== "" && namen[1] !== "" && namen[0] !== namen[1] && alle.some(merktTipp);
+  const bed = !!b && ((drin(schleife, "sensing_answer") && drin(schleife, "data_variable")) || mitTipp);
+  const hinweis = innen.some((k) => /^control_if/.test(k.op) && k.ein.CONDITION && flach([k.ein.CONDITION]).some((v) => ["operator_gt", "operator_lt"].includes(v.op))) && innen.some(istSage);
+  const fragtNeu = innen.some((k) => k.op === "sensing_askandwait"), neu = fragtNeu && (!mitTipp || nacheinander(innen, "sensing_askandwait", merktTipp));
   const ersteFrage = nacheinander(alle, "sensing_askandwait", "control_repeat_until");
-  const ende = (() => { const f = fahnen(x)[0] || [], i = f.findIndex((k) => k.op === "control_repeat_until"); return i >= 0 && f.slice(i + 1).some(istSage); })();
+  // „Richtig!“ hängt im selben Stapel unter der Schleife – auch wenn das ganze Spiel in „wiederhole fortlaufend“ steckt
+  const ende = danach(x, istSchleife).some(istSage);
   return [
     { ok: da, text: da ? "Dein Programm startet mit der grünen Fahne." : ohneFahne },
-    { ok: !!geheim, text: geheim ? "Die Geheimzahl ist eine Zufallszahl und steckt in der Variablen „" + geheim.feld.VARIABLE + "“." : "Am Anfang fehlt: „setze … auf Zufallszahl von 1 bis 10“. So denkt sich die Figur eine Zahl aus." },
+    { ok: !!geheim, text: geheim ? "Die Geheimzahl ist eine Zufallszahl und steckt in der Variablen „" + zahlName + "“." : "Am Anfang fehlt: „setze … auf Zufallszahl von 1 bis 10“. So denkt sich die Figur eine Zahl aus." },
     { ok: ersteFrage, text: ersteFrage ? "Vor der Schleife wird das erste Mal gefragt." : "Vor dem Block „wiederhole bis …“ muss die Figur schon einmal fragen – sonst gibt es noch keine Antwort zum Vergleichen." },
-    { ok: bed, text: bed ? "Die Schleife läuft, bis die Antwort gleich der Geheimzahl ist." : schleife ? "In das Feld von „wiederhole bis …“ gehört der Vergleich Antwort = Geheimzahl." : "Es fehlt der Block „wiederhole bis …“ (Bereich „Steuerung“)." },
+    { ok: bed, text: bed ? "Die Schleife läuft, bis der Tipp gleich der Geheimzahl ist." : schleife ? "In das Feld von „wiederhole bis …“ gehört der Vergleich Antwort = " + zahlName + "." : "Es fehlt der Block „wiederhole bis …“ (Bereich „Steuerung“)." },
     { ok: hinweis, text: hinweis ? "In der Schleife gibt die Figur einen Hinweis: zu groß oder zu klein." : "In die Schleife gehört eine Verzweigung mit > oder <: Ist die Antwort größer als die Geheimzahl, sagt die Figur „Zu groß!“, sonst „Zu klein!“." },
-    { ok: neu, text: neu ? "In der Schleife wird noch einmal gefragt." : "Am Ende der Schleife muss die Figur noch einmal fragen. Sonst vergleicht sie immer dieselbe Antwort – und hört nie auf." },
+    { ok: neu, text: neu ? "In der Schleife wird noch einmal gefragt." : fragtNeu ? "Nach der neuen Frage muss in der Schleife wieder der „setze“-Block mit „Antwort“ kommen. Sonst vergleicht die Figur immer den alten Tipp." : "Am Ende der Schleife muss die Figur noch einmal fragen. Sonst vergleicht sie immer dieselbe Antwort – und hört nie auf." },
     { ok: ende, text: ende ? "Nach der Schleife sagt die Figur, dass richtig geraten wurde." : "Unter der Schleife fehlt noch der Satz für den Erfolg, zum Beispiel „Richtig!“." }
   ];
 }
 function pruefeZaehler(x) {
   const alle = fahnenKnoten(x), basis = pruefeRaten(x).every((p) => p.ok);
-  const schleife = alle.find((k) => k.op === "control_repeat_until"), innen = schleife ? flach(schleife.innen[0]) : [];
+  const istSchleife = (k) => k.op === "control_repeat_until", schleife = alle.find(istSchleife), innen = schleife ? flach(schleife.innen[0]) : [];
   const geheim = alle.find((k) => k.op === "data_setvariableto" && k.ein.VALUE && k.ein.VALUE.op === "operator_random");
   const zaehlt = innen.find((k) => k.op === "data_changevariableby" && (!geheim || k.feld.VARIABLE !== geheim.feld.VARIABLE));
   const start = !!zaehlt && nacheinander(alle, (k) => k.op === "data_setvariableto" && k.feld.VARIABLE === zaehlt.feld.VARIABLE, "control_repeat_until");
-  const zeigt = !!zaehlt && (() => { const f = fahnen(x)[0] || [], i = f.findIndex((k) => k.op === "control_repeat_until"); return i >= 0 && flach(f.slice(i + 1)).some((k) => k.op === "data_variable" && k.feld.VARIABLE === zaehlt.feld.VARIABLE); })();
+  const zeigt = !!zaehlt && danach(x, istSchleife).some((k) => k.op === "data_variable" && k.feld.VARIABLE === zaehlt.feld.VARIABLE);
   return [
     { ok: basis, text: basis ? "Das Zahlenraten-Spiel läuft." : "Zuerst muss das Spiel selbst stimmen. Lade es beim ersten Auftrag hoch und sieh nach, was dort noch offen ist." },
     { ok: !!zaehlt, text: zaehlt ? "In der Schleife zählt „ändere " + zaehlt.feld.VARIABLE + " um …“ die Versuche mit." : "Lege eine Variable für die Versuche an und setze in die Schleife den Block „ändere … um 1“." },
@@ -263,7 +292,7 @@ function pruefeProjekt(x) {
     { ok: fragt, text: fragt ? "Eingabe: Die Figur stellt mindestens eine Frage." : "Eingabe fehlt: Baue mindestens einen Block „frage … und warte“ ein." },
     { ok: merkt, text: merkt ? "Variable: Dein Programm merkt sich etwas." : "Variable fehlt: Benutze „setze … auf …“ oder „ändere … um …“." },
     { ok: wenn, text: wenn ? "Verzweigung: Dein Programm entscheidet mit „falls“." : "Verzweigung fehlt: Baue einen Block „falls …, dann“ mit einer Bedingung ein." },
-    { ok: saetze.size >= 2, text: saetze.size >= 2 ? "Ausgabe: Die Figur sagt mindestens zwei verschiedene Dinge." : "Ausgabe: Die Figur soll mindestens zwei verschiedene Dinge sagen." }
+    { ok: saetze.size >= 2, text: saetze.size >= 2 ? "Ausgabe: Die Figur sagt mindestens zwei verschiedene Dinge." : "Ausgabe: Die Figur soll mindestens zwei verschiedene Dinge sagen. Hänge einen zweiten „sage“-Block mit anderem Text an." }
   ];
 }
 
@@ -275,7 +304,7 @@ const AUFGABEN = {
   },
   "objekte-auf1": {
     titel: "Eigenschaften verändern",
-    auftrag: "Die Figur ist ein Objekt mit Eigenschaften. Das Programm soll drei Eigenschaften ändern: Position (gehe zu x: … y: …), Größe (setze Größe auf …) und Richtung (setze Richtung auf … Grad).",
+    auftrag: "Die Figur ist ein Objekt mit Eigenschaften. Das Programm soll drei Eigenschaften ändern: Position (gehe zu x: … y: …), Größe (setze Größe auf …) und Richtung (setze Richtung auf … Grad). Außerdem soll das Kind über den Knopf „Figur wählen“ ein zweites Objekt erstellen.",
     pruefe: pruefeObjekte
   },
   "eingabe-auf1": {

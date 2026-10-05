@@ -36,6 +36,7 @@ async function kiRueckmeldung(aufgabe, programmText, punkte, erfuellt, askAnthro
     "Ist alles erfüllt: Lobe kurz und genau (was an diesem Programm gut ist). Fällt dir eine Kleinigkeit auf, zum Beispiel ein",
     "Tippfehler in einem Text der Figur oder ein fehlendes Leerzeichen, darfst du sie freundlich erwähnen.",
     "Sei freundlich und ermutigend. Keine Noten, keine Punkte, keine Emojis. Erfinde nichts, was nicht im Programm steht.",
+    "Benutze im Text keine geraden Anführungszeichen. Namen von Blöcken schreibst du so: „frage … und warte“.",
     'Antworte nur als JSON: {"rueckmeldung": "..."}'
   ].join("\n");
   const user = [

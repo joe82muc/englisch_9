@@ -195,16 +195,52 @@ test("Prozent: ohne Format, mal 100, ohne Dollar, getippt", () => {
   assert.match(offen("prozent-auf1", mal), /wird noch mal 100 gerechnet/);
   const ohne = Object.assign({}, UMFRAGE, { C3: { f: "B3/B8", v: "#DIV/0!", fehler: true, s: 4 }, C4: { f: "B4/B9", v: "#DIV/0!", fehler: true, s: 4 } });
   assert.match(offen("prozent-auf1", ohne), /stimmt noch nicht in: C3, C4/);
-  assert.match(offen("prozent-auf1", Object.assign({}, UMFRAGE, { C2: { v: 0.21, s: 4 } })), /stimmt noch nicht in: C2/, "Prozent getippt statt gerechnet");
+  assert.match(offen("prozent-auf1", Object.assign({}, UMFRAGE, { C2: { v: 0.21, s: 4 } })), /Getippte Zahl statt Formel: C2\./, "Prozent getippt statt gerechnet");
 });
 
 test("Mini-Projekt: Aufschlag ohne Dollar, Summe getippt, anderer Aufschlag", () => {
   assert.match(offen("miniprojekt-auf1", Object.assign({}, VERKAUF, { C5: { f: "B5+B2", v: 0.3 }, E5: { f: "C5*D5", v: 10.5 }, G5: { f: "E5-F5", v: 0 }, E8: { f: "SUM(E4:E7)", v: 142.1 }, G8: { f: "SUM(G4:G7)", v: 56 } })), /Verkaufspreis stimmt noch nicht in: C5/);
-  assert.match(offen("miniprojekt-auf1", Object.assign({}, VERKAUF, { G8: 70 })), /fehlt noch eine Summen-Formel in: G8/);
+  assert.match(offen("miniprojekt-auf1", Object.assign({}, VERKAUF, { G8: 70 })), /^G8: Hier soll eine Formel .* Im Moment steht dort eine getippte Zahl\.$/);
   const mehr = Object.assign({}, VERKAUF, { B1: 0.5 }, spalte("C", (z) => `B${z}+$B$1`, [1.05, 0.8, 0.95, 1.1]), spalte("E", (z) => `C${z}*D${z}`, [50.4, 28, 38, 57.2]), spalte("G", (z) => `E${z}-F${z}`, [24, 17.5, 20, 26]),
     { E8: { f: "SUM(E4:E7)", v: 173.6 }, G8: { f: "SUM(G4:G7)", v: 87.5 } });
   assert.equal(offen("miniprojekt-auf1", mehr), "", "Aufschlag 0,5: Gewinn 87,5");
   assert.match(offen("miniprojekt-aufM", Object.assign({}, ANTEIL, { H5: { f: "G5/G9", v: "#DIV/0!", fehler: true, s: 4 } })), /Anteil stimmt noch nicht in: H5/);
+});
+
+test("Modul 4: Folgefehler zählen einmal und heißen auch so", () => {
+  // Pausenverkauf: Dollar vergessen und kopiert – die Formeln in E, G und Zeile 8 stehen richtig da und zeigen nur den Fehler weiter
+  const ohne = Object.assign({}, VERKAUF, { C4: { f: "B4+B1", v: 0.95 }, C5: { f: "B5+B2", v: 0.3 }, C6: { f: "B6+B3", v: "#VALUE!", fehler: true }, C7: { f: "B7+B4", v: 1.15 },
+    E5: { f: "C5*D5", v: 10.5 }, E6: { f: "C6*D6", v: "#VALUE!", fehler: true }, E7: { f: "C7*D7", v: 59.8 }, G5: { f: "E5-F5", v: 0 }, G6: { f: "E6-F6", v: "#VALUE!", fehler: true }, G7: { f: "E7-F7", v: 28.6 },
+    E8: { f: "SUM(E4:E7)", v: "#VALUE!", fehler: true }, G8: { f: "SUM(G4:G7)", v: "#VALUE!", fehler: true } });
+  const text = offen("miniprojekt-auf1", ohne);
+  assert.match(text, /ist der Aufschlag B1 nicht festgemacht/);
+  assert.match(text, /Einnahmen: Die Formeln sind da\. Sie stimmen, sobald die Verkaufspreise in Spalte C stimmen\./);
+  assert.match(text, /Gewinn: Die Formeln sind da\./);
+  assert.match(text, /E8: Die Summen-Formel ist da\./);
+  assert.doesNotMatch(text, /fehlt|E6|G6/, "kein Verweis auf Zellen, deren Formel stimmt");
+  assert.doesNotMatch(text, /Kosten:|F8/, "Die Kosten hängen nicht am Verkaufspreis");
+  // Busfahrt: die Summe unter falschen Buskosten
+  const bus = Object.assign({}, BUS, { C5: { f: "B5*B2", v: 0 }, C6: { f: "B6*B3", v: "#VALUE!", fehler: true }, C7: { f: "B7*B4", v: 725 }, C8: { f: "SUM(C4:C7)", v: "#VALUE!", fehler: true } });
+  assert.match(offen("absolut-auf1", bus), /C8: Die Summen-Formel ist da\. Sie stimmt, sobald die Zellen darüber stimmen\./);
+  // Umfrage: alle Stimmen als Zahl getippt – nur dieser Punkt ist offen, die Anteile gelten
+  assert.match(offen("prozent-auf1", Object.assign({}, UMFRAGE, { B7: 200 })), /^B7: Hier soll eine Formel alle Stimmen von B2 bis B6 zusammenzählen\. Im Moment steht dort eine getippte Zahl\.$/);
+  // Umfrage: Summe zu kurz, die Anteile rechnen richtig mit dem eigenen B7
+  const kurz = Object.assign({}, UMFRAGE, { B7: { f: "SUM(B2:B5)", v: 190 }, C2: { f: "B2/$B$7", v: 42 / 190, s: 4 }, C3: { f: "B3/$B$7", v: 56 / 190, s: 4 }, C4: { f: "B4/$B$7", v: 70 / 190, s: 4 }, C5: { f: "B5/$B$7", v: 22 / 190, s: 4 }, C6: { f: "B6/$B$7", v: 10 / 190, s: 4 } });
+  assert.match(offen("prozent-auf1", kurz), /^B7: Die Formel zählt noch nicht genau die Zellen B2 bis B6 zusammen\.$/);
+});
+
+test("Modul 4: Formeln nur aus Zahlen bestehen nicht, SUMME im Nenner besteht", () => {
+  assert.match(offen("absolut-auf1", Object.assign({}, BUS, { B8: { f: "110", v: 110 } })), /^B8: In der Formel stehen nur feste Zahlen\./);
+  assert.match(offen("absolut-auf1", Object.assign({}, BUS, { C8: { f: "188.5+169+195+162.5", v: 715 } })), /^C8: In der Formel stehen nur feste Zahlen\./);
+  assert.match(offen("prozent-auf1", Object.assign({}, UMFRAGE, { B7: { f: "42+56+70+22+10", v: 200 } })), /^B7: In der Formel stehen nur feste Zahlen\./);
+  assert.match(offen("miniprojekt-auf1", Object.assign({}, VERKAUF, { D8: { f: "175", v: 175 } })), /^D8: In der Formel stehen nur feste Zahlen\./);
+  assert.match(offen("miniprojekt-auf1", Object.assign({}, VERKAUF, { E4: { f: "0.95*D4", v: 45.6 } })), /In E4 fehlt noch eine Formel mit Zelladressen: Verkaufspreis mal verkaufte Stück\./);
+  assert.match(offen("miniprojekt-auf1", Object.assign({}, VERKAUF, { C4: { f: "0.55+$B$1", v: 0.95 } })), /In C4 steht eine Zahl statt einer Zelladresse/);
+  const nenner = Object.assign({}, UMFRAGE, { C2: { f: "B2/SUM($B$2:$B$6)", v: 0.21, s: 4 }, C3: { f: "B3/SUM($B$2:$B$6)", v: 0.28, s: 4 }, C4: { f: "B4/SUM($B$2:$B$6)", v: 0.35, s: 4 }, C5: { f: "B5/SUM($B$2:$B$6)", v: 0.11, s: 4 }, C6: { f: "B6/SUM($B$2:$B$6)", v: 0.05, s: 4 } });
+  assert.equal(offen("prozent-auf1", nenner), "", "Anteil mit SUMME im Nenner lässt sich kopieren und rechnet richtig");
+  const getippt = Object.assign({}, BUS, { C5: 169, C6: 195, C7: 162.5 });
+  assert.match(offen("absolut-auf1", getippt), /Getippte Zahl statt Formel: C5, C6, C7\./);
+  assert.match(offen("miniprojekt-aufM", Object.assign({}, ANTEIL, { H4: { f: "G4/G8", v: 19.2 / 70, s: 4 }, H5: { f: "G5/G8", v: 0.2, s: 4 }, H6: { f: "G6/G8", v: 16 / 70, s: 4 }, H7: { f: "G7/G8", v: 20.8 / 70, s: 4 } })), /Schreibe in H4 die Formel mit \$G\$8 und kopiere sie nach unten\./);
 });
 
 test("Antwort der KI lesen: Codeblock, abgeschnittenes JSON, zu langer Text, Unsinn", () => {
@@ -213,6 +249,8 @@ test("Antwort der KI lesen: Codeblock, abgeschnittenes JSON, zu langer Text, Uns
   const lang = rueckmeldungAusKi('{"rueckmeldung": "' + "Das ist ein Satz mit etwa vierzig Zeichen. ".repeat(20) + '"}');
   assert.ok(lang.length <= 380 && /Zeichen\.$/.test(lang), "zu lang: endet am Satzende");
   assert.equal(rueckmeldungAusKi('{"rueckmeldung": "Er sagt \\"Hallo\\" und geht."}'), 'Er sagt "Hallo" und geht.');
+  assert.equal(rueckmeldungAusKi('{"rueckmeldung": "Fast geschafft. Stelle in B3 das Zahlenformat auf "Standard". Dann stimmt alles."}'),
+    'Fast geschafft. Stelle in B3 das Zahlenformat auf "Standard". Dann stimmt alles.', "gerade Anführungszeichen mitten im Text");
   assert.equal(rueckmeldungAusKi("Ich kann dazu nichts sagen."), "");
   assert.equal(rueckmeldungAusKi(""), "");
 });

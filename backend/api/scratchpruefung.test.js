@@ -13,7 +13,7 @@ const { scratchProjekt, AUFGABEN } = require("./inf8-scratch-aufgaben");
 
 /* ---------- Projekt bauen ---------- */
 // Block: [opcode, { EINGANG: wert }, { FELD: text }, [innen], [innen2]]   wert: "Text" | Zahl | Block | { v: "variable" }
-function projekt(skripte, variablen = []) {
+function projekt(skripte, variablen = [], mehrFiguren = []) {
   const blocks = {}; let nr = 0;
   const neu = () => "b" + (++nr);
   const eingang = (w, elternId) => {
@@ -37,7 +37,7 @@ function projekt(skripte, variablen = []) {
   }
   for (const s of skripte) { const erste = kette(s, null); if (erste) Object.assign(blocks[erste], { topLevel: true, x: 40, y: 40 }); }
   const vars = {}; variablen.forEach((n) => { vars["var_" + n] = [n, 0]; });
-  return JSON.stringify({ targets: [{ isStage: true, name: "Stage", variables: Object.assign({ "var_mv": ["meine Variable", 0] }, vars), blocks: {} }, { isStage: false, name: "Sprite1", variables: {}, blocks }], meta: { semver: "3.0.0" } });
+  return JSON.stringify({ targets: [{ isStage: true, name: "Stage", variables: Object.assign({ "var_mv": ["meine Variable", 0] }, vars), blocks: {} }, { isStage: false, name: "Sprite1", variables: {}, blocks }].concat((mehrFiguren || []).map((name) => ({ isStage: false, name, variables: {}, blocks: {} }))), meta: { semver: "3.0.0" } });
 }
 const FAHNE = ["event_whenflagclicked"], ANTWORT = ["sensing_answer"];
 const sage = (w, sek = 2) => ["looks_sayforsecs", { MESSAGE: w, SECS: sek }];
@@ -51,7 +51,7 @@ const bis = (bed, innen) => ["control_repeat_until", { CONDITION: bed }, {}, inn
 const V = (v) => ({ v });
 
 const START = projekt([[FAHNE, sage("Hallo!"), ["motion_movesteps", { STEPS: 100 }], sage("Ich bin angekommen.")]]);
-const OBJEKTE = projekt([[FAHNE, ["motion_gotoxy", { X: -150, Y: 50 }], ["looks_setsizeto", { SIZE: 50 }], ["motion_pointindirection", { DIRECTION: 180 }]]]);
+const OBJEKTE = projekt([[FAHNE, ["motion_gotoxy", { X: -150, Y: 50 }], ["looks_setsizeto", { SIZE: 50 }], ["motion_pointindirection", { DIRECTION: 180 }]]], [], ["Abby"]);
 const EINGABE = projekt([[FAHNE, frage("Wie heißt du?"), sage(ANTWORT)]]);
 const AUSGABE = projekt([[FAHNE, frage("Wie heißt du?"), sage(verbinde("Hallo ", ANTWORT))]]);
 const VARIABLEN = projekt([[FAHNE, frage("Wie heißt du?"), setze("name", ANTWORT), frage("Wie alt bist du?"), setze("alter", ANTWORT), sage(verbinde("Hallo ", V("name"))), sage(verbinde("Nächstes Jahr bist du ", ["operator_add", { NUM1: V("alter"), NUM2: 1 }]))]], ["name", "alter"]);
@@ -94,7 +94,19 @@ test("Typische Fehler werden genau benannt", () => {
   assert.match(offen("scratch-start-auf1", projekt([[sage("Hallo!"), ["motion_movesteps", { STEPS: 100 }], sage("Fertig.")]])), /braucht oben den Block „Wenn \(Fahne\) angeklickt wird“/);
   assert.match(offen("scratch-start-auf1", projekt([[FAHNE, ["motion_movesteps", { STEPS: 100 }], sage("Hallo!"), sage("Fertig.")]])), /^Die Reihenfolge soll sein/);
   assert.match(offen("objekte-auf1", projekt([[FAHNE, ["motion_gotoxy", { X: 0, Y: 0 }], ["looks_setsizeto", { SIZE: 100 }], ["motion_pointindirection", { DIRECTION: 90 }]]])), /^Die Größe steht noch auf 100/);
+  assert.match(offen("objekte-auf1", projekt([[FAHNE, ["motion_gotoxy", { X: -150, Y: 50 }], ["looks_setsizeto", { SIZE: 50 }], ["motion_pointindirection", { DIRECTION: 180 }]]])), /^Erstelle ein zweites Objekt: Klicke unten rechts auf den runden Knopf „Figur wählen“/);
+  assert.equal(offen("objekte-auf1", projekt([[FAHNE, ["looks_setsizeto", { SIZE: 100 }], ["motion_gotoxy", { X: 0, Y: 0 }], ["looks_setsizeto", { SIZE: 50 }], ["motion_pointindirection", { DIRECTION: 0 }]]], [], ["Ball"])), "", "erst zurückstellen, dann ändern");
+  assert.match(offen("objekte-auf1", projekt([[FAHNE, ["motion_gotoxy", { X: 0, Y: 0 }], ["looks_setsizeto", { SIZE: 50 }], ["motion_pointindirection", { DIRECTION: 90 }]]], [], ["Ball"])), /^Die Richtung steht noch auf 90 Grad/);
+  assert.equal(offen("scratch-start-auf1", projekt([[FAHNE, ["motion_movesteps", { STEPS: 10 }], ["motion_movesteps", { STEPS: 10 }], ["motion_movesteps", { STEPS: 10 }], ["motion_movesteps", { STEPS: 10 }]], [FAHNE, sage("Hallo!"), ["motion_movesteps", { STEPS: 100 }], sage("Fertig.")]])), "", "ein zweites, längeres Skript stört nicht");
   assert.match(offen("eingabe-auf1", projekt([[FAHNE, sage(ANTWORT), frage("Wie heißt du?")]])), /^Der „sage“-Block mit der Antwort muss unter dem Frage-Block hängen/);
+  assert.match(offen("ausgabe-auf1", projekt([[FAHNE, frage("Wie heißt du?"), sage(verbinde("Apfel ", ANTWORT))]])), /^Im „verbinde“-Block steht noch der Text, den Scratch vorgibt/);
+  assert.match(offen("ausgabe-auf1", projekt([[FAHNE, sage(verbinde("Hallo ", ANTWORT)), frage("Wie heißt du?")]])), /^Der „sage“-Block mit „verbinde“ muss unter dem Frage-Block hängen/);
+  assert.match(offen("variablen-auf1", projekt([[FAHNE, frage("Name?"), frage("Alter?"), setze("name", ANTWORT), setze("alter", ANTWORT), sage(verbinde("Hallo ", V("name")))]], ["name", "alter"])), /^Nach jeder Frage muss sofort „setze … auf Antwort“ kommen/);
+  const mitTipp = (inSchleife) => [FAHNE, setze("geheimzahl", ["operator_random", { FROM: 1, TO: 10 }]), frage("Rate!"), setze("tipp", ANTWORT),
+    bis(gleich(V("tipp"), V("geheimzahl")), [fallsSonst(groesser(V("tipp"), V("geheimzahl")), [sage("Zu groß!")], [sage("Zu klein!")]), frage("Rate noch einmal!"), ...inSchleife]), sage("Richtig!")];
+  assert.equal(offen("zahlenraten-auf1", projekt([mitTipp([setze("tipp", ANTWORT)])], ["geheimzahl", "tipp"])), "", "Tipp in eigener Variablen");
+  assert.match(offen("zahlenraten-auf1", projekt([mitTipp([])], ["geheimzahl", "tipp"])), /^Nach der neuen Frage muss in der Schleife wieder der „setze“-Block/);
+  assert.equal(offen("zahlenraten-auf1", projekt([[FAHNE, ["control_forever", {}, {}, raten().slice(1)]]], ["geheimzahl"])), "", "das ganze Spiel in „wiederhole fortlaufend“");
   assert.match(offen("ausgabe-auf1", projekt([[FAHNE, frage("Wie heißt du?"), sage(verbinde("Hallo", ANTWORT))]])), /^Dein Text und die Antwort kleben zusammen/);
   assert.equal(offen("ausgabe-auf1", projekt([[FAHNE, frage("Wie heißt du?"), sage(verbinde(ANTWORT, " ist ein schöner Name."))]])), "", "Antwort vorne, Text hinten");
   assert.match(offen("variablen-auf1", projekt([[FAHNE, frage("Name?"), setze("name", ANTWORT), sage(verbinde("Hallo ", V("name")))]], ["name"])), /Lege zwei eigene Variablen an/);

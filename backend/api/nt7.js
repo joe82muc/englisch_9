@@ -90,10 +90,20 @@ function registerNt7Routes(app, opts) {
       steps:item.steps ? item.steps.slice().sort((a,b) => a.localeCompare(b,"de")) : undefined,
       image:item.image || undefined,imageAlt:item.imageAlt || undefined};
   }
+  // item.dicht: Die Stichwörter sind Formeln. Leerzeichen um Rechenzeichen und Klammern zählen nicht,
+  // und hinter der Formel darf nicht weitergerechnet werden (=B3/$B$6*100 ist nicht =B3/$B$6).
+  function formelTreffer(text, word) {
+    for (let i = text.indexOf(word); i >= 0; i = text.indexOf(word, i + 1)) {
+      if (word.endsWith(")") || !/[*\/+^0-9]/.test(text[i + word.length] || "")) return true;
+    }
+    return false;
+  }
   function textFallback(answer, item) {
     if (answer.length < 3) return {points:0,comment:"Keine auswertbare Antwort.",source:"leer",needsReview:false};
-    const lower = answer.toLocaleLowerCase("de");
-    const hits = item.keywords.filter(group => group.split("|").some(word => lower.includes(word))).length;
+    let lower = answer.toLocaleLowerCase("de");
+    if (item.dicht) lower = lower.replace(/\s*([=*\/+\-():;$])\s*/g, "$1");
+    const trifft = item.dicht ? word => formelTreffer(lower, word) : word => lower.includes(word);
+    const hits = item.keywords.filter(group => group.split("|").some(trifft)).length;
     const points = Math.min(item.points, hits);
     return {points,comment:"Vorläufige Stichwortauswertung. Die Lehrkraft prüft diese Antwort nach.",source:"stichworte",needsReview:true};
   }

@@ -90,6 +90,27 @@ test("Proben: eigenes Präfix, eigene Datei, Reihenfolge-Aufgaben, keine Lösung
   });
 });
 
+test("Proben ohne KI: Formeln als Stichwörter – Leerzeichen zählen nicht, weiterrechnen zählt nicht", async () => {
+  const formel = (prompt) => ({ type: "text", prompt, expected: "Die Formel heißt =B3/$B$6.", criteria: ["richtige Formel"], keywords: ["=b3/$b$6|=b3/b$6"], points: 1, dicht: true });
+  const eigene = { "inf8-f-m": { id: "inf8-f-m", zug: "M", thema: "excel2", minutes: 15, title: "Testprobe Formeln (8M)", scope: "Test", items: [
+    formel("Formel eins?"), formel("Formel zwei?"), formel("Formel drei?"), formel("Formel vier?"), formel("Formel fünf?"),
+    { type: "text", prompt: "Warum steht dort eine Null?", expected: "Die Zelle ist leer.", criteria: ["leere Zelle"], keywords: ["leer"], points: 1 }
+  ] } };
+  const key = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;
+  try {
+    await mitServer((app, dataDir) => {
+      registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf8", datei: "inf8-proben.json", tests: eigene, fach: "Informatik", service: "inf8-proben", csvName: "informatik8-proben.csv" });
+    }, async ({ post }) => {
+      await post("/api/inf8/teacher/unlock", { password: PW, testId: "inf8-f-m", open: true });
+      assert.equal((await post("/api/inf8/start", { testId: "inf8-f-m", code: "111" })).status, 200);
+      const abgabe = await post("/api/inf8/submit", { testId: "inf8-f-m", code: "111",
+        answers: ["= B3 / $B$6", "c) =B3/$B$6*100", "=B3 / $B$6 * 100", "1. =b3/b$6 2. fertig", "B3/$B$6", "Die Zelle ist  leer."] });
+      assert.equal(abgabe.status, 200);
+      assert.deepEqual(abgabe.data.result.details.map((d) => d.points), [1, 0, 0, 1, 0, 1]);
+    });
+  } finally { if (key) process.env.ANTHROPIC_API_KEY = key; }
+});
+
 test("KI-Rückmeldung: eigene Route, das Fach steht im Auftrag an die KI", async () => {
   let system = "";
   await mitServer((app) => {

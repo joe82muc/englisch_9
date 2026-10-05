@@ -9,7 +9,7 @@
  *   choice: 1 Punkt · match: 1 Punkt je Paar (jedes Ziel kommt genau einmal vor) ·
  *   order: 1 Punkt je Schritt an der richtigen Stelle · text: 1 Punkt je Kriterium
  *   expected = Musterlösung, criteria = Erwartungshorizont (je Kriterium 1 Punkt), keywords = Stichwortgruppen
- *   für die vorläufige Bewertung ohne KI. Bilder liegen in 8M/Informatik/assets/proben (eigene Zeichnungen,
+ *   für die vorläufige Bewertung ohne KI (dicht: true = Formeln, Leerzeichen zählen nicht). Bilder liegen in 8M/Informatik/assets/proben (eigene Zeichnungen,
  *   ohne Kommentare im Quelltext – die Dateien sind öffentlich).
  *
  * Jede Probe dauert etwa 15 bis 20 Minuten. R: Ankreuzen, Zuordnen, Reihenfolge, wenig Text.
@@ -212,7 +212,7 @@ const PROBEN = {
       t("Schreibe die drei Formeln auf. a) Die Formel für E2 (Spende der 8a: Runden mal Euro je Runde). b) Du kopierst die Formel aus E2 nach unten bis E5. Welche Formel steht dann in E4? c) Die Formel für E6 (alle vier Spenden zusammen).",
         "a) =C2*D2 b) =C4*D4 c) =SUMME(E2:E5)",
         ["a) richtige Formel für E2: =C2*D2 (auch =D2*C2); ohne Gleichheitszeichen kein Punkt", "b) richtige Formel für E4: =C4*D4 (auch =D4*C4); ohne Gleichheitszeichen kein Punkt", "c) richtige Formel für E6: =SUMME(E2:E5) oder =E2+E3+E4+E5; ohne Gleichheitszeichen kein Punkt"],
-        ["=c2*d2|=d2*c2|= c2*d2|= d2*c2|=c2 * d2|=d2 * c2|= c2 * d2|= d2 * c2|=c2 *d2|=c2* d2", "=c4*d4|=d4*c4|= c4*d4|= d4*c4|=c4 * d4|=d4 * c4|= c4 * d4|= d4 * c4|=c4 *d4|=c4* d4", "=summe(e2:e5)|= summe(e2:e5)|=summe (e2:e5)|=summe(e2 : e5)|=e2+e3+e4+e5|= e2+e3+e4+e5|=e2 + e3 + e4 + e5|= e2 + e3 + e4 + e5|=summe(e2;e3;e4;e5)|=e5+e4+e3+e2"], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+        ["=c2*d2|=d2*c2", "=c4*d4|=d4*c4", "=summe(e2:e5)|=e2+e3+e4+e5|=summe(e2;e3;e4;e5)|=e5+e4+e3+e2"], { dicht: true, image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
       c("In einer anderen Tabelle steht in E3 die Formel =C3-D3. Du ziehst sie mit dem Ausfüllkästchen eine Zelle nach rechts, in F3. Welche Formel steht jetzt in F3?",
         ["=D3-E3", "=C3-D3", "=C4-D4", "=D4-E4"], 0),
       m("Welche Formel rechnet das aus? Ordne zu.",
@@ -231,6 +231,140 @@ const PROBEN = {
         "Mit einer Formel rechnet Excel von selbst neu, wenn sich die Zahl der Runden ändert. Eine eingetippte Zahl bleibt stehen und ist dann falsch.",
         ["die Formel rechnet von selbst neu bzw. passt sich an", "Bezug auf geänderte Zahlen (die eingetippte Zahl bleibt stehen und stimmt dann nicht mehr)"],
         ["rechnet neu|neu berechn|neu aus|selbst|selber|allein|automatisch|passt sich|aktualisier|rechnet mit|mitrechn", "änder|ander|mehr runden|weniger runden|bleibt stehen|stimmt nicht mehr|stimmt dann nicht|dann falsch|nicht mehr stimm"], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." })
+    ]
+  },
+
+  /* ================= Probe 4: Excel – Zellbezüge und Anwendungen (Modul 4) ================= */
+  "inf8-p4-r": {
+    id: "inf8-p4-r", zug: "R", thema: "excel2", minutes: 20,
+    title: "Probe 4 (8R): Excel – Zellbezüge und Anwendungen",
+    scope: "Relative und absolute Zellbezüge, Formeln kopieren, Prozent und Anteile",
+    items: [
+      c("Drei Klassen verkaufen Lose für eine Tombola. In welcher Zelle soll später der Anteil der 8c stehen?",
+        ["D5", "C5", "D4", "B5"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Welche Formel rechnet in C3 die Einnahmen der 8a aus – so, dass du sie nach unten kopieren kannst?",
+        ["=B3*$G$2", "=$B$3*G2", "=$B$3*$G$2", "=B3*G2"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("In einer anderen Tabelle steht in E2 die Formel =$H$2*D2. Sie wird nach unten bis E7 kopiert. Welche Formel steht in E7?",
+        ["=$H$2*D7", "=$H$7*D7", "=$H$2*D2", "=H7*D7"], 0),
+      c("In einer anderen Tabelle steht in C10 die Formel =C4*C9. Du kopierst sie zwei Spalten nach rechts. Welche Formel steht dort?",
+        ["=E4*E9", "=C4*C9", "=C6*C11", "=E6*E11"], 0),
+      c("Welche Formel zählt in B6 alle verkauften Lose zusammen?",
+        ["=SUMME(B3:B5)", "=SUMME(B3:C5)", "=B3:B5", "=B3+B5"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Welche Formel rechnet in D3 aus, welchen Anteil an allen Losen die 8a verkauft hat?",
+        ["=B3/$B$6", "=$B$6/B3", "=B3*$B$6", "=B3-$B$6"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Eine Zelle zeigt die Zahl 1. Du klickst auf die Schaltfläche %. Was zeigt die Zelle jetzt?",
+        ["100 %", "1 %", "10 %", "0,01 %"], 0),
+      m("Vier Kinder haben die Tabelle ausgefüllt. Bei jedem stimmt etwas nicht. Ordne jeder Beobachtung die Ursache zu.",
+        [["In D3 steht 2000 %.", "zusätzlich mal 100 gerechnet"], ["In C3 bis C5 steht dreimal 30.", "der Bezug auf die Lose ist festgemacht"], ["Jemand ändert den Lospreis. Trotzdem ändert sich kein Ergebnis.", "der Preis steht als Zahl in den Formeln"], ["In D4 steht #DIV/0!.", "die Formel teilt durch eine leere Zelle"]], { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Die Tabelle ist fertig. Jetzt soll ein Los 1 € kosten. Was musst du ändern?",
+        ["nur die Zahl in G2", "jede Formel in Spalte C", "die Summe in C6", "alle Zahlen in Spalte B"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      o("So schreibst du eine Formel mit festem Bezug und kopierst sie. Bringe die Schritte in die richtige Reihenfolge.",
+        ["Die Zelle für das erste Ergebnis anklicken", "Die Formel mit den Zelladressen tippen", "Mit F4 die Dollarzeichen in den festen Bezug setzen", "Die Eingabetaste drücken", "Das Ausfüllkästchen nach unten ziehen"]),
+      c("Die Einnahmen stehen in C6. Die Klassen haben für die Geschenke der Tombola Geld ausgegeben. Diese Kosten stehen in C8. Welche Formel rechnet aus, wie viel Geld übrig bleibt?",
+        ["=C6-C8", "=C8-C6", "=C6+C8", "=C6/C8"], 0),
+      t("Ein Kind hat in C3 den Bezug auf den Preis nicht festgemacht und die Formel nach unten kopiert. Mit welcher Zelle rechnet die Formel in C4 jetzt statt mit G2? Schreibe auch auf, warum das Ergebnis in C4 nicht stimmt.",
+        "Die Formel in C4 rechnet mit G3. Der Bezug ist beim Kopieren eine Zeile nach unten gewandert. In G3 steht kein Preis, deshalb kommt 0 heraus.",
+        ["der Bezug auf den Preis wandert beim Kopieren mit (aus G2 wird G3)", "in G3 steht kein Preis (leere Zelle), deshalb ist das Ergebnis 0"],
+        ["g3|g 3|wander|rutsch|verschieb|verschob|anpass|angepasst|passt sich|ändert|mit nach unten|mitgeh|mitkopier|weiterzähl|zeile tiefer|eins tiefer", "leer|kein preis|keinen preis|steht nichts|nichts drin|nichts steht|null|ergibt 0|kommt 0|zeigt 0|ist 0|0 heraus|0 raus|mal 0|eine 0|keine zahl|kein wert"], { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." })
+    ]
+  },
+  "inf8-p4-m": {
+    id: "inf8-p4-m", zug: "M", thema: "excel2", minutes: 20,
+    title: "Probe 4 (8M): Excel – Zellbezüge und Anwendungen",
+    scope: "Zellbezüge beim Kopieren, Formeln selbst schreiben, Prozent und Anteile, Fehler erklären",
+    items: [
+      c("Drei Klassen verkaufen Lose für eine Tombola. In welcher Zelle soll später der Anteil der 8c stehen?",
+        ["D5", "C5", "D4", "B5"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      t("Schreibe die drei Formeln auf. a) Die Formel für C3 (Einnahmen der 8a) – so, dass du sie nach unten kopieren kannst. b) Die Formel für B6 (alle Lose zusammen). c) Die Formel für D3 (Anteil der 8a an allen Losen) – auch sie soll sich nach unten kopieren lassen.",
+        "a) =B3*$G$2 b) =SUMME(B3:B5) c) =B3/$B$6",
+        ["a) richtige Formel für C3 mit festem Bezug auf G2: =B3*$G$2 (auch =$G$2*B3 oder mit G$2); ohne Gleichheitszeichen oder ohne Dollarzeichen kein Punkt", "b) richtige Formel für B6: =SUMME(B3:B5) oder =B3+B4+B5; ohne Gleichheitszeichen kein Punkt", "c) richtige Formel für D3 mit festem Bezug auf B6: =B3/$B$6 (auch mit B$6); ohne Gleichheitszeichen, ohne Dollarzeichen oder mit zusätzlichem „mal 100“ kein Punkt"],
+        ["=b3*$g$2|=$g$2*b3|=b3*g$2|=g$2*b3", "=summe(b3:b5)|=b3+b4+b5|=summe(b3;b4;b5)|=b5+b4+b3", "=b3/$b$6|=b3/b$6"], { dicht: true, image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("In einer anderen Tabelle steht in E2 die Formel =$H$2*D2. Sie wird nach unten bis E7 kopiert. Welche Formel steht in E7?",
+        ["=$H$2*D7", "=$H$7*D7", "=$H$2*D2", "=H7*D7"], 0),
+      c("In einer anderen Tabelle steht in C10 die Formel =C4*C9. Du kopierst sie zwei Spalten nach rechts. Welche Formel steht dort?",
+        ["=E4*E9", "=C4*C9", "=C6*C11", "=E6*E11"], 0),
+      m("Vier Kinder haben die Tabelle ausgefüllt. Bei jedem stimmt etwas nicht. Ordne jeder Beobachtung die Ursache zu.",
+        [["In D3 steht 2000 %.", "zusätzlich mal 100 gerechnet"], ["In C3 bis C5 steht dreimal 30.", "der Bezug auf die Lose ist festgemacht"], ["Jemand ändert den Lospreis. Trotzdem ändert sich kein Ergebnis.", "der Preis steht als Zahl in den Formeln"], ["In D4 steht #DIV/0!.", "die Formel teilt durch eine leere Zelle"]], { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Eine Zelle zeigt die Zahl 1. Du klickst auf die Schaltfläche %. Was zeigt die Zelle jetzt?",
+        ["100 %", "1 %", "10 %", "0,01 %"], 0),
+      t("Ein Kind hat in C3 den Bezug auf den Preis nicht festgemacht und die Formel nach unten kopiert. Mit welcher Zelle rechnet die Formel in C4 jetzt? Erkläre, warum das Ergebnis dort nicht stimmt.",
+        "Die Formel in C4 rechnet mit G3. Der Bezug ist beim Kopieren eine Zeile nach unten gewandert. In G3 steht kein Preis, deshalb kommt 0 heraus.",
+        ["der Bezug auf den Preis wandert beim Kopieren mit (aus G2 wird G3)", "in G3 steht kein Preis (leere Zelle), deshalb ist das Ergebnis 0"],
+        ["g3|g 3|wander|rutsch|verschieb|verschob|anpass|angepasst|passt sich|ändert|mit nach unten|mitgeh|mitkopier|weiterzähl|zeile tiefer|eins tiefer", "leer|kein preis|keinen preis|steht nichts|nichts drin|nichts steht|null|ergibt 0|kommt 0|zeigt 0|ist 0|0 heraus|0 raus|mal 0|eine 0|keine zahl|kein wert"], { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Die Tabelle ist fertig. Jetzt soll ein Los 1 € kosten. Was musst du ändern?",
+        ["nur die Zahl in G2", "jede Formel in Spalte C", "die Summe in C6", "alle Zahlen in Spalte B"], 0, { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      t("Die 8b sagt: „Wir haben fast die Hälfte aller Lose verkauft.“ Prüfe die Aussage mit den Zahlen der Tabelle und begründe dein Urteil.",
+        "Die Aussage stimmt nicht. Die 8b hat 90 von 300 Losen verkauft, das sind 30 %. Die Hälfte wären 150 Lose.",
+        ["Anteil der 8b richtig bestimmt: 90 von 300 Losen bzw. 30 % (auch: weniger als ein Drittel)", "Urteil: Die Aussage stimmt nicht – die Hälfte wären 150 Lose bzw. 50 %"],
+        ["30 %|30%|30 prozent|dreißig|0,3|90 von 300|90 von den 300|von 300|90/300|90 : 300|90:300|3/10|drittel", "stimmt nicht|nicht richtig|falsch|nein|nicht die hälfte|keine hälfte|nicht fast|weit weg|zu wenig|150 wären|wären 150|hälfte wären|hälfte sind 150|hälfte ist 150|50 %|50%|50 prozent|übertrieben|übertreib"], { image: "assets/proben/tabelle-tombola.svg", imageAlt: "Tabelle mit den Spalten A bis G und den Zeilen 1 bis 6. Zeile 1: Tombola beim Schulfest. Zeile 2: Klasse, Lose, Einnahmen, Anteil; weiter rechts steht in F2 „Preis je Los“ und in G2 die Zahl 0,5. Zeile 3: 8a, 60. Zeile 4: 8b, 90. Zeile 5: 8c, 150. Zeile 6: Zusammen. Die Zellen C3 bis C6, D3 bis D5 und B6 sind leer und gelb markiert." }),
+      c("Von den Einnahmen in C6 bleibt nach allen Ausgaben ein Betrag übrig. Er steht in C9. Welche Formel rechnet aus, welcher Anteil der Einnahmen übrig bleibt?",
+        ["=C9/C6", "=C6/C9", "=C9*C6", "=C6-C9"], 0)
+    ]
+  },
+
+  /* ================= Probe 5: Programmieren mit Scratch (Modul 5) ================= */
+  "inf8-p5-r": {
+    id: "inf8-p5-r", zug: "R", thema: "scratch", minutes: 20,
+    title: "Probe 5 (8R): Programmieren mit Scratch",
+    scope: "Programme lesen und erklären – alle Einheiten aus Modul 5",
+    items: [
+      c("Sieh dir das Programm an. Was tut die Figur als Erstes, nachdem die grüne Fahne angeklickt wurde?",
+        ["Sie stellt eine Frage.", "Sie sagt „Wie süß: “.", "Sie wartet 2 Sekunden.", "Sie geht 10 Schritte."], 0, { image: "assets/proben/scratch-p5-a.png", imageAlt: "Scratch-Programm mit drei Blöcken untereinander. Erster Block: Wenn die grüne Fahne angeklickt wird. Zweiter Block: frage „Wie heißt dein Haustier?“ und warte. Dritter Block: sage für 2 Sekunden, was der Block verbinde aus dem Text „Wie süß: “ (mit Leerzeichen am Ende) und dem Block Antwort macht." }),
+      c("Jemand gibt Bello ein. Was sagt die Figur?",
+        ["Wie süß: Bello", "Wie süß: Antwort", "Wie süß: und Bello", "Bello"], 0, { image: "assets/proben/scratch-p5-a.png", imageAlt: "Scratch-Programm mit drei Blöcken untereinander. Erster Block: Wenn die grüne Fahne angeklickt wird. Zweiter Block: frage „Wie heißt dein Haustier?“ und warte. Dritter Block: sage für 2 Sekunden, was der Block verbinde aus dem Text „Wie süß: “ (mit Leerzeichen am Ende) und dem Block Antwort macht." }),
+      c("Welcher Block in diesem Programm ist für die Ausgabe zuständig?",
+        ["sage … für 2 Sekunden", "frage … und warte", "Wenn Fahne angeklickt wird", "Antwort"], 0, { image: "assets/proben/scratch-p5-a.png", imageAlt: "Scratch-Programm mit drei Blöcken untereinander. Erster Block: Wenn die grüne Fahne angeklickt wird. Zweiter Block: frage „Wie heißt dein Haustier?“ und warte. Dritter Block: sage für 2 Sekunden, was der Block verbinde aus dem Text „Wie süß: “ (mit Leerzeichen am Ende) und dem Block Antwort macht." }),
+      c("Eine Figur hat die Größe 100. Sie soll doppelt so groß werden. Welcher Block passt?",
+        ["setze Größe auf 200", "setze Größe auf 2", "ändere x um 200", "setze Richtung auf 200 Grad"], 0),
+      c("Welchen Wert hat die Variable zahl am Ende dieses Programms?",
+        ["8", "4", "1", "341"], 0, { image: "assets/proben/scratch-p5-b.png", imageAlt: "Scratch-Programm mit fünf Blöcken untereinander. Wenn die grüne Fahne angeklickt wird. setze zahl auf 3. ändere zahl um 4. ändere zahl um 1. sage zahl für 2 Sekunden." }),
+      c("Jemand gibt 4 ein. Was sagt die Figur?",
+        ["Das ist nah!", "Ganz schön weit!", "erst das eine, dann das andere", "gar nichts"], 0, { image: "assets/proben/scratch-p5-c.png", imageAlt: "Scratch-Programm. Wenn die grüne Fahne angeklickt wird. frage „Wie viele Minuten brauchst du zur Schule?“ und warte. Dann eine Verzweigung: falls Antwort kleiner als 10, dann: sage „Das ist nah!“ für 2 Sekunden. Sonst: sage „Ganz schön weit!“ für 2 Sekunden." }),
+      c("Jemand gibt 10 ein. Was sagt die Figur?",
+        ["Ganz schön weit!", "Das ist nah!", "erst das eine, dann das andere", "gar nichts"], 0, { image: "assets/proben/scratch-p5-c.png", imageAlt: "Scratch-Programm. Wenn die grüne Fahne angeklickt wird. frage „Wie viele Minuten brauchst du zur Schule?“ und warte. Dann eine Verzweigung: falls Antwort kleiner als 10, dann: sage „Das ist nah!“ für 2 Sekunden. Sonst: sage „Ganz schön weit!“ für 2 Sekunden." }),
+      m("Vor jedem Block steht in der Variablen punkte die Zahl 4. Welcher Wert steht nach dem Block darin?",
+        [["ändere punkte um 3", "7"], ["setze punkte auf 0", "0"], ["ändere punkte um 6", "10"], ["setze punkte auf 3", "3"]]),
+      o("Ein Programm fragt nach deinem Alter und sagt dann, ob du schon 14 bist. Bringe die Schritte in die richtige Reihenfolge.",
+        ["Die grüne Fahne wird angeklickt.", "Die Figur fragt nach dem Alter.", "Das Programm prüft die Bedingung.", "Die Figur sagt den passenden Satz."]),
+      c("Ein Programm soll so lange nach dem Passwort fragen, bis die Eingabe stimmt. Welchen Block braucht es dafür?",
+        ["wiederhole bis …", "falls …, dann", "setze … auf …", "verbinde … und …"], 0),
+      c("Eine Figur stellt zwei Fragen nacheinander. Am Ende soll sie beide Antworten nennen. Was brauchst du dafür?",
+        ["eine Variable für die erste Antwort", "einen zweiten Block „Antwort“", "eine zweite Figur auf der Bühne", "einen Block „wiederhole 2 mal“"], 0),
+      t("Erkläre in einem Satz den Unterschied zwischen den Blöcken „setze zahl auf …“ und „ändere zahl um …“.",
+        "„setze“ legt einen neuen Wert fest, der alte Wert ist weg. „ändere“ rechnet zum alten Wert etwas dazu.",
+        ["„setze“: legt einen neuen Wert fest bzw. ersetzt den alten", "„ändere“: rechnet zum alten Wert dazu (erhöht ihn)"],
+        ["neuer wert|neuen wert|neue zahl|neuen zahl|ersetzt|überschreib|legt fest|festgelegt|fester wert|gesetzt|setzt|stellt|genau|bestimmt|egal|vorher|ist weg|von vorn|löscht", "dazu|addier|plus|erhöh|rechnet|zählt|zum alten|vergrößer|hinzu|größer|hoch|weiter|+|wird mehr|mehr dazu|drauf"], { image: "assets/proben/scratch-p5-b.png", imageAlt: "Scratch-Programm mit fünf Blöcken untereinander. Wenn die grüne Fahne angeklickt wird. setze zahl auf 3. ändere zahl um 4. ändere zahl um 1. sage zahl für 2 Sekunden." })
+    ]
+  },
+  "inf8-p5-m": {
+    id: "inf8-p5-m", zug: "M", thema: "scratch", minutes: 20,
+    title: "Probe 5 (8M): Programmieren mit Scratch",
+    scope: "Programme lesen, erklären und planen – alle Einheiten aus Modul 5",
+    items: [
+      c("Eine Figur hat die Größe 100. Sie soll doppelt so groß werden. Welcher Block passt?",
+        ["setze Größe auf 200", "setze Größe auf 2", "ändere x um 200", "setze Richtung auf 200 Grad"], 0),
+      c("Sieh dir das Programm an. Welchen Wert hat die Variable zahl, direkt bevor der letzte Block „ändere zahl um …“ läuft?",
+        ["7", "8", "3", "4"], 0, { image: "assets/proben/scratch-p5-b.png", imageAlt: "Scratch-Programm mit fünf Blöcken untereinander. Wenn die grüne Fahne angeklickt wird. setze zahl auf 3. ändere zahl um 4. ändere zahl um 1. sage zahl für 2 Sekunden." }),
+      t("Jemand gibt bei diesem Programm 10 ein. Was sagt die Figur? Begründe mit der Bedingung.",
+        "Die Figur sagt „Ganz schön weit!“ Die Bedingung Antwort < 10 ist falsch, weil 10 nicht kleiner als 10 ist. Deshalb läuft der Zweig bei „sonst“.",
+        ["richtige Ausgabe genannt: „Ganz schön weit!“", "Begründung: Die Bedingung ist falsch, weil 10 nicht kleiner als 10 ist (erst bis 9 wahr)"],
+        ["weit", "nicht kleiner|ist falsch|bedingung falsch|falsch ist|nicht wahr|nicht stimmt|stimmt nicht|trifft nicht|nicht zutrifft|nicht <|gleich 10|genau 10|gleich groß|kleiner sein|bis 9|bei 9|unter 10 sein|nicht unter 10|nicht erfüllt"], { image: "assets/proben/scratch-p5-c.png", imageAlt: "Scratch-Programm. Wenn die grüne Fahne angeklickt wird. frage „Wie viele Minuten brauchst du zur Schule?“ und warte. Dann eine Verzweigung: falls Antwort kleiner als 10, dann: sage „Das ist nah!“ für 2 Sekunden. Sonst: sage „Ganz schön weit!“ für 2 Sekunden." }),
+      m("In der Variablen punkte steht am Anfang jedes Mal 4. Dann laufen zwei Blöcke nacheinander. Welcher Wert steht danach in punkte?",
+        [["setze punkte auf 2, dann ändere punkte um 5", "7"], ["ändere punkte um 3, dann ändere punkte um 3", "10"], ["ändere punkte um 5, dann setze punkte auf 2", "2"], ["setze punkte auf 0, dann ändere punkte um 4", "4"]]),
+      c("Jemand gibt nacheinander Paris, Mailand, Madrid und Rom ein. Wie oft sagt die Figur „Leider nein.“?",
+        ["dreimal", "viermal", "zweimal", "einmal"], 0, { image: "assets/proben/scratch-p5-d.png", imageAlt: "Scratch-Programm. Wenn die grüne Fahne angeklickt wird. frage „Wie heißt die Hauptstadt von Italien?“ und warte. Dann eine Schleife: wiederhole bis Antwort gleich Rom. In der Schleife: sage „Leider nein.“ für 1 Sekunden, danach frage „Versuch es noch einmal!“ und warte. Unter der Schleife: sage „Genau!“ für 2 Sekunden." }),
+      c("Jemand tippt bei diesem Programm immer wieder Mailand ein. Was passiert?",
+        ["Die Figur fragt immer weiter.", "Beim dritten Mal sagt sie „Genau!“.", "Das Programm endet sofort.", "Die Figur bleibt stumm."], 0, { image: "assets/proben/scratch-p5-d.png", imageAlt: "Scratch-Programm. Wenn die grüne Fahne angeklickt wird. frage „Wie heißt die Hauptstadt von Italien?“ und warte. Dann eine Schleife: wiederhole bis Antwort gleich Rom. In der Schleife: sage „Leider nein.“ für 1 Sekunden, danach frage „Versuch es noch einmal!“ und warte. Unter der Schleife: sage „Genau!“ für 2 Sekunden." }),
+      t("Eine Figur soll wissen wollen, wie dein Lieblingstier heißt. Danach soll sie zum Beispiel bei der Eingabe Igel sagen: „Igel finde ich auch toll!“ Welche Blöcke brauchst du unter „Wenn die grüne Fahne angeklickt wird“? Schreibe sie in der richtigen Reihenfolge auf.",
+        "frage „Was ist dein Lieblingstier?“ und warte – danach: sage (verbinde Antwort und „ finde ich auch toll!“). Vor „finde“ steht ein Leerzeichen.",
+        ["zuerst der Block „frage … und warte“ (vor der Ausgabe)", "Ausgabe mit „sage“ und „verbinde“", "im „verbinde“-Block steckt der Block „Antwort“ zusammen mit dem Text „ finde ich auch toll!“"],
+        ["frage|fragt|fragen", "verbinde|verbinden|verbindet|verbunden", "antwort"]),
+      c("In einem Quiz hängt der Block „ändere punkte um 1“ nicht im dann-Zweig, sondern unter der ganzen Verzweigung. Was passiert?",
+        ["Es gibt bei jeder Antwort einen Punkt.", "Es gibt bei keiner Antwort einen Punkt.", "Das Programm startet nicht mehr.", "Die Punkte bleiben immer auf 1."], 0),
+      c("Eine Figur fragt erst nach dem Namen und gleich danach nach dem Alter. Erst dann kommt der Block „setze name auf Antwort“. Was steht jetzt in der Variablen name?",
+        ["das Alter", "der Name", "beide Antworten", "gar nichts"], 0),
+      o("Ein Programm fragt nach einer Zahl und sagt, ob sie größer als 100 ist. Danach verabschiedet es sich. Bringe die Schritte in die richtige Reihenfolge.",
+        ["Jemand klickt auf die grüne Fahne.", "Die Figur fragt nach einer Zahl.", "Das Programm prüft die Bedingung.", "Die Figur sagt einen von zwei Sätzen.", "Am Ende verabschiedet sich die Figur."])
     ]
   }
 };

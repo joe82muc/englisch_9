@@ -152,67 +152,95 @@ function pruefeWander(x) {
   ];
 }
 
+// Formel mit Zellbezügen? (Eine Formel nur aus Zahlen wie =110 rechnet nicht mit, wenn sich etwas ändert.)
+const rechnet = (x, a, n) => x.hatFormel(a) && x.bezuege(a).length >= (n || 1);
+const NUR_ZAHLEN = "In der Formel stehen nur feste Zahlen. Verwende Zelladressen – dann rechnet Excel neu, wenn sich eine Zahl ändert.";
+// Summe einer Spalte: { ok, text } – unterscheidet „fehlt“, „nur Zahlen“ und „stimmt, sobald die Zellen darüber stimmen“
+function summenPunkt(x, a, spalte, von, bis, was, obenGut) {
+  const wertGut = x.gleich(a, summeVon(x, spalte, von, bis));
+  if (rechnet(x, a) && wertGut && obenGut !== false) return { ok: true, text: a + ": " + x.formel(a) + " zählt " + was + " zusammen." };
+  if (!x.hatFormel(a)) return { ok: false, text: a + ": Hier soll eine Formel " + was + " von " + spalte + von + " bis " + spalte + bis + " zusammenzählen." + (x.leer(a) ? "" : " Im Moment steht dort eine getippte Zahl.") };
+  if (!rechnet(x, a)) return { ok: false, text: a + ": " + NUR_ZAHLEN };
+  if (obenGut === false) return { ok: false, text: a + ": Die Summen-Formel ist da. Sie stimmt, sobald die Zellen darüber stimmen." };
+  return { ok: false, text: a + ": Die Formel zählt noch nicht genau die Zellen " + spalte + von + " bis " + spalte + bis + " zusammen." };
+}
+
 /* ---------- Einheit 2: absolute Zellbezüge (Busfahrt) ---------- */
 function pruefeBus(x) {
-  const zeilen = [4, 5, 6, 7], preis = zahl(x, "B1");
-  const wert = zeilen.filter((z) => !(x.hatFormel("C" + z) && x.gleich("C" + z, zahl(x, "B" + z) * preis))).map((z) => "C" + z);
-  const ohneB1 = zeilen.filter((z) => x.hatFormel("C" + z) && !nennt(x, "C" + z, "B1")).map((z) => "C" + z);
-  const ohneDollar = zeilen.filter((z) => nennt(x, "C" + z, "B1") && !fest(x, "C" + z, "B1")).map((z) => "C" + z);
-  const okWert = !wert.length && preis > 0, okFest = okWert && !ohneB1.length && !ohneDollar.length;
-  const okB8 = x.hatFormel("B8") && x.gleich("B8", summeVon(x, "B", 4, 7)), okC8 = x.hatFormel("C8") && x.gleich("C8", summeVon(x, "C", 4, 7)) && okWert;
+  const zeilen = [4, 5, 6, 7], C = (z) => "C" + z, preis = zahl(x, "B1");
+  const getippt = zeilen.filter((z) => !x.hatFormel(C(z)) && !x.leer(C(z))).map(C);
+  const wert = zeilen.filter((z) => !(x.hatFormel(C(z)) && x.gleich(C(z), zahl(x, "B" + z) * preis))).map(C);
+  const ohnePersonen = zeilen.filter((z) => x.hatFormel(C(z)) && !nennt(x, C(z), "B" + z)).map(C);
+  const ohneB1 = zeilen.filter((z) => x.hatFormel(C(z)) && !nennt(x, C(z), "B1")).map(C);
+  const ohneDollar = zeilen.filter((z) => nennt(x, C(z), "B1") && !fest(x, C(z), "B1")).map(C);
+  const okWert = !wert.length && preis > 0, okFest = okWert && !ohneB1.length && !ohneDollar.length && !ohnePersonen.length;
   return [
-    { ok: okWert, text: okWert ? "C4 bis C7: Alle Buskosten stimmen (Personen mal Preis pro Person)." : "Die Buskosten stimmen noch nicht in: " + liste(wert) + ". Jede Klasse zahlt Personen mal den Preis aus B1." },
-    { ok: okFest, text: okFest ? "Der Bezug auf den Preis ist festgemacht: " + x.formel("C4") + "." : !okWert ? "Der Preis in B1 muss in jeder Formel festgemacht sein – mit Dollarzeichen." : ohneB1.length ? "In " + liste(ohneB1) + " steht der Preis als Zahl in der Formel. Verwende die Zelle B1 – dann rechnet alles neu, wenn sich der Preis ändert." : "In " + liste(ohneDollar) + " steht B1 ohne Dollarzeichen. Schreibe in C4 die Formel mit $B$1 und kopiere sie nach unten." },
-    { ok: okB8, text: okB8 ? "B8: " + x.formel("B8") + " zählt alle Personen zusammen." : "B8: Hier soll eine Formel die Personen von B4 bis B7 zusammenzählen." },
-    { ok: okC8, text: okC8 ? "C8: " + x.formel("C8") + " zählt alle Buskosten zusammen." : "C8: Hier soll eine Formel die Buskosten von C4 bis C7 zusammenzählen." }
+    { ok: okWert, text: okWert ? "C4 bis C7: Alle Buskosten stimmen (Personen mal Preis pro Person)." : getippt.length ? "Getippte Zahl statt Formel: " + liste(getippt) + ". Schreibe in C4 eine Formel und kopiere sie mit dem Ausfüllkästchen nach unten." : "Die Buskosten stimmen noch nicht in: " + liste(wert) + ". Jede Klasse zahlt Personen mal den Preis aus B1." },
+    { ok: okFest, text: okFest ? "Der Bezug auf den Preis ist festgemacht: " + x.formel("C4") + "." : !okWert ? "Der Preis in B1 muss in jeder Formel festgemacht sein – mit Dollarzeichen: $B$1." : ohneB1.length ? "In " + liste(ohneB1) + " steht der Preis als Zahl in der Formel. Verwende die Zelle B1 – dann rechnet alles neu, wenn sich der Preis ändert." : ohnePersonen.length ? "In " + liste(ohnePersonen) + " stehen die Personen als Zahl in der Formel. Verwende die Zelle aus Spalte B." : "In " + liste(ohneDollar) + " steht B1 ohne Dollarzeichen. Schreibe in C4 die Formel mit $B$1 und kopiere sie nach unten." },
+    summenPunkt(x, "B8", "B", 4, 7, "alle Personen"),
+    summenPunkt(x, "C8", "C", 4, 7, "alle Buskosten", okWert)
   ];
 }
 
 /* ---------- Einheit 4: Prozent (Umfrage zum Schulweg) ---------- */
 function pruefeUmfrage(x) {
-  const zeilen = [2, 3, 4, 5, 6], gesamt = summeVon(x, "B", 2, 6);
-  const okSumme = x.hatFormel("B7") && x.gleich("B7", gesamt) && gesamt > 0;
-  const wert = zeilen.filter((z) => !(x.hatFormel("C" + z) && x.gleich("C" + z, zahl(x, "B" + z) / (gesamt || 1), 0.0005))).map((z) => "C" + z);
-  const mal100 = zeilen.filter((z) => x.hatFormel("C" + z) && x.gleich("C" + z, 100 * zahl(x, "B" + z) / (gesamt || 1), 0.05)).map((z) => "C" + z);
-  const ohneDollar = zeilen.filter((z) => x.hatFormel("C" + z) && !fest(x, "C" + z, "B7")).map((z) => "C" + z);
-  const ohneFormat = zeilen.filter((z) => !x.istProzent("C" + z)).map((z) => "C" + z);
-  const okWert = okSumme && !wert.length, okFest = okWert && !ohneDollar.length, okFormat = !ohneFormat.length && okWert;
+  const zeilen = [2, 3, 4, 5, 6], C = (z) => "C" + z, gesamt = summeVon(x, "B", 2, 6);
+  const summe = summenPunkt(x, "B7", "B", 2, 6, "alle Stimmen");
+  // Folgefehler vermeiden: Die Anteile werden an der eigenen Zahl in B7 gemessen
+  const ganzes = zahl(x, "B7") > 0 ? zahl(x, "B7") : gesamt || 1;
+  const wert = zeilen.filter((z) => !(x.hatFormel(C(z)) && x.gleich(C(z), zahl(x, "B" + z) / ganzes, 0.0005))).map(C);
+  const mal100 = zeilen.filter((z) => x.hatFormel(C(z)) && x.gleich(C(z), 100 * zahl(x, "B" + z) / ganzes, 0.05)).map(C);
+  const getippt = zeilen.filter((z) => !x.hatFormel(C(z)) && !x.leer(C(z))).map(C);
+  const ohneDollar = zeilen.filter((z) => nennt(x, C(z), "B7") && !fest(x, C(z), "B7")).map(C);
+  const ohneFormat = zeilen.filter((z) => !x.istProzent(C(z))).map(C);
+  const okWert = !wert.length, okFest = okWert && !ohneDollar.length;
   return [
-    { ok: okSumme, text: okSumme ? "B7: " + x.formel("B7") + " zählt alle Stimmen zusammen." : "B7: Hier soll eine Formel alle Stimmen von B2 bis B6 zusammenzählen." },
-    { ok: okWert, text: okWert ? "C2 bis C6: Jeder Anteil ist Stimmen geteilt durch alle Stimmen." : mal100.length ? "In " + liste(mal100) + " wird noch mal 100 gerechnet. Lass das weg – das Prozentformat erledigt die Anzeige." : "Der Anteil stimmt noch nicht in: " + liste(wert) + ". Rechne Stimmen geteilt durch alle Stimmen (B7)." },
-    { ok: okFest, text: okFest ? "Der Bezug auf alle Stimmen ist festgemacht: " + x.formel("C2") + "." : !okWert ? "Der Bezug auf B7 muss festgemacht sein, damit er beim Kopieren stehen bleibt." : "In " + liste(ohneDollar) + " steht B7 ohne Dollarzeichen. Schreibe in C2 die Formel mit $B$7 und kopiere sie nach unten." },
-    { ok: okFormat, text: okFormat ? "Die Anteile werden in Prozent angezeigt." : ohneFormat.length ? "Noch nicht als Prozent angezeigt: " + liste(ohneFormat) + ". Markiere die Zellen und klicke auf das Prozentzeichen." : "Die Anteile werden als Prozent angezeigt, aber die Werte stimmen noch nicht." }
+    summe,
+    { ok: okWert, text: okWert ? "C2 bis C6: Jeder Anteil ist Stimmen geteilt durch alle Stimmen." : mal100.length ? "In " + liste(mal100) + " wird noch mal 100 gerechnet. Lass das weg – das Prozentformat erledigt die Anzeige." : getippt.length ? "Getippte Zahl statt Formel: " + liste(getippt) + ". Schreibe in C2 eine Formel und kopiere sie nach unten." : "Der Anteil stimmt noch nicht in: " + liste(wert) + ". Rechne Stimmen geteilt durch alle Stimmen (B7)." },
+    { ok: okFest, text: okFest ? "Der Bezug auf alle Stimmen bleibt beim Kopieren stehen: " + x.formel("C2") + "." : ohneDollar.length ? "In " + liste(ohneDollar) + " steht B7 ohne Dollarzeichen. Schreibe in C2 die Formel mit $B$7 und kopiere sie nach unten." : "Der feste Bezug auf B7 lässt sich erst prüfen, wenn in C2 bis C6 die Anteile stimmen." },
+    { ok: !ohneFormat.length, text: !ohneFormat.length ? "Die Anteile werden in Prozent angezeigt." : "Noch nicht als Prozent angezeigt: " + liste(ohneFormat) + ". Markiere die Zellen und klicke auf das Prozentzeichen." }
   ];
 }
 
 /* ---------- Einheit 5: Mini-Projekt Pausenverkauf ---------- */
 function pruefeVerkauf(x) {
   const zeilen = [4, 5, 6, 7], auf = zahl(x, "B1");
-  const falsch = (spalte, soll) => zeilen.filter((z) => !(x.hatFormel(spalte + z) && x.gleich(spalte + z, soll(z)))).map((z) => spalte + z);
-  const c = falsch("C", (z) => zahl(x, "B" + z) + auf), cDollar = zeilen.filter((z) => x.hatFormel("C" + z) && !fest(x, "C" + z, "B1")).map((z) => "C" + z);
-  const e = falsch("E", (z) => zahl(x, "C" + z) * zahl(x, "D" + z)), f = falsch("F", (z) => zahl(x, "B" + z) * zahl(x, "D" + z)), g = falsch("G", (z) => zahl(x, "E" + z) - zahl(x, "F" + z));
-  const s = ["D", "E", "F", "G"].filter((sp) => !(x.hatFormel(sp + "8") && x.gleich(sp + "8", summeVon(x, sp, 4, 7)))).map((sp) => sp + "8");
-  const okC = !c.length && !cDollar.length, okRest = !e.length && !f.length && !g.length && okC;
+  const falsch = (sp, soll) => zeilen.filter((z) => !(x.hatFormel(sp + z) && x.gleich(sp + z, soll(z)))).map((z) => sp + z);
+  const ohneFormel = (sp, n) => zeilen.filter((z) => !rechnet(x, sp + z, n)).map((z) => sp + z);
+  // Verkaufspreis: Einkaufspreis der Zeile plus Aufschlag aus B1 (festgemacht)
+  const c = falsch("C", (z) => zahl(x, "B" + z) + auf);
+  const cDollar = zeilen.filter((z) => nennt(x, "C" + z, "B1") && !fest(x, "C" + z, "B1")).map((z) => "C" + z);
+  const cZahl = zeilen.filter((z) => x.hatFormel("C" + z) && (!nennt(x, "C" + z, "B1") || !nennt(x, "C" + z, "B" + z))).map((z) => "C" + z);
+  const okC = !c.length && !cDollar.length && !cZahl.length;
+  // Einnahmen, Kosten, Gewinn: an den eigenen Zellen davor gemessen (Folgefehler zählen nur einmal)
+  const spalte = (sp, soll, was, rechnung, davorGut, davor) => {
+    const offen = falsch(sp, soll), leer = ohneFormel(sp, 2), ok = !offen.length && !leer.length;
+    return { ok, text: ok ? was + ": " + rechnung + "." : leer.length ? "In " + liste(leer) + " fehlt noch eine Formel mit Zelladressen: " + rechnung + "." : !davorGut ? was + ": Die Formeln sind da. Sie stimmen, sobald " + davor + " stimmen." : was + " stimmt noch nicht in: " + liste(offen) + ". Rechne " + rechnung + "." };
+  };
+  const e = spalte("E", (z) => zahl(x, "C" + z) * zahl(x, "D" + z), "Einnahmen", "Verkaufspreis mal verkaufte Stück", okC, "die Verkaufspreise in Spalte C");
+  const f = spalte("F", (z) => zahl(x, "B" + z) * zahl(x, "D" + z), "Kosten", "Einkaufspreis mal verkaufte Stück", true, "");
+  const g = spalte("G", (z) => zahl(x, "E" + z) - zahl(x, "F" + z), "Gewinn", "Einnahmen minus Kosten", e.ok && f.ok, "Einnahmen und Kosten");
+  const obenGut = { E: e.ok, F: f.ok, G: g.ok };
+  const summen = ["D", "E", "F", "G"].map((sp) => summenPunkt(x, sp + "8", sp, 4, 7, "die Spalte " + sp, obenGut[sp]));
+  const sFehlt = summen.filter((s) => !s.ok), sOk = !sFehlt.length;
   return [
-    { ok: okC, text: okC ? "Verkaufspreis: " + x.formel("C4") + " – der Aufschlag aus B1 ist festgemacht." : c.length ? "Der Verkaufspreis stimmt noch nicht in: " + liste(c) + ". Rechne Einkaufspreis plus den Aufschlag aus B1 – mit festgemachtem Bezug." : "In " + liste(cDollar) + " ist der Aufschlag B1 nicht festgemacht. Schreibe $B$1 und kopiere die Formel aus C4." },
-    { ok: !e.length && okC, text: !e.length && okC ? "Einnahmen: Verkaufspreis mal verkaufte Stück." : e.length ? "Die Einnahmen stimmen noch nicht in: " + liste(e) + ". Rechne Verkaufspreis mal verkaufte Stück." : "Die Einnahmen stimmen erst, wenn die Verkaufspreise stimmen." },
-    { ok: !f.length, text: !f.length ? "Kosten: Einkaufspreis mal verkaufte Stück." : "Die Kosten stimmen noch nicht in: " + liste(f) + ". Rechne Einkaufspreis mal verkaufte Stück." },
-    { ok: !g.length && okRest, text: !g.length && okRest ? "Gewinn: Einnahmen minus Kosten." : g.length ? "Der Gewinn stimmt noch nicht in: " + liste(g) + ". Rechne Einnahmen minus Kosten." : "Der Gewinn stimmt erst, wenn die Spalten davor stimmen." },
-    { ok: !s.length && okRest, text: !s.length && okRest ? "Zeile 8: Die Summen stimmen – Gewinn zusammen: " + String(Math.round(zahl(x, "G8") * 100) / 100).replace(".", ",") + " €." : s.length ? "In Zeile 8 fehlt noch eine Summen-Formel in: " + liste(s) + "." : "Die Summen stimmen erst, wenn die Zeilen darüber stimmen." }
+    { ok: okC, text: okC ? "Verkaufspreis: " + x.formel("C4") + " – der Aufschlag aus B1 ist festgemacht." : cDollar.length ? "In " + liste(cDollar) + " ist der Aufschlag B1 nicht festgemacht. Schreibe in C4 die Formel mit $B$1 und kopiere sie nach unten." : c.length ? "Der Verkaufspreis stimmt noch nicht in: " + liste(c) + ". Rechne Einkaufspreis plus den Aufschlag aus B1 – mit festgemachtem Bezug." : "In " + liste(cZahl) + " steht eine Zahl statt einer Zelladresse. Rechne mit dem Einkaufspreis aus Spalte B und dem Aufschlag aus $B$1." },
+    e, f, g,
+    { ok: sOk, text: sOk ? "Zeile 8: Die Summen stimmen – Gewinn zusammen: " + String(Math.round(zahl(x, "G8") * 100) / 100).replace(".", ",") + " €." : sFehlt[0].text + (sFehlt.length > 1 ? " Ebenso: " + liste(sFehlt.slice(1).map((s) => s.text.slice(0, 2))) + "." : "") }
   ];
 }
 function pruefeAnteil(x) {
-  const zeilen = [4, 5, 6, 7], gesamt = zahl(x, "G8");
+  const zeilen = [4, 5, 6, 7], H = (z) => "H" + z, gesamt = zahl(x, "G8");
   const basis = pruefeVerkauf(x).every((p) => p.ok);
-  const wert = zeilen.filter((z) => !(x.hatFormel("H" + z) && gesamt > 0 && x.gleich("H" + z, zahl(x, "G" + z) / gesamt, 0.0005))).map((z) => "H" + z);
-  const ohneDollar = zeilen.filter((z) => x.hatFormel("H" + z) && !fest(x, "H" + z, "G8")).map((z) => "H" + z);
-  const ohneFormat = zeilen.filter((z) => !x.istProzent("H" + z)).map((z) => "H" + z);
+  const wert = zeilen.filter((z) => !(x.hatFormel(H(z)) && gesamt > 0 && x.gleich(H(z), zahl(x, "G" + z) / gesamt, 0.0005))).map(H);
+  const ohneDollar = zeilen.filter((z) => nennt(x, H(z), "G8") && !fest(x, H(z), "G8")).map(H);
+  const ohneFormat = zeilen.filter((z) => !x.istProzent(H(z))).map(H);
   const okWert = !wert.length, okFest = okWert && !ohneDollar.length;
   return [
-    { ok: basis, text: basis ? "Die Tabelle aus dem ersten Auftrag rechnet weiter richtig." : "In der Tabelle aus dem ersten Auftrag stimmt etwas nicht mehr. Prüfe die Spalten C bis G und die Summen." },
+    { ok: basis, text: basis ? "Die Tabelle aus dem ersten Auftrag rechnet weiter richtig." : "In der Tabelle aus dem ersten Auftrag stimmt etwas nicht mehr. Lade die Datei beim ersten Auftrag hoch – dort steht, welche Zelle es ist." },
     { ok: okWert, text: okWert ? "H4 bis H7: Jeder Anteil ist Gewinn des Artikels geteilt durch den Gewinn zusammen." : "Der Anteil stimmt noch nicht in: " + liste(wert) + ". Rechne Gewinn des Artikels geteilt durch den Gewinn zusammen (G8)." },
-    { ok: okFest, text: okFest ? "Der Bezug auf den Gewinn zusammen ist festgemacht: " + x.formel("H4") + "." : !okWert ? "Der Bezug auf G8 muss festgemacht sein, damit er beim Kopieren stehen bleibt." : "In " + liste(ohneDollar) + " steht G8 ohne Dollarzeichen." },
-    { ok: !ohneFormat.length && okWert, text: !ohneFormat.length && okWert ? "Die Anteile werden in Prozent angezeigt." : ohneFormat.length ? "Noch nicht als Prozent angezeigt: " + liste(ohneFormat) + "." : "Das Prozentformat stimmt, die Werte noch nicht." }
+    { ok: okFest, text: okFest ? "Der Bezug auf den Gewinn zusammen bleibt beim Kopieren stehen: " + x.formel("H4") + "." : ohneDollar.length ? "In " + liste(ohneDollar) + " steht G8 ohne Dollarzeichen. Schreibe in H4 die Formel mit $G$8 und kopiere sie nach unten." : "Der feste Bezug auf G8 lässt sich erst prüfen, wenn in H4 bis H7 die Anteile stimmen." },
+    { ok: !ohneFormat.length, text: !ohneFormat.length ? "Die Anteile werden in Prozent angezeigt." : "Noch nicht als Prozent angezeigt: " + liste(ohneFormat) + ". Markiere die Zellen und klicke auf das Prozentzeichen." }
   ];
 }
 
