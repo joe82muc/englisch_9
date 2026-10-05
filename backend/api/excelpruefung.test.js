@@ -8,7 +8,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const express = require("express");
 const { zip } = require("./xlsx-mini");
-const { registerExcelPruefung, liesXlsx, tabellenText } = require("./excelpruefung");
+const { registerExcelPruefung, liesXlsx, tabellenText, rueckmeldungAusKi } = require("./excelpruefung");
 const AUFGABEN = require("./inf8-excel-aufgaben");
 
 const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
@@ -205,6 +205,16 @@ test("Mini-Projekt: Aufschlag ohne Dollar, Summe getippt, anderer Aufschlag", ()
     { E8: { f: "SUM(E4:E7)", v: 173.6 }, G8: { f: "SUM(G4:G7)", v: 87.5 } });
   assert.equal(offen("miniprojekt-auf1", mehr), "", "Aufschlag 0,5: Gewinn 87,5");
   assert.match(offen("miniprojekt-aufM", Object.assign({}, ANTEIL, { H5: { f: "G5/G9", v: "#DIV/0!", fehler: true, s: 4 } })), /Anteil stimmt noch nicht in: H5/);
+});
+
+test("Antwort der KI lesen: Codeblock, abgeschnittenes JSON, zu langer Text, Unsinn", () => {
+  assert.equal(rueckmeldungAusKi('```json\n{"rueckmeldung": "Gut gemacht. Weiter so!"}\n```'), "Gut gemacht. Weiter so!");
+  assert.equal(rueckmeldungAusKi('{"rueckmeldung": "Deine Formeln rechnen richtig. In B10 fehlt noch die Rechnung für die Kosten pro Ki'), "Deine Formeln rechnen richtig.", "abgeschnitten: bis zum letzten ganzen Satz");
+  const lang = rueckmeldungAusKi('{"rueckmeldung": "' + "Das ist ein Satz mit etwa vierzig Zeichen. ".repeat(20) + '"}');
+  assert.ok(lang.length <= 380 && /Zeichen\.$/.test(lang), "zu lang: endet am Satzende");
+  assert.equal(rueckmeldungAusKi('{"rueckmeldung": "Er sagt \\"Hallo\\" und geht."}'), 'Er sagt "Hallo" und geht.');
+  assert.equal(rueckmeldungAusKi("Ich kann dazu nichts sagen."), "");
+  assert.equal(rueckmeldungAusKi(""), "");
 });
 
 /* ---------- Route ---------- */

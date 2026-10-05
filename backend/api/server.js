@@ -240,6 +240,9 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf8/uebung/feedback",
 // exakt, die KI schreibt die Rückmeldung (wie bei der Filius-Prüfung). Es wird nichts gespeichert.
 const { registerExcelPruefung } = require("./excelpruefung");
 registerExcelPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse", aufgaben: require("./inf8-excel-aufgaben") });
+// Informatik 8: Scratch-Aufträge – gespeichertes Projekt (.sb3) hochladen, Prüfprogramm prüft exakt, KI schreibt die Rückmeldung
+const { registerScratchPruefung } = require("./scratchpruefung");
+registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse" });
 
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
@@ -394,7 +397,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-05-informatik8-excel",
+    version: "2026-10-05-informatik8-excel2",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

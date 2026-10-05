@@ -215,6 +215,24 @@ function tabellenText(x, max = 90) {
 /* ------------------------------------------------------------------
    KI: schreibt die Rückmeldung. Die Punkte des Prüfprogramms kann sie nicht ändern.
    ------------------------------------------------------------------ */
+// Holt den Text aus der Antwort der KI – auch wenn das JSON abgeschnitten ist (zu lange Antwort) – und kürzt ihn
+// auf höchstens `max` Zeichen, ohne mitten im Satz aufzuhören.
+function rueckmeldungAusKi(roh, max = 380) {
+  const s = String(roh || "");
+  let text = "";
+  const ganz = s.match(/\{[\s\S]*\}/);
+  if (ganz) { try { text = clean(JSON.parse(ganz[0]).rueckmeldung); } catch (_e) { text = ""; } }
+  if (!text) {
+    const m = s.match(/"rueckmeldung"\s*:\s*"((?:[^"\\]|\\.)*)/);
+    if (m) { try { text = clean(JSON.parse('"' + m[1].replace(/\\$/, "") + '"')); } catch (_e) { text = clean(m[1].replace(/\\n/g, " ").replace(/\\"/g, "“")); } }
+  }
+  text = text.replace(/\s+/g, " ");
+  if (text.length <= max && /[.!?…“"]$/.test(text)) return text;
+  // am letzten Satzende vor der Grenze aufhören
+  const teil = text.slice(0, max), ende = Math.max(teil.lastIndexOf(". "), teil.lastIndexOf("! "), teil.lastIndexOf("? "), /[.!?]$/.test(teil) ? teil.length - 1 : -1);
+  return ende >= 15 ? teil.slice(0, ende + 1) : (text.length <= max ? text : "");
+}
+
 async function kiRueckmeldung(aufgabe, x, punkte, erfuellt, askAnthropic, klasse) {
   const offen = punkte.filter((p) => !p.ok), gut = punkte.filter((p) => p.ok);
   const ersatz = erfuellt
@@ -225,10 +243,12 @@ async function kiRueckmeldung(aufgabe, x, punkte, erfuellt, askAnthropic, klasse
   const system = [
     `Du gibst einem Kind der ${klasse} einer bayerischen Mittelschule eine Rückmeldung zu seiner Excel-Tabelle (Fach Informatik).`,
     "Ein Prüfprogramm hat die Tabelle schon genau geprüft. Seine Ergebnisse stimmen – ändere sie nicht und widersprich ihnen nicht.",
-    "Schreibe höchstens 3 kurze Sätze in einfacher Sprache und sprich das Kind mit du an.",
+    "Schreibe höchstens 3 kurze Sätze (zusammen höchstens 45 Wörter) in einfacher Sprache und sprich das Kind mit du an.",
     "Nenne zuerst, was gelungen ist – auch dann, wenn noch etwas fehlt.",
-    "Ist etwas offen: Erkläre den wichtigsten offenen Punkt so, dass das Kind selbst weiterkommt. Sag, in welcher Zelle es",
-    "nachsehen soll und was dort gerechnet oder eingetragen werden soll. Schreibe die fertige Formel nicht hin.",
+    "Ist etwas offen: Greife nur EINEN offenen Punkt heraus, den wichtigsten. Sag, in welcher Zelle das Kind nachsehen soll und",
+    "beschreibe in Worten, was dort gerechnet oder eingetragen werden soll (zum Beispiel: die beiden Einnahmen zusammenzählen).",
+    "Sage keine Formel vor – auch keine Rechnung mit Zelladressen wie B2+B3. Zähle nicht alle offenen Punkte auf.",
+    "Beschreibe keine Menüs oder Klickwege, die nicht im Auftrag oder in den Ergebnissen des Prüfprogramms stehen.",
     "Ist alles erfüllt: Lobe kurz und genau (was an dieser Tabelle gut ist). Fällt dir in der Tabelle noch eine Kleinigkeit auf,",
     "zum Beispiel ein Tippfehler in einer Überschrift, darfst du sie freundlich erwähnen.",
     "Sei freundlich und ermutigend. Keine Noten, keine Punkte, keine Emojis. Erfinde nichts, was nicht in der Tabelle steht.",
@@ -241,9 +261,7 @@ async function kiRueckmeldung(aufgabe, x, punkte, erfuellt, askAnthropic, klasse
     "Die Tabelle des Kindes:\n" + tabellenText(x)
   ].join("\n\n");
   try {
-    const roh = await askAnthropic(system, user, 260);
-    const treffer = String(roh || "").match(/\{[\s\S]*\}/);
-    const text = treffer ? clean(JSON.parse(treffer[0]).rueckmeldung).slice(0, 420) : "";
+    const text = rueckmeldungAusKi(await askAnthropic(system, user, 400));
     return text ? { text, quelle: "ki" } : { text: ersatz, quelle: "ersatz" };
   } catch (_e) {
     return { text: ersatz, quelle: "ersatz" };
@@ -284,4 +302,4 @@ function registerExcelPruefung(app, opts = {}) {
   });
 }
 
-module.exports = { registerExcelPruefung, liesXlsx, tabellenText, zipLesen };
+module.exports = { registerExcelPruefung, liesXlsx, tabellenText, zipLesen, rueckmeldungAusKi };
