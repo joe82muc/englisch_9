@@ -22,6 +22,7 @@
  *
  * Mehrfach registrierbar: options.prefix ("/api/inf7"), options.datei ("inf7-freigabe.json"), options.name
  * ("Informatik-7-Freigabe") – so nutzt Informatik 7 dieselbe Logik mit eigenem Stand (Module und Einheiten).
+ * Deutsch 7 ebenso: "/api/d7", "d7-freigabe.json" (Themenbereiche und Module aus 7M/Deutsch/themen.js).
  */
 
 const crypto = require("crypto");

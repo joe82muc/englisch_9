@@ -73,3 +73,36 @@ test("Eintrag entfernen (null) und Thema neu setzen räumt Einzel-Einträge sein
   assert.deepEqual(r.data.themen, { atome: false });
   assert.deepEqual(r.data.module, { "brand-schutz": true });
 });
+
+test("Deutsch 7: eigener Stand unter /api/d7, getrennt von NT 7", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "d7-freigabe-test-"));
+  const app = express();
+  app.use(express.json());
+  const kindZumCode = async (code) => (code === "123" ? { code: "123", klasse: "7aM", zug: "7M" } : code === "456" ? { code: "456", klasse: "7d", zug: "7R" } : null);
+  registerNt7FreigabeRoutes(app, { dataDir: dir, teacherPassword: PW, kindZumCode });
+  registerNt7FreigabeRoutes(app, { dataDir: dir, teacherPassword: PW, kindZumCode, prefix: "/api/d7", datei: "d7-freigabe.json", name: "Deutsch-7-Freigabe" });
+  const s = await new Promise((resolve) => { const x = app.listen(0, () => resolve(x)); });
+  const p = (route, body) => fetch(`http://127.0.0.1:${s.address().port}` + route, {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+  }).then(async (r) => ({ status: r.status, data: await r.json().catch(() => null) }));
+  try {
+    assert.deepEqual((await p("/api/d7/freigabe", { code: "123" })).data, { ok: true, klasse: "7aM", zug: "7M", themen: {}, module: {} });
+    let r = await p("/api/d7/lehrer/freigabe/setzen", { password: PW, klasse: "7aM", art: "thema", id: "grammatik", offen: true });
+    assert.deepEqual(r.data.themen, { grammatik: true });
+    r = await p("/api/d7/lehrer/freigabe/setzen", { password: PW, klasse: "7aM", art: "modul", id: "gr-04", offen: false });
+    assert.deepEqual(r.data.module, { "gr-04": false });
+    r = await p("/api/d7/lehrer/freigabe/setzen", { password: PW, klasse: "7aM", art: "modul", id: "argumentationstrainer", offen: true });
+    assert.equal(r.status, 200);
+    const kind = (await p("/api/d7/freigabe", { code: "123" })).data;
+    assert.deepEqual([kind.themen, kind.module], [{ grammatik: true }, { "gr-04": false, argumentationstrainer: true }]);
+    assert.deepEqual((await p("/api/d7/freigabe", { code: "456" })).data.themen, {}, "andere Klasse, eigener Stand");
+    assert.deepEqual((await p("/api/nt7/freigabe", { code: "123" })).data.themen, {}, "NT 7 bleibt unberührt");
+    assert.equal((await p("/api/d7/lehrer/freigabe/setzen", { password: "falsch", klasse: "7aM", art: "thema", id: "grammatik", offen: false })).status, 401);
+    assert.equal((await p("/api/d7/lehrer/freigabe/setzen", { password: PW, klasse: "8a", art: "thema", id: "grammatik", offen: true })).status, 400, "nur 7. Klassen");
+    assert.equal((await p("/api/d7/freigabe", { code: "000" })).status, 401);
+    assert.ok(fs.existsSync(path.join(dir, "d7-freigabe.json")) && !fs.existsSync(path.join(dir, "nt7-freigabe.json")), "eigene Datei");
+  } finally {
+    await new Promise((resolve) => s.close(resolve));
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

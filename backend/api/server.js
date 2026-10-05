@@ -233,6 +233,15 @@ registerNt7FreigabeRoutes(app, {
   teacherPassword: TEACHER_PASSWORD,
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
+// --- Deutsch 7: Themenbereiche und Module je Klasse freischalten (Übersicht 7M/Deutsch, Verwaltung „Deutsch“) ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/d7",
+  datei: "d7-freigabe.json",
+  name: "Deutsch-7-Freigabe",
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
 
 // --- Klassenbereich der Startseite: Hausaufgabenheft und Klassenrat-Briefkasten (die KI prüft jede Nachricht) ---
 const { registerKlasseRoutes } = require("./klasse");
@@ -350,7 +359,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-05-filius-adresse",
+    version: "2026-10-05-deutsch7-freigabe",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
