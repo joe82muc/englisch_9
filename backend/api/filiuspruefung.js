@@ -91,6 +91,13 @@ function zipEntryLesen(buf, endung) {
   return null;
 }
 
+const LEER = /\s*/.source;   // beliebiger Leerraum zwischen den XML-Marken
+
+// Inhalt einer Eigenschaft mit Zeilenumbruechen, z. B. der Hinweistext einer Beschriftung
+function eigenschaftRoh(text, name) {
+  return (text.match(new RegExp('<void property="' + name + '">' + LEER + '<string>([^]*?)</string>')) || [])[1] || "";
+}
+
 /* ------------------------------------------------------------------
    Filius-Projekt auslesen
    ------------------------------------------------------------------ */
@@ -100,18 +107,38 @@ function zipEntryLesen(buf, endung) {
  */
 function filiusAuslesen(xml) {
   const geraete = [];
-  // Jeder Knoten beginnt mit <object class="filius.hardware.knoten.XYZ"
-  const teile = xml.split(/(?=<object class="filius\.hardware\.knoten\.)/);
+  const IP = /\d{1,3}(?:\.\d{1,3}){3}/.source;
+  const eigenschaft = (text, name) => (text.match(new RegExp('<void property="' + name + '">' + LEER + '<string>([^<]*)</string>')) || [])[1] || "";
 
-  for (const t of teile.slice(1)) {
-    const art = (t.match(/knoten\.(\w+)/) || [])[1] || "?";
-    const name = (t.match(/<void property="name">\s*<string>([^<]*)<\/string>/) || [])[1] || "";
-    const ips = (t.match(/<void property="ip">\s*<string>([^<]*)<\/string>/g) || [])
-      .map((s) => (s.match(/<string>([^<]*)<\/string>/) || [])[1])
-      .filter(Boolean);
-    const gateway = (t.match(/<void property="gateway">\s*<string>([^<]*)<\/string>/) || [])[1] || "";
-    const dns = (t.match(/<void property="dns">\s*<string>([^<]*)<\/string>/) || [])[1] || "";
-    const maske = (t.match(/<void property="(?:subnetzMaske|netzmaske)">\s*<string>([^<]*)<\/string>/) || [])[1] || "";
+  /* Jedes Geraet steht als GUIKnotenItem in der Datei: erst die Beschriftung (Text und Hinweistext), dann der
+     Knoten selbst. Filius schreibt beim Knoten nur, was von der Voreinstellung abweicht. Die voreingestellte
+     Adresse 192.168.0.10 (die jeder neue Rechner bekommt) und ein unveraenderter Name FEHLEN dort deshalb.
+     Der Hinweistext der Beschriftung nennt Adresse, Netzmaske und Gateway dagegen immer - er wird mitgelesen.
+     Ohne das zaehlte ein Rechner mit 192.168.0.10 in keinem Netz mit (geprueft mit Dateien aus Filius 2.14.0). */
+  let teile = xml.split(/(?=<object class="filius\.gui\.netzwerksicht\.GUIKnotenItem")/).slice(1);
+  if (!teile.length) teile = xml.split(/(?=<object class="filius\.hardware\.knoten\.)/).slice(1);
+
+  for (const t of teile) {
+    const ab = t.search(/class="filius\.hardware\.knoten\./);
+    if (ab < 0) continue;
+    const kopf = t.slice(0, ab), k = t.slice(ab);
+    const art = (k.match(/knoten\.(\w+)/) || [])[1] || "?";
+    const tipp = eigenschaftRoh(kopf, "toolTipText");
+    const paare = [...tipp.matchAll(new RegExp("(" + IP + ")" + LEER + "/" + LEER + "(" + IP + ")", "g"))];
+    // Name: der Text der Beschriftung (steht immer da); sonst der Name des Knotens, aber nicht der eines Dienstes darin
+    const name = eigenschaft(kopf, "text") || eigenschaft(k.split(/<void[^>]*property="(?:netzwerkInterfaces|systemSoftware)"/)[0], "name");
+    const ips = Array.from(new Set(
+      (k.match(/<void property="ip">\s*<string>([^<]*)<\/string>/g) || [])
+        .map((s) => (s.match(/<string>([^<]*)<\/string>/) || [])[1])
+        .concat(paare.map((m) => m[1]))
+        .filter(Boolean)
+    ));
+    const endgeraet = art === "Rechner" || art === "Notebook";
+    if (!ips.length && endgeraet) ips.push("192.168.0.10");
+    const gateway = eigenschaft(k, "gateway") || (tipp.match(new RegExp("Gateway:[ ]*(" + IP + ")")) || [])[1] || "";
+    const dns = eigenschaft(k, "dns") || (tipp.match(new RegExp("DNS-Server:[ ]*(" + IP + ")")) || [])[1] || "";
+    const maske = (k.match(/<void property="(?:subnetzMaske|netzmaske)">\s*<string>([^<]*)<\/string>/) || [])[1]
+      || (paare[0] || [])[2] || (ips.length ? "255.255.255.0" : "");
     geraete.push({ art, name, ips, gateway, dns, maske });
   }
 
