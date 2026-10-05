@@ -263,4 +263,4 @@ function buildXlsx(sheets) {
   return zip(files);
 }
 
-module.exports = { buildXlsx, crc32, dateSerial, dateTimeSerial };
+module.exports = { buildXlsx, crc32, dateSerial, dateTimeSerial, zip };

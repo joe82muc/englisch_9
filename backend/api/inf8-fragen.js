@@ -164,6 +164,74 @@ const PROBEN = {
       c("Du willst wissen, welche Daten ein Shop über dich gespeichert hat. Was darfst du tun?",
         ["beim Shop Auskunft verlangen", "gar nichts – das ist ein Geschäftsgeheimnis", "nichts – das dürfen nur Erwachsene fragen", "die Daten selbst vom Server des Shops holen"], 0)
     ]
+  },
+
+  /* ================= Probe 3: Excel Grundlagen (Modul 3) ================= */
+  "inf8-p3-r": {
+    id: "inf8-p3-r", zug: "R", thema: "excel1", minutes: 20,
+    title: "Probe 3 (8R): Excel Grundlagen",
+    scope: "Zelle, Zeile, Spalte, Daten eingeben, erste Formeln, Formeln kopieren",
+    items: [
+      c("Die Klassen einer Schule sind bei einem Spendenlauf gelaufen. In welcher Zelle steht das Wort „Runden“?",
+        ["C1", "1C", "B1", "C2"], 0, { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("Was steht in der Zelle A4?",
+        ["8c", "8b", "140", "26"], 0, { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("Du klickst in Excel auf eine Zelle. Wo liest du ab, welche Adresse sie hat?",
+        ["im Namenfeld", "in der Bearbeitungsleiste", "im Blattregister", "in der Titelleiste"], 0),
+      c("Lena tippt in die Zelle C2 „120 Runden“ ein. Was ist das für Excel?",
+        ["ein Text – damit kann Excel nicht rechnen", "eine Zahl – das Wort stört Excel nicht", "ein Datum – wegen der Zahl am Anfang", "eine Formel – wegen des Leerzeichens"], 0),
+      c("Welche Eingabe versteht Excel als Zahl?",
+        ["0,5", "0;5", "0,5 Euro", "ein halb"], 0),
+      c("Welche Formel rechnet in E3 die Spende der 8b aus (Runden mal Euro je Runde)?",
+        ["=C3*D3", "=B3*C3", "=C3xD3", "=C3+D3"], 0, { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("In einer anderen Tabelle steht in F2 die Formel =D2+E2. Sie wird mit dem Ausfüllkästchen bis F6 kopiert. Welche Formel steht danach in F6?",
+        ["=D6+E6", "=D2+E2", "=F2+F6", "=D6+E2"], 0),
+      c("Welche Formel zählt in E6 alle vier Spenden zusammen?",
+        ["=SUMME(E2:E5)", "=SUMME(C2:D5)", "=E2:E5", "=E2+E5"], 0, { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("Die Gesamtspende in E6 soll gleichmäßig an 4 Vereine gehen. Welche Formel rechnet aus, was jeder Verein bekommt?",
+        ["=E6/4", "=E6:4", "=E6*4", "=4/E6"], 0),
+      m("Was zeigt Excel an? Ordne jeder Eingabe die Anzeige zu.",
+        [["=C2+A2 (in A2 steht „8a“)", "#WERT!"], ["4.2 (gemeint ist die Zahl 4,2)", "04. Feb"], ["=C2/0", "#DIV/0!"], ["=SUME(E2:E5)", "#NAME?"]]),
+      o("So kopierst du eine Formel nach unten. Bringe die Schritte in die richtige Reihenfolge.",
+        ["Die Formel in die erste Zelle schreiben", "Die Zelle mit der Formel anklicken", "Auf das kleine Quadrat unten rechts zeigen", "Bei gedrückter Maustaste nach unten ziehen"]),
+      t("In E2 steht die Zahl 60. Jemand hat sie mit dem Taschenrechner ausgerechnet und eingetippt. Warum wäre eine Formel besser? Ein Satz genügt.",
+        "Mit einer Formel rechnet Excel von selbst neu, wenn sich die Zahl der Runden ändert. Eine eingetippte Zahl bleibt stehen und ist dann falsch.",
+        ["die Formel rechnet von selbst neu bzw. passt sich an", "Bezug auf geänderte Zahlen (die eingetippte Zahl bleibt stehen und stimmt dann nicht mehr)"],
+        ["rechnet neu|neu berechn|neu aus|selbst|selber|allein|automatisch|passt sich|aktualisier|rechnet mit|mitrechn", "änder|ander|mehr runden|weniger runden|bleibt stehen|stimmt nicht mehr|stimmt dann nicht|dann falsch|nicht mehr stimm"], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." })
+    ]
+  },
+  "inf8-p3-m": {
+    id: "inf8-p3-m", zug: "M", thema: "excel1", minutes: 20,
+    title: "Probe 3 (8M): Excel Grundlagen",
+    scope: "Das Excel-Fenster, Daten eingeben, Formeln selbst schreiben und kopieren, Fehler erklären",
+    items: [
+      c("Die Klassen einer Schule sind bei einem Spendenlauf gelaufen. In welcher Zelle steht die Rundenzahl der 8c?",
+        ["C4", "B4", "4C", "D4"], 0, { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("Welche Eingabe versteht Excel als Zahl?",
+        ["0,5", "0;5", "0,5 Euro", "ein halb"], 0),
+      t("Schreibe die drei Formeln auf. a) Die Formel für E2 (Spende der 8a: Runden mal Euro je Runde). b) Du kopierst die Formel aus E2 nach unten bis E5. Welche Formel steht dann in E4? c) Die Formel für E6 (alle vier Spenden zusammen).",
+        "a) =C2*D2 b) =C4*D4 c) =SUMME(E2:E5)",
+        ["a) richtige Formel für E2: =C2*D2 (auch =D2*C2); ohne Gleichheitszeichen kein Punkt", "b) richtige Formel für E4: =C4*D4 (auch =D4*C4); ohne Gleichheitszeichen kein Punkt", "c) richtige Formel für E6: =SUMME(E2:E5) oder =E2+E3+E4+E5; ohne Gleichheitszeichen kein Punkt"],
+        ["=c2*d2|=d2*c2|= c2*d2|= d2*c2|=c2 * d2|=d2 * c2|= c2 * d2|= d2 * c2|=c2 *d2|=c2* d2", "=c4*d4|=d4*c4|= c4*d4|= d4*c4|=c4 * d4|=d4 * c4|= c4 * d4|= d4 * c4|=c4 *d4|=c4* d4", "=summe(e2:e5)|= summe(e2:e5)|=summe (e2:e5)|=summe(e2 : e5)|=e2+e3+e4+e5|= e2+e3+e4+e5|=e2 + e3 + e4 + e5|= e2 + e3 + e4 + e5|=summe(e2;e3;e4;e5)|=e5+e4+e3+e2"], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("In einer anderen Tabelle steht in E3 die Formel =C3-D3. Du ziehst sie mit dem Ausfüllkästchen eine Zelle nach rechts, in F3. Welche Formel steht jetzt in F3?",
+        ["=D3-E3", "=C3-D3", "=C4-D4", "=D4-E4"], 0),
+      m("Welche Formel rechnet das aus? Ordne zu.",
+        [["der Unterschied der Runden von 8c und 8a", "=C4-C2"], ["die Kinder der 8a und der 8b zusammen", "=B2+B3"], ["doppelt so viele Runden wie die 8d", "=C5*2"], ["Runden je Kind in der 8b", "=C3/B3"]], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      m("Was zeigt Excel an? Ordne jeder Eingabe die Anzeige zu.",
+        [["=C2+A2 (in A2 steht „8a“)", "#WERT!"], ["4.2 (gemeint ist die Zahl 4,2)", "04. Feb"], ["=C2/0", "#DIV/0!"], ["=SUME(E2:E5)", "#NAME?"]]),
+      t("Tim tippt in C3 „95 Runden“. In E3 steht die Formel für die Spende – dort erscheint jetzt ein Fehlerwert statt einer Zahl. Erkläre den Fehler und schreibe, wie Tim ihn behebt.",
+        "Wegen des Wortes hinter der Zahl ist der Eintrag für Excel ein Text. Mit Text kann die Formel nicht rechnen. Tim tippt in C3 nur die Zahl 95 ein.",
+        ["Ursache: der Eintrag ist Text bzw. enthält ein Wort – damit kann Excel nicht rechnen", "Behebung: in C3 nur die Zahl eintippen (das Wort weglassen)"],
+        ["text|ein wort|das wort|des wortes|wort hinter|wort dahinter|wörter|buchstabe|keine zahl|nicht als zahl|einheit", "nur die zahl|nur 95|nur die 95|ohne runden|ohne text|ohne einheit|ohne das wort|wort weg|runden weg|weglass|wegnehm|rausnehm|wegmach|wort lösch|runden lösch|text lösch|wort entfern|runden entfern|95 eintipp|95 eingeb|neu eintipp|neu tipp|überschrift"], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." }),
+      c("Welches Ergebnis zeigt eine Zelle mit der Formel =10+4*2?",
+        ["18", "28", "16", "20"], 0),
+      c("Die Zelle E3 zeigt 47,5. Du willst wissen, ob dort eine Formel oder eine getippte Zahl steht. Wo siehst du nach?",
+        ["in der Bearbeitungsleiste", "im Namenfeld", "im Blattregister", "in der Spaltenüberschrift"], 0),
+      t("In E2 steht die Zahl 60. Jemand hat sie mit dem Taschenrechner ausgerechnet und eingetippt. Erkläre, warum eine Formel hier besser ist.",
+        "Mit einer Formel rechnet Excel von selbst neu, wenn sich die Zahl der Runden ändert. Eine eingetippte Zahl bleibt stehen und ist dann falsch.",
+        ["die Formel rechnet von selbst neu bzw. passt sich an", "Bezug auf geänderte Zahlen (die eingetippte Zahl bleibt stehen und stimmt dann nicht mehr)"],
+        ["rechnet neu|neu berechn|neu aus|selbst|selber|allein|automatisch|passt sich|aktualisier|rechnet mit|mitrechn", "änder|ander|mehr runden|weniger runden|bleibt stehen|stimmt nicht mehr|stimmt dann nicht|dann falsch|nicht mehr stimm"], { image: "assets/proben/tabelle-spendenlauf.svg", imageAlt: "Tabelle mit den Spalten A bis E und den Zeilen 1 bis 6. Zeile 1: Klasse, Kinder, Runden, Euro je Runde, Spende. Zeile 2: 8a, 24, 120, 0,5. Zeile 3: 8b, 22, 95, 0,5. Zeile 4: 8c, 26, 140, 0,5. Zeile 5: 8d, 23, 110, 0,5. Zeile 6: Zusammen. Die Zellen E2 bis E6 sind leer und gelb markiert." })
+    ]
   }
 };
 

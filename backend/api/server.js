@@ -236,6 +236,11 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf7/uebung/feedback",
 // Informatik 8: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf8/uebung/feedback", klasse: "Klasse 8", fach: "Informatik", thema: "Informatik (digitale Informationssysteme, Datenschutz und Big Data, Tabellenkalkulation mit Excel, Programmieren mit Scratch)" });
 
+// Informatik 8: Excel-Aufträge – das Kind lädt seine gespeicherte Tabelle hoch, ein Prüfprogramm prüft die Punkte
+// exakt, die KI schreibt die Rückmeldung (wie bei der Filius-Prüfung). Es wird nichts gespeichert.
+const { registerExcelPruefung } = require("./excelpruefung");
+registerExcelPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse", aufgaben: require("./inf8-excel-aufgaben") });
+
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
 registerNt7FreigabeRoutes(app, {
@@ -389,7 +394,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-05-informatik8-modul2",
+    version: "2026-10-05-informatik8-excel",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

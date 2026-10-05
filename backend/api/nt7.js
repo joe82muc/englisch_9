@@ -102,7 +102,7 @@ function registerNt7Routes(app, opts) {
     if (!answer || !process.env.ANTHROPIC_API_KEY) return fallback;
 
     const systemText = [
-      "Du korrigierst eine " + FACH + "-Probe der 7. Klasse einer bayerischen Mittelschule.",
+      "Du korrigierst eine " + FACH + "-Probe der " + (STUFE || "7") + ". Klasse einer bayerischen Mittelschule.",
       "Bewerte fachlichen Sinn wohlwollend anhand der Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
       "Gib fuer jedes erfuellte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
       "Antworte ausschliesslich mit JSON: {\"points\":0,\"comment\":\"Kurze konkrete Rueckmeldung auf Deutsch\"}."
@@ -129,7 +129,7 @@ function registerNt7Routes(app, opts) {
         method:"POST",signal:AbortSignal.timeout(18000),
         headers:{"content-type":"application/json","x-api-key":process.env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
         body:JSON.stringify({model:MODEL,max_tokens:220,system:[
-          "Du korrigierst eine " + FACH + "-Probe der 7. Klasse einer bayerischen Mittelschule.",
+          "Du korrigierst eine " + FACH + "-Probe der " + (STUFE || "7") + ". Klasse einer bayerischen Mittelschule.",
           "Bewerte fachlichen Sinn wohlwollend anhand der Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
           "Gib für jedes erfüllte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
           "Die erwartete Antwort ist ein Beispiel, keine Checkliste: Trifft das Kind den Kern, gibt es volle oder fast volle Punkte, auch wenn Einzelheiten fehlen. Im Zweifel für das Kind.",
