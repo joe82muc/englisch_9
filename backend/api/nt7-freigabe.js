@@ -23,6 +23,7 @@
  * Mehrfach registrierbar: options.prefix ("/api/inf7"), options.datei ("inf7-freigabe.json"), options.name
  * ("Informatik-7-Freigabe") – so nutzt Informatik 7 dieselbe Logik mit eigenem Stand (Module und Einheiten).
  * Deutsch 7 ebenso: "/api/d7", "d7-freigabe.json" (Themenbereiche und Module aus 7M/Deutsch/themen.js).
+ * Informatik 8: "/api/inf8", "inf8-freigabe.json" und options.stufe = 8 (Freischalten für die 8. Klassen; Standard ist 7).
  */
 
 const crypto = require("crypto");
@@ -40,6 +41,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
   const PREFIX = String(options.prefix || "/api/nt7").replace(/\/$/, "");
   const NAME = options.name || "NT-7-Freigabe";
   const DATEI = path.join(dataDir, options.datei || "nt7-freigabe.json");
+  const STUFE = parseInt(options.stufe, 10) || 7;
 
   function lesen() {
     try {
@@ -66,10 +68,10 @@ function registerNt7FreigabeRoutes(app, options = {}) {
     }
     return true;
   }
-  // Freischalten gibt es für die Klassen der Jahrgangsstufe 7
+  // Freischalten gibt es für die Klassen einer Jahrgangsstufe (Standard: 7)
   function klasse7(v) {
     const k = klasseNorm(v);
-    return k && parseInt(k, 10) === 7 ? k : "";
+    return k && parseInt(k, 10) === STUFE ? k : "";
   }
 
   app.post(PREFIX + "/freigabe", async (req, res) => {
@@ -87,7 +89,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
   app.post(PREFIX + "/lehrer/freigabe", (req, res) => {
     if (!lehrerOk(req, res)) return;
     const klasse = klasse7(req.body.klasse);
-    if (!klasse) return res.status(400).json({ ok: false, error: "Freischalten gibt es für die 7. Klassen." });
+    if (!klasse) return res.status(400).json({ ok: false, error: "Freischalten gibt es für die " + STUFE + ". Klassen." });
     return res.json({ ok: true, klasse, ...stand(lesen(), klasse) });
   });
 
@@ -96,7 +98,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
     try {
       const b = req.body || {};
       const klasse = klasse7(b.klasse), art = b.art === "thema" ? "themen" : b.art === "modul" ? "module" : "", id = String(b.id || "");
-      if (!klasse) return res.status(400).json({ ok: false, error: "Freischalten gibt es für die 7. Klassen." });
+      if (!klasse) return res.status(400).json({ ok: false, error: "Freischalten gibt es für die " + STUFE + ". Klassen." });
       if (!art || !KENNUNG.test(id)) return res.status(400).json({ ok: false, error: "Unbekanntes Thema oder Modul." });
       if (b.offen !== true && b.offen !== false && b.offen !== null) return res.status(400).json({ ok: false, error: "offen muss true, false oder null sein." });
       const daten = lesen();

@@ -22,6 +22,7 @@
  *
  * Mehrfach registrierbar (Informatik 7): opts.prefix ("/api/inf7"), opts.datei ("inf7-proben.json"),
  * opts.tests (Fragen), opts.fach ("Informatik"), opts.csvName, opts.service.
+ * opts.stufe (Informatik 8: 8) – nur Kinder dieser Jahrgangsstufe können die Proben beginnen; steht auch in den Meldungen des Servers.
  * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
  * je Schritt an der richtigen Stelle gibt es 1 Punkt.
  */
@@ -45,7 +46,8 @@ function registerNt7Routes(app, opts) {
   const tests = opts.tests || nt7Tests;
   const FACH = opts.fach || "Natur-und-Technik";
   const SERVICE = opts.service || "nt7-proben";
-  const LOG = opts.fach ? opts.fach + " 7" : "NT7";
+  const STUFE = opts.stufe ? String(opts.stufe) : "";
+  const LOG = opts.fach ? opts.fach + " " + (STUFE || "7") : "NT7";
   const TEACHER_PASSWORD = opts.teacherPassword || "";
   const MODEL = opts.model || process.env.ANTHROPIC_MODEL_HAIKU || "claude-haiku-4-5";
   /* Der Hauptserver reicht seine askAnthropic-Funktion herein. Sie probiert
@@ -160,6 +162,8 @@ function registerNt7Routes(app, opts) {
     if (!probeOffen(readData().unlocked[test.id])) return res.status(403).json({ok:false,error:"locked"});
     const student = await probeKind(req, res);
     if (!student) return;
+    // Probe einer anderen Jahrgangsstufe (nur wenn opts.stufe gesetzt ist)
+    if (STUFE && String(student.klasse || "").indexOf(STUFE) !== 0) return res.status(403).json({ok:false,error:"falsche_stufe",message:`Diese Probe ist für die ${STUFE}. Klassen.`});
     // Fassung für den anderen Zug: R-Kinder schreiben die R-Probe, M-Kinder die M-Probe
     if (test.zug && test.zug !== student.zug) return res.status(403).json({ok:false,error:"falscher_zug",message:`Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.`});
     const data = readData();

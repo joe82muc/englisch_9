@@ -207,6 +207,22 @@ registerKohlenstoffRoutes(app, { askAnthropic });
 const { registerNt7UebungRoutes } = require("./nt7-uebung");
 registerNt7UebungRoutes(app, { askAnthropic });
 // NT 9M/9R Modul 2 (Biodiesel, Stärke, Nachhaltigkeit): gleiche Rückmeldung mit Tipp, eigene Route
+// --- Informatik 8 (8M und 8R), Ausbau 2026/27: Proben 1 bis 5 je Zug, dieselbe Technik wie Informatik 7 ---
+// (Die bisherige Probe „Digitaler Informationsaustausch“ läuft weiter unter /api/informatik8.)
+const inf8Proben = registerNt7Routes(app, {
+  prefix: "/api/inf8",
+  datei: "inf8-proben.json",
+  tests: require("./inf8-fragen"),
+  fach: "Informatik",
+  stufe: 8,
+  service: "inf8-proben",
+  csvName: "informatik8-proben.csv",
+  dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
+
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", klasse: "Klasse 9", thema: "Organische Rohstoffe (Kohlenstoff, Holz und Zellstoff, Raps, Biodiesel, Stärke, Nachhaltigkeit)" });
 
 // NT 9M/9R Organische Rohstoffe: Anmeldung mit Code und Lernfortschritt fuer die Lehrkraft
@@ -216,6 +232,9 @@ const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, te
 
 // Informatik 7: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf7/uebung/feedback", klasse: "Klasse 7", fach: "Informatik", thema: "Informatik (Internet und Sicherheit, Netzwerke, digitale Bilder, Vektorgrafik, Programmieren mit Scratch)" });
+
+// Informatik 8: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf8/uebung/feedback", klasse: "Klasse 8", fach: "Informatik", thema: "Informatik (digitale Informationssysteme, Datenschutz und Big Data, Tabellenkalkulation mit Excel, Programmieren mit Scratch)" });
 
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
@@ -229,6 +248,16 @@ registerNt7FreigabeRoutes(app, {
   prefix: "/api/inf7",
   datei: "inf7-freigabe.json",
   name: "Informatik-7-Freigabe",
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+// --- Informatik 8: Module und Einheiten je Klasse freischalten (Übersicht 8M/Informatik, Verwaltung „Informatik“) ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/inf8",
+  datei: "inf8-freigabe.json",
+  name: "Informatik-8-Freigabe",
+  stufe: 8,
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
@@ -291,6 +320,7 @@ registerProbenNotenRoutes(app, {
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
     { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
+    { modul: "inf8", fach: "Informatik", abgaben: inf8Proben.abgaben },
     { modul: "nt9probe", fach: "NT", abgaben: nt9Probe.abgaben },
     { modul: "netzwerktest", fach: "Informatik", abgaben: netzwerktest.abgaben },
     { modul: "filiuspruefung", fach: "Informatik", abgaben: filiuspruefung.abgaben }
@@ -359,7 +389,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-05-informatik7-modul2",
+    version: "2026-10-05-informatik8-modul1",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
