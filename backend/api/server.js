@@ -109,6 +109,20 @@ const nt7Proben = registerNt7Routes(app, {
   askAnthropic: askAnthropic
 });
 
+// --- Informatik 7 (7M und 7R): Proben 1 bis 5 je Zug, dieselbe Technik wie die NT-7-Proben ---
+const inf7Proben = registerNt7Routes(app, {
+  prefix: "/api/inf7",
+  datei: "inf7-proben.json",
+  tests: require("./inf7-fragen"),
+  fach: "Informatik",
+  service: "inf7-proben",
+  csvName: "informatik7-proben.csv",
+  dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
+
 // --- Deutsch 7M: Argumentationstrainer mit revisionsfaehigem KI-Feedback ---
 const { registerArgumentation7Routes, requireStudent: requireDe7Student, requireTeacher: requireDe7Teacher } = require("./argumentation7");
 const DE7_SECRET = process.env.ARGUMENTATION7_SECRET || `${TEACHER_PASSWORD}|de7-argumentation`;
@@ -200,9 +214,21 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", 
 const { registerNt9FortschrittRoutes } = require("./nt9-fortschritt");
 const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD });
 
+// Informatik 7: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf7/uebung/feedback", klasse: "Klasse 7", fach: "Informatik", thema: "Informatik (Internet und Sicherheit, Netzwerke, digitale Bilder, Vektorgrafik, Programmieren mit Scratch)" });
+
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
 registerNt7FreigabeRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+// --- Informatik 7: Module und Einheiten je Klasse freischalten (Übersicht 7M/Informatik, Verwaltung „Informatik“) ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/inf7",
+  datei: "inf7-freigabe.json",
+  name: "Informatik-7-Freigabe",
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
@@ -254,6 +280,7 @@ registerProbenNotenRoutes(app, {
     { modul: "grammatik9r", fach: "Englisch", abgaben: grammatik.abgaben },
     { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
+    { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
     { modul: "nt9probe", fach: "NT", abgaben: nt9Probe.abgaben },
     { modul: "netzwerktest", fach: "Informatik", abgaben: netzwerktest.abgaben },
@@ -323,7 +350,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-04-nt7-proben-2",
+    version: "2026-10-05-informatik7",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

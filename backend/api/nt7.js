@@ -19,12 +19,17 @@
  *   POST /api/nt7/teacher/unlock | results | override | delete | export
  *
  * Die Fragen stehen in nt7-fragen.js und bleiben serverseitig.
+ *
+ * Mehrfach registrierbar (Informatik 7): opts.prefix ("/api/inf7"), opts.datei ("inf7-proben.json"),
+ * opts.tests (Fragen), opts.fach ("Informatik"), opts.csvName, opts.service.
+ * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
+ * je Schritt an der richtigen Stelle gibt es 1 Punkt.
  */
 
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const tests = require("./nt7-fragen");
+const nt7Tests = require("./nt7-fragen");
 const { probeKindPruefer, probeOffen, verlassenZahl, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 
 /**
@@ -35,7 +40,12 @@ const { probeKindPruefer, probeOffen, verlassenZahl, GRADE_SCALE_M, GRADE_SCALE_
  */
 function registerNt7Routes(app, opts) {
   const DATA_DIR = opts.dataDir;
-  const DATA_FILE = path.join(DATA_DIR, "nt7-proben.json");
+  const DATA_FILE = path.join(DATA_DIR, opts.datei || "nt7-proben.json");
+  const PREFIX = String(opts.prefix || "/api/nt7").replace(/\/$/, "");
+  const tests = opts.tests || nt7Tests;
+  const FACH = opts.fach || "Natur-und-Technik";
+  const SERVICE = opts.service || "nt7-proben";
+  const LOG = opts.fach ? opts.fach + " 7" : "NT7";
   const TEACHER_PASSWORD = opts.teacherPassword || "";
   const MODEL = opts.model || process.env.ANTHROPIC_MODEL_HAIKU || "claude-haiku-4-5";
   /* Der Hauptserver reicht seine askAnthropic-Funktion herein. Sie probiert
@@ -75,6 +85,7 @@ function registerNt7Routes(app, opts) {
     return {nr:index+1,type:item.type,prompt:item.prompt,points:item.points,
       options:item.options || undefined, labels:item.pairs?.map(pair => pair[0]),
       targets:item.pairs?.map(pair => pair[1]).sort((a,b) => a.localeCompare(b,"de")),
+      steps:item.steps ? item.steps.slice().sort((a,b) => a.localeCompare(b,"de")) : undefined,
       image:item.image || undefined,imageAlt:item.imageAlt || undefined};
   }
   function textFallback(answer, item) {
@@ -89,7 +100,7 @@ function registerNt7Routes(app, opts) {
     if (!answer || !process.env.ANTHROPIC_API_KEY) return fallback;
 
     const systemText = [
-      "Du korrigierst eine Natur-und-Technik-Probe der 7. Klasse einer bayerischen Mittelschule.",
+      "Du korrigierst eine " + FACH + "-Probe der 7. Klasse einer bayerischen Mittelschule.",
       "Bewerte fachlichen Sinn wohlwollend anhand der Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
       "Gib fuer jedes erfuellte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
       "Antworte ausschliesslich mit JSON: {\"points\":0,\"comment\":\"Kurze konkrete Rueckmeldung auf Deutsch\"}."
@@ -106,7 +117,7 @@ function registerNt7Routes(app, opts) {
         if (!Number.isFinite(Number(parsed.points))) throw new Error("Invalid AI points");
         return {points:Math.max(0,Math.min(item.points,Math.round(Number(parsed.points)))),comment:clean(parsed.comment,220) || "KI-Bewertung.",source:"ki",needsReview:false};
       } catch (err) {
-        console.error("NT7 KI-Korrektur (askAnthropic):",err.message);
+        console.error(LOG + " KI-Korrektur (askAnthropic):",err.message);
         /* weiter zum direkten Aufruf unten */
       }
     }
@@ -116,7 +127,7 @@ function registerNt7Routes(app, opts) {
         method:"POST",signal:AbortSignal.timeout(18000),
         headers:{"content-type":"application/json","x-api-key":process.env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
         body:JSON.stringify({model:MODEL,max_tokens:220,system:[
-          "Du korrigierst eine Natur-und-Technik-Probe der 7. Klasse einer bayerischen Mittelschule.",
+          "Du korrigierst eine " + FACH + "-Probe der 7. Klasse einer bayerischen Mittelschule.",
           "Bewerte fachlichen Sinn wohlwollend anhand der Kriterien. Eigene Worte gelten. Rechtschreibung, Grammatik und Ausdruck sind egal.",
           "Gib für jedes erfüllte Kriterium genau einen Punkt. Bei teilweise richtigem Inhalt darf ein Punkt gegeben werden. Falsche Behauptungen nicht belohnen.",
           "Die erwartete Antwort ist ein Beispiel, keine Checkliste: Trifft das Kind den Kern, gibt es volle oder fast volle Punkte, auch wenn Einzelheiten fehlen. Im Zweifel für das Kind.",
@@ -132,18 +143,18 @@ function registerNt7Routes(app, opts) {
       if (!Number.isFinite(Number(parsed.points))) throw new Error("Invalid AI points");
       return {points:Math.max(0,Math.min(item.points,Math.round(Number(parsed.points)))),comment:clean(parsed.comment,220) || "KI-Bewertung.",source:"ki",needsReview:false};
     } catch (err) {
-      console.error("NT7 KI-Korrektur:",err.message);
+      console.error(LOG + " KI-Korrektur:",err.message);
       return fallback;
     }
   }
 
 
-  app.get("/api/nt7/health", (_req,res) => res.json({ok:true,service:"nt7-proben",aiConfigured:Boolean(process.env.ANTHROPIC_API_KEY),storageConfigured:Boolean(process.env.NT_DATA_DIR)}));
-  app.get("/api/nt7/list", (_req,res) => {
+  app.get(PREFIX + "/health", (_req,res) => res.json({ok:true,service:SERVICE,aiConfigured:Boolean(process.env.ANTHROPIC_API_KEY),storageConfigured:Boolean(process.env.NT_DATA_DIR)}));
+  app.get(PREFIX + "/list", (_req,res) => {
     const data = readData();
     res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),zug:test.zug || "",thema:test.thema || "",unlocked:probeOffen(data.unlocked[test.id])}))});
   });
-  app.post("/api/nt7/start", async (req,res) => {
+  app.post(PREFIX + "/start", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
     if (!probeOffen(readData().unlocked[test.id])) return res.status(403).json({ok:false,error:"locked"});
@@ -155,7 +166,7 @@ function registerNt7Routes(app, opts) {
     if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
     return res.json({ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test)},items:test.items.map(publicItem)});
   });
-  app.post("/api/nt7/submit", async (req,res) => {
+  app.post(PREFIX + "/submit", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
     const student = await probeKind(req, res);
@@ -180,6 +191,10 @@ function registerNt7Routes(app, opts) {
           const expected = item.pairs.map(pair => pair[1]);
           const points = expected.filter((v,j) => given[j] === v).length;
           details.push({...base,given,labels:item.pairs.map(pair => pair[0]),points,expected,source:"schluessel"});
+        } else if (item.type === "order") {
+          const given = Array.isArray(raw) ? raw.map(v => clean(v,200)).slice(0,item.steps.length) : [];
+          const points = item.steps.filter((v,j) => given[j] === v).length;
+          details.push({...base,given,labels:item.steps.map((_,j) => (j+1) + "."),points,expected:item.steps,source:"schluessel"});
         } else {
           const given = clean(raw,1500);
           const result = await textScore(given,item);
@@ -194,24 +209,24 @@ function registerNt7Routes(app, opts) {
       data.submissions.push(record); writeData(data);
       return res.json({ok:true,result:{score,total,percent,grade:record.grade,needsReview:record.needsReview,details,submittedAt:record.submittedAt}});
     } catch (err) {
-      console.error("NT7 submission:",err);
+      console.error(LOG + " submission:",err);
       return res.status(500).json({ok:false,error:"server_error"});
     } finally { pending.delete(submissionKey); }
   });
-  app.post("/api/nt7/teacher/unlock", (req,res) => {
+  app.post(PREFIX + "/teacher/unlock", (req,res) => {
     if (!teacher(req,res)) return;
     const id = clean(req.body.testId);
     if (!tests[id]) return res.status(404).json({ok:false,error:"test_not_found"});
     const data = readData(); data.unlocked[id] = {open:req.body.open === true,changedAt:new Date().toISOString()}; writeData(data);
     res.json({ok:true,testId:id,unlocked:data.unlocked[id].open});
   });
-  app.post("/api/nt7/teacher/results", (req,res) => {
+  app.post(PREFIX + "/teacher/results", (req,res) => {
     if (!teacher(req,res)) return;
     const id = clean(req.body.testId);
     const rows = readData().submissions.filter(row => !id || row.testId === id).sort((a,b) => a.className.localeCompare(b.className,"de") || a.lastName.localeCompare(b.lastName,"de"));
     res.json({ok:true,submissions:rows});
   });
-  app.post("/api/nt7/teacher/override", (req,res) => {
+  app.post(PREFIX + "/teacher/override", (req,res) => {
     if (!teacher(req,res)) return;
     const data = readData(), row = data.submissions.find(s => s.id === clean(req.body.submissionId));
     const item = row?.details.find(d => d.nr === Number(req.body.nr));
@@ -222,14 +237,14 @@ function registerNt7Routes(app, opts) {
     row.score = row.details.reduce((sum,d) => sum+d.points,0); row.percent = Math.round(row.score/row.total*100); row.grade = grade(row.score/row.total*100,row.zug); row.needsReview = row.details.some(d => d.needsReview);
     writeData(data); res.json({ok:true,score:row.score,percent:row.percent,grade:row.grade});
   });
-  app.post("/api/nt7/teacher/delete", (req,res) => {
+  app.post(PREFIX + "/teacher/delete", (req,res) => {
     if (!teacher(req,res)) return;
     const data = readData(), before = data.submissions.length;
     data.submissions = data.submissions.filter(s => s.id !== clean(req.body.submissionId));
     if (data.submissions.length === before) return res.status(404).json({ok:false,error:"not_found"});
     writeData(data); res.json({ok:true});
   });
-  app.post("/api/nt7/teacher/export", (req,res) => {
+  app.post(PREFIX + "/teacher/export", (req,res) => {
     if (!teacher(req,res)) return;
     const id = clean(req.body.testId);
     const rows = readData().submissions.filter(row => !id || row.testId === id);
@@ -238,7 +253,7 @@ function registerNt7Routes(app, opts) {
       return '"' + (/^[=+\-@\t\r]/.test(text) ? "'" : "") + text.replace(/"/g,'""') + '"';
     };
     const csv = ["Probe;Klasse;Nachname;Vorname;Punkte;Gesamt;Prozent;Note;Nachpruefen;Abgabe", ...rows.map(r => [r.testTitle,r.className,r.lastName,r.firstName,r.score,r.total,r.percent,r.grade,r.needsReview ? "ja":"nein",r.submittedAt].map(quote).join(";"))].join("\r\n");
-    res.type("text/csv; charset=utf-8").attachment("nt7-proben.csv").send("\ufeff"+csv);
+    res.type("text/csv; charset=utf-8").attachment(opts.csvName || "nt7-proben.csv").send("\ufeff"+csv);
   });
 
   // Fuer die Notenuebersicht je Klasse

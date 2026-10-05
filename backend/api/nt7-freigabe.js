@@ -19,6 +19,9 @@
  *             POST /api/nt7/lehrer/freigabe/setzen   { password, klasse, art: "thema"|"modul", id, offen: true|false|null }
  *                                                    (null = Eintrag entfernen, es gilt wieder der Standard)
  * Datei: backend/data/nt7-freigabe.json (wird mit den Proben nach Upstash gespiegelt, Präfix /api/nt7).
+ *
+ * Mehrfach registrierbar: options.prefix ("/api/inf7"), options.datei ("inf7-freigabe.json"), options.name
+ * ("Informatik-7-Freigabe") – so nutzt Informatik 7 dieselbe Logik mit eigenem Stand (Module und Einheiten).
  */
 
 const crypto = require("crypto");
@@ -33,7 +36,9 @@ function registerNt7FreigabeRoutes(app, options = {}) {
   const teacherPassword = String(options.teacherPassword || "");
   const kindZumCode = options.kindZumCode;
   if (typeof kindZumCode !== "function") throw new Error("NT-7-Freigabe: kindZumCode fehlt.");
-  const DATEI = path.join(dataDir, "nt7-freigabe.json");
+  const PREFIX = String(options.prefix || "/api/nt7").replace(/\/$/, "");
+  const NAME = options.name || "NT-7-Freigabe";
+  const DATEI = path.join(dataDir, options.datei || "nt7-freigabe.json");
 
   function lesen() {
     try {
@@ -66,26 +71,26 @@ function registerNt7FreigabeRoutes(app, options = {}) {
     return k && parseInt(k, 10) === 7 ? k : "";
   }
 
-  app.post("/api/nt7/freigabe", async (req, res) => {
+  app.post(PREFIX + "/freigabe", async (req, res) => {
     try {
       const kind = await kindZumCode(req.body && req.body.code, req);
       if (!kind) return res.status(401).json({ ok: false, error: "Bitte melde dich mit deinem Code an." });
       if (kind.gesperrt) return res.status(429).json({ ok: false, error: "Zu viele falsche Codes. Warte ein paar Minuten." });
       return res.json({ ok: true, klasse: kind.klasse, zug: kind.zug, ...stand(lesen(), kind.klasse) });
     } catch (error) {
-      console.error("NT-7-Freigabe:", error && error.message);
+      console.error(NAME + ":", error && error.message);
       return res.status(500).json({ ok: false, error: "Das hat gerade nicht geklappt. Versuche es noch einmal." });
     }
   });
 
-  app.post("/api/nt7/lehrer/freigabe", (req, res) => {
+  app.post(PREFIX + "/lehrer/freigabe", (req, res) => {
     if (!lehrerOk(req, res)) return;
     const klasse = klasse7(req.body.klasse);
     if (!klasse) return res.status(400).json({ ok: false, error: "Freischalten gibt es für die 7. Klassen." });
     return res.json({ ok: true, klasse, ...stand(lesen(), klasse) });
   });
 
-  app.post("/api/nt7/lehrer/freigabe/setzen", (req, res) => {
+  app.post(PREFIX + "/lehrer/freigabe/setzen", (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
       const b = req.body || {};
@@ -111,7 +116,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
       schreiben(daten);
       return res.json({ ok: true, klasse, ...stand(daten, klasse) });
     } catch (error) {
-      console.error("NT-7-Freigabe:", error && error.message);
+      console.error(NAME + ":", error && error.message);
       return res.status(500).json({ ok: false, error: "Das hat gerade nicht geklappt. Versuche es noch einmal." });
     }
   });

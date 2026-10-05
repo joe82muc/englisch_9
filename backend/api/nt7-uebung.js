@@ -12,7 +12,7 @@
  * Antwort dann zusätzlich { punkte: [0|1, …], summe, max }. Ohne KI fehlt punkte, die Seite prüft selbst.
  *
  * Mehrfach registrierbar (z. B. NT 9, Organische Rohstoffe):
- * opts.route, opts.klasse ("Klasse 9"), opts.thema (Thema im Systemtext).
+ * opts.route, opts.klasse ("Klasse 9"), opts.thema (Thema im Systemtext), opts.fach ("Informatik").
  */
 
 const { keywordFeedback } = require("./kohlenstoff");
@@ -24,6 +24,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
   const route = opts.route || "/api/nt7/uebung/feedback";
   const klasse = opts.klasse || "Klasse 7";
   const themaSystem = opts.thema || "Luft";
+  const fach = opts.fach || "Natur und Technik";
 
   app.post(route, async (req, res) => {
     const frage = clean(req.body?.frage).slice(0, 600);
@@ -44,7 +45,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
 
     if (kriterien.length) {
       const systemQuali = [
-        `Du korrigierst eine Quali-Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
+        `Du korrigierst eine Quali-Übungsaufgabe in ${fach}, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
         "Für jeden Bewertungspunkt gibt es 1 Punkt, wenn sein Inhalt in der Antwort sinngemäß vorkommt –",
         "auch mit eigenen Worten, in Stichpunkten, in anderer Reihenfolge oder mit Rechtschreibfehlern (auch bei Lese-Rechtschreib-Störung).",
         "Fachbegriffe müssen nicht fallen, wenn die Sache richtig beschrieben ist. Im Zweifel entscheide für das Kind.",
@@ -81,7 +82,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
     }
 
     const system = [
-      `Du prüfst eine offene Übungsaufgabe in Natur und Technik, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
+      `Du prüfst eine offene Übungsaufgabe in ${fach}, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
       "Bewerte nur den fachlichen Inhalt. Rechtschreibung, Grammatik und Stil zählen nicht. Eigene Worte und Stichpunkte sind erlaubt.",
       "Sei wohlwollend, aber fachlich korrekt. Falsche Aussagen nicht belohnen.",
       "richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt.",
