@@ -30,7 +30,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { probeKindPruefer, probeOffen, verlassenZahl } = require("./probe-kind");
+const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel
@@ -503,7 +503,7 @@ function registerGrammatik9rRoutes(app, opts) {
     const record = {
       id: `g9r_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       testId, testTitle: test.title, unit: test.unit,
-      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen),
+      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen), protokoll: protokollSauber(req.body?.protokoll),
       firstName, lastName, className, studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),
       score, total, percent, grade, aiUsed, needsReview,

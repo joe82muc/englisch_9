@@ -48,6 +48,27 @@ function probeOffen(eintrag, zurAbgabe, jetzt = Date.now()) {
 // Wie oft das Kind die Probe verlassen hat (Tab oder App gewechselt), zählt der Browser mit
 const verlassenZahl = (v) => Math.max(0, Math.min(999, parseInt(v, 10) || 0));
 
+/* Protokoll des Probenmodus (js/probe-schutz.js auf der Website), mit der Abgabe geschickt und bei ihr gespeichert:
+   wechsel   [{ art: "verborgen" | "fokus" | "geschlossen", von, bis, sekunden }]   Seite verlassen – mit Uhrzeit und Dauer
+   einfuegen [{ zeit, zeichen, woerter, erlaubt }]   kopieren [{ zeit, art, zeichen }]   spruenge [{ zeit, woerter, … }]
+   Nur Zeitpunkte und Zahlen: Eingefügter oder kopierter Text wird nie übertragen. Welche andere Seite oder App offen
+   war, kann ein Browser nicht erkennen – das steht nirgends. Nichts davon bewertet eine Probe; was die Ereignisse
+   bedeuten, entscheidet die Lehrkraft. Ohne Ereignisse: undefined (es wird nichts gespeichert). */
+function protokollSauber(p) {
+  const istZeit = (v) => typeof v === "string" && v.length <= 30 && !Number.isNaN(Date.parse(v));
+  const ganz = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v)) || 0));
+  const liste = (v) => (Array.isArray(v) ? v.slice(0, 100) : []);
+  const aus = {
+    wechsel: liste(p && p.wechsel).filter((w) => w && istZeit(w.von) && istZeit(w.bis))
+      .map((w) => ({ art: ["fokus", "geschlossen"].includes(w.art) ? w.art : "verborgen", von: w.von, bis: w.bis, sekunden: ganz(w.sekunden, 86400) })),
+    einfuegen: liste(p && p.einfuegen).filter((e) => e && istZeit(e.zeit)).map((e) => ({ zeit: e.zeit, zeichen: ganz(e.zeichen, 1000000), woerter: ganz(e.woerter, 200000), erlaubt: e.erlaubt === true })),
+    kopieren: liste(p && p.kopieren).filter((e) => e && istZeit(e.zeit)).map((e) => ({ zeit: e.zeit, art: e.art === "cut" ? "cut" : "copy", zeichen: ganz(e.zeichen, 1000000) })),
+    spruenge: liste(p && p.spruenge).filter((e) => e && istZeit(e.zeit))
+      .map((e) => ({ zeit: e.zeit, woerter: ganz(e.woerter, 200000), sekunden: ganz(e.sekunden, 600), vorher: ganz(e.vorher, 200000), nachher: ganz(e.nachher, 200000) }))
+  };
+  return aus.wechsel.length || aus.einfuegen.length || aus.kopieren.length || aus.spruenge.length ? aus : undefined;
+}
+
 /* Notenschutz LRS: Rechtschreibung zählt nicht. Text für die KI-Bewertung freier Antworten. */
 const LRS_REGEL = "WICHTIG: Dieses Kind hat Notenschutz wegen LRS (Lese-Rechtschreib-Störung). Rechtschreibung zählt " +
   "überhaupt nicht – auch nicht Groß- und Kleinschreibung, vertauschte, fehlende oder lautgetreu geschriebene Buchstaben. " +
@@ -90,4 +111,4 @@ function probeKindPruefer(kindZumCode) {
   };
 }
 
-module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, NACHFRIST_MS, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R };
+module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, NACHFRIST_MS, verlassenZahl, protokollSauber, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R };

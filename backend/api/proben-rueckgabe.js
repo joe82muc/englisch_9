@@ -68,6 +68,9 @@ function registerProbenRueckgabeRoutes(app, options) {
   const schluessel = (modul, id) => modul + "|" + id;
   const text = (v, max) => (Array.isArray(v) ? v.join(", ") : v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v)).slice(0, max || 6000);
   const zahl = (v, ersatz) => (typeof v === "number" && Number.isFinite(v) ? v : ersatz);
+  // Zuordnen und Reihenfolge (Liste mit labels, z. B. NT 7): „links → rechts“ je Paar statt einer bloßen Aufzählung
+  const paare = (v, labels, max) => (Array.isArray(v) && Array.isArray(labels) && labels.length
+    ? labels.map((l, j) => text(l, 200) + " → " + (text(v[j], 300) || "–")).join("; ").slice(0, max || 6000) : text(v, max));
   function finde(modul, id) {
     const q = quellen.find((x) => x.modul === modul);
     const r = q && (q.abgaben() || []).find((x) => x && x.id === id);
@@ -141,8 +144,8 @@ function registerProbenRueckgabeRoutes(app, options) {
     const r = treffer.r;
     const aufgaben = (Array.isArray(r.details) ? r.details : []).map((d, i) => {
       const max = zahl(d.maxPoints, 1), punkte = zahl(d.points, d.correct ? 1 : 0);
-      const a = { nr: d.nr != null ? d.nr : i + 1, prompt: text(d.prompt, 3000), given: text(d.given), points: punkte, max, comment: text(d.comment, 1500) };
-      if (e.mitLoesung && punkte < max && d.expected != null && d.expected !== "") { a.loesung = text(d.expected, 3000); a.beispiel = d.type === "text"; }
+      const a = { nr: d.nr != null ? d.nr : i + 1, prompt: text(d.prompt, 3000), given: paare(d.given, d.labels), points: punkte, max, comment: text(d.comment, 1500) };
+      if (e.mitLoesung && punkte < max && d.expected != null && d.expected !== "") { a.loesung = paare(d.expected, d.labels, 3000); a.beispiel = d.type === "text"; }
       return a;
     });
     res.json({ ok: true, korrektur: {

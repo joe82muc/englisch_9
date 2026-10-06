@@ -38,7 +38,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { buildXlsx } = require("./xlsx-mini");
-const { probeKindPruefer, GRADE_SCALE_M, probeOffen, verlassenZahl } = require("./probe-kind");
+const { probeKindPruefer, GRADE_SCALE_M, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
 
 /* ------------------------------------------------------------------
    Notenschluessel Informatik 7
@@ -573,7 +573,7 @@ function registerInfoaustauschRoutes(app, opts) {
       testId,
       testTitle: test.title,
       unit: test.unit,
-      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen),
+      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen), protokoll: protokollSauber(req.body?.protokoll),
       firstName, lastName, className,
       studentKey: key,
       testDate: testDate || new Date().toISOString().slice(0, 10),

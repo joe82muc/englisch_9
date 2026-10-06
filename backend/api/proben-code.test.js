@@ -107,13 +107,31 @@ test("Notenschlüssel nach Zug des Kindes: M 50 % = Note 4, R 50 % = Note 3", as
 });
 
 test("LRS: Rechtschreibfehler zählen nicht, Verlassen wird gezählt", async () => {
-  const mitLrs = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "555", answers: ["dag", "kat"], verlassen: 3 });
+  // Protokoll des Probenmodus (js/probe-schutz.js): Wechsel mit Uhrzeit und Dauer, Einfügen, Kopieren – nur Zahlen
+  const protokoll = {
+    wechsel: [{ art: "verborgen", von: "2026-10-06T08:10:00.000Z", bis: "2026-10-06T08:10:42.000Z", sekunden: 42 }, { art: "irgendwas", von: "kein Datum", bis: "x", sekunden: 5 },
+      { art: "fokus", von: "2026-10-06T08:20:00.000Z", bis: "2026-10-06T08:20:07.000Z", sekunden: 7.4 }],
+    einfuegen: [{ zeit: "2026-10-06T08:12:00.000Z", zeichen: 250, woerter: 40, erlaubt: false, text: "heimlich eingefügter Text" }],
+    kopieren: [{ zeit: "2026-10-06T08:13:00.000Z", art: "cut", zeichen: 12 }], spruenge: "kein Feld", fremd: ["x"]
+  };
+  const mitLrs = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "555", answers: ["dag", "kat"], verlassen: 3, protokoll });
   assert.equal(mitLrs.data.result.grade, 1, "LRS: dag/kat gelten als dog/cat");
   const ohne = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "556", answers: ["dag", "kat"] });
   assert.equal(ohne.data.result.score, 0, "ohne LRS bleiben dag/kat falsch");
-  const rec = JSON.parse(fs.readFileSync(path.join(dataDir, "vokabeltest_abgaben.json"), "utf8")).submissions.find((s) => s.code === "555");
+  const gespeichert = JSON.parse(fs.readFileSync(path.join(dataDir, "vokabeltest_abgaben.json"), "utf8")).submissions;
+  const rec = gespeichert.find((s) => s.code === "555");
   assert.equal(rec.lrs, true);
   assert.equal(rec.verlassen, 3);
+  assert.deepEqual(rec.protokoll, {
+    wechsel: [{ art: "verborgen", von: "2026-10-06T08:10:00.000Z", bis: "2026-10-06T08:10:42.000Z", sekunden: 42 }, { art: "fokus", von: "2026-10-06T08:20:00.000Z", bis: "2026-10-06T08:20:07.000Z", sekunden: 7 }],
+    einfuegen: [{ zeit: "2026-10-06T08:12:00.000Z", zeichen: 250, woerter: 40, erlaubt: false }],
+    kopieren: [{ zeit: "2026-10-06T08:13:00.000Z", art: "cut", zeichen: 12 }], spruenge: []
+  }, "Protokoll bereinigt gespeichert: ungültige Einträge und Fremdes fallen weg");
+  assert.ok(!JSON.stringify(rec).includes("heimlich"), "eingefügter Text wird nie gespeichert");
+  assert.ok(!("protokoll" in gespeichert.find((s) => s.code === "556")), "ohne Ereignisse wird kein Protokoll gespeichert");
+  // die Lehrkraft bekommt es mit den Ergebnissen
+  const ergebnisse = await post("/api/vokabeltest/results", { password: "2", testId: "e7m-u1-a" });
+  assert.equal(ergebnisse.data.submissions.find((s) => s.code === "555").protokoll.wechsel[0].sekunden, 42);
 });
 
 test("Zahl in Worten: Ziffern sind falsch und gehen nicht an die KI, ein anderes Wort schon", async () => {

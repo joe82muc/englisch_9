@@ -17,7 +17,8 @@ const abgabe = (id, code, extra) => Object.assign({ id, testId: "nt7-p1-m", test
   submittedAt: "2026-10-05T08:30:00.000Z", details: [
     { nr: 1, type: "choice", prompt: "Welches Gas brauchen wir zum Atmen?", given: "Stickstoff", expected: "Sauerstoff", points: 0, maxPoints: 1 },
     { nr: 2, type: "text", prompt: "Erkläre, warum warme Luft aufsteigt.", given: "Weil sie leichter ist.", expected: "Warme Luft dehnt sich aus und hat eine geringere Dichte.", points: 2, maxPoints: 3, comment: "Der Grund stimmt, die Dichte fehlt." },
-    { nr: 3, type: "choice", prompt: "Luft ist ein …", given: "Gemisch", expected: "Gemisch", correct: true }
+    { nr: 3, type: "choice", prompt: "Luft ist ein …", given: "Gemisch", expected: "Gemisch", correct: true },
+    { nr: 4, type: "match", prompt: "Ordne die Formeln zu.", labels: ["Sauerstoff", "Stickstoff"], given: ["N₂", ""], expected: ["O₂", "N₂"], points: 0, maxPoints: 2 }
   ] }, extra || {});
 
 async function mitServer(lauf) {
@@ -58,7 +59,9 @@ test("Zurückgeben: erst nach der Freigabe sieht das Kind seine Probe – nur di
     assert.equal(k.status, 200);
     const kor = k.data.korrektur;
     assert.equal(kor.titel, "NT 7 – Probe 1: Luft"); assert.equal(kor.fach, "NT"); assert.equal(kor.grade, 3); assert.equal(kor.kommentar, "Schau dir Aufgabe 2 noch einmal an.");
-    assert.deepEqual(kor.aufgaben.map((a) => [a.points, a.max]), [[0, 1], [2, 3], [1, 1]]);
+    assert.deepEqual(kor.aufgaben.map((a) => [a.points, a.max]), [[0, 1], [2, 3], [1, 1], [0, 2]]);
+    assert.equal(kor.aufgaben[3].given, "Sauerstoff → N₂; Stickstoff → –", "Zuordnen: je Paar „links → rechts“");
+    assert.equal(kor.aufgaben[3].loesung, "Sauerstoff → O₂; Stickstoff → N₂");
     assert.equal(kor.aufgaben[0].loesung, "Sauerstoff", "falsch gelöst: richtige Lösung steht dabei");
     assert.equal(kor.aufgaben[1].beispiel, true, "freie Antwort: Lösung gilt als Beispiel");
     assert.equal(kor.aufgaben[2].loesung, undefined, "richtig gelöst: keine Lösung nötig");

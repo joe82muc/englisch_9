@@ -31,7 +31,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const nt7Tests = require("./nt7-fragen");
-const { probeKindPruefer, probeOffen, verlassenZahl, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 
 /**
  * @param app            Express-App
@@ -253,7 +253,7 @@ function registerNt7Routes(app, opts) {
           if (given && process.env.ANTHROPIC_API_KEY) frei.push(i);
         }
       }
-      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),details,submittedAt:new Date().toISOString()};
+      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),protokoll:protokollSauber(req.body.protokoll),details,submittedAt:new Date().toISOString()};
       // nach dem Sperren von Hand abgegeben (Nachfrist): für die Lehrkraft vermerkt
       if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
       rechne(record, test);
