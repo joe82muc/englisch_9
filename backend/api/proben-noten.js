@@ -7,7 +7,8 @@
  *
  * POST /api/proben/noten { password, klasse }
  *   -> { ok, klasse, noten: [{ id, modul, fach, testId, titel, code, note, punkte, max, prozent,
- *                              datum, abgabe, nachpruefen, lrs, verlassen }] }
+ *                              datum, abgabe, nachpruefen, lrs, verlassen, zurueck, geoeffnet }] }
+ *   (zurueck / geoeffnet: wann die korrigierte Probe an das Kind zurückgegeben und von ihm geöffnet wurde – proben-rueckgabe.js)
  *   (lrs: mit Notenschutz LRS gewertet; verlassen: so oft hat das Kind die Probe verlassen)
  */
 const crypto = require("crypto");
@@ -16,6 +17,7 @@ function registerProbenNotenRoutes(app, options) {
   const teacherPassword = String(options.teacherPassword || "");
   const quellen = options.quellen || [];          // [{ modul, fach, abgaben: () => [...] }]
   const kindZumCode = options.kindZumCode;        // (code) -> { code, klasse } | null
+  const rueckgabe = options.rueckgabe || (() => null);   // (modul, abgabe) -> { freigegebenAm, geoeffnetAm } | null
 
   function lehrerOk(req, res) {
     const given = Buffer.from(String((req.body && req.body.password) || "").slice(0, 200));
@@ -43,11 +45,13 @@ function registerProbenNotenRoutes(app, options) {
           }
           // Gelöschter Code: dann zählt die Klasse beim Abgeben
           if ((klasseVon.get(r.code) || r.className) !== klasse) continue;
+          const zurueck = rueckgabe(q.modul, r);
           noten.push({
             id: r.id, modul: q.modul, fach: q.fach, testId: r.testId, titel: r.testTitle || r.testId,
             code: r.code, note: r.grade, punkte: r.score, max: r.total, prozent: r.percent,
             datum: r.testDate || String(r.submittedAt || "").slice(0, 10), abgabe: r.submittedAt,
-            nachpruefen: Boolean(r.needsReview), lrs: Boolean(r.lrs), verlassen: Number(r.verlassen) || 0
+            nachpruefen: Boolean(r.needsReview), lrs: Boolean(r.lrs), verlassen: Number(r.verlassen) || 0,
+            zurueck: zurueck ? zurueck.freigegebenAm || "" : "", geoeffnet: zurueck ? zurueck.geoeffnetAm || "" : ""
           });
         }
       }

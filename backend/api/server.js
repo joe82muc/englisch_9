@@ -345,10 +345,7 @@ const grammatik = registerGrammatik9rRoutes(app, {
 
 // --- Notenuebersicht je Klasse: alle Proben mit Code (fuer proben-verwalten.html) ---
 const { registerProbenNotenRoutes } = require("./proben-noten");
-registerProbenNotenRoutes(app, {
-  teacherPassword: TEACHER_PASSWORD,
-  kindZumCode: (code) => nt9Fortschritt.kindZumCode(code),
-  quellen: [
+const PROBEN_QUELLEN = [
     { modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben },
     { modul: "grammatik9r", fach: "Englisch", abgaben: grammatik.abgaben },
     { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
@@ -360,7 +357,20 @@ registerProbenNotenRoutes(app, {
     { modul: "nt9probe", fach: "NT", abgaben: nt9Probe.abgaben },
     { modul: "netzwerktest", fach: "Informatik", abgaben: netzwerktest.abgaben },
     { modul: "filiuspruefung", fach: "Informatik", abgaben: filiuspruefung.abgaben }
-  ]
+];
+// --- Korrigierte Proben an die Kinder zurückgeben (alle Fächer): Startseite „Zurückbekommen“, Korrekturseite, Druck ---
+const { registerProbenRueckgabeRoutes } = require("./proben-rueckgabe");
+const probenRueckgabe = registerProbenRueckgabeRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: probeKindZumCode,
+  quellen: PROBEN_QUELLEN
+});
+registerProbenNotenRoutes(app, {
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code) => nt9Fortschritt.kindZumCode(code),
+  quellen: PROBEN_QUELLEN,
+  rueckgabe: (modul, abgabe) => probenRueckgabe.stand(modul, abgabe)
 });
 
 // Aufgabenlösungen und Schülerdaten dürfen nicht über den statischen Dateiserver erreichbar sein – auch nicht über
@@ -425,7 +435,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-06-namen-verschluesselt",
+    version: "2026-10-06-proben-rueckgabe",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
