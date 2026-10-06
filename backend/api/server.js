@@ -404,7 +404,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-06-vokabeltest3",
+    version: "2026-10-06-lehrercode",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

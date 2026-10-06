@@ -110,6 +110,17 @@ function zugVon(klasse) {
   if (!k) return "";
   return parseInt(k, 10) + (/M$/.test(k) ? "M" : "R");
 }
+// Lehrercode: ein fester Code für die Lehrkraft. Mit ihm sind in den Übersichten alle Module aller Klassen offen
+// (die Routen …/freigabe melden dann „alles: true“). Er gehört zu keiner Klasse: kein Lernstand, keine Proben, keine
+// abgegebenen Dateien, kein Hausaufgabenheft. Die Codes der Kinder liegen zwischen 100 und 999 – ein Code, der mit
+// 0 beginnt, kann deshalb nie einem Kind gehören. Umgebungsvariable LEHRER_CODE: drei Ziffern mit führender 0
+// (z. B. „042“) ändert ihn, „aus“ schaltet ihn ab; ohne Angabe gilt „000“.
+const LEHRER_KLASSE = "Lehrkraft";
+function lehrerCode(env = process.env) {
+  const v = String((env && env.LEHRER_CODE) || "").trim();
+  if (/^aus$/i.test(v)) return "";
+  return /^0\d\d$/.test(v) ? v : "000";
+}
 function kursVon(modul) {
   if (MODUL_IDS.includes(modul)) return MODULE.find((m) => m.id === modul).kurs;
   const m = DYN_MUSTER.exec(modul);
@@ -393,8 +404,13 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     else e.n += 1;
   }
   // Kind zum Code; schreibt bei Fehlern selbst die Antwort. klasse (optional): Zug der Seite
+  // Lehrercode (siehe oben): options.lehrerCode überschreibt die Umgebungsvariable (Tests), "" = abgeschaltet
+  const LEHRER = options.lehrerCode !== undefined ? String(options.lehrerCode || "") : lehrerCode();
+  const istLehrer = (code) => Boolean(LEHRER) && String(code || "").trim() === LEHRER;
   async function kindPruefen(req, res, code, klasse) {
     if (!/^\d{3}$/.test(code)) { res.status(400).json({ ok: false, error: "Der Code hat genau 3 Ziffern." }); return null; }
+    // Die Lehrkraft gehört zu keiner Klasse: Die Klasse der Seite (z. B. „9M“) wird nicht verglichen
+    if (istLehrer(code)) return { code, klasse: LEHRER_KLASSE, p: {}, lehrer: true };
     const kz = klasse ? klasseNorm(klasse) : "";
     if (klasse && !kz) { res.status(400).json({ ok: false, error: "Unbekannte Klasse." }); return null; }
     const kind = (await kinderLaden()).get(code);
@@ -437,6 +453,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
         if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0, ...(p.f ? { f: p.f } : {}) };
       });
       const antwort = { ok: true, code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), fortschritt };
+      if (kind.lehrer) antwort.lehrer = true;
       const modul = String(body.modul || "");
       if (modul && kursVon(modul)) {
         const bekannt = MODUL_IDS.includes(modul) || (await dynLaden()).has(modul);
@@ -459,6 +476,8 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       if (!kursVon(modul)) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
       const kind = await kindPruefen(req, res, String(body.code || "").trim(), String(body.klasse || "").trim());
       if (!kind) return;
+      // Lehrercode: Es wird nichts gespeichert – weder der Lernstand noch das Modul oder sein Katalog
+      if (kind.lehrer) return res.json({ ok: true, anzahl: 0, lehrer: true });
       if (!(await modulBekannt(modul, body.meta, zugVon(kind.klasse)))) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
       const geloest = aufgabenListe(body.geloest);
       const gesamt = Math.max(0, Math.min(MAX_AUFGABEN, parseInt(body.gesamt, 10) || 0));
@@ -590,16 +609,19 @@ function registerNt9FortschrittRoutes(app, options = {}) {
 
   // Für andere Module (z. B. Deutsch 7): Kind zum Code, mit derselben Sperre bei vielen falschen Codes.
   // -> { code, klasse, zug } | { gesperrt: true } | null
+  // Lehrercode: { code, klasse: "Lehrkraft", zug: "", lehrer: true } – wer damit etwas speichern würde (Proben,
+  // Hausaufgabenheft), muss „lehrer“ selbst abweisen.
   async function kindZumCode(code, req) {
     if (req && gesperrt(req)) return { gesperrt: true };
     const c = String(code || "").trim();
     if (!/^\d{3}$/.test(c)) return null;
+    if (istLehrer(c)) return { code: c, klasse: LEHRER_KLASSE, zug: "", lrs: false, lehrer: true };
     const kind = (await kinderLaden()).get(c);
     if (!kind) { if (req) fehlversuch(req); return null; }
     return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), lrs: Boolean(kind.lrs) };
   }
 
-  return { store, flush, kindZumCode };
+  return { store, flush, kindZumCode, lehrerCode: LEHRER };
 }
 
 // Zugangsdaten aus dem Render-Dashboard großzügig lesen: ganze .env-Zeile, Anführungszeichen,
@@ -674,4 +696,4 @@ function katalogPruefen(v) {
   return n ? out : null;
 }
 
-module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, fehlerGrund, klasseNorm, zugVon, MODULE, KURSE };
+module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, fehlerGrund, klasseNorm, zugVon, lehrerCode, LEHRER_KLASSE, MODULE, KURSE };

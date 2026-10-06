@@ -162,6 +162,8 @@ function registerKlasseRoutes(app, options = {}) {
     const k = await kindZumCode(req.body && req.body.code, req);
     if (!k) { res.status(401).json({ ok: false, error: "Bitte melde dich mit deinem Code an." }); return null; }
     if (k.gesperrt) { res.status(429).json({ ok: false, error: "Zu viele falsche Codes. Warte ein paar Minuten." }); return null; }
+    // Lehrercode: gehört zu keiner Klasse – Hausaufgabenheft und Klassenrat stehen für die Lehrkraft in der Verwaltung
+    if (k.lehrer) { res.status(403).json({ ok: false, lehrer: true, error: "Hausaufgabenheft und Klassenrat gehören zu einer Klasse. Mit dem Lehrercode findest du beides in der Verwaltung." }); return null; }
     return k;
   }
   function zuViele(code) {

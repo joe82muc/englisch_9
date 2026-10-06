@@ -78,6 +78,11 @@ function probeKindPruefer(kindZumCode) {
       res.status(404).json({ ok: false, error: "code_unbekannt", message: "Diesen Code gibt es nicht. Prüfe ihn oder frag deine Lehrkraft." });
       return null;
     }
+    // Lehrercode: öffnet Module, aber keine Proben – eine Abgabe unter diesem Code gehörte zu keiner Klasse
+    if (kind.lehrer) {
+      res.status(403).json({ ok: false, error: "lehrercode", message: "Mit dem Lehrercode kann keine Probe geschrieben werden. Ansehen kannst du jede Probe in der Verwaltung auf ihrer Lehrerseite." });
+      return null;
+    }
     return {
       code: kind.code, klasse: kind.klasse, zug: zugVonKlasse(kind.klasse), lrs: Boolean(kind.lrs),
       firstName: "Code " + kind.code, lastName: "", className: kind.klasse, key: "code|" + kind.code

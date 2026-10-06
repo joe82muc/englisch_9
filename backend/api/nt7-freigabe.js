@@ -15,6 +15,8 @@
  * Proben werden weiter eigens freigeschaltet (/api/nt7/teacher/unlock).
  *
  * Kind:       POST /api/nt7/freigabe                 { code }                       -> { ok, klasse, zug, themen, module }
+ *             Mit dem Lehrercode (nt9-fortschritt.js): { ok, klasse: "Lehrkraft", zug: "", themen: {}, module: {}, alles: true }
+ *             – die Website zeigt dann jedes Modul offen (themen.js: offen()).
  * Lehrkraft:  POST /api/nt7/lehrer/freigabe          { password, klasse }           -> { ok, klasse, themen, module }
  *             POST /api/nt7/lehrer/freigabe/setzen   { password, klasse, art: "thema"|"modul", id, offen: true|false|null }
  *                                                    (null = Eintrag entfernen, es gilt wieder der Standard)
@@ -79,6 +81,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
       const kind = await kindZumCode(req.body && req.body.code, req);
       if (!kind) return res.status(401).json({ ok: false, error: "Bitte melde dich mit deinem Code an." });
       if (kind.gesperrt) return res.status(429).json({ ok: false, error: "Zu viele falsche Codes. Warte ein paar Minuten." });
+      if (kind.lehrer) return res.json({ ok: true, klasse: kind.klasse, zug: "", themen: {}, module: {}, alles: true });
       return res.json({ ok: true, klasse: kind.klasse, zug: kind.zug, ...stand(lesen(), kind.klasse) });
     } catch (error) {
       console.error(NAME + ":", error && error.message);

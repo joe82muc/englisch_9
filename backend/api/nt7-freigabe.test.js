@@ -18,7 +18,8 @@ test.before(async () => {
   registerNt7FreigabeRoutes(app, {
     dataDir, teacherPassword: PW,
     kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "7aM", zug: "7M" }
-      : code === "456" ? { code: "456", klasse: "7d", zug: "7R" } : code === "999" ? { gesperrt: true } : null)
+      : code === "456" ? { code: "456", klasse: "7d", zug: "7R" } : code === "999" ? { gesperrt: true }
+      : code === "012" ? { code: "012", klasse: "Lehrkraft", zug: "", lehrer: true } : null)
   });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
@@ -39,6 +40,14 @@ test("Ohne Einträge: leerer Stand, die Website nimmt ihren Standard", async () 
   assert.deepEqual(r.data, { ok: true, klasse: "7aM", zug: "7M", themen: {}, module: {} });
   assert.equal((await post("/api/nt7/freigabe", { code: "000" })).status, 401);
   assert.equal((await post("/api/nt7/freigabe", { code: "999" })).status, 429);
+});
+
+test("Lehrercode: alles offen, unabhängig von dem, was für die Klassen gesetzt ist", async () => {
+  const r = await post("/api/nt7/freigabe", { code: "012" });
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.data, { ok: true, klasse: "Lehrkraft", zug: "", themen: {}, module: {}, alles: true });
+  // Ein Kind bekommt „alles“ nie
+  assert.ok(!("alles" in (await post("/api/nt7/freigabe", { code: "123" })).data));
 });
 
 test("Nur die Lehrkraft schaltet frei – und nur für 7. Klassen", async () => {

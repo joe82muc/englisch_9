@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const test = require("node:test");
 const express = require("express");
-const { registerNt9FortschrittRoutes, dateiStore, upstashZugang, klasseNorm, zugVon } = require("./nt9-fortschritt");
+const { registerNt9FortschrittRoutes, dateiStore, upstashZugang, klasseNorm, zugVon, lehrerCode } = require("./nt9-fortschritt");
 
 // Nachbau der Upstash-REST-Schnittstelle (nur die Befehle, die das Modul benutzt)
 function upstashAttrappe() {
@@ -363,6 +363,54 @@ test("Kind zum Code für andere Module", async () => {
     await api.post(P + "/lehrer/lrs", { password: "2", code, lrs: false });
     assert.equal((await api.kindZumCode(code)).lrs, false);
   } finally { await new Promise((r) => api.server.close(r)); }
+});
+
+test("Lehrercode: meldet sich an, gehört zu keiner Klasse, speichert nichts", async () => {
+  // Welcher Code gilt: ohne Angabe 000, mit führender 0 änderbar, „aus“ schaltet ab; Codes der Kinder (100–999) nie
+  assert.equal(lehrerCode({}), "000");
+  assert.equal(lehrerCode({ LEHRER_CODE: "042" }), "042");
+  assert.equal(lehrerCode({ LEHRER_CODE: "aus" }), "");
+  assert.equal(lehrerCode({ LEHRER_CODE: "742" }), "000", "ein Code, den ein Kind haben könnte, wird nicht angenommen");
+  assert.equal(lehrerCode({ LEHRER_CODE: "12" }), "000");
+
+  const api = await starte({ store: dateiStore(null) });
+  try {
+    const an = await api.post(P + "/anmelden", { code: "000" });
+    assert.equal(an.status, 200);
+    assert.deepEqual(an.body, { ok: true, code: "000", klasse: "Lehrkraft", zug: "", fortschritt: {}, lehrer: true });
+    // Die Seite einer Klasse schickt ihre Klasse mit (NT 9: „9M“) – beim Lehrercode wird sie nicht verglichen
+    assert.equal((await api.post(P + "/anmelden", { code: "000", klasse: "9M" })).status, 200);
+    assert.equal((await api.post(P + "/anmelden", { code: "000", klasse: "7b" })).body.lehrer, true);
+    assert.deepEqual(await api.kindZumCode("000"), { code: "000", klasse: "Lehrkraft", zug: "", lrs: false, lehrer: true });
+
+    // Lernstand melden: Antwort „in Ordnung“, gespeichert wird nichts – kein Kind, kein Modul, kein Katalog
+    const m = await api.post(P + "/melden", { code: "000", klasse: "7aM", modul: "nt7-luft", geloest: ["a", "b"], gesamt: 5,
+      meta: { bereich: "Luft", bnr: 1, titel: "Luft", kurz: "L", nr: 1 }, katalog: { a: ["Aufgabe a", "Basis"] } });
+    assert.deepEqual(m.body, { ok: true, anzahl: 0, lehrer: true });
+    assert.equal(await api.store.get("nt9:c:000"), null);
+    assert.deepEqual((await api.post(P + "/anmelden", { code: "000" })).body.fortschritt, {});
+    const liste = (await api.post(P + "/lehrer/liste", { password: "2" })).body;
+    assert.deepEqual(liste.klassen, []);
+    assert.ok(!JSON.stringify(liste).includes("Lehrkraft"));
+
+    // Kinder bekommen nie einen Code unter 100 – auch nicht, wenn sehr viele angelegt werden
+    const neu = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 60 })).body.neu.map((x) => x.code);
+    assert.ok(neu.every((c) => +c >= 100 && c !== "000"));
+    // Ein falscher Code bleibt falsch
+    assert.equal((await api.post(P + "/anmelden", { code: "001" })).status, 404);
+  } finally { await new Promise((r) => api.server.close(r)); }
+
+  // Abgeschaltet oder geändert
+  const aus = await starte({ store: dateiStore(null), lehrerCode: "" });
+  try {
+    assert.equal((await aus.post(P + "/anmelden", { code: "000" })).status, 404);
+    assert.equal(await aus.kindZumCode("000"), null);
+  } finally { await new Promise((r) => aus.server.close(r)); }
+  const anders = await starte({ store: dateiStore(null), lehrerCode: "042" });
+  try {
+    assert.equal((await anders.post(P + "/anmelden", { code: "000" })).status, 404);
+    assert.equal((await anders.post(P + "/anmelden", { code: "042" })).body.lehrer, true);
+  } finally { await new Promise((r) => anders.server.close(r)); }
 });
 
 test("Fehlerwörter der Vokabeltrainer", async () => {

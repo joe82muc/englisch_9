@@ -35,7 +35,8 @@ const askAnthropic = async (_system, user) => {
 // Wie im Lernfortschritt: Code -> aktuelle Klasse (umbenennbar)
 const klassen = new Map([["123", "7aM"], ["456", "7aM"], ["789", "7b"], ["321", "7b"], ["555", "7dM"], ["556", "7dM"], ["901", "7eM"], ["902", "7eM"]]);
 const lrs = new Set(["555"]);
-const kindZumCode = async (code) => (klassen.has(code) ? { code, klasse: klassen.get(code), lrs: lrs.has(code) } : null);
+const kindZumCode = async (code) => (code === "000" ? { code, klasse: "Lehrkraft", zug: "", lrs: false, lehrer: true }
+  : klassen.has(code) ? { code, klasse: klassen.get(code), lrs: lrs.has(code) } : null);
 
 let server, basis, dataDir;
 test.before(async () => {
@@ -83,6 +84,16 @@ test("Anmeldung nur mit gültigem Code, Namen werden nicht gespeichert", async (
   const nochmal = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "123", answers: ["dog", "cat"] });
   assert.equal(nochmal.status, 409);
   assert.equal((await post("/api/vokabeltest/start", { testId: "e7m-u1-a", code: "123" })).status, 409);
+});
+
+test("Lehrercode: keine Probe – weder beginnen noch abgeben", async () => {
+  const start = await post("/api/vokabeltest/start", { testId: "e7m-u1-a", code: "000" });
+  assert.equal(start.status, 403);
+  assert.equal(start.data.error, "lehrercode");
+  assert.match(start.data.message, /Mit dem Lehrercode kann keine Probe geschrieben werden/);
+  const ab = await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "000", answers: ["dog", "cat"] });
+  assert.equal(ab.status, 403);
+  assert.equal(ab.data.error, "lehrercode");
 });
 
 test("Notenschlüssel nach Zug des Kindes: M 50 % = Note 4, R 50 % = Note 3", async () => {
