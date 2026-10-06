@@ -14,10 +14,26 @@ const TESTS = {
   "e7m-u1-a": { id: "e7m-u1-a", title: "Unit 1 A", unit: 1, classLevel: 7, items: [
     { prompt: "Hund", solutions: ["dog"], direction: "de-en" },
     { prompt: "Katze", solutions: ["cat"], direction: "de-en" }
+  ] },
+  // Zahlwörter: Hinweis „in Worten“
+  "e7m-u1-z": { id: "e7m-u1-z", title: "Zahlen", unit: 1, classLevel: "7M", items: [
+    { prompt: "fünfzigtausend", solutions: ["fifty thousand"], direction: "de-en", hint: "in Worten" },
+    { prompt: "eine Million", solutions: ["a million; one million"], direction: "de-en", hint: "in Worten" },
+    { prompt: "Rakete", solutions: ["rocket"], direction: "de-en" }
   ] }
 };
+// Eine „KI“, die alles durchwinkt, was man ihr vorlegt – und mitschreibt, was sie zu sehen bekam
+// (nur solange kiAn gesetzt ist – die anderen Tests laufen ohne KI)
+const kiGesehen = [];
+let kiAn = false;
+const askAnthropic = async (_system, user) => {
+  if (!kiAn) return "";
+  const nrn = [...String(user).matchAll(/Aufgabe (\d+)/g)].map((m) => +m[1]);
+  kiGesehen.push(String(user));
+  return JSON.stringify({ results: nrn.map((nr) => ({ nr, correct: true, reason: "passt" })) });
+};
 // Wie im Lernfortschritt: Code -> aktuelle Klasse (umbenennbar)
-const klassen = new Map([["123", "7aM"], ["456", "7aM"], ["789", "7b"], ["321", "7b"], ["555", "7dM"], ["556", "7dM"]]);
+const klassen = new Map([["123", "7aM"], ["456", "7aM"], ["789", "7b"], ["321", "7b"], ["555", "7dM"], ["556", "7dM"], ["901", "7eM"], ["902", "7eM"]]);
 const lrs = new Set(["555"]);
 const kindZumCode = async (code) => (klassen.has(code) ? { code, klasse: klassen.get(code), lrs: lrs.has(code) } : null);
 
@@ -26,7 +42,7 @@ test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "proben-code-"));
   const app = express();
   app.use(express.json());
-  const vokabeltest = registerVokabeltestRoutes(app, { dataDir, teacherPassword: "2", tests: TESTS, hashSecret: "x", kindZumCode });
+  const vokabeltest = registerVokabeltestRoutes(app, { dataDir, teacherPassword: "2", tests: TESTS, hashSecret: "x", kindZumCode, askAnthropic });
   registerProbenNotenRoutes(app, {
     teacherPassword: "2", kindZumCode,
     quellen: [{ modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben }]
@@ -87,6 +103,27 @@ test("LRS: Rechtschreibfehler zählen nicht, Verlassen wird gezählt", async () 
   const rec = JSON.parse(fs.readFileSync(path.join(dataDir, "vokabeltest_abgaben.json"), "utf8")).submissions.find((s) => s.code === "555");
   assert.equal(rec.lrs, true);
   assert.equal(rec.verlassen, 3);
+});
+
+test("Zahl in Worten: Ziffern sind falsch und gehen nicht an die KI, ein anderes Wort schon", async () => {
+  assert.equal((await post("/api/vokabeltest/unlock", { password: "2", testId: "e7m-u1-z", open: true })).status, 200);
+  kiGesehen.length = 0; kiAn = true;
+  const r = await post("/api/vokabeltest/submit", { testId: "e7m-u1-z", code: "901", answers: ["50,000", "one million", "raket"] });
+  assert.equal(r.status, 200);
+  const d = r.data.result.details;
+  assert.equal(d[0].correct, false, "50,000 statt fifty thousand ist falsch");
+  assert.match(d[0].comment, /Zahl in Worten/);
+  assert.equal(d[1].correct, true);
+  // „raket“ (Tippfehler, 1 Buchstabe) gilt schon ohne KI; die Ziffern-Antwort hat die KI nie gesehen
+  assert.equal(d[2].correct, true);
+  assert.ok(!kiGesehen.join(" ").includes("50,000"), "Ziffern dürfen nicht an die KI gehen");
+  // Ein falsches Wort geht an die KI – mit dem Hinweis der Aufgabe
+  const s = await post("/api/vokabeltest/submit", { testId: "e7m-u1-z", code: "902", answers: ["fifty tousand people", "1000000", "xyz"] });
+  kiAn = false;
+  assert.equal(s.status, 200);
+  assert.equal(s.data.result.details[1].correct, false);
+  assert.ok(kiGesehen.some((u) => /fünfzigtausend \(Hinweis fuer das Kind: in Worten\)/.test(u)), "die KI bekommt den Hinweis mit");
+  assert.ok(!kiGesehen.join(" ").includes("1000000"));
 });
 
 test("Freigeschaltete Proben schließen sich nach 3 Stunden, Abgabe geht 1 Stunde länger", () => {

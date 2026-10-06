@@ -554,6 +554,64 @@ const e7mu1probe1 = {
 };
 
 /* ==================================================================
+   Englisch 7M - Unit 1 - Vokabeltest 3 (Stand 06.10.2026)
+   Zoom in (British Isles) bis Numbers higher than 1,000, 30 Woerter –
+   derselbe Stoff wie Test 1, aber eine neue Auswahl: mehr Woerter aus
+   "Talking about places" und mehr Zahlen, dazu Himmelsrichtungen und
+   Woerter, die in Test 1 und in der Probe nicht vorkamen.
+   Nur Deutsch -> Englisch, M-Zug-Notenschluessel (50 % = Note 4).
+   Eigennamen muessen grossgeschrieben sein, Zahlen stehen in Worten.
+   ================================================================== */
+const e7mu1t3 = {
+  id: "e7m-u1-test3",
+  title: "7M · Vokabeltest 3 - Zoom in bis Numbers",
+  unit: "Englisch 7M / Unit 1",
+  classLevel: "7M",
+  direction: "de-en",
+  items: [
+    // --- Zoom in: The British Isles ---
+    { prompt: "die Britischen Inseln", direction: "de-en", solutions: ["the British Isles; British Isles"] },
+    { prompt: "die Republik Irland", direction: "de-en", solutions: ["the Republic of Ireland; Republic of Ireland"] },
+    { prompt: "Nordirland", direction: "de-en", solutions: ["Northern Ireland"] },
+    { prompt: "Alter; Zeitalter", direction: "de-en", solutions: ["age"] },
+
+    // --- Intro ---
+    { prompt: "unterwegs", direction: "de-en", solutions: ["out and about"] },
+    { prompt: "Theaterstück", direction: "de-en", solutions: ["play"] },
+    { prompt: "Naturwissenschaft", direction: "de-en", solutions: ["science"] },
+    { prompt: "Ausstellung", direction: "de-en", solutions: ["exhibition"] },
+    { prompt: "fahren (mit dem Auto)", direction: "de-en", solutions: ["to drive; drive"], hint: "Verb" },
+    { prompt: "Süden; Süd-", direction: "de-en", solutions: ["south"] },
+    { prompt: "Küste", direction: "de-en", solutions: ["coast"] },
+
+    // --- Topic 1: Manchester ---
+    { prompt: "im Nordwesten von", direction: "de-en", solutions: ["in the northwest of; in the north-west of"] },
+    { prompt: "Verkehr", direction: "de-en", solutions: ["traffic"], hint: "auf der Straße" },
+    { prompt: "Vergangenheit", direction: "de-en", solutions: ["past; the past"] },
+    { prompt: "Fabrik; Werk", direction: "de-en", solutions: ["factory"] },
+    { prompt: "Bergwerk; Mine", direction: "de-en", solutions: ["mine"] },
+    { prompt: "Norden; Nord-", direction: "de-en", solutions: ["north"] },
+    { prompt: "Osten; Ost-", direction: "de-en", solutions: ["east"] },
+    { prompt: "vorher; zuvor", direction: "de-en", solutions: ["before"] },
+    { prompt: "sauber", direction: "de-en", solutions: ["clean"] },
+
+    // --- Talking about places ---
+    { prompt: "leise; ruhig", direction: "de-en", solutions: ["quiet"] },
+    { prompt: "weit", direction: "de-en", solutions: ["far"], hint: "Ist der Bahnhof … von hier?" },
+    { prompt: "groß", direction: "de-en", solutions: ["large; big"], hint: "eine … Stadt" },
+    { prompt: "Umgebung", direction: "de-en", solutions: ["environment"] },
+    { prompt: "Hauptstadt", direction: "de-en", solutions: ["capital; capital city"] },
+    { prompt: "Stadtzentrum", direction: "de-en", solutions: ["city centre; city center; town centre"] },
+
+    // --- Numbers higher than 1,000 ---
+    { prompt: "zweitausendfünfhundert", direction: "de-en", solutions: ["two thousand five hundred; two thousand, five hundred"], hint: "in Worten" },
+    { prompt: "fünfzigtausend", direction: "de-en", solutions: ["fifty thousand"], hint: "in Worten" },
+    { prompt: "eine halbe Million", direction: "de-en", solutions: ["half a million; five hundred thousand"], hint: "in Worten" },
+    { prompt: "eine Million", direction: "de-en", solutions: ["a million; one million"], hint: "in Worten" }
+  ]
+};
+
+/* ==================================================================
    Englisch 8R - Unit 1 bis 4: neue Vokabeltests, nur Deutsch -> Englisch
    Grundlage sind die Wörter der früheren gemischten Tests (e8r-uN-test1):
    Englisch -> Deutsch-Aufgaben stehen jetzt auf Deutsch, bei mehrdeutigen
@@ -669,6 +727,7 @@ const TESTS = {
   [e7mu1t1.id]: e7mu1t1,
   [e7mu1t2.id]: e7mu1t2,
   [e7mu1probe1.id]: e7mu1probe1,
+  [e7mu1t3.id]: e7mu1t3,
   [e7ru1t1.id]: e7ru1t1,
   [e7ru1t2.id]: e7ru1t2
 };

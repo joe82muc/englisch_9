@@ -295,7 +295,7 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
 
   const user = pending.map((p) => [
     "Aufgabe " + p.nr + " (" + (p.direction === "en-de" ? "Englisch -> Deutsch" : "Deutsch -> Englisch") + ")",
-    "Gefragtes Wort: " + p.prompt,
+    "Gefragtes Wort: " + p.prompt + (p.hint ? " (Hinweis fuer das Kind: " + p.hint + ")" : ""),
     "Zugelassene Loesungen: " + p.solutions.join(" / "),
     "Antwort: " + p.given
   ].join("\n")).join("\n\n");
@@ -497,7 +497,9 @@ function registerVokabeltestRoutes(app, opts) {
     const details = test.items.map((item, idx) => {
       const given = clean(answers[idx]);
       const result = checkAnswer(given, item.solutions, kind.lrs);
-      const regel = regelHinweis(result);
+      // Zahlwörter (Hinweis „in Worten“): Eine Zahl in Ziffern ist keine Vokabel – auch nicht für die KI
+      const ziffern = !result.correct && /in worten/i.test(item.hint || "") && /\d/.test(given);
+      const regel = ziffern ? "Zahl in Worten schreiben, nicht in Ziffern" : regelHinweis(result);
       return {
         nr: idx + 1,
         prompt: item.prompt,
@@ -506,7 +508,7 @@ function registerVokabeltestRoutes(app, opts) {
         typo: result.typo,
         ai: false,
         aiReason: "",
-        // regel: Eigenname kleingeschrieben oder Verbformen fehlen – das darf die KI nicht durchwinken
+        // regel: Eigenname kleingeschrieben, Verbformen fehlen oder Ziffern statt Zahlwort – das darf die KI nicht durchwinken
         regel: Boolean(regel),
         comment: regel,
         expected: item.solutions.join(" / ")
@@ -522,6 +524,7 @@ function registerVokabeltestRoutes(app, opts) {
         prompt: d.prompt,
         given: d.given,
         direction: item.direction,
+        hint: item.hint || "",
         solutions: item.solutions
       }));
 
