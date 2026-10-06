@@ -299,6 +299,18 @@ registerNt7FreigabeRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 }));
 
+// --- NT 9: Themenbereiche und Seiten je Klasse sperren oder freischalten (Übersichten 9M/NT_9 und 9R/NT_9, Verwaltung
+// „Natur und Technik“). Die Seiten sind von sich aus offen; gespeichert wird nur, was die Lehrkraft setzt. ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/n9",
+  datei: "n9-freigabe.json",
+  name: "NT-9-Freigabe",
+  stufe: 9,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- Deutsch 7: Proben 1 bis 8 (je R7/M7, Variante A und Nachschreiber-Variante B). Die KI korrigiert vor, die
 // Lehrkraft prüft und gibt die korrigierte Probe an das Kind zurück (d7-proben.js). ---
 const { registerD7ProbenRoutes } = require("./d7-proben");
@@ -447,7 +459,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-06-probenmodus-alle",
+    version: "2026-10-07-nt9-freischalten",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

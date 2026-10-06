@@ -153,3 +153,41 @@ test("Englisch: je Stufe ein Stand (/api/e7, /api/e9); 9M und 9R teilen sich /ap
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("NT 9: eigener Stand unter /api/n9 – nichts gesetzt heißt offen, die Lehrkraft sperrt je Klasse", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "n9-freigabe-test-"));
+  const app = express();
+  app.use(express.json());
+  const KINDER = { 901: ["9aM", "9M"], 902: ["9b", "9R"] };
+  const kindZumCode = async (code) => (KINDER[code] ? { code: String(code), klasse: KINDER[code][0], zug: KINDER[code][1] } : null);
+  registerNt7FreigabeRoutes(app, { dataDir: dir, teacherPassword: PW, kindZumCode, prefix: "/api/n9", datei: "n9-freigabe.json", name: "NT-9-Freigabe", stufe: 9 });
+  registerNt7FreigabeRoutes(app, { dataDir: dir, teacherPassword: PW, kindZumCode, prefix: "/api/e9", datei: "e9-freigabe.json", name: "Englisch-9-Freigabe", stufe: 9 });
+  const s = await new Promise((resolve) => { const x = app.listen(0, () => resolve(x)); });
+  const p = (route, body) => fetch(`http://127.0.0.1:${s.address().port}` + route, {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+  }).then(async (r) => ({ status: r.status, data: await r.json().catch(() => null) }));
+  try {
+    // nichts gesetzt: Die Website zeigt dann alles, was in der Liste „offen: true“ hat
+    assert.deepEqual((await p("/api/n9/freigabe", { code: "901" })).data, { ok: true, klasse: "9aM", zug: "9M", themen: {}, module: {} });
+    // 9aM: Kernenergie gesperrt, davon die Kernspaltung wieder offen; 9b: nur Modul 7 gesperrt
+    await p("/api/n9/lehrer/freigabe/setzen", { password: PW, klasse: "9aM", art: "thema", id: "kernenergie", offen: false });
+    await p("/api/n9/lehrer/freigabe/setzen", { password: PW, klasse: "9aM", art: "modul", id: "ke-kernspaltung", offen: true });
+    await p("/api/n9/lehrer/freigabe/setzen", { password: PW, klasse: "9b", art: "modul", id: "m7", offen: false });
+    const m = (await p("/api/n9/freigabe", { code: "901" })).data, r = (await p("/api/n9/freigabe", { code: "902" })).data;
+    assert.deepEqual([m.themen, m.module], [{ kernenergie: false }, { "ke-kernspaltung": true }]);
+    assert.deepEqual([r.themen, r.module], [{}, { m7: false }], "9b hat seinen eigenen Stand");
+    // „Alle freischalten“ beim Themenbereich räumt die Einzel-Einträge seiner Module mit auf
+    await p("/api/n9/lehrer/freigabe/setzen", { password: PW, klasse: "9aM", art: "thema", id: "kernenergie", offen: true, module: ["ke-kernspaltung", "ke-kettenreaktion"] });
+    assert.deepEqual((await p("/api/n9/lehrer/freigabe", { password: PW, klasse: "9aM" })).data.module, {});
+    // zurück zur Vorgabe der Website (null) – und Englisch 9 bleibt davon unberührt
+    await p("/api/n9/lehrer/freigabe/setzen", { password: PW, klasse: "9b", art: "modul", id: "m7", offen: null });
+    assert.deepEqual((await p("/api/n9/freigabe", { code: "902" })).data.module, {});
+    assert.deepEqual((await p("/api/e9/freigabe", { code: "901" })).data.themen, {}, "eigene Datei, eigener Stand");
+    assert.equal((await p("/api/n9/lehrer/freigabe/setzen", { password: PW, klasse: "7aM", art: "thema", id: "rohstoffe", offen: false })).status, 400, "nur 9. Klassen");
+    assert.equal((await p("/api/n9/lehrer/freigabe/setzen", { password: "falsch", klasse: "9aM", art: "thema", id: "rohstoffe", offen: false })).status, 401);
+    assert.ok(fs.existsSync(path.join(dir, "n9-freigabe.json")) && !fs.existsSync(path.join(dir, "e9-freigabe.json")), "nur die eigene Datei wird geschrieben");
+  } finally {
+    await new Promise((resolve) => s.close(resolve));
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

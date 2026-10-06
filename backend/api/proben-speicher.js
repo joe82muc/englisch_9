@@ -35,7 +35,7 @@ const TOKEN_NAME = "UPSTASH_grumiproben_token";
 const PRAEFIXE = [
   "/api/vokabeltest", "/api/netzwerktest", "/api/filiuspruefung", "/api/nt7", "/api/de7-argument",
   "/api/infoaustausch", "/api/inf7", "/api/inf8", "/api/d7", "/api/informatik8", "/api/nt9probe", "/api/grammatik9r", "/api/proben", "/api/klasse",
-  "/api/e7", "/api/e8", "/api/e9"
+  "/api/e7", "/api/e8", "/api/e9", "/api/n9"
 ];
 // Lernfortschritt hat seine eigene Datenbank, students/progress sind Reste der alten Englisch-App
 const AUSGENOMMEN = new Set(["nt9-fortschritt.json", "students.json", "progress.json"]);
