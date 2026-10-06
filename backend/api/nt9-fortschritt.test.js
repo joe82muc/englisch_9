@@ -458,3 +458,49 @@ test("Deutsch 7: früher angemeldete Module erscheinen unter den heutigen Bereic
     assert.equal((await api.store.get("nt9:mm:d7-rs-03")).bnr, 6, "gespeichert wird gleich der heutige Stand");
   } finally { await new Promise((ok) => api.server.close(ok)); }
 });
+
+test("Namensliste der Lehrkraft: nur verschlüsselt, nur mit Passwort, zwei Geräte überschreiben sich nicht", async () => {
+  const api = await starte({ store: dateiStore(null) });
+  const N = P + "/lehrer/namen";
+  // so verschlüsselt der Browser (AES-GCM, Schlüssel per PBKDF2 aus dem Passwort) – hier mit Node nachgestellt
+  const crypto = require("node:crypto");
+  const b64 = (b) => Buffer.from(b).toString("base64");
+  const verschluesseln = (passwort, liste) => {
+    const salz = crypto.randomBytes(16), iv = crypto.randomBytes(12);
+    const key = crypto.pbkdf2Sync(passwort, salz, 150000, 32, "sha256");
+    const c = crypto.createCipheriv("aes-256-gcm", key, iv);
+    const text = Buffer.concat([c.update(JSON.stringify({ n: liste }), "utf8"), c.final(), c.getAuthTag()]);
+    return "v1." + b64(salz) + "." + b64(iv) + "." + b64(text);
+  };
+  try {
+    assert.equal((await api.post(N, { password: "falsch" })).status, 401, "ohne Lehrkraft-Passwort kein Zugriff");
+    assert.equal((await api.post(N, {})).status, 401);
+    assert.deepEqual((await api.post(N, { password: "2" })).body, { ok: true, blob: "", version: 0 });
+    // lesbare Listen nimmt der Server nicht an
+    for (const blob of [JSON.stringify({ 101: "Lena" }), "101;7aM;Lena", "", "v1.a.b.c"]) {
+      assert.equal((await api.post(N + "/sichern", { password: "2", blob, version: 0 })).status, 400, "abgelehnt: " + blob.slice(0, 20));
+    }
+    const a = verschluesseln("2", { 101: ["Lena Beispiel", 1000] });
+    assert.deepEqual((await api.post(N + "/sichern", { password: "2", blob: a, version: 0 })).body, { ok: true, version: 1 });
+    assert.equal((await api.post(N + "/sichern", { password: "falsch", blob: a, version: 1 })).status, 401);
+    // zweites Gerät kennt den neuen Stand noch nicht: bekommt ihn zurück statt ihn zu überschreiben
+    const zu = await api.post(N + "/sichern", { password: "2", blob: verschluesseln("2", { 205: ["Tom", 2000] }), version: 0 });
+    assert.equal(zu.status, 409); assert.equal(zu.body.version, 1); assert.equal(zu.body.blob, a);
+    assert.equal((await api.post(N + "/sichern", { password: "2", blob: verschluesseln("2", { 101: ["Lena Beispiel", 1000], 205: ["Tom", 2000] }), version: 1 })).body.version, 2);
+    const geholt = (await api.post(N, { password: "2" })).body;
+    assert.equal(geholt.version, 2);
+    // im Speicher steht kein Name – nur Schlüsseltext
+    const roh = JSON.stringify(await api.store.get("nt9:namen"));
+    assert.ok(!/Lena|Tom|Beispiel/.test(roh), "kein lesbarer Name im Speicher");
+    assert.match(geholt.blob, /^v1\./);
+    // die Kinder-Routen geben davon nichts heraus
+    const [kind] = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 1 })).body.neu.map((x) => x.code);
+    const anmeldung = JSON.stringify((await api.post(P + "/anmelden", { code: kind, katalog: true, kurs: "nt7" })).body);
+    assert.ok(!anmeldung.includes("v1.") && !/namen/i.test(anmeldung));
+    assert.equal((await api.post(N, { code: kind })).status, 401, "ein Schülercode öffnet die Liste nicht");
+    // löschen
+    assert.equal((await api.post(N + "/loeschen", { password: "falsch" })).status, 401);
+    assert.deepEqual((await api.post(N + "/loeschen", { password: "2" })).body, { ok: true });
+    assert.deepEqual((await api.post(N, { password: "2" })).body, { ok: true, blob: "", version: 0 });
+  } finally { await new Promise((ok) => api.server.close(ok)); }
+});

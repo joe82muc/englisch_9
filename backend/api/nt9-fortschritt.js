@@ -43,6 +43,9 @@
  *   POST …/lehrer/loeschen    { password, code } oder { password, klasse }  -> { ok, anzahl }
  *   POST …/lehrer/umbenennen  { password, von, nach }    -> { ok, anzahl }   (z. B. 9M -> 9aM)
  *   POST …/lehrer/lrs         { password, code, lrs }    -> { ok, code, lrs } (Notenschutz LRS an/aus)
+ *   POST …/lehrer/namen       { password }               -> { ok, blob, version }   Namensliste der Lehrkraft, nur Schlüsseltext
+ *   POST …/lehrer/namen/sichern  { password, blob, version } -> { ok, version } | 409 { blob, version }
+ *   POST …/lehrer/namen/loeschen { password }             -> { ok }
  *   GET  …/status -> { ok, speicher, verbunden }
  */
 
@@ -596,6 +599,42 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       schmutzig.delete(kind.code);
       await msetStuecke(store, [[cKey(kind.code), kind]]);
       return res.json({ ok: true, code: kind.code, lrs: Boolean(kind.lrs) });
+    } catch (error) { return fehler(res, error); }
+  });
+  /* --- Namensliste der Lehrkraft, damit sie auf jedem ihrer Geräte steht – hier nur als Schlüsseltext ---
+   * Der Browser der Lehrkraft verschlüsselt die Liste { Code: Name } selbst (AES-GCM, Schlüssel per PBKDF2 aus einem
+   * eigenen Namens-Schlüssel, der nie hierher geschickt wird; siehe js/namen-sync.js der Website) und legt nur den
+   * Schlüsseltext ab. In der Datenbank steht
+   * kein lesbarer Name; der Server entschlüsselt nie. Abrufen und Speichern nur mit dem Lehrkraft-Passwort – die
+   * Seiten der Kinder kommen nicht heran. version = Zähler gegen gleichzeitiges Speichern von zwei Geräten. */
+  const NAMEN_KEY = "nt9:namen";
+  const NAMEN_FORM = /^v1\.[A-Za-z0-9+/=]{16,64}\.[A-Za-z0-9+/=]{12,32}\.[A-Za-z0-9+/=]{16,400000}$/;
+  app.post("/api/nt9/fortschritt/lehrer/namen", async (req, res) => {
+    if (!lehrerOk(req, res)) return;
+    try {
+      const alt = await store.get(NAMEN_KEY);
+      return res.json({ ok: true, blob: (alt && alt.blob) || "", version: (alt && alt.version) || 0 });
+    } catch (error) { return fehler(res, error); }
+  });
+  app.post("/api/nt9/fortschritt/lehrer/namen/sichern", async (req, res) => {
+    if (!lehrerOk(req, res)) return;
+    try {
+      const blob = String((req.body && req.body.blob) || "");
+      // nur Schlüsseltext in der erwarteten Form – nie eine lesbare Liste
+      if (!NAMEN_FORM.test(blob)) return res.status(400).json({ ok: false, error: "Die Namensliste muss verschlüsselt ankommen." });
+      const alt = await store.get(NAMEN_KEY), version = (alt && alt.version) || 0;
+      if (Number(req.body.version) !== version) {
+        return res.status(409).json({ ok: false, error: "Die Namensliste wurde inzwischen auf einem anderen Gerät geändert.", blob: (alt && alt.blob) || "", version });
+      }
+      await store.set(NAMEN_KEY, { blob, version: version + 1, zeit: new Date().toISOString() });
+      return res.json({ ok: true, version: version + 1 });
+    } catch (error) { return fehler(res, error); }
+  });
+  app.post("/api/nt9/fortschritt/lehrer/namen/loeschen", async (req, res) => {
+    if (!lehrerOk(req, res)) return;
+    try {
+      await store.del([NAMEN_KEY]);
+      return res.json({ ok: true });
     } catch (error) { return fehler(res, error); }
   });
   app.post("/api/nt9/fortschritt/lehrer/umbenennen", async (req, res) => {
