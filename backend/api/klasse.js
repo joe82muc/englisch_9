@@ -17,11 +17,18 @@
  * Die KI bekommt nur Jahrgangsstufe, Thema und Text. server.js ruft sie ohne den Zusatz „milde bewerten“ auf.
  * Anonyme Nachrichten tragen nur das Tagesdatum und eine zufällige Kennung (keine Uhrzeit).
  *
- * Löschfristen (bei jedem Zugriff): Heft-Einträge 60 Tage nach dem Termin; Klassenrat mit dem neuen Schuljahr
- * (ab 1. September alles, was vor dem 1. August einging). Die Lehrkraft kann jederzeit einzeln löschen.
+ * Eigene Einträge (seit 07.10.2026): Ein Kind kann sich selbst etwas ins Hausaufgabenheft schreiben. Diese Einträge
+ * stehen in klasse-heft-eigen.json beim Code des Kindes, nur dieses Kind bekommt sie zu sehen (nicht die Klasse,
+ * nicht die Lehrkraft – es gibt dafür keine Lehrkraft-Route). Sie werden 14 Tage nach dem Schreiben gelöscht.
+ *
+ * Löschfristen (bei jedem Zugriff): Heft-Einträge 60 Tage nach dem Termin; eigene Einträge der Kinder 14 Tage nach
+ * dem Schreiben; Klassenrat mit dem neuen Schuljahr (ab 1. September alles, was vor dem 1. August einging).
+ * Die Lehrkraft kann ihre Einträge und die Nachrichten jederzeit einzeln löschen.
  *
  * Kind:
- *   POST /api/klasse/heft            { code }                          -> { ok, klasse, heute, eintraege[] }
+ *   POST /api/klasse/heft            { code }                          -> { ok, klasse, heute, eintraege[], eigene[], eigenTage }
+ *   POST /api/klasse/heft/eigen/speichern { code, fach, text, faellig, typ } -> { ok, eintrag }   (faellig: heute bis heute + 14)
+ *   POST /api/klasse/heft/eigen/loeschen  { code, id }                 -> { ok }                  (nur der eigene Eintrag)
  *   POST /api/klasse/rat/senden      { code, kategorie, text, zeigen } -> { ok, angenommen, privat?, hinweis?, vorschlag?, hilfe? }
  * Lehrkraft (immer mit password):
  *   POST /api/klasse/lehrer/heft/liste      { klasse }                               -> { ok, heute, eintraege[] }
@@ -39,6 +46,8 @@ const path = require("path");
 const { klasseNorm } = require("./nt9-fortschritt");
 
 const TYPEN = ["aufgabe", "probe", "termin"];
+// Eigene Einträge der Kinder im Hausaufgabenheft: so viele Tage nach dem Schreiben werden sie gelöscht; höchstens so viele je Kind
+const EIGEN_TAGE = 14, EIGEN_MAX = 40;
 const KATEGORIEN = ["Klassenklima", "Unterricht", "Pause", "Organisation", "Wunsch / Idee", "Sonstiges"];
 const STATUS = ["neu", "agenda", "done"];
 const HILFE = "Das klingt ernst. Bitte sprich auch direkt mit einer Lehrkraft, der du vertraust. Kostenlos und anonym hilft dir auch die Nummer gegen Kummer: 116 111.";
@@ -122,6 +131,8 @@ function registerKlasseRoutes(app, options = {}) {
   const kiZeitMs = options.kiZeitMs || 20000;
   const HEFT = path.join(dataDir, "klasse-heft.json");
   const RAT = path.join(dataDir, "klasse-rat.json");
+  const EIGEN = path.join(dataDir, "klasse-heft-eigen.json");
+  const EIGEN_PRO_ZEHN_MINUTEN = options.eigenProZehnMinuten || 20;
   const versuche = new Map(); // code -> { start, n } (nur im Arbeitsspeicher)
 
   function lesen(datei) {
@@ -141,6 +152,13 @@ function registerKlasseRoutes(app, options = {}) {
     const daten = lesen(HEFT), grenze = tagPlus(tagBerlin(jetzt()), -60), vorher = daten.eintraege.length;
     daten.eintraege = daten.eintraege.filter((e) => String(e.faellig) >= grenze);
     if (daten.eintraege.length !== vorher) schreiben(HEFT, daten);
+    return daten;
+  }
+  // Eigene Einträge der Kinder: EIGEN_TAGE Tage nach dem Schreiben weg (am = Tagesdatum des Schreibens)
+  function eigenDaten() {
+    const daten = lesen(EIGEN), grenze = tagPlus(tagBerlin(jetzt()), -EIGEN_TAGE), vorher = daten.eintraege.length;
+    daten.eintraege = daten.eintraege.filter((e) => String(e.am) >= grenze);
+    if (daten.eintraege.length !== vorher) schreiben(EIGEN, daten);
     return daten;
   }
   function ratDaten() {
@@ -166,13 +184,13 @@ function registerKlasseRoutes(app, options = {}) {
     if (k.lehrer) { res.status(403).json({ ok: false, lehrer: true, error: "Hausaufgabenheft und Klassenrat gehören zu einer Klasse. Mit dem Lehrercode findest du beides in der Verwaltung." }); return null; }
     return k;
   }
-  function zuViele(code) {
+  function zuViele(code, grenze) {
     const t = jetzt().getTime();
     let z = versuche.get(code);
     if (!z || t - z.start > 600000) { z = { start: t, n: 0 }; versuche.set(code, z); }
     z.n += 1;
     if (versuche.size > 5000) versuche.clear();
-    return z.n > proZehnMinuten;
+    return z.n > (grenze || proZehnMinuten);
   }
   const fehler = (res, error) => {
     console.error("Klassenbereich:", error && error.message);
@@ -181,6 +199,8 @@ function registerKlasseRoutes(app, options = {}) {
 
   /* ---------- Hausaufgabenheft ---------- */
   const fuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: e.link || "" });
+  // eigen: vom Kind selbst geschrieben; bis: letzter Tag, an dem es den Eintrag gibt
+  const eigenFuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: "", eigen: true, bis: tagPlus(e.am, EIGEN_TAGE) });
 
   app.post("/api/klasse/heft", async (req, res) => {
     try {
@@ -191,7 +211,47 @@ function registerKlasseRoutes(app, options = {}) {
         .filter((e) => e.klasse === k.klasse && e.faellig >= ab)
         .sort((a, b) => a.faellig.localeCompare(b.faellig) || String(a.am).localeCompare(String(b.am)))
         .map(fuerKind);
-      return res.json({ ok: true, klasse: k.klasse, heute, eintraege });
+      // dazu, was das Kind sich selbst eingetragen hat (nur seine eigenen Einträge)
+      const eigene = eigenDaten().eintraege
+        .filter((e) => e.code === k.code && e.faellig >= ab)
+        .sort((a, b) => a.faellig.localeCompare(b.faellig) || a.id.localeCompare(b.id))
+        .map(eigenFuerKind);
+      return res.json({ ok: true, klasse: k.klasse, heute, eintraege, eigene, eigenTage: EIGEN_TAGE });
+    } catch (error) { return fehler(res, error); }
+  });
+
+  /* ---------- Eigene Einträge des Kindes ---------- */
+  // Das Kind schreibt sich selbst etwas ins Heft (z. B. die Hausaufgabe eines Fachs, das nicht in GRUMI steht).
+  // Den Eintrag sieht nur dieses Kind – nicht die Klasse und nicht die Lehrkraft. Er wird EIGEN_TAGE Tage nach dem
+  // Schreiben von selbst gelöscht; gespeichert wird dazu nur das Tagesdatum, keine Uhrzeit.
+  app.post("/api/klasse/heft/eigen/speichern", async (req, res) => {
+    try {
+      const k = await kind(req, res);
+      if (!k) return;
+      if (zuViele("eigen:" + k.code, EIGEN_PRO_ZEHN_MINUTEN)) return res.status(429).json({ ok: false, error: "Das waren viele Einträge auf einmal. Warte ein paar Minuten." });
+      const b = req.body || {}, heute = tagBerlin(jetzt());
+      const fach = text(b.fach, 30), inhalt = mehrzeilig(b.text, 300), faellig = String(b.faellig || ""), typ = TYPEN.includes(b.typ) ? b.typ : "aufgabe";
+      if (!fach) return res.status(400).json({ ok: false, error: "Bitte wähle ein Fach." });
+      if (inhalt.length < 2) return res.status(400).json({ ok: false, error: "Schreib bitte auf, was du erledigen sollst." });
+      // Später als in EIGEN_TAGE Tagen geht nicht: Der Eintrag wäre vor seinem Termin schon gelöscht
+      if (!datumOk(faellig) || faellig < heute || faellig > tagPlus(heute, EIGEN_TAGE)) return res.status(400).json({ ok: false, error: "Bitte wähle einen Tag in den nächsten " + EIGEN_TAGE + " Tagen." });
+      const daten = eigenDaten();
+      if (daten.eintraege.filter((e) => e.code === k.code).length >= EIGEN_MAX) return res.status(400).json({ ok: false, error: "Du hast schon sehr viele eigene Einträge. Lösche zuerst einen alten." });
+      const eintrag = { id: neueId("e"), code: k.code, klasse: k.klasse, fach, text: inhalt, faellig, typ, am: heute };
+      daten.eintraege.push(eintrag);
+      schreiben(EIGEN, daten);
+      return res.json({ ok: true, eintrag: eigenFuerKind(eintrag) });
+    } catch (error) { return fehler(res, error); }
+  });
+
+  app.post("/api/klasse/heft/eigen/loeschen", async (req, res) => {
+    try {
+      const k = await kind(req, res);
+      if (!k) return;
+      const daten = eigenDaten(), id = String((req.body && req.body.id) || ""), vorher = daten.eintraege.length;
+      daten.eintraege = daten.eintraege.filter((e) => !(e.id === id && e.code === k.code));
+      if (daten.eintraege.length !== vorher) schreiben(EIGEN, daten);
+      return res.json({ ok: true });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -351,11 +411,11 @@ function registerKlasseRoutes(app, options = {}) {
 
   // Auch ohne Zugriff aufräumen: kurz nach dem Start und danach alle sechs Stunden
   const aufraeumen = () => {
-    try { heftDaten(); ratDaten(); } catch (error) { console.error("Klassenbereich: Aufräumen", error && error.message); }
+    try { heftDaten(); eigenDaten(); ratDaten(); } catch (error) { console.error("Klassenbereich: Aufräumen", error && error.message); }
   };
   [setTimeout(aufraeumen, 90000), setInterval(aufraeumen, 6 * 3600000)].forEach((t) => { if (t.unref) t.unref(); });
 
-  return { heft: () => lesen(HEFT).eintraege, rat: () => lesen(RAT).eintraege };
+  return { heft: () => lesen(HEFT).eintraege, rat: () => lesen(RAT).eintraege, eigen: () => lesen(EIGEN).eintraege, aufraeumen };
 }
 
-module.exports = { registerKlasseRoutes, SYSTEM, KATEGORIEN, TYPEN, regelPruefung, tagBerlin, schuljahrGrenze };
+module.exports = { registerKlasseRoutes, SYSTEM, KATEGORIEN, TYPEN, EIGEN_TAGE, EIGEN_MAX, regelPruefung, tagBerlin, schuljahrGrenze };

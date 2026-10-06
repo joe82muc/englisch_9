@@ -243,3 +243,73 @@ test("Löschfristen: Heft 60 Tage nach dem Termin, Klassenrat mit dem neuen Schu
   assert.equal((await post("/api/klasse/lehrer/rat/liste", { password: PW, klasse: "7aM" })).data.eintraege.length, 0);
   assert.equal(modul.rat().length, 0);
 });
+
+/* ---------- Eigene Einträge der Kinder (seit 07.10.2026) ---------- */
+test("Eigener Eintrag: das Kind schreibt selbst ins Heft – nur es selbst sieht ihn", async () => {
+  zeit = new Date("2027-10-04T08:00:00Z"); // Montag
+  const a = await post("/api/klasse/heft/eigen/speichern", { code: "123", fach: "Mathematik", text: "  Arbeitsheft: Aufgaben 3 bis 5  ", faellig: "2027-10-05" });
+  assert.equal(a.status, 200);
+  assert.deepEqual({ ...a.data.eintrag, id: "" }, { id: "", fach: "Mathematik", text: "Arbeitsheft: Aufgaben 3 bis 5", faellig: "2027-10-05", typ: "aufgabe", link: "", eigen: true, bis: "2027-10-18" });
+  await post("/api/klasse/heft/eigen/speichern", { code: "123", fach: "GPG", text: "Kurztest", faellig: "2027-10-07", typ: "probe" });
+  await post("/api/klasse/lehrer/heft/speichern", { password: PW, klasse: "7aM", fach: "Deutsch", text: "Text lesen", faellig: "2027-10-05" });
+
+  const ich = (await post("/api/klasse/heft", { code: "123" })).data;
+  assert.deepEqual(ich.eigene.map((e) => e.fach + "|" + e.typ), ["Mathematik|aufgabe", "GPG|probe"]);
+  assert.equal(ich.eigenTage, 14);
+  assert.deepEqual(ich.eintraege.map((e) => e.fach), ["Deutsch"], "die Einträge der Lehrkraft bleiben getrennt");
+  assert.deepEqual(Object.keys(ich.eintraege[0]).sort(), ["fach", "faellig", "id", "link", "text", "typ"]);
+  // ein anderes Kind sieht nichts davon, die Lehrkraft auch nicht
+  assert.deepEqual((await post("/api/klasse/heft", { code: "456" })).data.eigene, []);
+  const lk = (await post("/api/klasse/lehrer/heft/liste", { password: PW, klasse: "7aM" })).data.eintraege;
+  assert.deepEqual(lk.map((e) => e.text), ["Text lesen"]);
+  // gespeichert: Code, Klasse und nur das Tagesdatum (keine Uhrzeit)
+  const roh = modul.eigen()[0];
+  assert.deepEqual([roh.code, roh.klasse, roh.am], ["123", "7aM", "2027-10-04"]);
+  assert.equal(JSON.stringify(modul.heft()).includes("Arbeitsheft"), false, "nicht im Heft der Klasse");
+});
+
+test("Eigener Eintrag: Fach, Text und ein Tag in den nächsten 14 Tagen sind nötig", async () => {
+  zeit = new Date("2027-10-04T08:20:00Z");
+  for (const [feld, wert] of [["fach", ""], ["text", "x"], ["faellig", "2027-10-03"], ["faellig", "2027-10-19"], ["faellig", "19.10.2027"], ["faellig", ""]]) {
+    const r = await post("/api/klasse/heft/eigen/speichern", { code: "123", fach: "Englisch", text: "Vokabeln lernen", faellig: "2027-10-06", [feld]: wert });
+    assert.equal(r.status, 400, feld + "=" + wert);
+  }
+  assert.equal((await post("/api/klasse/heft/eigen/speichern", { code: "123", fach: "Englisch", text: "Vokabeln lernen", faellig: "2027-10-18" })).status, 200, "heute + 14 geht noch");
+  assert.equal((await post("/api/klasse/heft/eigen/speichern", { code: "000", fach: "Englisch", text: "Vokabeln lernen", faellig: "2027-10-06" })).status, 401);
+  assert.equal((await post("/api/klasse/heft/eigen/speichern", { code: "999", fach: "Englisch", text: "Vokabeln lernen", faellig: "2027-10-06" })).status, 429);
+  assert.equal(modul.eigen().length, 3);
+});
+
+test("Eigener Eintrag: löschen kann ihn nur das Kind, dem er gehört", async () => {
+  const id = (await post("/api/klasse/heft", { code: "123" })).data.eigene.find((e) => e.fach === "Englisch").id;
+  assert.equal((await post("/api/klasse/heft/eigen/loeschen", { code: "456", id })).status, 200);
+  assert.equal(modul.eigen().length, 3, "fremder Code: nichts gelöscht");
+  assert.equal((await post("/api/klasse/heft/eigen/loeschen", { code: "000", id })).status, 401);
+  assert.equal((await post("/api/klasse/heft/eigen/loeschen", { code: "123", id })).status, 200);
+  assert.deepEqual((await post("/api/klasse/heft", { code: "123" })).data.eigene.map((e) => e.fach), ["Mathematik", "GPG"]);
+});
+
+test("Eigener Eintrag: nach 14 Tagen von selbst gelöscht – auch ohne dass das Kind noch einmal hineinschaut", async () => {
+  zeit = new Date("2027-10-18T08:00:00Z"); // 14 Tage nach dem Schreiben: noch gespeichert
+  modul.aufraeumen();
+  assert.equal(modul.eigen().length, 2);
+  zeit = new Date("2027-10-19T08:00:00Z"); // 15. Tag: weg
+  modul.aufraeumen();
+  assert.equal(modul.eigen().length, 0);
+  assert.deepEqual((await post("/api/klasse/heft", { code: "123" })).data.eigene, []);
+});
+
+test("Eigener Eintrag: höchstens 20 in zehn Minuten und 40 je Kind", async () => {
+  zeit = new Date("2027-11-01T08:00:00Z");
+  const neu = (i) => post("/api/klasse/heft/eigen/speichern", { code: "456", fach: "Sport", text: "Turnbeutel " + i, faellig: "2027-11-02" });
+  for (let i = 0; i < 20; i++) assert.equal((await neu(i)).status, 200, "Eintrag " + i);
+  assert.equal((await neu(20)).status, 429);
+  zeit = new Date("2027-11-01T08:11:00Z");
+  for (let i = 20; i < 40; i++) assert.equal((await neu(i)).status, 200, "Eintrag " + i);
+  zeit = new Date("2027-11-01T08:22:00Z");
+  const voll = await neu(40);
+  assert.equal(voll.status, 400);
+  assert.match(voll.data.error, /sehr viele eigene Einträge/);
+  assert.equal(modul.eigen().filter((e) => e.code === "456").length, 40);
+  assert.equal((await post("/api/klasse/heft/eigen/speichern", { code: "123", fach: "Sport", text: "Turnbeutel", faellig: "2027-11-02" })).status, 200, "andere Kinder sind davon nicht betroffen");
+});
