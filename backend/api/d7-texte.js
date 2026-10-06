@@ -64,7 +64,14 @@ function registerD7TexteRoutes(app, options = {}) {
     fs.mkdirSync(dataDir, { recursive: true });
     const temp = DATEI + ".tmp";
     fs.writeFileSync(temp, JSON.stringify(daten, null, 1), "utf8");
-    fs.renameSync(temp, DATEI);
+    // kurz neu versuchen, falls gerade etwas anderes die Datei offen hält (siehe d7-proben.js)
+    for (let i = 0; ; i++) {
+      try { fs.renameSync(temp, DATEI); return; }
+      catch (error) {
+        if (i >= 6 || !["EPERM", "EBUSY", "EACCES"].includes(error.code)) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 40);
+      }
+    }
   }
   function lehrerOk(req, res) {
     const given = Buffer.from(String((req.body && req.body.password) || "").slice(0, 200)), expected = Buffer.from(teacherPassword);

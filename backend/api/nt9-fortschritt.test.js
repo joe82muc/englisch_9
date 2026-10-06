@@ -436,3 +436,25 @@ test("Fehlerwörter der Vokabeltrainer", async () => {
     assert.equal(an.body.fortschritt["e8-u1-vokabeln"].f, undefined);
   } finally { await new Promise((r) => api.server.close(r)); }
 });
+
+test("Deutsch 7: früher angemeldete Module erscheinen unter den heutigen Bereichsnamen", async () => {
+  const api = await starte({ store: dateiStore(null) });
+  try {
+    const [kind] = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 1 })).body.neu.map((x) => x.code);
+    // so stand ein Modul vor dem 06.10.2026 im Speicher
+    await api.store.sadd("nt9:mods", "d7-gr-01");
+    await api.store.set("nt9:mm:d7-gr-01", { id: "d7-gr-01", kurs: "d7", bereich: "Grammatik", bnr: 2, titel: "Wortarten und Pronomen", kurz: "G1", nr: 1, klassen: ["7M"] });
+    // eine noch nicht neu geladene Seite meldet mit dem alten Namen, eine neue Seite mit dem neuen
+    assert.equal((await api.post(P + "/melden", { code: kind, modul: "d7-rs-03", geloest: ["a"], gesamt: 7, meta: { bereich: "Rechtschreibung", bnr: 3, titel: "Getrennt oder zusammen?", kurz: "R3", nr: 3 } })).status, 200);
+    assert.equal((await api.post(P + "/melden", { code: kind, modul: "d7-rs-fehler", geloest: ["check"], gesamt: 18, meta: { bereich: "Rechtschreibung und Sprachtraining", bnr: 6, titel: "Mein Fehlertraining", kurz: "Modul 8", nr: 8 } })).status, 200);
+    assert.equal((await api.post(P + "/melden", { code: kind, modul: "d7-argumentationstrainer", geloest: ["s1"], gesamt: 4, meta: { bereich: "Argumentieren und diskutieren", bnr: 1, titel: "Argumentations-Führerschein", kurz: "Modul 1", nr: 1 } })).status, 200);
+    await api.flush();
+    const module = (await api.post(P + "/lehrer/liste", { password: "2", kurs: "d7", klasse: "7aM" })).body.module;
+    const bereich = (id) => (module.find((m) => m.id === id) || {}).bereich;
+    assert.equal(bereich("d7-gr-01"), "Grammatik und Sprache");
+    assert.equal(bereich("d7-rs-03"), "Rechtschreibung und Sprachtraining");
+    assert.equal(bereich("d7-rs-fehler"), "Rechtschreibung und Sprachtraining");
+    assert.deepEqual([...new Set(module.map((m) => m.bereich))], ["Argumentieren und diskutieren", "Grammatik und Sprache", "Rechtschreibung und Sprachtraining"], "jeder Bereich einmal, in der Reihenfolge der Themenbereiche");
+    assert.equal((await api.store.get("nt9:mm:d7-rs-03")).bnr, 6, "gespeichert wird gleich der heutige Stand");
+  } finally { await new Promise((ok) => api.server.close(ok)); }
+});

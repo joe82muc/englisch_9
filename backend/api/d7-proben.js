@@ -159,7 +159,15 @@ function registerD7ProbenRoutes(app, opts) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
     const temp = DATA_FILE + ".tmp";
     fs.writeFileSync(temp, JSON.stringify(data, null, 1), "utf8");
-    fs.renameSync(temp, DATA_FILE);
+    // Das Umbenennen kann kurz scheitern, wenn gerade etwas anderes die Datei offen hält (unter Windows z. B. der
+    // Virenscanner): ein paar Mal neu versuchen, statt die Abgabe oder die Korrektur zu verlieren
+    for (let i = 0; ; i++) {
+      try { fs.renameSync(temp, DATA_FILE); return; }
+      catch (error) {
+        if (i >= 6 || !["EPERM", "EBUSY", "EACCES"].includes(error.code)) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 40);
+      }
+    }
   }
   const probeKind = probeKindPruefer(opts.kindZumCode);
   function teacher(req, res) {

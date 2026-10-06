@@ -239,13 +239,18 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   const mmKey = (modul) => `nt9:mm:${modul}`;
 
   /* --- Selbst angemeldete Module --- */
+  // Deutsch 7 hat seit dem 06.10.2026 sechs Themenbereiche. Module, die sich früher angemeldet haben (oder die eine
+  // noch nicht neu geladene Seite meldet), tragen die alten Namen und Nummern ihrer Bereiche – angleichen, damit
+  // die Lehrkraft im Lernstand keinen Bereich doppelt sieht.
+  const D7_BEREICHE = { "Grammatik": ["Grammatik und Sprache", 5], "Rechtschreibung": ["Rechtschreibung und Sprachtraining", 6], "Argumentieren und diskutieren": ["Argumentieren und diskutieren", 3] };
+  const bereichHeute = (m) => (m && m.kurs === "d7" && D7_BEREICHE[m.bereich] ? { ...m, bereich: D7_BEREICHE[m.bereich][0], bnr: D7_BEREICHE[m.bereich][1] } : m);
   let dynCache = null;
   async function dynLaden() {
     if (dynCache) return dynCache;
     const ids = (await store.smembers("nt9:mods")).filter((id) => DYN_MUSTER.test(id));
     const metas = await mgetStuecke(store, ids.map(mmKey));
     const karte = new Map();
-    ids.forEach((id, i) => { if (metas[i]) karte.set(id, metas[i]); });
+    ids.forEach((id, i) => { if (metas[i]) karte.set(id, bereichHeute(metas[i])); });
     dynCache = karte;
     return karte;
   }
@@ -263,7 +268,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     const alt = dyn.get(id);
     if (!alt && !(meta && typeof meta === "object")) return false;
     if (!alt && dyn.size >= MAX_DYN) return false;
-    const neu = meta && typeof meta === "object" ? metaSaeubern(id, meta) : { ...alt };
+    const neu = bereichHeute(meta && typeof meta === "object" ? metaSaeubern(id, meta) : { ...alt });
     neu.klassen = [...new Set([...(alt ? alt.klassen || [] : []), ...(zug ? [zug] : [])])].sort();
     if (JSON.stringify(neu) !== JSON.stringify(alt)) {
       await store.set(mmKey(id), neu);
