@@ -340,6 +340,15 @@ registerKlasseRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// --- Sprachfahnen (zuerst Informatik 8): Lernseiten auf Englisch, Ukrainisch, Ungarisch, Kroatisch – die KI übersetzt
+// jedes Textstück einmal, danach kommt es aus dem Speicher (uebersetzungen-<sprache>.json, nach Upstash gespiegelt) ---
+const { registerUebersetzen } = require("./uebersetzen");
+registerUebersetzen(app, {
+  dataDir: DATA_DIR,
+  askKi: (system, user, maxTokens) => askKiMitErsatz(system, user, maxTokens, { milde: false }),
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- Deutsch 9M/9R Grammatik: KI-Zweitmeinung, wenn eine Umformung von der Lösung abweicht (nur mit Code) ---
 const { registerDeutsch9GrammatikRoutes } = require("./deutsch9-grammatik");
 registerDeutsch9GrammatikRoutes(app, {
@@ -459,7 +468,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-07-heft-eigen",
+    version: "2026-10-07-sprachfahnen",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),

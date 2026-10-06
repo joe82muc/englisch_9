@@ -146,6 +146,7 @@ function registerProbenRueckgabeRoutes(app, options) {
       const max = zahl(d.maxPoints, 1), punkte = zahl(d.points, d.correct ? 1 : 0);
       const a = { nr: d.nr != null ? d.nr : i + 1, prompt: text(d.prompt, 3000), given: paare(d.given, d.labels), points: punkte, max, comment: text(d.comment, 1500) };
       if (e.mitLoesung && punkte < max && d.expected != null && d.expected !== "") { a.loesung = paare(d.expected, d.labels, 3000); a.beispiel = d.type === "text"; }
+      Object.assign(a, herkunft(d));
       return a;
     });
     res.json({ ok: true, korrektur: {
@@ -156,6 +157,14 @@ function registerProbenRueckgabeRoutes(app, options) {
   });
 
   return { stand };
+}
+
+// Herkunft einer Aufgabe für die Rückgabe: Titel des Moduls (NT 7: modulTitel; NT 9: teil, bei Transferaufgaben
+// modulTitel) und die Marke „Transfer“. So sieht das Kind, welches Modul es wiederholen sollte.
+function herkunft(d) {
+  const teil = String(d.teil || ""), istTransfer = Boolean(d.transfer) || teil.slice(0, 8).toLowerCase() === "transfer";
+  const modul = String(d.modulTitel || (istTransfer ? "" : teil)).trim().slice(0, 120);
+  return { ...(modul ? { modul } : {}), ...(istTransfer ? { transfer: true } : {}) };
 }
 
 module.exports = { registerProbenRueckgabeRoutes };

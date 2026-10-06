@@ -25,6 +25,9 @@
  * opts.stufe (Informatik 8: 8) – nur Kinder dieser Jahrgangsstufe können die Proben beginnen; steht auch in den Meldungen des Servers.
  * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
  * je Schritt an der richtigen Stelle gibt es 1 Punkt.
+ * Block-Proben (seit 07.10.2026, nt7-block-*.js): Jede Aufgabe nennt ihr Modul (modul, modulTitel) und ggf. transfer: true.
+ * alt: true an einer Probe = frühere Fassung. Sie steht weiter in der Liste (Ergebnisse bleiben einsehbar), die Seiten
+ * bieten sie aber nicht mehr zum Freischalten oder Schreiben an.
  */
 
 const fs = require("fs");
@@ -96,7 +99,12 @@ function registerNt7Routes(app, opts) {
       options:item.options || undefined, labels:item.pairs?.map(pair => pair[0]),
       targets:item.pairs?.map(pair => pair[1]).sort((a,b) => a.localeCompare(b,"de")),
       steps:item.steps ? item.steps.slice().sort((a,b) => a.localeCompare(b,"de")) : undefined,
-      image:item.image || undefined,imageAlt:item.imageAlt || undefined};
+      image:item.image || undefined,imageAlt:item.imageAlt || undefined,...herkunft(item)};
+  }
+  // Herkunft einer Aufgabe (Block-Proben): Modul, in dem der Stoff steht (Kennung und Titel), und „Transfer“.
+  // Steht bei der Aufgabe in der Probe und – mit der Abgabe gespeichert – in Korrektur und Rückgabe.
+  function herkunft(item) {
+    return {...(item.modul ? {modul:item.modul,modulTitel:item.modulTitel || ""} : {}),...(item.transfer ? {transfer:true} : {})};
   }
   // item.dicht: Die Stichwörter sind Formeln. Leerzeichen um Rechenzeichen und Klammern zählen nicht,
   // und hinter der Formel darf nicht weitergerechnet werden (=B3/$B$6*100 ist nicht =B3/$B$6).
@@ -174,7 +182,7 @@ function registerNt7Routes(app, opts) {
   app.get(PREFIX + "/health", (_req,res) => res.json({ok:true,service:SERVICE,aiConfigured:Boolean(process.env.ANTHROPIC_API_KEY),storageConfigured:Boolean(process.env.NT_DATA_DIR)}));
   app.get(PREFIX + "/list", (_req,res) => {
     const data = readData();
-    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),zug:test.zug || "",thema:test.thema || "",unlocked:probeOffen(data.unlocked[test.id])}))});
+    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),zug:test.zug || "",thema:test.thema || "",...(test.alt ? {alt:true} : {}),unlocked:probeOffen(data.unlocked[test.id])}))});
   });
   app.post(PREFIX + "/start", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
@@ -233,7 +241,7 @@ function registerNt7Routes(app, opts) {
       const details = [], frei = [];
       for (let i=0; i<test.items.length; i++) {
         const item = test.items[i], raw = req.body.answers[i];
-        const base = {nr:i+1,type:item.type,prompt:item.prompt,maxPoints:item.points};
+        const base = {nr:i+1,type:item.type,prompt:item.prompt,maxPoints:item.points,...herkunft(item)};
         if (item.type === "choice") {
           const picked = Number.isInteger(raw) ? raw : -1;
           details.push({...base,given:item.options[picked] || "",points:picked === item.answer ? item.points : 0,expected:item.options[item.answer],source:"schluessel"});

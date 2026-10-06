@@ -242,6 +242,9 @@ function teilSummen(details) {
 
 // Kurzname fuer Tabellenkoepfe: "Modul 3 · Informationssysteme" -> "Modul 3"
 const teilKurz = (teil) => String(teil).split("·")[0].trim();
+// Herkunft einer Aufgabe (Block-Proben seit 07.10.2026): Modul (Kennung und Titel) und „Transfer“ – geht an die Seite
+// und wird mit der Abgabe gespeichert (Korrektur, Rückgabe). alt: true an einer Probe = frühere Fassung.
+const herkunft = (it) => ({ ...(it.modul ? { modul: it.modul, modulTitel: it.modulTitel || "" } : {}), ...(it.transfer ? { transfer: true } : {}) });
 
 // Datum und Uhrzeit wie in Deutschland ueblich, z. B. 29.09.2026 10:15
 function deutscheZeit(iso) {
@@ -403,6 +406,7 @@ function registerInfoaustauschRoutes(app, opts) {
       classLevel: t.classLevel,
       itemCount: t.items.length,
       maxPoints: maxPoints(t),
+      ...(t.alt ? { alt: true } : {}), thema: t.thema || "", minutes: t.minutes || undefined,
       unlocked: probeOffen(unlocks.unlocked[t.id])
     }));
     res.json({ ok: true, tests: list });
@@ -440,7 +444,7 @@ function registerInfoaustauschRoutes(app, opts) {
     const items = test.items.map((it, idx) => ({
       nr: idx + 1,
       type: it.type,
-      teil: it.teil || "",
+      teil: it.teil || "", ...herkunft(it),
       prompt: it.prompt,
       options: it.type === "choice" || it.type === "match" ? it.options : undefined,
       rows: it.type === "match" ? it.rows.map((r) => r.text) : undefined,
@@ -519,7 +523,7 @@ function registerInfoaustauschRoutes(app, opts) {
         details.push({
           nr: idx + 1,
           type: "match",
-          teil: item.teil || "",
+          teil: item.teil || "", ...herkunft(item),
           prompt: item.prompt,
           given: given.join(" | "),
           correct: hits === max,
@@ -533,7 +537,7 @@ function registerInfoaustauschRoutes(app, opts) {
         details.push({
           nr: idx + 1,
           type: "choice",
-          teil: item.teil || "",
+          teil: item.teil || "", ...herkunft(item),
           prompt: item.prompt,
           given: Number.isInteger(picked) && item.options[picked] !== undefined
             ? item.options[picked] : "",
@@ -550,7 +554,7 @@ function registerInfoaustauschRoutes(app, opts) {
         details.push({
           nr: idx + 1,
           type: "text",
-          teil: item.teil || "",
+          teil: item.teil || "", ...herkunft(item),
           prompt: item.prompt,
           given,
           correct: scored.points >= max,
@@ -600,7 +604,7 @@ function registerInfoaustauschRoutes(app, opts) {
         needsReview,
         teile: teilSummen(details),
         details: details.map((d) => ({
-          nr: d.nr, type: d.type, teil: d.teil, prompt: d.prompt, given: d.given,
+          nr: d.nr, type: d.type, teil: d.teil, ...herkunft(d), prompt: d.prompt, given: d.given,
           correct: d.correct, points: d.points, maxPoints: d.maxPoints,
           comment: d.comment || "", expected: d.expected
         })),
