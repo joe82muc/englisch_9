@@ -287,6 +287,26 @@ registerNt7FreigabeRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// --- Deutsch 7: Proben 1 bis 8 (je R7/M7, Variante A und Nachschreiber-Variante B). Die KI korrigiert vor, die
+// Lehrkraft prüft und gibt die korrigierte Probe an das Kind zurück (d7-proben.js). ---
+const { registerD7ProbenRoutes } = require("./d7-proben");
+const d7Proben = registerD7ProbenRoutes(app, {
+  dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
+// --- Deutsch 7: Schreibtrainer der Lernmodule (Rückmeldung in fünf Teilen, Fassungen für die Lehrkraft aufbewahrt) ---
+const { registerD7TexteRoutes } = require("./d7-texte");
+registerD7TexteRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+// Deutsch 7: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
+
 // --- Klassenbereich der Startseite: Hausaufgabenheft und Klassenrat-Briefkasten (die KI prüft jede Nachricht) ---
 const { registerKlasseRoutes } = require("./klasse");
 registerKlasseRoutes(app, {
@@ -332,6 +352,7 @@ registerProbenNotenRoutes(app, {
     { modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben },
     { modul: "grammatik9r", fach: "Englisch", abgaben: grammatik.abgaben },
     { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
+    { modul: "d7proben", fach: "Deutsch", abgaben: d7Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
     { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
@@ -404,7 +425,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-06-lehrercode",
+    version: "2026-10-06-deutsch7-proben",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
