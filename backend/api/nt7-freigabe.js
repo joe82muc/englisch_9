@@ -26,6 +26,8 @@
  * ("Informatik-7-Freigabe") – so nutzt Informatik 7 dieselbe Logik mit eigenem Stand (Module und Einheiten).
  * Deutsch 7 ebenso: "/api/d7", "d7-freigabe.json" (Themenbereiche und Module aus 7M/Deutsch/themen.js).
  * Informatik 8: "/api/inf8", "inf8-freigabe.json" und options.stufe = 8 (Freischalten für die 8. Klassen; Standard ist 7).
+ * Englisch 7, 8 und 9: "/api/e7", "/api/e8", "/api/e9" (Units und Seiten aus den themen.js der Englisch-Ordner; 9M und
+ * 9R haben je eine Liste, aber einen gemeinsamen Stand – er ist ohnehin nach Klasse getrennt).
  */
 
 const crypto = require("crypto");

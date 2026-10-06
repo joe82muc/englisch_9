@@ -287,6 +287,18 @@ registerNt7FreigabeRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// --- Englisch 7, 8 und 9: Units und Seiten je Klasse freischalten (Übersichten 7/Englisch_7, 8R/Englisch,
+// 9M/Englisch_9, 9R/Englisch; Verwaltung „Englisch“). 9M und 9R teilen sich /api/e9 – der Stand ist je Klasse. ---
+[7, 8, 9].forEach((stufe) => registerNt7FreigabeRoutes(app, {
+  prefix: "/api/e" + stufe,
+  datei: "e" + stufe + "-freigabe.json",
+  name: "Englisch-" + stufe + "-Freigabe",
+  stufe,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+}));
+
 // --- Deutsch 7: Proben 1 bis 8 (je R7/M7, Variante A und Nachschreiber-Variante B). Die KI korrigiert vor, die
 // Lehrkraft prüft und gibt die korrigierte Probe an das Kind zurück (d7-proben.js). ---
 const { registerD7ProbenRoutes } = require("./d7-proben");
@@ -435,7 +447,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-06-proben-rueckgabe",
+    version: "2026-10-06-englisch-freischalten",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
