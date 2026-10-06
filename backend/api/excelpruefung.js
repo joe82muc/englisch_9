@@ -42,16 +42,18 @@ function zipLesen(buf) {
     }
     break;
   }
-  const text = (name) => {
+  // Inhalt eines Eintrags als Bytes (daten) oder als Text
+  const daten = (name) => {
     const e = liste[name];
     if (!e || e.kopf + 30 > n) throw new Error("eintrag_fehlt");
     const start = e.kopf + 30 + buf.readUInt16LE(e.kopf + 26) + buf.readUInt16LE(e.kopf + 28);
     const roh = buf.subarray(start, start + e.gross);
-    if (e.methode === 0) return roh.toString("utf8");
+    if (e.methode === 0) return Buffer.from(roh);
     if (e.methode !== 8) throw new Error("verfahren");
-    return zlib.inflateRawSync(roh, { maxOutputLength: 4 * 1024 * 1024 }).toString("utf8");
+    return zlib.inflateRawSync(roh, { maxOutputLength: 4 * 1024 * 1024 });
   };
-  return { namen: Object.keys(liste), hat: (name) => Object.prototype.hasOwnProperty.call(liste, name), text };
+  const text = (name) => daten(name).toString("utf8");
+  return { namen: Object.keys(liste), hat: (name) => Object.prototype.hasOwnProperty.call(liste, name), text, daten };
 }
 
 /* ------------------------------------------------------------------
@@ -293,14 +295,19 @@ function registerExcelPruefung(app, opts = {}) {
     if (!b64) return res.status(400).json({ ok: false, error: "keine_datei", message: "Es ist keine Datei angekommen." });
     const nichtLesbar = (text) => res.json({ ok: true, lesbar: false, erfuellt: false, punkte: [], rueckmeldung: text, quelle: "pruefprogramm" });
     if (b64.length > MAX_BYTES * 1.4) return nichtLesbar("Die Datei ist zu groß. Eine Übungstabelle ist viel kleiner – hast du die richtige Datei gewählt?");
+    const buf = Buffer.from(b64, "base64");
     let x;
-    try { x = liesXlsx(Buffer.from(b64, "base64")); } catch (_e) { return nichtLesbar(KEINE_EXCEL); }
+    try { x = liesXlsx(buf); } catch (_e) { return nichtLesbar(KEINE_EXCEL); }
     let punkte;
     try { punkte = (aufgabe.pruefe(x) || []).map((p) => ({ ok: !!p.ok, text: clean(p.text).slice(0, 300) })); }
     catch (_e) { return nichtLesbar("Die Datei lässt sich nicht prüfen. Speichere sie in Excel noch einmal als Excel-Arbeitsmappe (.xlsx)."); }
     const erfuellt = punkte.length > 0 && punkte.every((p) => p.ok);
-    const ki = await kiRueckmeldung(aufgabe, x, punkte, erfuellt, kiErlaubt(req.ip || "") ? askAnthropic : null, klasse);
-    return res.json({ ok: true, lesbar: true, erfuellt, punkte, rueckmeldung: ki.text, quelle: ki.quelle });
+    // opts.merke: die Datei für die Lehrkraft aufbewahren, wenn das Kind mit seinem Code angemeldet ist (abgaben.js)
+    const [ki, gespeichert] = await Promise.all([
+      kiRueckmeldung(aufgabe, x, punkte, erfuellt, kiErlaubt(req.ip || "") ? askAnthropic : null, klasse),
+      opts.merke ? opts.merke(req, { aufgabe: kennung, art: "xlsx", buf, punkte }) : false
+    ]);
+    return res.json({ ok: true, lesbar: true, erfuellt, punkte, rueckmeldung: ki.text, quelle: ki.quelle, gespeichert: !!gespeichert });
   });
 }
 

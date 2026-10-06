@@ -30,10 +30,16 @@ const zugVonKlasse = (klasse) => (/M$/.test(String(klasse || "")) ? "M" : "R");
    mitten in der Probe seine Arbeit verliert. eintrag: { open, changedAt } aus der Freischalt-Datei. */
 const OFFEN_MS = 3 * 60 * 60 * 1000;
 const ABGABE_MS = 4 * 60 * 60 * 1000;
+/* Sperrt die Lehrkraft die Probe von Hand, während Kinder noch abgeben (Stundenende), geht Abgeben noch
+   NACHFRIST_MS weiter – sonst wäre die Arbeit dieser Kinder verloren. Beginnen kann die Probe dann niemand mehr. */
+const NACHFRIST_MS = 15 * 60 * 1000;
 function probeOffen(eintrag, zurAbgabe, jetzt = Date.now()) {
   if (!eintrag) return false;
   if (eintrag === true) return true; // ältere Form ohne Zeitpunkt (NT 7)
-  if (!eintrag.open) return false;
+  if (!eintrag.open) {
+    const zu = Date.parse(eintrag.changedAt || "");
+    return Boolean(zurAbgabe) && Number.isFinite(zu) && jetzt - zu >= 0 && jetzt - zu < NACHFRIST_MS;
+  }
   const seit = Date.parse(eintrag.changedAt || "");
   if (!Number.isFinite(seit)) return true;
   return jetzt - seit < (zurAbgabe ? ABGABE_MS : OFFEN_MS);
@@ -79,4 +85,4 @@ function probeKindPruefer(kindZumCode) {
   };
 }
 
-module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R };
+module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, NACHFRIST_MS, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R };

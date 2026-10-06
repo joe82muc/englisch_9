@@ -55,6 +55,14 @@ function registerNt7Routes(app, opts) {
      Modell abgekuendigt sein kann. Fehlt sie, fragen wir direkt an. */
   const askAnthropic = typeof opts.askAnthropic === "function" ? opts.askAnthropic : null;
   const pending = new Set();
+  /* Abgabe: Die Antworten werden sofort gespeichert (freie Antworten vorläufig nach Stichwörtern). Danach bewertet
+     die KI die freien Antworten. Das Kind wartet höchstens KI_GEDULD_MS auf sie; was länger dauert, läuft im
+     Hintergrund weiter und landet im gespeicherten Satz (bis zu KI_VERSUCHE Anläufe im Abstand von KI_PAUSE_MS).
+     So geht keine Abgabe verloren, wenn die KI langsam ist, ausfällt oder der Server neu startet. */
+  const KI_GEDULD_MS = opts.kiGeduldMs === undefined ? 20000 : opts.kiGeduldMs;
+  const KI_PAUSE_MS = opts.kiPauseMs === undefined ? 20000 : opts.kiPauseMs;
+  const KI_VERSUCHE = opts.kiVersuche || 3;
+  const warte = (ms) => new Promise((ok) => { const timer = setTimeout(ok, ms); if (timer.unref) timer.unref(); });
 
 
   function readData() {
@@ -119,7 +127,9 @@ function registerNt7Routes(app, opts) {
     ].join("\n");
     const userText = JSON.stringify({question:item.prompt,expected:item.expected,criteria:item.criteria,studentAnswer:answer});
 
-    /* Bevorzugt ueber den Hauptserver, weil der mehrere Modelle durchprobiert. */
+    /* Bevorzugt ueber den Hauptserver: Er probiert mehrere Modelle durch, begrenzt die Zahl gleichzeitiger
+       Anfragen und setzt eine Zeitgrenze. Scheitert der Anlauf, gilt vorläufig das Stichwort-Ergebnis – die Abgabe
+       fragt später im Hintergrund noch einmal nach (kiNachtragen). */
     if (askAnthropic) {
       try {
         const raw = await askAnthropic(systemText, userText, 220);
@@ -130,7 +140,7 @@ function registerNt7Routes(app, opts) {
         return {points:Math.max(0,Math.min(item.points,Math.round(Number(parsed.points)))),comment:clean(parsed.comment,220) || "KI-Bewertung.",source:"ki",needsReview:false};
       } catch (err) {
         console.error(LOG + " KI-Korrektur (askAnthropic):",err.message);
-        /* weiter zum direkten Aufruf unten */
+        return fallback;
       }
     }
 
@@ -180,6 +190,33 @@ function registerNt7Routes(app, opts) {
     if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
     return res.json({ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test)},items:test.items.map(publicItem)});
   });
+  // Punkte, Prozent, Note und „Nachsehen nötig“ eines Satzes aus seinen Einzelheiten
+  function rechne(record, test) {
+    const total = maxPoints(test), score = record.details.reduce((sum,d) => sum+d.points,0);
+    Object.assign(record, {score,total,percent:Math.round(score/total*100),grade:grade(score/total*100,record.zug),needsReview:record.details.some(d => d.needsReview)});
+  }
+  // KI-Bewertung der freien Antworten in den gespeicherten Satz eintragen. Lesen, ändern und schreiben geschieht
+  // ohne Unterbrechung – gleichzeitige Abgaben anderer Kinder gehen dabei nicht verloren.
+  async function kiNachtragen(id, test, frei) {
+    let offen = frei.slice();
+    for (let versuch = 0; versuch < KI_VERSUCHE && offen.length; versuch++) {
+      if (versuch) await warte(KI_PAUSE_MS);
+      const stand = readData().submissions.find(row => row.id === id);
+      if (!stand) return;                                      // von der Lehrkraft gelöscht
+      const ergebnisse = await Promise.all(offen.map(i => textScore(stand.details[i].given, test.items[i]).catch(() => null)));
+      const data = readData(), row = data.submissions.find(r => r.id === id);
+      if (!row) return;
+      const weiter = [];
+      offen.forEach((i, k) => {
+        const d = row.details[i], r = ergebnisse[k];
+        if (d.source === "lehrkraft") return;                  // die Lehrkraft hat inzwischen selbst bewertet
+        if (r && r.source === "ki") Object.assign(d, {points:r.points,comment:r.comment,source:"ki",needsReview:false});
+        else weiter.push(i);
+      });
+      rechne(row, test); writeData(data);
+      offen = weiter;
+    }
+  }
   app.post(PREFIX + "/submit", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
@@ -190,10 +227,10 @@ function registerNt7Routes(app, opts) {
     if (pending.has(submissionKey)) return res.status(409).json({ok:false,error:"submission_in_progress"});
     pending.add(submissionKey);
     try {
-      let data = readData();
+      const data = readData();
       if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ok:false,error:"locked"});
       if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
-      const details = [];
+      const details = [], frei = [];
       for (let i=0; i<test.items.length; i++) {
         const item = test.items[i], raw = req.body.answers[i];
         const base = {nr:i+1,type:item.type,prompt:item.prompt,maxPoints:item.points};
@@ -210,18 +247,20 @@ function registerNt7Routes(app, opts) {
           const points = item.steps.filter((v,j) => given[j] === v).length;
           details.push({...base,given,labels:item.steps.map((_,j) => (j+1) + "."),points,expected:item.steps,source:"schluessel"});
         } else {
-          const given = clean(raw,1500);
-          const result = await textScore(given,item);
+          // freie Antwort: sofort vorläufig nach Stichwörtern, die KI kommt nach dem Speichern
+          const given = clean(raw,1500), result = textFallback(given,item);
           details.push({...base,given,points:result.points,expected:item.expected,comment:result.comment,source:result.source,needsReview:result.needsReview});
+          if (given && process.env.ANTHROPIC_API_KEY) frei.push(i);
         }
       }
-      const score = details.reduce((sum,d) => sum+d.points,0), total = maxPoints(test), percent = Math.round(score/total*100);
-      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),score,total,percent,grade:grade(score/total*100,student.zug),needsReview:details.some(d => d.needsReview),details,submittedAt:new Date().toISOString()};
-      data = readData();
-      if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ok:false,error:"locked"});
-      if (data.submissions.some(row => row.testId === test.id && row.studentKey === student.key)) return res.status(409).json({ok:false,error:"already_submitted"});
-      data.submissions.push(record); writeData(data);
-      return res.json({ok:true,result:{score,total,percent,grade:record.grade,needsReview:record.needsReview,details,submittedAt:record.submittedAt}});
+      const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),details,submittedAt:new Date().toISOString()};
+      // nach dem Sperren von Hand abgegeben (Nachfrist): für die Lehrkraft vermerkt
+      if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
+      rechne(record, test);
+      data.submissions.push(record); writeData(data);          // ab hier ist die Abgabe sicher
+      if (frei.length) await Promise.race([kiNachtragen(record.id, test, frei), warte(KI_GEDULD_MS)]);
+      const stand = readData().submissions.find(row => row.id === record.id) || record;
+      return res.json({ok:true,result:{score:stand.score,total:stand.total,percent:stand.percent,grade:stand.grade,needsReview:stand.needsReview,details:stand.details,submittedAt:stand.submittedAt}});
     } catch (err) {
       console.error(LOG + " submission:",err);
       return res.status(500).json({ok:false,error:"server_error"});

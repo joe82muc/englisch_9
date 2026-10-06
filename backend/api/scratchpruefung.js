@@ -72,9 +72,10 @@ function registerScratchPruefung(app, opts = {}) {
     if (!b64) return res.status(400).json({ ok: false, error: "keine_datei", message: "Es ist keine Datei angekommen." });
     const nichtLesbar = (text) => res.json({ ok: true, lesbar: false, erfuellt: false, punkte: [], rueckmeldung: text, quelle: "pruefprogramm" });
     if (b64.length > MAX_BYTES * 1.4) return nichtLesbar("Die Datei ist zu groß für die Prüfung hier. Beantworte die Frage darunter.");
+    const buf = Buffer.from(b64, "base64");
     let x;
     try {
-      const zip = zipLesen(Buffer.from(b64, "base64"));
+      const zip = zipLesen(buf);
       if (!zip.hat("project.json")) throw new Error("kein_projekt");
       x = scratchProjekt(zip.text("project.json"));
     } catch (_e) { return nichtLesbar(KEIN_PROJEKT); }
@@ -82,8 +83,12 @@ function registerScratchPruefung(app, opts = {}) {
     try { punkte = (aufgabe.pruefe(x) || []).map((p) => ({ ok: !!p.ok, text: clean(p.text).slice(0, 300) })); }
     catch (_e) { return nichtLesbar("Das Projekt lässt sich nicht prüfen. Speichere es in Scratch noch einmal und lade es erneut hoch."); }
     const erfuellt = punkte.length > 0 && punkte.every((p) => p.ok);
-    const ki = await kiRueckmeldung(aufgabe, x.text(), punkte, erfuellt, kiErlaubt(req.ip || "") ? askAnthropic : null, klasse);
-    return res.json({ ok: true, lesbar: true, erfuellt, punkte, rueckmeldung: ki.text, quelle: ki.quelle });
+    // opts.merke: das Projekt für die Lehrkraft aufbewahren, wenn das Kind mit seinem Code angemeldet ist (abgaben.js)
+    const [ki, gespeichert] = await Promise.all([
+      kiRueckmeldung(aufgabe, x.text(), punkte, erfuellt, kiErlaubt(req.ip || "") ? askAnthropic : null, klasse),
+      opts.merke ? opts.merke(req, { aufgabe: kennung, art: "sb3", buf, punkte }) : false
+    ]);
+    return res.json({ ok: true, lesbar: true, erfuellt, punkte, rueckmeldung: ki.text, quelle: ki.quelle, gespeichert: !!gespeichert });
   });
 }
 

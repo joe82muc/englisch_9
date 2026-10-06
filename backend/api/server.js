@@ -237,12 +237,19 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf7/uebung/feedback",
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf8/uebung/feedback", klasse: "Klasse 8", fach: "Informatik", thema: "Informatik (digitale Informationssysteme, Datenschutz und Big Data, Tabellenkalkulation mit Excel, Programmieren mit Scratch)" });
 
 // Informatik 8: Excel-Aufträge – das Kind lädt seine gespeicherte Tabelle hoch, ein Prüfprogramm prüft die Punkte
-// exakt, die KI schreibt die Rückmeldung (wie bei der Filius-Prüfung). Es wird nichts gespeichert.
+// exakt, die KI schreibt die Rückmeldung (wie bei der Filius-Prüfung).
+// Ist das Kind mit seinem Code angemeldet, wird die Datei für die Lehrkraft aufbewahrt (abgaben.js: ohne Namen,
+// in der Datenbank der Proben; ansehen in der Verwaltung). Ohne Code wird nichts gespeichert.
+const { abgabenSpeicher, abgabeMerker, registerAbgabenRoutes } = require("./abgaben");
+const inf8Abgaben = abgabenSpeicher({ kurs: "inf8", dataDir: DATA_DIR });
+const inf8Merke = abgabeMerker({ speicher: inf8Abgaben, stufe: 8, kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req) });
 const { registerExcelPruefung } = require("./excelpruefung");
-registerExcelPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse", aufgaben: require("./inf8-excel-aufgaben") });
+registerExcelPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse", aufgaben: require("./inf8-excel-aufgaben"), merke: inf8Merke });
 // Informatik 8: Scratch-Aufträge – gespeichertes Projekt (.sb3) hochladen, Prüfprogramm prüft exakt, KI schreibt die Rückmeldung
 const { registerScratchPruefung } = require("./scratchpruefung");
-registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse" });
+registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Klasse", merke: inf8Merke });
+registerAbgabenRoutes(app, { prefix: "/api/inf8", stufe: 8, teacherPassword: TEACHER_PASSWORD, speicher: inf8Abgaben,
+  excelAufgaben: require("./inf8-excel-aufgaben"), scratchModul: require("./inf8-scratch-aufgaben") });
 
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
@@ -397,7 +404,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-05-informatik8-komplett",
+    version: "2026-10-06-abgaben-sicher",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     time: new Date().toISOString(),
@@ -2069,7 +2076,35 @@ function clampNtPoints10(value) {
   return Math.round(clamped);
 }
 
+/* KI-Anfragen: Zeitgrenze und Drossel. Gibt eine ganze Klasse gleichzeitig eine Probe ab, laufen sonst Dutzende
+   Anfragen auf einmal los (Sperre beim Anbieter) oder eine hängende Anfrage hält die Abgabe auf. Höchstens
+   KI_GLEICHZEITIG Anfragen laufen zugleich; wer länger als KI_WARTEN_MS ansteht oder nach KI_ANTWORT_MS keine
+   Antwort hat, bekommt einen Fehler – jede Probe hat dafür eine Bewertung ohne KI. */
+const KI_GLEICHZEITIG = 8, KI_WARTEN_MS = 10000, KI_ANTWORT_MS = 20000;
+let kiLaeuft = 0;
+const kiSchlange = [];
+function kiPlatz() {
+  if (kiLaeuft < KI_GLEICHZEITIG) { kiLaeuft++; return Promise.resolve(); }
+  return new Promise((ok, fehler) => {
+    const eintrag = { ok, timer: setTimeout(() => {
+      const i = kiSchlange.indexOf(eintrag);
+      if (i >= 0) kiSchlange.splice(i, 1);
+      fehler(new Error("KI ausgelastet"));
+    }, KI_WARTEN_MS) };
+    kiSchlange.push(eintrag);
+  });
+}
+function kiFrei() {
+  const naechster = kiSchlange.shift();
+  if (naechster) { clearTimeout(naechster.timer); naechster.ok(); } else kiLaeuft--;
+}
 async function askAnthropic(system, user, maxTokens, optionen) {
+  if (!ANTHROPIC_API_KEY) return "";
+  await kiPlatz();
+  try { return await anthropicAnfrage(system, user, maxTokens, optionen); } finally { kiFrei(); }
+}
+
+async function anthropicAnfrage(system, user, maxTokens, optionen) {
   const apiKey = ANTHROPIC_API_KEY;
   if (!apiKey) return "";
 
@@ -2085,6 +2120,7 @@ async function askAnthropic(system, user, maxTokens, optionen) {
   for (const model of modelCandidates) {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: AbortSignal.timeout(KI_ANTWORT_MS),
       headers: {
         "content-type": "application/json",
         "x-api-key": apiKey,
