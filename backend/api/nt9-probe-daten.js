@@ -33,7 +33,10 @@ const GRADE_SCALE = [
 
 const KI_REGELN = [
   "Du korrigierst eine Probe im Fach Natur und Technik einer 9. Klasse an einer bayerischen Mittelschule.",
-  "Thema: Organische Rohstoffe (Kohlenstoffverbindungen, regenerative und fossile Rohstoffe, Holz, Zellstoff,",
+  "Die Probe gehört zu einem dieser Themenblöcke: Radioaktivität (Nachweis, Strahlungsarten, Halbwertszeit,",
+  "C-14-Methode, Folgen und Anwendung von Strahlung), Kernenergie (Kernspaltung, Kettenreaktion, Kernkraftwerk,",
+  "Risiken und Folgen) oder",
+  "Organische Rohstoffe (Kohlenstoffverbindungen, regenerative und fossile Rohstoffe, Holz, Zellstoff,",
   "Raps, Biodiesel, Stärke, Nachhaltigkeit, Entstehung von Erdöl, Erdgas und Kohle, fraktionierte Destillation,",
   "Fraktionen und Siedetemperaturen, Produkte aus Erdöl, Kohlenstoffkreislauf, Treibhauseffekt, Klimawandel,",
   "Verwendung von Erdöl, Umweltkosten, Abhängigkeit vom Import, Ersatz durch erneuerbare Energien und",
@@ -303,8 +306,53 @@ const probeR = {
   if (it.type === "match") it.points = it.rows.length;
 }));
 
+/* ================= Block-Proben (seit 07.10.2026) =================
+ * Je Themenblock eine Probe über alle seine Module, 30 bis 45 Minuten, je eine Fassung für 9M und 9R:
+ *   rohstoffe        – Auswahl aus der langen Probe oben (dieselben Aufgaben, neue Kennungen nt9m-/nt9r-rohstoffe)
+ *   radioaktivitaet  – nt9-block-radioaktivitaet.js
+ *   kernenergie      – nt9-block-kernenergie.js
+ * Jede Aufgabe nennt ihr Modul: teil = Titel des Moduls (das sehen die Kinder), modul = Kennung aus
+ * 9M/NT_9/themen.js (für die Verwaltung), Transferaufgaben: teil „Transfer“, transfer: true.
+ * Die lange Probe (nt9m-probe1, nt9r-probe1, etwa 60 Minuten) bleibt als frühere Fassung (alt) erhalten:
+ * Ihre Ergebnisse sind weiter einsehbar, zum Freischalten wird sie nicht mehr angeboten. */
+const MODUL_KENNUNG = { [M1]: "m1", [M2]: "m2", [M3]: "m3", [M4]: "m4", [M5]: "m5", [M6]: "m6", [M7]: "m7" };
+// Auswahl: Nummern der Aufgaben in der langen Probe (ab 0); transfer: Modul, auf dem die Transferaufgabe aufbaut
+function rohstoffBlock(quelle, id, minutes, auswahl, transfer) {
+  return {
+    id, title: quelle.title, unit: quelle.unit.replace("Module 1 bis 7", "Organische Rohstoffe, alle sieben Module"), classLevel: quelle.classLevel, thema: "rohstoffe", minutes,
+    items: auswahl.map((nr) => {
+      const it = quelle.items[nr], istTransfer = it.teil === TR;
+      return { ...it, teil: istTransfer ? "Transfer" : it.teil.split("·")[1].trim(), modul: istTransfer ? transfer[nr] : MODUL_KENNUNG[it.teil], ...(istTransfer ? { transfer: true } : {}) };
+    })
+  };
+}
+const bloecke = [
+  rohstoffBlock(probeM, "nt9m-rohstoffe", 45, [0, 1, 3, 4, 6, 7, 9, 10, 13, 14, 15, 17, 19, 22, 23, 25, 27, 29, 31, 34, 35, 36], { 35: "m5", 36: "m7" }),
+  rohstoffBlock(probeR, "nt9r-rohstoffe", 40, [0, 1, 3, 5, 6, 9, 10, 11, 14, 15, 16, 17, 20, 22, 23, 25, 26, 31, 32, 34, 35, 36], { 35: "m5", 36: "m7" })
+];
+["radioaktivitaet", "kernenergie"].forEach((block) => {
+  const b = JSON.parse(JSON.stringify(require("./nt9-block-" + block)));
+  [b.probeM, b.probeR].forEach((p) => {
+    p.items.forEach((it) => {
+      if (it.type === "text") it.keywordsVoll = 2;
+      if (it.type === "match") it.points = it.rows.length;
+    });
+    bloecke.push(p);
+  });
+});
+// Titel des Moduls zu jeder Aufgabe (bei Transferaufgaben steht in teil „Transfer“): für Korrektur und Rückgabe
+bloecke.forEach((p) => {
+  const titel = {};
+  p.items.forEach((it) => { if (!it.transfer && it.modul && !titel[it.modul]) titel[it.modul] = it.teil; });
+  p.items.forEach((it) => { it.modulTitel = titel[it.modul] || ""; });
+});
+probeM.alt = true;
+probeR.alt = true;
+
 // Antwortreihenfolge fest mischen (die richtige Antwort steht oben immer zuerst), siehe proben-mischen.js
 const { mischeAlle } = require("./proben-mischen");
-const TESTS = mischeAlle({ [probeM.id]: probeM, [probeR.id]: probeR });
+const alle = { [probeM.id]: probeM, [probeR.id]: probeR };
+bloecke.forEach((p) => { alle[p.id] = p; });
+const TESTS = mischeAlle(alle);
 
 module.exports = { TESTS, GRADE_SCALE, KI_REGELN };

@@ -38,5 +38,18 @@ module.exports = {
 // (als Kopie: Das Mischen verändert die Aufgaben, die Vorlage in nt7-fragen-ausbau.js bleibt unberührt)
 Object.assign(module.exports, JSON.parse(JSON.stringify(require("./nt7-fragen-ausbau"))));
 
+// Seit 07.10.2026: je Themenbereich EINE Probe über alle seine Module (30 bis 45 Minuten), R- und M-Fassung –
+// nt7-block-<bereich>.js mit den Kennungen nt7-<bereich>-r und nt7-<bereich>-m. Jede Aufgabe nennt ihr Modul
+// (modul = Kennung aus 7M/NT/themen.js, der Titel kommt aus nt7-module.js) und ggf. transfer: true.
+// Alles davor (die beiden ersten Luft-Proben und die Proben 1 bis 4) bleibt als frühere Fassung (alt): Die Ergebnisse
+// sind weiter einsehbar, zum Freischalten werden diese Proben nicht mehr angeboten.
+Object.values(module.exports).forEach((probe) => { probe.alt = true; });
+const MODUL_TITEL = require("./nt7-module");
+["luft", "atome", "tiere", "mensch", "strom"].forEach((bereich) => {
+  const proben = JSON.parse(JSON.stringify(require("./nt7-block-" + bereich)));
+  Object.values(proben).forEach((probe) => probe.items.forEach((item) => { item.modulTitel = MODUL_TITEL[item.modul] || ""; }));
+  Object.assign(module.exports, proben);
+});
+
 // Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
 require("./proben-mischen").mischeAlle(module.exports);

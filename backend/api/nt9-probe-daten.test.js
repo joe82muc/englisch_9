@@ -8,8 +8,9 @@ const { TESTS } = require("./nt9-probe-daten");
 const punkte = (t) => t.items.reduce((s, it) => s + (it.type === "match" ? it.rows.length : it.points), 0);
 
 test("Je eine ausführliche Fassung für 9M und 9R mit allen sieben Modulen", () => {
-  assert.deepEqual(Object.keys(TESTS).sort(), ["nt9m-probe1", "nt9r-probe1"]);
-  for (const t of Object.values(TESTS)) {
+  // seit 07.10.2026 die frühere, lange Fassung (alt); die Block-Proben prüft block-proben.test.js
+  assert.deepEqual(Object.keys(TESTS).filter((id) => TESTS[id].alt).sort(), ["nt9m-probe1", "nt9r-probe1"]);
+  for (const t of Object.values(TESTS).filter((x) => x.alt)) {
     assert.ok(t.items.length >= 35, t.id + ": mindestens 35 Aufgaben");
     for (let m = 1; m <= 7; m++) assert.ok(t.items.filter((it) => it.teil.startsWith("Modul " + m + " ")).length >= 4, t.id + ": Modul " + m + " mit mindestens 4 Aufgaben");
     assert.ok(t.items.some((it) => it.teil.startsWith("Transfer")), t.id + ": Transfer");

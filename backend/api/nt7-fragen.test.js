@@ -12,7 +12,8 @@ const { registerNt7Routes } = require("./nt7");
 const NEU = ["nt7-p1-r", "nt7-p1-m", "nt7-p2-r", "nt7-p2-m", "nt7-p3-r", "nt7-p3-m", "nt7-p4-r", "nt7-p4-m"];
 
 test("Die beiden ersten Luft-Proben sind unverändert da, dazu acht neue (je Probe eine R- und eine M-Fassung)", () => {
-  assert.deepEqual(Object.keys(tests).sort(), ["nt7-luft-1", "nt7-luft-2", ...NEU].sort());
+  // seit 07.10.2026 sind das die früheren Fassungen (alt); die Block-Proben prüft block-proben.test.js
+  assert.deepEqual(Object.keys(tests).filter((id) => tests[id].alt).sort(), ["nt7-luft-1", "nt7-luft-2", ...NEU].sort());
   assert.equal(tests["nt7-luft-1"].items.length, 10);
   assert.equal(tests["nt7-luft-1"].zug, undefined);
   NEU.forEach((id) => {
@@ -102,8 +103,8 @@ test("R-Kinder schreiben die R-Fassung, M-Kinder die M-Fassung", async () => {
   const post = (route, body) => fetch(base + route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, data: await r.json() }));
   try {
     const liste = (await (await fetch(base + "/api/nt7/list")).json()).tests;
-    assert.equal(liste.length, 10);
-    assert.deepEqual(liste.find((t) => t.id === "nt7-p3-r"), { ...liste.find((t) => t.id === "nt7-p3-r"), zug: "R", thema: "mensch", unlocked: false });
+    assert.equal(liste.length, 20);
+    assert.deepEqual(liste.find((t) => t.id === "nt7-p3-r"), { ...liste.find((t) => t.id === "nt7-p3-r"), zug: "R", thema: "mensch", alt: true, unlocked: false });
     assert.equal(liste.find((t) => t.id === "nt7-luft-1").zug, "");
     for (const id of ["nt7-p1-r", "nt7-p1-m"]) assert.equal((await post("/api/nt7/teacher/unlock", { password: "pw", testId: id, open: true })).status, 200);
     assert.equal((await post("/api/nt7/start", { testId: "nt7-p1-m", code: "222" })).status, 403, "R-Kind in der M-Probe");
