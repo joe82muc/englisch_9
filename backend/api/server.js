@@ -340,6 +340,17 @@ registerKlasseRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// Gemeinsamer Probenkalender: eigene Lehrkraft-Zugaenge, Klassenansicht ueber den vorhandenen Code.
+const { registerKalenderRoutes } = require("./kalender/server/kalender");
+const { upstashZugang: kalenderUpstash } = require("./nt9-fortschritt");
+registerKalenderRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  redis: kalenderUpstash(process.env, "UPSTASH_grumiproben", "UPSTASH_grumiproben_token"),
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req),
+  klassenLaden: () => nt9Fortschritt.klassenLaden()
+});
+
 // --- Sprachfahnen (zuerst Informatik 8): Lernseiten auf Englisch, Ukrainisch, Ungarisch, Kroatisch – die KI übersetzt
 // jedes Textstück einmal, danach kommt es aus dem Speicher (uebersetzungen-<sprache>.json, nach Upstash gespiegelt) ---
 const { registerUebersetzen } = require("./uebersetzen");

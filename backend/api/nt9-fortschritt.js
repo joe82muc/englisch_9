@@ -665,7 +665,9 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), lrs: Boolean(kind.lrs) };
   }
 
-  return { store, flush, kindZumCode, lehrerCode: LEHRER };
+  return { store, flush, kindZumCode, lehrerCode: LEHRER,
+    klassenLaden: async () => klassenUebersicht([...(await kinderLaden()).values()]).map((k) => k.klasse)
+  };
 }
 
 // Zugangsdaten aus dem Render-Dashboard großzügig lesen: ganze .env-Zeile, Anführungszeichen,

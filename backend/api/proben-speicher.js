@@ -38,7 +38,7 @@ const PRAEFIXE = [
   "/api/e7", "/api/e8", "/api/e9", "/api/n9", "/api/uebersetzen"
 ];
 // Lernfortschritt hat seine eigene Datenbank, students/progress sind Reste der alten Englisch-App
-const AUSGENOMMEN = new Set(["nt9-fortschritt.json", "students.json", "progress.json"]);
+const AUSGENOMMEN = new Set(["nt9-fortschritt.json", "students.json", "progress.json", "kalender-lokal.json"]);
 const gueltig = (datei) => /^[\w.-]+\.json$/.test(datei) && !AUSGENOMMEN.has(datei);
 const sha1 = (buf) => crypto.createHash("sha1").update(buf).digest("hex");
 
