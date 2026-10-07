@@ -198,7 +198,19 @@ function registerKlasseRoutes(app, options = {}) {
   };
 
   /* ---------- Hausaufgabenheft ---------- */
-  const fuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: e.link || "" });
+  const fuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: e.link || "", ...(e.quelle === "kalender" ? { quelle: "kalender" } : {}) });
+  // Kalender bleibt die Quelle: Verschieben, Klassenwechsel und Loeschen gelten sofort auch im Heft.
+  async function gemeinsameEintraege(klasse) {
+    const eintraege = heftDaten().eintraege.filter((e) => e.klasse === klasse);
+    if (typeof options.kalenderTermine !== "function") return { eintraege };
+    try {
+      const proben = await options.kalenderTermine(klasse);
+      return { eintraege: eintraege.concat(proben.filter((e) => e.klasse === klasse)) };
+    } catch (error) {
+      console.error("Heft-Probentermine:", error.message);
+      return { eintraege, kalenderFehler: "Die Probentermine konnten gerade nicht geladen werden. Bitte später neu laden oder im Probenkalender nachsehen." };
+    }
+  }
   // eigen: vom Kind selbst geschrieben; bis: letzter Tag, an dem es den Eintrag gibt
   const eigenFuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: "", eigen: true, bis: tagPlus(e.am, EIGEN_TAGE) });
 
@@ -207,8 +219,9 @@ function registerKlasseRoutes(app, options = {}) {
       const k = await kind(req, res);
       if (!k) return;
       const heute = tagBerlin(jetzt()), ab = tagPlus(heute, -1);
-      const eintraege = heftDaten().eintraege
-        .filter((e) => e.klasse === k.klasse && e.faellig >= ab)
+      const gemeinsam = await gemeinsameEintraege(k.klasse);
+      const eintraege = gemeinsam.eintraege
+        .filter((e) => e.faellig >= ab)
         .sort((a, b) => a.faellig.localeCompare(b.faellig) || String(a.am).localeCompare(String(b.am)))
         .map(fuerKind);
       // dazu, was das Kind sich selbst eingetragen hat (nur seine eigenen Einträge)
@@ -216,7 +229,7 @@ function registerKlasseRoutes(app, options = {}) {
         .filter((e) => e.code === k.code && e.faellig >= ab)
         .sort((a, b) => a.faellig.localeCompare(b.faellig) || a.id.localeCompare(b.id))
         .map(eigenFuerKind);
-      return res.json({ ok: true, klasse: k.klasse, heute, eintraege, eigene, eigenTage: EIGEN_TAGE });
+      return res.json({ ok: true, klasse: k.klasse, heute, eintraege, eigene, eigenTage: EIGEN_TAGE, ...(gemeinsam.kalenderFehler ? { kalenderFehler: gemeinsam.kalenderFehler } : {}) });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -255,21 +268,24 @@ function registerKlasseRoutes(app, options = {}) {
     } catch (error) { return fehler(res, error); }
   });
 
-  app.post("/api/klasse/lehrer/heft/liste", (req, res) => {
+  app.post("/api/klasse/lehrer/heft/liste", async (req, res) => {
     if (!lehrerOk(req, res)) return;
-    const klasse = klasseNorm(req.body.klasse);
-    if (!klasse) return res.status(400).json({ ok: false, error: "Unbekannte Klasse." });
-    const heute = tagBerlin(jetzt()), ab = tagPlus(heute, -30);
-    const eintraege = heftDaten().eintraege
-      .filter((e) => e.klasse === klasse && e.faellig >= ab)
-      .sort((a, b) => b.faellig.localeCompare(a.faellig) || String(b.am).localeCompare(String(a.am)));
-    return res.json({ ok: true, klasse, heute, eintraege });
+    try {
+      const klasse = klasseNorm(req.body.klasse);
+      if (!klasse) return res.status(400).json({ ok: false, error: "Unbekannte Klasse." });
+      const heute = tagBerlin(jetzt()), ab = tagPlus(heute, -30), gemeinsam = await gemeinsameEintraege(klasse);
+      const eintraege = gemeinsam.eintraege
+        .filter((e) => e.faellig >= ab)
+        .sort((a, b) => b.faellig.localeCompare(a.faellig) || String(b.am).localeCompare(String(a.am)));
+      return res.json({ ok: true, klasse, heute, eintraege, ...(gemeinsam.kalenderFehler ? { kalenderFehler: gemeinsam.kalenderFehler } : {}) });
+    } catch (error) { return fehler(res, error); }
   });
 
   app.post("/api/klasse/lehrer/heft/speichern", (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
       const b = req.body || {};
+      if (String(b.id || "").startsWith("kalender:")) return res.status(409).json({ ok: false, error: "Diesen Probentermin bitte im Probenkalender bearbeiten." });
       const klasse = klasseNorm(b.klasse), fach = text(b.fach, 30), inhalt = mehrzeilig(b.text, 400);
       const faellig = String(b.faellig || ""), typ = TYPEN.includes(b.typ) ? b.typ : "aufgabe";
       const heute = tagBerlin(jetzt());
@@ -295,6 +311,7 @@ function registerKlasseRoutes(app, options = {}) {
   app.post("/api/klasse/lehrer/heft/loeschen", (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
+      if (String(req.body.id || "").startsWith("kalender:")) return res.status(409).json({ ok: false, error: "Diesen Probentermin bitte im Probenkalender löschen." });
       const daten = heftDaten(), vorher = daten.eintraege.length;
       daten.eintraege = daten.eintraege.filter((e) => e.id !== String(req.body.id || ""));
       if (daten.eintraege.length !== vorher) schreiben(HEFT, daten);

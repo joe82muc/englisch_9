@@ -337,13 +337,14 @@ registerKlasseRoutes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   askKi: (system, user, maxTokens) => askKiMitErsatz(system, user, maxTokens, { milde: false }),
+  kalenderTermine: (klasse) => probenKalender.heft(klasse),
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
 // Gemeinsamer Probenkalender: eigene Lehrkraft-Zugaenge, Klassenansicht ueber den vorhandenen Code.
 const { registerKalenderRoutes } = require("./kalender/server/kalender");
 const { upstashZugang: kalenderUpstash } = require("./nt9-fortschritt");
-registerKalenderRoutes(app, {
+const probenKalender = registerKalenderRoutes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   redis: kalenderUpstash(process.env, "UPSTASH_grumiproben", "UPSTASH_grumiproben_token"),
@@ -482,6 +483,7 @@ app.get("/api/health", (_req, res) => {
     version: "2026-10-07-block-proben",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
+    kalenderHeft: true,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

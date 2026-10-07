@@ -158,6 +158,14 @@ function registerKalenderRoutes(app, options = {}) {
     const es = (await entries()).filter((e) => e.klasse === k.klasse);
     return { klasse: k.klasse, eintraege: display(es, await store.all("konten"), true), vorschau: Boolean(options.vorschau) };
   });
-  return { store };
+  return { store, async heft(klasse) {
+    const k = D.klasse(klasse);
+    if (!k) throw problem(400, "Unbekannte Klasse.");
+    return (await entries()).filter((e) => e.klasse === k).map((e) => ({
+      id: "kalender:" + e.id, klasse: k, fach: e.fach,
+      text: [e.titel, e.stunde, e.hinweis].filter(Boolean).join("\n"),
+      faellig: e.datum, typ: "probe", link: "", quelle: "kalender", am: e.erstellt || e.datum
+    }));
+  } };
 }
 module.exports = { registerKalenderRoutes, pruefeEintrag };
