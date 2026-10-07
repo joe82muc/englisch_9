@@ -71,6 +71,7 @@ function registerKalenderRoutes(app, options = {}) {
       const k = accounts.find((a) => a.id === e.lehrerId);
       const out = { ...e, lehrer: k?.name || "Ehemalige Lehrkraft" };
       delete out.uid;
+      delete out._finger;
       if (pupil) { delete out.lehrerId; delete out.version; delete out.erstellt; delete out.geaendert; }
       return out;
     });
@@ -125,7 +126,10 @@ function registerKalenderRoutes(app, options = {}) {
     const next = { ...e, uid: old?.uid || "", id, lehrerId: t.konto.id, version: (old?.version || 0) + 1, erstellt: old?.erstellt || now().toISOString(), geaendert: now().toISOString() };
     const warnungen = D.warnungen(next, alle);
     if (warnungen.length && b.bestaetigt !== true) throw problem(409, "Bitte die Termin-Hinweise prüfen und bestätigen.");
-    if (!await store.cas("termine", id, raw, next)) throw problem(409, "Der Termin wurde inzwischen geändert. Bitte neu laden.");
+    const saved = await store.save(id, raw, next);
+    if (saved === -1) throw problem(409, "Dieser Termin ist bereits eingetragen.");
+    if (saved === -3) throw problem(400, "Der Kalender ist voll (5000 Termine).");
+    if (saved !== 1) throw problem(409, "Der Termin wurde inzwischen geändert. Bitte neu laden.");
     return { eintrag: display([next], [t.konto])[0], warnungen };
   });
   route("loeschen", async (req) => {
@@ -148,6 +152,7 @@ function registerKalenderRoutes(app, options = {}) {
     }
     if (alle.length + add.length > 5000) throw problem(400, "Der Kalender ist voll (5000 Termine).");
     const anzahl = await store.import(add);
+    if (anzahl === -3) throw problem(400, "Der Kalender ist voll (5000 Termine).");
     return { anzahl, doppelt: b.eintraege.length - anzahl };
   });
   route("klasse", async (req) => {
@@ -163,7 +168,7 @@ function registerKalenderRoutes(app, options = {}) {
     if (!k) throw problem(400, "Unbekannte Klasse.");
     return (await entries()).filter((e) => e.klasse === k).map((e) => ({
       id: "kalender:" + e.id, klasse: k, fach: e.fach,
-      text: [e.titel, e.stunde, e.hinweis].filter(Boolean).join("\n"),
+      text: [e.titel, e.stunde].filter(Boolean).join("\n"),
       faellig: e.datum, typ: "probe", link: "", quelle: "kalender", am: e.erstellt || e.datum
     }));
   } };

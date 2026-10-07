@@ -484,6 +484,7 @@ app.get("/api/health", (_req, res) => {
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     kalenderHeft: true,
+    kalenderDedupliziert: true,
     time: new Date().toISOString(),
     staticRoot: STATIC_ROOT,
     ai: {

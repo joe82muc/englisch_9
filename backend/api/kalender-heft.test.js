@@ -46,9 +46,13 @@ test.after(async () => {
 test("Vorhandene/importierte Proben aller Lehrkraefte zusaetzlich im richtigen Klassenheft",async()=>{
   const r=await kid(); assert.equal(r.status,200); assert.equal(proben(r).length,2);
   const e=proben(r).find(e=>e.id==="kalender:"+own.id);
-  assert.equal(e.fach,"Deutsch"); assert.equal(e.text,"Erzaehlung\n2. Stunde\nSchreibplan"); assert.equal(e.faellig,"2026-10-08"); assert.equal(e.typ,"probe");
+  assert.equal(e.fach,"Deutsch"); assert.equal(e.text,"Erzaehlung\n2. Stunde"); assert.equal(e.faellig,"2026-10-08"); assert.equal(e.typ,"probe");
+  assert.ok(!JSON.stringify(r.data).includes("Schreibplan"));
+  const original=(await post("/api/kalender/liste",{},token)).data.eintraege.find(e=>e.id===own.id);
+  assert.equal(original.hinweis,"Schreibplan");
   assert.ok(r.data.eintraege.some(e=>e.id===homework.id)); assert.equal(r.data.eigene.length,1);
   assert.equal(proben(await kid("202")).length,1); assert.equal(proben(await teacher()).length,2);
+  assert.equal(proben(await teacher()).find(entry=>entry.id==="kalender:"+own.id).text,"Erzaehlung\n2. Stunde");
   assert.ok(proben(r).some(e=>e.id==="kalender:"+other.id));
 });
 test("Klasse vom Code, keine fremden oder privaten Verwaltungsfelder",async()=>{
