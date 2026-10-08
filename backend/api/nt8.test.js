@@ -221,7 +221,7 @@ test("KI-Vorkorrektur: Vorschlag nach dem Erwartungshorizont, Punkte begrenzt, o
     anfragen.push({ system, user: JSON.parse(user) });
     return "Bewertung: {\"points\": 9, \"comment\": \"Du nennst das Magnetfeld und die schnellere Änderung.\", \"tipp\": \"Nenne auch die größere Spannung.\"}";
   };
-  const vorher = process.env.ANTHROPIC_API_KEY; process.env.ANTHROPIC_API_KEY = "nur-fuer-diesen-test";
+  const vorher = process.env.ANTHROPIC_API_KEY; process.env.ANTHROPIC_API_KEY = "nur-ein-test";
   try {
     await mitServer(async ({ post }) => {
       await post("/api/nt8/teacher/unlock", { password: PW, testId: "nt8-x-r-a", open: true });
