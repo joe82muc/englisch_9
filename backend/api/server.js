@@ -30,7 +30,7 @@ function mitMilde(system) {
   if (Array.isArray(system)) return system.concat([{ type: "text", text: KI_MILDE }]);
   return String(system || "") + "\n\n" + KI_MILDE;
 }
-const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "2";
+const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "1982";
 const SITE_USERNAME = process.env.SITE_USERNAME || "1";
 const SITE_PASSWORD = process.env.SITE_PASSWORD || "2";
 const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || "";
@@ -518,7 +518,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-08-schreibweise-zaehlt",
+    version: "2026-10-08-verwaltungscode",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     nt9Fortschritt: nt9Fortschritt.store.art,
