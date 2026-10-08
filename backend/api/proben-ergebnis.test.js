@@ -20,7 +20,7 @@ const TESTS = {
     { prompt: "Rakete", solutions: ["rocket"], direction: "de-en" }
   ] }
 };
-const klassen = new Map([["101", "7aM"], ["102", "7aM"], ["103", "7aM"], ["201", "7b"]]);
+const klassen = new Map([["101", "7aM"], ["102", "7aM"], ["103", "7aM"], ["104", "7aM"], ["105", "7aM"], ["201", "7b"]]);
 const kindZumCode = async (code) => (klassen.has(code) ? { code, klasse: klassen.get(code), lrs: false } : null);
 // Die „KI“ der Tests: schweigt, solange kein Test sie umstellt
 let ki = async () => "";
@@ -148,6 +148,34 @@ test("LRS an und wieder aus führt genau zum alten Stand zurück – auch wenn d
   assert.equal(s.details[0].ai, true);
   assert.equal(s.details[1].correct, false); assert.match(s.details[1].comment, /Großschreibung: France/);
   assert.ok(!("detailsOhneLrs" in s), "der aufgehobene Stand ist wieder weg");
+});
+
+test("KI-Zweitmeinung: Schreibfehler winkt sie nicht durch – ein Synonym und eine andere richtige Schreibweise zählen", async () => {
+  // Diese „KI“ hält jede Antwort für inhaltlich richtig; die Schreibweise beurteilt sie, wie hier vorgegeben
+  const schreibweise = { roket: true, rockett: false, enviromant: false };
+  const auftraege = [];
+  ki = async (system, user) => {
+    auftraege.push(system);
+    const results = [...String(user).matchAll(/Aufgabe (\d+)[\s\S]*?Antwort: (.*)/g)].map((m) => ({ nr: +m[1], correct: true, spelling: schreibweise[m[2].trim()], reason: "passt" }));
+    return JSON.stringify({ results });
+  };
+  await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "104", answers: ["hound", "France", "enviromant", "rockett"] });
+  await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "105", answers: ["dogg", "France", "environment", "roket"] });
+  ki = async () => "";
+  assert.match(auftraege[0], /Die Schreibweise zaehlt/);
+  assert.match(auftraege[0], /"spelling": true\|false/);
+
+  const a = await abgabe("104");
+  assert.equal(a.details[0].correct, true, "„hound“: anderes Wort mit passender Bedeutung – die KI entscheidet");
+  assert.equal(a.details[0].ai, true);
+  assert.equal(a.details[2].correct, false, "„enviromant“: zwei Buchstaben falsch, die KI nennt es einen Schreibfehler");
+  assert.equal(a.details[3].correct, false, "„rockett“: ein Buchstabe zu viel in einem kurzen Wort");
+  assert.equal(a.score, 2);
+
+  const b = await abgabe("105");
+  assert.equal(b.details[0].correct, false, "„dogg“: ein Buchstabe neben der Lösung – ohne ausdrückliches „richtig geschrieben“ zählt es nicht");
+  assert.equal(b.details[3].correct, true, "ein Buchstabe neben der Lösung, aber von der KI als richtige Schreibweise bestätigt (wie color/colour)");
+  assert.equal(b.score, 3);
 });
 
 test("Die Lehrkraft wertet eine Antwort selbst; LRS an/aus lässt ihre Entscheidung stehen", async () => {

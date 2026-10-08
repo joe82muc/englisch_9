@@ -105,15 +105,60 @@ function editDistance(a, b, max) {
   return prev[b.length];
 }
 
+/* ------------------------------------------------------------------
+   Schreibfehler in englischen Antworten – seit 08.10.2026 strenger.
+   Vorher zaehlte ab 5 Buchstaben jeder einzelne Buchstabenfehler noch als richtig; damit galten auch andere
+   Woerter ("clear" fuer "clean", "cost" fuer "coast"). Jetzt zaehlt die Schreibweise. Nachsicht gibt es nur noch
+     - fuer Leerzeichen und Bindestrich ("north west" fuer "northwest") und
+     - fuer genau EINEN falschen, fehlenden oder ueberzaehligen Buchstaben in EINEM langen Wort
+       (ab TIPPFEHLER_AB Buchstaben: "enviroment" fuer "environment") – nicht, wenn dabei ein Wort der deutschen
+       Vorgabe ("Republik") oder ein anderes Wort aus den Vokabeltests herauskommt.
+   Solche Antworten tragen weiter das Merkmal "typo" und den Hinweis, wie man das Wort schreibt.
+   Notenschutz LRS und deutsche Antworten (Englisch -> Deutsch) behalten die fruehere Nachsicht.
+   ------------------------------------------------------------------ */
+const TIPPFEHLER_AB = 8;
+// Britische und amerikanische Schreibweise sind beide richtig – auch wenn in den Loesungen nur eine steht
+const SCHREIBWEISEN = new Map([["center", "centre"], ["theater", "theatre"], ["meter", "metre"], ["liter", "litre"],
+  ["color", "colour"], ["favorite", "favourite"], ["neighbor", "neighbour"], ["harbor", "harbour"], ["gray", "grey"],
+  ["mom", "mum"], ["math", "maths"], ["program", "programme"], ["traveling", "travelling"], ["traveled", "travelled"],
+  ["traveler", "traveller"], ["jewelry", "jewellery"], ["tire", "tyre"], ["airplane", "aeroplane"],
+  ["organize", "organise"], ["realize", "realise"], ["recognize", "recognise"], ["apologize", "apologise"]]);
+const einheitlich = (s) => String(s).replace(/[a-z]+/g, (w) => SCHREIBWEISEN.get(w) || w);
+const kompakt = (s) => String(s).replace(/[\s-]+/g, "");
+const wortTeile = (s) => String(s).split(/[\s-]+/).filter(Boolean);
+function kleinerTippfehler(g, sol, tabu) {
+  if (kompakt(g) === kompakt(sol)) return true;
+  const a = wortTeile(g), b = wortTeile(sol);
+  if (a.length !== b.length) return false;
+  let fehler = 0;
+  for (let i = 0; i < b.length; i++) {
+    if (a[i] === b[i]) continue;
+    if (b[i].length < TIPPFEHLER_AB || editDistance(a[i], b[i], 1) > 1) return false;
+    if (tabu && tabu(a[i])) return false;
+    fehler++;
+  }
+  return fehler === 1;
+}
+// Liegt die Antwort genau einen Buchstaben neben einer Loesung ("cost"/"coast", "clear"/"clean", aber auch "color"/"colour")?
+function einBuchstabeDaneben(given, solutions) {
+  const g = normalizeAnswer(given);
+  if (!g) return false;
+  return (solutions || []).some((sol) => String(sol).split(";").some((part) => {
+    const n = normalizeAnswer(part);
+    return Boolean(n) && n !== g && editDistance(g, n, 1) <= 1;
+  }));
+}
+
 /**
  * Prueft eine Schuelerantwort gegen alle zugelassenen Loesungen.
  * Rueckgabe: { correct, typo, matched }
- * Ein kleiner Tippfehler (Distanz 1) gilt ab 5 Zeichen noch als richtig,
- * wird aber als "typo" markiert, damit die Lehrkraft es sieht.
+ * Schreibfehler: siehe kleinerTippfehler(). Was trotz Fehler zaehlt, wird als "typo" markiert,
+ * damit die Lehrkraft es sieht.
  * lrs (Notenschutz LRS): mehr Toleranz, ab 3 Zeichen 1 Fehler, ab 6 Zeichen 2 Fehler.
  * Lautgetreue Schreibungen ("wenzday") erkennt danach die KI.
+ * opts: { direction: "de-en" | "en-de", prompt: deutsche Vorgabe, bekannt: Set aller Loesungswoerter der Tests }
  */
-function checkAnswer(given, solutions, lrs) {
+function checkAnswer(given, solutions, lrs, opts) {
   const g = normalizeAnswer(given);
   if (!g) return { correct: false, typo: false, matched: "" };
 
@@ -132,6 +177,9 @@ function checkAnswer(given, solutions, lrs) {
       if (n) accepted.push({ norm: n, raw: String(part).trim() });
     });
   }
+  const deutscheAntwort = Boolean(opts && opts.direction === "en-de");
+  const vorgabe = new Set(wortTeile(normalizeAnswer(opts && opts.prompt)));
+  const tabu = (wort) => vorgabe.has(wort) || Boolean(opts && opts.bekannt && opts.bekannt.has(wort));
 
   // Englische Eigennamen (France, Northern Ireland, CV …) müssen großgeschrieben sein – außer bei Notenschutz LRS
   const mitGross = (ergebnis, a) => {
@@ -141,11 +189,20 @@ function checkAnswer(given, solutions, lrs) {
   for (const a of accepted) {
     if (g === a.norm) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
   }
-  for (const a of accepted) {
-    const erlaubt = lrs ? (a.norm.length >= 6 ? 2 : a.norm.length >= 3 ? 1 : 0) : (a.norm.length >= 5 ? 1 : 0);
-    if (erlaubt && editDistance(g, a.norm, erlaubt) <= erlaubt) {
-      return mitGross({ correct: true, typo: true, matched: a.raw }, a);
+  if (!deutscheAntwort) {
+    for (const a of accepted) {
+      if (einheitlich(g) === einheitlich(a.norm)) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
     }
+  }
+  for (const a of accepted) {
+    let zaehlt;
+    if (lrs || deutscheAntwort) {
+      const erlaubt = lrs ? (a.norm.length >= 6 ? 2 : a.norm.length >= 3 ? 1 : 0) : (a.norm.length >= 5 ? 1 : 0);
+      zaehlt = kompakt(g) === kompakt(a.norm) || (erlaubt > 0 && editDistance(g, a.norm, erlaubt) <= erlaubt);
+    } else {
+      zaehlt = kleinerTippfehler(g, a.norm, tabu);
+    }
+    if (zaehlt) return mitGross({ correct: true, typo: true, matched: a.raw }, a);
   }
   return { correct: false, typo: false, matched: "" };
 }
@@ -218,7 +275,8 @@ function checkVerbFormen(given, formen, lrs) {
     if (alts.includes(w)) return "exakt";
     if (alleFormen.has(w)) return ""; // eine andere Form desselben Verbs ist kein Tippfehler („driven“ statt „drive“)
     for (const a of alts) {
-      const erlaubt = lrs ? (a.length >= 6 ? 2 : a.length >= 3 ? 1 : 0) : (a.length >= 5 ? 1 : 0);
+      // ohne Notenschutz wie bei den anderen Vokabeln: ein Buchstabenfehler nur in langen Formen („forgotten“)
+      const erlaubt = lrs ? (a.length >= 6 ? 2 : a.length >= 3 ? 1 : 0) : (a.length >= TIPPFEHLER_AB ? 1 : 0);
       if (erlaubt && editDistance(w, a, erlaubt) <= erlaubt) return "typo";
     }
     return "";
@@ -273,7 +331,9 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
     "- ein Synonym oder eine gleichwertige Uebersetzung ('Bezirk' statt 'Stadtteil')",
     "- eine andere, aber korrekte Wortform ('gehen' statt 'zu Fuss gehen')",
     "- fehlendes 'to' beim Verb oder fehlender Artikel",
-    "- Kleinschreibung gewoehnlicher Woerter, Tippfehler, fehlende Umlautpunkte",
+    "- Kleinschreibung gewoehnlicher Woerter, fehlende Umlautpunkte in deutschen Antworten",
+    "- eine andere RICHTIGE Schreibweise desselben englischen Wortes (britisch/amerikanisch: 'color' und 'colour',",
+    "  'center' und 'centre', 'traveling' und 'travelling')",
     ...(lrs ? [
       "- NOTENSCHUTZ LRS (Lese-Rechtschreib-Stoerung): Rechtschreibung zaehlt nicht, auch nicht Gross- und",
       "  Kleinschreibung. Richtig ist auch lautgetreue, verdrehte oder lueckenhafte Schreibung, wenn eindeutig",
@@ -284,13 +344,23 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
     "- eine andere Vokabel, auch wenn sie thematisch passt",
     "- eine Antwort in der falschen Sprache",
     "- eine leere oder sinnlose Antwort",
-    ...(lrs ? [] : ["- ein englischer Eigenname kleingeschrieben (Laender, Sprachen, Nationalitaeten, Feiertage, Namen), z. B. 'france' statt 'France'"]),
+    ...(lrs ? [] : [
+      "- ein englischer Eigenname kleingeschrieben (Laender, Sprachen, Nationalitaeten, Feiertage, Namen), z. B. 'france' statt 'France'",
+      "- eine FALSCH GESCHRIEBENE englische Antwort. Die Schreibweise zaehlt: Fehlt ein Buchstabe, ist einer falsch, zu viel",
+      "  oder vertauscht, ist die Antwort falsch – auch wenn klar ist, welches Wort gemeint war",
+      "  ('coas' statt 'coast', 'sience' statt 'science', 'quiet' und 'quite' sind verschiedene Woerter)",
+      "- ein ANDERES englisches Wort, das der Loesung nur aehnlich sieht ('clear' statt 'clean', 'cost' statt 'coast')"
+    ]),
     "- bei unregelmaessigen Verben fehlt eine der drei Formen (z. B. nur 'drive' statt 'drive, drove, driven')",
     "",
-    "Bewerte wohlwollend, aber nicht beliebig: Die Vokabel muss getroffen sein.",
+    lrs ? "Bewerte wohlwollend, aber nicht beliebig: Die Vokabel muss getroffen sein."
+      : "Bewerte die Bedeutung wohlwollend, die Schreibweise genau: Die Vokabel muss getroffen UND richtig geschrieben sein.",
+    "",
+    "Gib zu jeder Antwort auch an, ob sie richtig geschrieben ist (\"spelling\": true = ein richtig geschriebenes Wort",
+    "bzw. eine richtig geschriebene Wendung der Zielsprache; false = Schreibfehler).",
     "",
     "Antworte NUR mit JSON in genau dieser Form, ohne weiteren Text:",
-    '{"results": [{"nr": <Zahl>, "correct": true|false, "reason": "<max. 8 Woerter>"}]}'
+    '{"results": [{"nr": <Zahl>, "correct": true|false, "spelling": true|false, "reason": "<max. 8 Woerter>"}]}'
   ].join("\n");
 
   const user = pending.map((p) => [
@@ -313,7 +383,8 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
       if (!Number.isFinite(nr)) continue;
       // Die KI darf nur aufwerten, nie abwerten.
       if (r.correct === true) {
-        out[nr] = { correct: true, reason: clean(r.reason).slice(0, 120) };
+        // spelling: true/false, wenn die KI die Schreibweise beurteilt hat (sonst undefined)
+        out[nr] = { correct: true, spelling: typeof r.spelling === "boolean" ? r.spelling : undefined, reason: clean(r.reason).slice(0, 120) };
       }
     }
     return out;
@@ -408,13 +479,23 @@ function registerVokabeltestRoutes(app, opts) {
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
+  // Alle englischen Loesungswoerter der Tests: Ergibt ein Buchstabenfehler eines davon, ist es ein anderes Wort,
+  // kein Tippfehler (siehe kleinerTippfehler)
+  const BEKANNT = new Set();
+  for (const t of Object.values(TESTS)) {
+    for (const it of t.items || []) {
+      if (it.direction === "en-de") continue;
+      for (const sol of it.solutions || []) String(sol).split(/[;,\/]/).forEach((teil) => wortTeile(normalizeAnswer(teil)).forEach((w) => BEKANNT.add(w)));
+    }
+  }
+
   /* ---------- Auswertung: erst exakt, dann KI-Zweitmeinung ----------
      Bei der Abgabe und wenn die Lehrkraft den Notenschutz LRS einer Abgabe nachträglich an- oder ausschaltet
      (dann mit den gespeicherten Antworten). lrs: Rechtschreibung zählt nicht. */
   async function werteAus(test, answers, lrs) {
     const details = test.items.map((item, idx) => {
       const given = clean(answers[idx]);
-      const result = checkAnswer(given, item.solutions, lrs);
+      const result = checkAnswer(given, item.solutions, lrs, { direction: item.direction, prompt: item.prompt, bekannt: BEKANNT });
       // Zahlwörter (Hinweis „in Worten“): Eine Zahl in Ziffern ist keine Vokabel – auch nicht für die KI
       const ziffern = !result.correct && /in worten/i.test(item.hint || "") && /\d/.test(given);
       const regel = ziffern ? "Zahl in Worten schreiben, nicht in Ziffern" : regelHinweis(result);
@@ -452,6 +533,12 @@ function registerVokabeltestRoutes(app, opts) {
       for (const d of details) {
         const v = verdicts[d.nr];
         if (v && v.correct && !d.correct) {
+          // Ohne Notenschutz zaehlt bei englischen Antworten die Schreibweise: Hat die KI sie beanstandet, bleibt die
+          // Antwort falsch. Liegt die Antwort genau einen Buchstaben neben einer Loesung, muss die KI die Schreibweise
+          // ausdruecklich bestaetigt haben ("color" fuer "colour" ja – "coas" oder "cost" fuer "coast" nein).
+          const item = test.items[d.nr - 1];
+          if (!lrs && item.direction !== "en-de" &&
+            (v.spelling === false || (v.spelling !== true && einBuchstabeDaneben(d.given, item.solutions)))) continue;
           d.correct = true;
           d.ai = true;
           d.aiReason = v.reason;
@@ -776,6 +863,9 @@ module.exports = {
   normalizeAnswer,
   grossPflicht,
   verbFormen,
+  kleinerTippfehler,
+  einBuchstabeDaneben,
+  TIPPFEHLER_AB,
   GRADE_SCALE,
   GRADE_SCALE_8R,
   GRADE_SCALE_9R
