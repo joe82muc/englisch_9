@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const fs = require("fs");
 const path = require("path");
@@ -328,6 +328,39 @@ registerD7TexteRoutes(app, {
   askAnthropic: askAnthropic,
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
+// --- Deutsch 8 (8M und 8R): dieselben Bausteine wie Deutsch 7 mit stufe: 8 – Freischalten je Klasse (/api/d8),
+// Proben 1 bis 8 je R8/M8 × A/B (/api/d8/proben, Daten in d8-proben/), Schreibtrainer (/api/d8/schreiben, /texte),
+// Rückmeldung zu offenen Übungsaufgaben (/api/d8/uebung/feedback). Kein zweites System: nur andere Daten. ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/d8",
+  datei: "d8-freigabe.json",
+  name: "Deutsch-8-Freigabe",
+  stufe: 8,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+const d8Proben = registerD7ProbenRoutes(app, {
+  dataDir: DATA_DIR,
+  prefix: "/api/d8/proben",
+  datei: "d8-proben.json",
+  tests: require("./d8-proben-daten"),
+  stufe: 8,
+  // Deutsch 8: Zeit und Zwischenstand auf dem Server, Planung zu Schreibaufgaben, Fehlermarkierungen
+  sitzung: true,
+  marken: true,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
+registerD7TexteRoutes(app, {
+  dataDir: DATA_DIR,
+  stufe: 8,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d8/uebung/feedback", klasse: "Klasse 8", fach: "Deutsch", thema: "Deutsch (Lesen, Sachtexte und Medien, Argumentieren, Literatur und Textanalyse, Schreiben, Beruf und Kommunikation, Grammatik, Rechtschreibung)" });
 // Deutsch 7: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
 
@@ -395,6 +428,7 @@ const PROBEN_QUELLEN = [
     { modul: "grammatik9r", fach: "Englisch", abgaben: grammatik.abgaben },
     { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
     { modul: "d7proben", fach: "Deutsch", abgaben: d7Proben.abgaben },
+    { modul: "d8proben", fach: "Deutsch", abgaben: d8Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
     { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
@@ -480,7 +514,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-07-block-proben",
+    version: "2026-10-08-deutsch8",
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     kalenderHeft: true,
@@ -2830,10 +2864,6 @@ function buildStudentOverview(records) {
   overview.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
   return overview;
 }
-
-
-
-
 
 
 

@@ -29,7 +29,7 @@ const fs = require("fs");
 const path = require("path");
 const { probeKindPruefer } = require("./probe-kind");
 
-const EIGENER_ABLAUF = new Set(["d7proben"]);   // Module, die Rückgabe und Korrekturseite selbst mitbringen
+const EIGENER_ABLAUF = new Set(["d7proben", "d8proben"]);   // Module, die Rückgabe und Korrekturseite selbst mitbringen
 const ANZEIGE_TAGE = 3;                         // so lange bleibt eine Rückgabe mindestens als Kachel auf der Startseite
 
 function registerProbenRueckgabeRoutes(app, options) {

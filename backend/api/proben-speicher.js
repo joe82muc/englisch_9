@@ -34,7 +34,7 @@ const URL_NAME = "UPSTASH_grumiproben";
 const TOKEN_NAME = "UPSTASH_grumiproben_token";
 const PRAEFIXE = [
   "/api/vokabeltest", "/api/netzwerktest", "/api/filiuspruefung", "/api/nt7", "/api/de7-argument",
-  "/api/infoaustausch", "/api/inf7", "/api/inf8", "/api/d7", "/api/informatik8", "/api/nt9probe", "/api/grammatik9r", "/api/proben", "/api/klasse",
+  "/api/infoaustausch", "/api/inf7", "/api/inf8", "/api/d7", "/api/d8", "/api/informatik8", "/api/nt9probe", "/api/grammatik9r", "/api/proben", "/api/klasse",
   "/api/e7", "/api/e8", "/api/e9", "/api/n9", "/api/uebersetzen"
 ];
 // Lernfortschritt hat seine eigene Datenbank, students/progress sind Reste der alten Englisch-App

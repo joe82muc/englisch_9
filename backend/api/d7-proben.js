@@ -45,6 +45,25 @@
  *   POST korrektur{ code, testId } -> die freigegebene Korrektur (merkt das erste Öffnen)
  *   POST teacher/unlock | results | probe | vorschau | bewerten | zuruecksetzen | neu-bewerten | einstellung |
  *        bestaetigen | freigeben | delete | export
+ *
+ * Nur mit opts.sitzung (Deutsch 8): Die Bearbeitung liegt als „Sitzung“ auf dem Server (Datei …-sitzungen.json).
+ *   POST start         -> zusätzlich sitzung { begonnenAm, serverZeit, minuten, endetAm, timer } und – falls vorhanden –
+ *                         zwischenstand { answers, plan, gespeichertAm }. Neuladen beginnt die Zeit nicht neu.
+ *   POST zwischenstand { testId, code, answers, plan, begonnenAm? } -> { ok, gespeichertAm, sitzung }
+ *                         laufendes Sichern; nach der Abgabe wird die Sitzung gelöscht.
+ *   submit             -> hält zusätzlich Beginn, Dauer und überzogene Minuten fest. Läuft die Zeit ab, gibt der Server
+ *                         nichts von selbst ab und bewertet nichts: Die Lehrkraft sieht die Zeiten und entscheidet.
+ *   POST teacher/sitzungen { nr } | sitzung-zeit { nr, code, minuten } | sitzung-abgeben { nr, code }
+ *                         laufende Bearbeitungen sehen, Zeit für ein Kind verlängern, einen gesicherten Zwischenstand
+ *                         als Abgabe übernehmen (z. B. nach einem Geräteausfall)
+ *   teacher/probe-einstellung nimmt zusätzlich schutz { wechsel, warnen, kopieren, ausschneiden, kontextmenue,
+ *                         spruenge, timer } an – was der Probenmodus festhält oder sperrt, stellt die Lehrkraft ein.
+ * Schreibaufgaben können ein Planungswerkzeug haben (form: "stellungnahme" … oder plan: [{ id, label, hilfe }]); die
+ * Planung des Kindes wird mit der Abgabe aufbewahrt und nicht bewertet.
+ * Nur mit opts.marken (Deutsch 8): Fehlermarkierungen in offenen Antworten und Texten als Bereiche
+ *   marken: [{ start, end, type, comment, von: "ki" | "lehrer" }]   (type: spelling, grammar, punctuation, expression,
+ *   structure, content, evidence, positive). Die KI schlägt sie bei längeren Texten vor, die Lehrkraft ändert sie.
+ *   Der Text des Kindes (given) bleibt dabei unverändert.
  */
 
 const fs = require("fs");
@@ -57,6 +76,13 @@ const OFFENE = new Set(["offen", "schreiben"]);
 const HALBOFFENE = new Set(["felder", "zeile", "komma"]);
 const KATEGORIEN = ["Textbeleg fehlt", "Zeilenangabe fehlt", "Begründung fehlt", "Beispiel fehlt", "Aufgabe nicht getroffen", "Inhalt falsch",
   "zu knapp", "Aufbau", "Zeitform", "Satzbau", "Wortwahl", "Rechtschreibung", "Zeichensetzung"];
+
+// Fehlermarkierungen (Deutsch 8): Arten und ihre Namen für die KI
+const MARKEN_ARTEN = ["spelling", "grammar", "punctuation", "expression", "structure", "content", "evidence", "positive"];
+const MARKEN_DEUTSCH = { rechtschreibung: "spelling", grammatik: "grammar", zeichensetzung: "punctuation", ausdruck: "expression", aufbau: "structure", inhalt: "content", beleg: "evidence", gelungen: "positive" };
+// Schreibformen mit eigenem Planungswerkzeug (die Felder dazu kennt die Website: 7M/Deutsch/aufsatz-editor.js)
+const SCHREIBFORMEN = ["stellungnahme", "argumentation", "zusammenfassung", "inhaltsangabe", "bericht", "charakterisierung", "monolog", "perspektive", "brief", "material", "frei"];
+const SITZ_MAX_MS = 3 * 24 * 60 * 60 * 1000;
 
 const clean = (v, max = 120) => String(v ?? "").replace(/\u0000/g, "").trim().slice(0, max);
 const glatt = (s) => String(s ?? "").normalize("NFC").replace(/[„“”»«]/g, '"').replace(/[‚‘’´`]/g, "'").replace(/\s+/g, " ").trim();
@@ -95,10 +121,12 @@ function kommaSatz(satz) {
   String(satz).trim().split(/\s+/).forEach((w, i) => { if (/,$/.test(w)) { stellen.push(i); w = w.slice(0, -1); } woerter.push(w); });
   return { woerter, stellen };
 }
-function vorbereiten(tests) {
+function vorbereiten(tests, stufe) {
+  // Kennungen: d7-p… (Deutsch 7) oder d8-p… (Deutsch 8, opts.stufe)
+  const kennung = new RegExp("^d" + (stufe || 7) + "-p\\d+-[rm]-[ab]$");
   Object.values(tests).forEach((test) => {
     const wo = (i) => test.id + " Aufgabe " + (i + 1) + ": ";
-    if (!/^d7-p\d+-[rm]-[ab]$/.test(test.id)) throw new Error("Kennung " + test.id);
+    if (!kennung.test(test.id)) throw new Error("Kennung " + test.id);
     test.texte = test.texte || [];
     test.texte.forEach((t) => { if (!t.typ) t.typ = t.verse ? "gedicht" : t.absaetze ? "text" : t.typ; if (t.typ === "text" || t.typ === "gedicht") t.zeilen = Zeilen.umbrechen(t); });
     const text = (id) => test.texte.find((t) => t.id === id);
@@ -122,6 +150,8 @@ function vorbereiten(tests) {
         if (item.zeilen) { const t = text(item.text), n = t && t.zeilen ? Zeilen.anzahl(t.zeilen) : 0; if (!n || item.zeilen[0] < 1 || item.zeilen[1] > n) throw new Error(wo(i) + "Ausschnitt außerhalb des Textes"); }
       }
       if (item.type === "schreiben" && !(Array.isArray(item.raster) && item.raster.length && item.raster.every((k) => k.name && k.punkte > 0))) throw new Error(wo(i) + "Raster fehlt");
+      if (item.form && !(item.type === "schreiben" && SCHREIBFORMEN.includes(item.form))) throw new Error(wo(i) + "Schreibform " + item.form);
+      if (item.plan && !(item.type === "schreiben" && Array.isArray(item.plan) && item.plan.length <= 10 && item.plan.every((f) => /^[a-z0-9-]{1,30}$/.test(f.id || "") && f.label))) throw new Error(wo(i) + "Planung");
       item.points = punkteVon(item);
     });
   });
@@ -139,7 +169,12 @@ function registerD7ProbenRoutes(app, opts) {
   const DATA_DIR = opts.dataDir;
   const DATA_FILE = path.join(DATA_DIR, opts.datei || "d7-proben.json");
   const PREFIX = String(opts.prefix || "/api/d7/proben").replace(/\/$/, "");
-  const tests = vorbereiten(opts.tests || require("./d7-proben-daten"));
+  // Jahrgangsstufe: 7 (Vorgabe) oder 8 – bestimmt Kennungen, Texte für die KI und wer die Proben schreiben darf
+  const STUFE = parseInt(opts.stufe, 10) || 7;
+  // Deutsch 8: Sitzung (Zeit und Zwischenstand auf dem Server) und Fehlermarkierungen
+  const SITZUNG = opts.sitzung === true, MARKEN = opts.marken === true;
+  const SITZ_FILE = path.join(DATA_DIR, String(opts.datei || "d7-proben.json").replace(/\.json$/, "") + "-sitzungen.json");
+  const tests = vorbereiten(opts.tests || require("./d7-proben-daten"), STUFE);
   const TEACHER_PASSWORD = opts.teacherPassword || "";
   const askAnthropic = typeof opts.askAnthropic === "function" ? opts.askAnthropic : null;
   const KI_PAUSE_MS = opts.kiPauseMs === undefined ? 30000 : opts.kiPauseMs;
@@ -151,23 +186,82 @@ function registerD7ProbenRoutes(app, opts) {
 
   function readData() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(DATA_FILE)) return { unlocked: {}, einfuegen: {}, submissions: [] };
+    if (!fs.existsSync(DATA_FILE)) return { unlocked: {}, einfuegen: {}, schutz: {}, submissions: [] };
     const d = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    return { unlocked: d.unlocked || {}, einfuegen: d.einfuegen || {}, submissions: Array.isArray(d.submissions) ? d.submissions : [] };
+    return { unlocked: d.unlocked || {}, einfuegen: d.einfuegen || {}, schutz: d.schutz || {}, submissions: Array.isArray(d.submissions) ? d.submissions : [] };
   }
-  function writeData(data) {
+  function atomar(datei, inhalt, einzug) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    const temp = DATA_FILE + ".tmp";
-    fs.writeFileSync(temp, JSON.stringify(data, null, 1), "utf8");
+    const temp = datei + ".tmp";
+    fs.writeFileSync(temp, JSON.stringify(inhalt, null, einzug), "utf8");
     // Das Umbenennen kann kurz scheitern, wenn gerade etwas anderes die Datei offen hält (unter Windows z. B. der
     // Virenscanner): ein paar Mal neu versuchen, statt die Abgabe oder die Korrektur zu verlieren
     for (let i = 0; ; i++) {
-      try { fs.renameSync(temp, DATA_FILE); return; }
+      try { fs.renameSync(temp, datei); return; }
       catch (error) {
         if (i >= 6 || !["EPERM", "EBUSY", "EACCES"].includes(error.code)) throw error;
         Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 40);
       }
     }
+  }
+  function writeData(data) { atomar(DATA_FILE, data, 1); }
+
+  /* ---------- Sitzungen: Beginn, Zeit und Zwischenstand (nur mit opts.sitzung) ---------- */
+  function sitzLesen() {
+    try { const d = JSON.parse(fs.readFileSync(SITZ_FILE, "utf8")); return { sitzungen: d && d.sitzungen && typeof d.sitzungen === "object" ? d.sitzungen : {} }; }
+    catch (_e) { return { sitzungen: {} }; }
+  }
+  // Jedes Schreiben räumt Sitzungen weg, die älter als drei Tage sind (Zwischenstände bleiben nicht liegen)
+  function sitzSchreiben(d) {
+    const grenze = Date.now() - SITZ_MAX_MS;
+    Object.keys(d.sitzungen).forEach((k) => { if (!(Date.parse(d.sitzungen[k].begonnenAm) > grenze)) delete d.sitzungen[k]; });
+    atomar(SITZ_FILE, d, 0);
+  }
+  const sitzKey = (test, student) => test.nr + "|" + student.key;
+  const minutenVon = (test, s) => test.minutes + (Number(s && s.verlaengerung) || 0);
+  function sitzAntwort(test, s, data) {
+    const min = minutenVon(test, s);
+    return { begonnenAm: s.begonnenAm, serverZeit: new Date().toISOString(), minuten: min, verlaengerung: Number(s.verlaengerung) || 0,
+      endetAm: new Date(Date.parse(s.begonnenAm) + min * 60000).toISOString(), timer: schutzVon(data, test.nr).timer, gespeichertAm: s.gespeichertAm || undefined };
+  }
+  // Sitzung holen oder anlegen. beginnVomGeraet: Hat der Server die Sitzung verloren (Neustart ohne Spiegel), gilt der
+  // Beginn, den das Gerät des Kindes kennt – aber nur, wenn er höchstens sechs Stunden zurückliegt.
+  function sitzHolen(sd, test, student, beginnVomGeraet) {
+    const k = sitzKey(test, student);
+    let sitz = sd.sitzungen[k], neu = false;
+    if (!sitz || sitz.testId !== test.id) {
+      const t = Date.parse(beginnVomGeraet || ""), jetzt = Date.now();
+      sitz = { testId: test.id, nr: test.nr, code: student.code, klasse: student.klasse, zug: student.zug, lrs: Boolean(student.lrs), key: student.key,
+        begonnenAm: new Date(Number.isFinite(t) && t <= jetzt && jetzt - t < 6 * 3600000 ? t : jetzt).toISOString() };
+      sd.sitzungen[k] = sitz; neu = true;
+    }
+    return { sitz, neu };
+  }
+  const textSauber = (v, max) => String(v ?? "").replace(/\u0000/g, "").replace(/\r\n?/g, "\n").slice(0, max);
+  // Antworten eines Zwischenstands säubern (gleiche Form wie bei der Abgabe, begrenzte Länge)
+  function antwortenSauber(test, roh) {
+    if (!Array.isArray(roh) || roh.length !== test.items.length) return null;
+    return test.items.map((item, i) => {
+      const v = roh[i];
+      if (item.type === "choice") return Number.isInteger(v) && v >= 0 && v < item.options.length ? v : null;
+      if (item.type === "match" || item.type === "order" || item.type === "felder") return (Array.isArray(v) ? v : []).slice(0, 40).map((x) => clean(x, 300));
+      if (item.type === "komma") return (Array.isArray(v) ? v : []).slice(0, 40).map((x) => (Array.isArray(x) ? x : []).slice(0, 80).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < 400));
+      if (item.type === "zeile") return { von: clean(v && v.von, 4), bis: clean(v && v.bis, 4) };
+      return textSauber(v, item.type === "schreiben" ? 12000 : 2500);
+    });
+  }
+  // Planung zu Schreibaufgaben: { "<Nummer der Aufgabe>": { "<Feld>": "Text" } }
+  function planSauber(test, roh) {
+    const aus = {};
+    if (!roh || typeof roh !== "object") return aus;
+    test.items.forEach((item, i) => {
+      const plan = roh[i + 1];
+      if (item.type !== "schreiben" || !plan || typeof plan !== "object") return;
+      const felder = {};
+      Object.keys(plan).slice(0, 12).forEach((k) => { const t = textSauber(plan[k], 800); if (/^[a-z0-9-]{1,30}$/.test(k) && t.trim()) felder[k] = t; });
+      if (Object.keys(felder).length) aus[i + 1] = felder;
+    });
+    return aus;
   }
   const probeKind = probeKindPruefer(opts.kindZumCode);
   function teacher(req, res) {
@@ -186,14 +280,26 @@ function registerD7ProbenRoutes(app, opts) {
     if (item.type === "order") p.steps = item.steps.slice().sort((a, b) => a.localeCompare(b, "de"));
     if (item.type === "felder") p.felder = item.felder.map((f, j) => ({ label: item.menge ? (j + 1) + "." : f.label || "", breit: Boolean(f.breit) && !item.menge }));
     if (item.type === "komma") p.saetze = item.saetze.map((s) => kommaSatz(s).woerter);
-    if (item.type === "schreiben") { p.minWoerter = item.minWoerter || 0; p.material = item.material || undefined; p.raster = item.raster.map((r) => ({ name: r.name, punkte: r.punkte })); }
+    if (item.type === "schreiben") { p.minWoerter = item.minWoerter || 0; p.material = item.material || undefined; p.raster = item.raster.map((r) => ({ name: r.name, punkte: r.punkte })); p.form = item.form || undefined; p.plan = item.plan || undefined; }
     return p;
   }
   const publicText = (t) => ({ id: t.id, typ: t.typ, titel: t.titel || "", art: t.art || "", quelle: t.quelle || "", zeilen: t.zeilen, kopf: t.kopf, reihen: t.reihen, werte: t.werte, einheit: t.einheit, hinweis: t.hinweis });
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
-    itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr) });
+    itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
+    ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
   // Einfügen in der Probe: gesperrt (Vorgabe) oder erlaubt und protokolliert – stellt die Lehrkraft je Probe ein
   const einfuegenVon = (data, nr) => ((data.einfuegen || {})[nr] === "protokollieren" ? "protokollieren" : "sperren");
+  // Einstellungen des Probenmodus je Probe (Deutsch 8). Vorgabe: alles festhalten und sperren, Zeit anzeigen.
+  //   wechsel       Verlassen der Seite mit Uhrzeit und Dauer festhalten        warnen   Hinweisfenster nach der Rückkehr
+  //   kopieren, ausschneiden, kontextmenue   "sperren" oder "erlauben"           spruenge große Texteingaben vermerken
+  //   timer         Restzeit anzeigen (die Zeit selbst misst der Server immer)
+  const SCHUTZ_VORGABE = { wechsel: true, warnen: true, kopieren: "sperren", ausschneiden: "sperren", kontextmenue: "sperren", spruenge: true, timer: true };
+  function schutzVon(data, nr) {
+    const s = (data.schutz || {})[nr] || {}, aus = { ...SCHUTZ_VORGABE };
+    ["wechsel", "warnen", "spruenge", "timer"].forEach((k) => { if (typeof s[k] === "boolean") aus[k] = s[k]; });
+    ["kopieren", "ausschneiden", "kontextmenue"].forEach((k) => { if (s[k] === "erlauben" || s[k] === "sperren") aus[k] = s[k]; });
+    return aus;
+  }
   // Protokoll des Probenmodus säubern: nur Zeiten und Mengen, höchstens 100 Einträge je Art
   const istZeit = (v) => typeof v === "string" && v.length <= 30 && !Number.isNaN(Date.parse(v));
   const ganz = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v)) || 0));
@@ -286,6 +392,7 @@ function registerD7ProbenRoutes(app, opts) {
     });
     const d = { ...base, given, kriterien: liste, points: 0, source: "offen", comment: "", hinweis: "" };
     if (lang) d.woerter = wortZahl(given);
+    if (lang && item.form) d.form = item.form;
     if (given.length < 3) return { ...d, source: "leer", comment: "Keine Antwort.", hinweis: "Schreibe beim nächsten Mal auch dann etwas, wenn du unsicher bist. Oft gibt es dafür schon Punkte." };
     const stichworte = !lang && Array.isArray(item.keywords) && item.keywords.length > 0;
     if (stichworte) {
@@ -333,9 +440,9 @@ function registerD7ProbenRoutes(app, opts) {
     if (t.typ === "diagramm") return "Diagramm „" + (t.titel || "") + "“ (" + (t.einheit || "") + ")\n" + t.werte.map((w) => w[0] + ": " + w[1]).join("\n");
     return "";
   }
-  const ZUG_TEXT = { R: "R7 (Regelklasse): kürzere, einfache Antworten sind in Ordnung.", M: "M7 (Mittlere-Reife-Klasse): Begründungen und Textbelege dürfen etwas genauer sein." };
+  const ZUG_TEXT = { R: "R" + STUFE + " (Regelklasse): kürzere, einfache Antworten sind in Ordnung.", M: "M" + STUFE + " (Mittlere-Reife-Klasse): Begründungen und Textbelege dürfen etwas genauer sein." };
   const SYSTEM_ALLE = [
-    "Du korrigierst eine Deutsch-Probe der 7. Klasse einer bayerischen Mittelschule. Deine Korrektur ist ein Vorschlag, die Lehrkraft entscheidet.",
+    "Du korrigierst eine Deutsch-Probe der " + STUFE + ". Klasse einer bayerischen Mittelschule. Deine Korrektur ist ein Vorschlag, die Lehrkraft entscheidet.",
     "Bewerte nur nach dem mitgeschickten Erwartungshorizont: Für jedes Kriterium vergibst du ganze Punkte von 0 bis zu seiner Höchstpunktzahl.",
     "Es zählt, ob ein Kriterium inhaltlich erfüllt ist. Eigene Worte, kurze Sätze und Stichpunkte gelten; die Antwort muss der Beispiellösung nicht gleichen. Im Zweifel für das Kind.",
     "Fehlt ein Kriterium in der Antwort, bekommt es 0 Punkte, auch wenn der Rest gut ist. Falsche Aussagen werden nicht belohnt. Erfinde keine eigenen Kriterien.",
@@ -379,7 +486,13 @@ function registerD7ProbenRoutes(app, opts) {
       "arbeiten: höchstens drei Punkte, woran das Kind arbeiten soll – die wichtigsten zuerst, jeder mit der Stelle, die gemeint ist.",
       "hinweis: der eine nächste Schritt für das nächste Mal (höchstens 25 Wörter).",
       "kategorien: höchstens drei aus dieser Liste, nur wenn sie eindeutig zutreffen, sonst leere Liste: " + KATEGORIEN.join(", ") + "."
-    ] : [
+    ].concat(MARKEN ? [
+      "Zusätzlich im JSON: \"markierungen\":[{\"stelle\":\"…\",\"art\":\"…\",\"hinweis\":\"…\"}] – höchstens zwölf Stellen aus dem Schülertext.",
+      "stelle: ein bis acht Wörter, buchstabengetreu aus dem Schülertext kopiert (mit seinen Fehlern), damit die Stelle gefunden wird.",
+      "art: genau eine von " + Object.keys(MARKEN_DEUTSCH).join(", ") + ". Ein bis drei Markierungen haben die art gelungen (eine treffende Formulierung, ein guter Beleg).",
+      "hinweis: höchstens 15 Wörter für das Kind – was hier auffällt oder woran es denken soll. Schreibe keinen fertig verbesserten Satz.",
+      record.rsWerten === false ? "Markiere keine Rechtschreibfehler (art rechtschreibung): Sie werden bei dieser Arbeit nicht gewertet." : "Bei Rechtschreibung und Zeichensetzung markierst du nur die deutlichsten Stellen, nicht jeden Fehler."
+    ] : []) : [
       "Antworte nur als JSON: {\"punkte\":[…],\"korrektur\":\"…\",\"hinweis\":\"…\",\"kategorie\":\"…\"}",
       "punkte: je Kriterium ein Wert, in derselben Reihenfolge.",
       "korrektur: ein oder zwei Sätze – was an der Antwort stimmt und was fehlt (höchstens 40 Wörter).",
@@ -387,7 +500,7 @@ function registerD7ProbenRoutes(app, opts) {
       "kategorie: höchstens eine aus dieser Liste, nur wenn sie eindeutig passt, sonst leer: " + KATEGORIEN.join(", ") + "."
     ], lrsZusatz(record)).join("\n");
     const user = JSON.stringify({
-      klasse: ZUG_TEXT[test.zug] || "7. Klasse",
+      klasse: ZUG_TEXT[test.zug] || STUFE + ". Klasse",
       probe: test.title,
       aufgabe: item.prompt,
       material: item.material || undefined,
@@ -398,21 +511,56 @@ function registerD7ProbenRoutes(app, opts) {
       mindestlaenge: lang && item.minWoerter ? item.minWoerter + " Wörter (der Text hat " + wortZahl(given) + ")" : undefined,
       schuelerantwort: given
     });
-    const p = jsonAus(await askAnthropic(system, user, lang ? 900 : 380, { milde: false }));
+    const p = jsonAus(await askAnthropic(system, user, lang ? (MARKEN ? 1500 : 900) : 380, { milde: false }));
     if (!p || !Array.isArray(p.punkte) || p.punkte.length < teile.length) return null;
     const punkte = teile.map((k, i) => Math.max(0, Math.min(k.punkte, Math.round(Number(p.punkte[i]) || 0))));
     if (lang) {
       return { punkte, begruendung: teile.map((_, i) => kurz(Array.isArray(p.begruendung) ? p.begruendung[i] : "", 260)), gelungen: liste(p.gelungen, 3, 240), arbeiten: liste(p.arbeiten, 3, 260),
-        hinweis: kurz(p.hinweis, 240), kategorien: (Array.isArray(p.kategorien) ? p.kategorien : []).map((k) => clean(k, 40)).filter((k) => KATEGORIEN.includes(k)).slice(0, 3), am: new Date().toISOString() };
+        hinweis: kurz(p.hinweis, 240), kategorien: (Array.isArray(p.kategorien) ? p.kategorien : []).map((k) => clean(k, 40)).filter((k) => KATEGORIEN.includes(k)).slice(0, 3), am: new Date().toISOString(),
+        ...(MARKEN ? { marken: markenAusKi(p.markierungen, given, record) } : {}) };
     }
     const voll = punkte.every((v, i) => v === teile[i].punkte);
     return { punkte, comment: kurz(p.korrektur, 420) || (voll ? "Deine Antwort passt." : "Hier fehlt noch etwas."), hinweis: voll ? "" : kurz(p.hinweis, 240),
       kategorie: KATEGORIEN.includes(clean(p.kategorie, 40)) ? clean(p.kategorie, 40) : "", am: new Date().toISOString() };
   }
+  /* ---------- Fehlermarkierungen: Bereiche im unveränderten Text des Kindes ---------- */
+  // Liste säubern: ganze Zahlen innerhalb des Textes, bekannte Art, der Reihe nach, ohne Überschneidung
+  function markenSauber(roh, text, von) {
+    const n = String(text || "").length, aus = [];
+    (Array.isArray(roh) ? roh : []).slice(0, 60).map((m) => ({ start: Math.round(Number(m && m.start)), end: Math.round(Number(m && m.end)), type: clean(m && m.type, 20),
+      comment: clean(m && m.comment, 200), von: m && m.von === "ki" && von !== "ki" ? "ki" : von }))
+      .filter((m) => Number.isInteger(m.start) && Number.isInteger(m.end) && m.start >= 0 && m.end > m.start && m.end <= n && MARKEN_ARTEN.includes(m.type))
+      .sort((a, b) => a.start - b.start)
+      .forEach((m) => { if (!aus.length || m.start >= aus[aus.length - 1].end) aus.push(m); });
+    return aus.slice(0, 40);
+  }
+  // Die KI nennt Stellen als Zitat; hier wird daraus ein Bereich. Was sich im Text nicht findet, entfällt.
+  function markenAusKi(roh, text, record) {
+    const t = String(text || ""), belegt = [], aus = [];
+    const frei = (a, b) => belegt.every((x) => b <= x[0] || a >= x[1]);
+    (Array.isArray(roh) ? roh : []).slice(0, 14).forEach((m) => {
+      const stelle = String((m && m.stelle) || "").replace(/^[\s„“"'‚‘»«]+|[\s„“"'‚‘»«]+$/g, ""), type = MARKEN_DEUTSCH[String((m && m.art) || "").trim().toLowerCase()];
+      if (stelle.length < 2 || stelle.length > 160 || !type) return;
+      if (type === "spelling" && record && record.rsWerten === false) return;
+      // genau suchen; sonst mit beliebigen Leerzeichen/Zeilenumbrüchen zwischen den Wörtern
+      let start = -1, laenge = stelle.length;
+      for (let ab = 0; ab <= t.length; ) { const i = t.indexOf(stelle, ab); if (i < 0) break; if (frei(i, i + laenge)) { start = i; break; } ab = i + 1; }
+      if (start < 0) {
+        const muster = new RegExp(stelle.split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+"), "g");
+        for (let treffer = muster.exec(t); treffer; treffer = muster.exec(t)) { if (frei(treffer.index, treffer.index + treffer[0].length)) { start = treffer.index; laenge = treffer[0].length; break; } }
+      }
+      if (start < 0) return;
+      belegt.push([start, start + laenge]);
+      aus.push({ start, end: start + laenge, type, comment: kurz(m.hinweis, 160), von: "ki" });
+    });
+    return markenSauber(aus, t, "ki");
+  }
+
   // Vorschlag der KI in die Aufgabe eintragen. Hat die Lehrkraft schon selbst bewertet, bleibt ihre Bewertung gültig.
   function kiEintragen(d, r) {
     d.ki = r; delete d.kiOffen;
     if (d.lehrer) return;
+    if (r.marken) d.marken = r.marken.map((m) => ({ ...m }));
     d.kriterien.forEach((k, i) => { k.punkte = r.punkte[i]; });
     Object.assign(d, { source: "ki", needsReview: false, hinweis: r.hinweis || "" });
     if (d.type === "schreiben") Object.assign(d, { begruendung: r.begruendung, gelungen: r.gelungen, arbeiten: r.arbeiten, kategorien: r.kategorien, comment: "" });
@@ -450,7 +598,7 @@ function registerD7ProbenRoutes(app, opts) {
       if (row.status === "eingegangen") row.status = "zu-pruefen";
       rechne(row); writeData(data);
     } catch (err) {
-      console.error("Deutsch 7 KI-Korrektur:", err && err.message);
+      console.error("Deutsch " + STUFE + " KI-Korrektur:", err && err.message);
     } finally { laufend.delete(id); }
   }
   // Nach einem Neustart: Abgaben, deren KI-Korrektur nicht fertig wurde, holen wir nach
@@ -471,14 +619,14 @@ function registerD7ProbenRoutes(app, opts) {
       details: row.details.map((d) => {
         const item = test ? test.items[d.nr - 1] : null;
         return { ...d, horizont: item && OFFENE.has(item.type) ? (item.type === "schreiben" ? item.raster.map((k) => ({ text: k.name, erwartet: k.text || "", punkte: k.punkte })) : item.kriterien.map((k) => ({ text: k.text, erwartet: k.erwartet || "", punkte: k.punkte }))) : undefined,
-          beispiel: item && item.expected || undefined, textId: item && item.text || undefined };
+          beispiel: item && item.expected || undefined, textId: item && item.text || undefined, planFelder: item && item.plan || undefined };
       }) };
   }
   // für das Kind: nur nach der Freigabe, ohne Lehrer-Interna und ohne Kennzeichen des Notenschutzes
   function fuerKind(row) {
     const test = tests[row.testId];
     return {
-      fach: "Deutsch 7", testId: row.testId, nr: row.nr, title: row.testTitle, zug: row.zugProbe, variante: row.variante, klasse: row.className, code: row.code,
+      fach: "Deutsch " + STUFE, stufe: STUFE, testId: row.testId, nr: row.nr, title: row.testTitle, zug: row.zugProbe, variante: row.variante, klasse: row.className, code: row.code,
       datum: row.submittedAt, freigegebenAm: row.freigegebenAm, score: row.score, total: row.total, percent: row.percent, grade: row.grade, lehrerKommentar: row.lehrerKommentar || "",
       texte: test ? test.texte.map(publicText) : [],
       aufgaben: row.details.map((d) => {
@@ -489,6 +637,8 @@ function registerD7ProbenRoutes(app, opts) {
         if (d.kriterien) a.kriterien = d.kriterien.map((k, i) => ({ text: k.text, punkte: k.punkte, max: k.max, gewertet: zaehlt(k, row), begruendung: d.begruendung ? d.begruendung[i] || "" : undefined }));
         if (d.felder) a.felder = d.felder.map((f) => ({ label: f.label, given: f.given, punkte: f.punkte, max: f.max, loesung: f.expected, gewertet: zaehlt(f, row) }));
         if (d.type === "schreiben") Object.assign(a, { gelungen: d.gelungen || [], arbeiten: d.arbeiten || [], woerter: d.woerter });
+        if (d.marken && d.marken.length) a.marken = d.marken.map((m) => ({ start: m.start, end: m.end, type: m.type, comment: m.comment || "" }));
+        if (d.plan) { a.plan = d.plan; a.form = d.form; a.planFelder = test && test.items[d.nr - 1] ? test.items[d.nr - 1].plan : undefined; }
         if (teile && w.aus) a.teilweiseNichtBewertet = true;
         return a;
       })
@@ -496,7 +646,7 @@ function registerD7ProbenRoutes(app, opts) {
   }
 
   /* ---------- Routen für die Kinder ---------- */
-  app.get(PREFIX + "/health", (_req, res) => res.json({ ok: true, service: "d7-proben", proben: Object.keys(tests).length }));
+  app.get(PREFIX + "/health", (_req, res) => res.json({ ok: true, service: "d" + STUFE + "-proben", proben: Object.keys(tests).length }));
   app.get(PREFIX + "/list", (req, res) => {
     const data = readData(), alle = req.query && req.query.alle === "1";
     res.json({ ok: true, tests: Object.values(tests).map((t) => publicTest(t, data)).filter((t) => alle || t.variante !== "B" || t.unlocked) });
@@ -504,16 +654,85 @@ function registerD7ProbenRoutes(app, opts) {
   app.post(PREFIX + "/start", async (req, res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
-    if (!probeOffen(readData().unlocked[test.id])) return res.status(403).json({ ok: false, error: "locked" });
+    // Mit Sitzung: Hat die Lehrkraft eben gesperrt, darf eine schon begonnene Probe in der Nachfrist weitergehen
+    // (z. B. nach dem Neuladen) – neu beginnen kann sie niemand mehr.
+    const freigabe = readData().unlocked[test.id];
+    if (!probeOffen(freigabe, SITZUNG)) return res.status(403).json({ ok: false, error: "locked" });
     const student = await probeKind(req, res);
     if (!student) return;
-    if (String(student.klasse || "").indexOf("7") !== 0) return res.status(403).json({ ok: false, error: "falsche_stufe", message: "Diese Probe ist für die 7. Klassen." });
+    if (SITZUNG && !probeOffen(freigabe)) { const laufend = sitzLesen().sitzungen[sitzKey(test, student)]; if (!laufend || laufend.testId !== test.id) return res.status(403).json({ ok: false, error: "locked" }); }
+    if (String(student.klasse || "").indexOf(String(STUFE)) !== 0) return res.status(403).json({ ok: false, error: "falsche_stufe", message: "Diese Probe ist für die " + STUFE + ". Klassen." });
     if (test.zug !== student.zug) return res.status(403).json({ ok: false, error: "falscher_zug", message: `Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.` });
     const schon = readData().submissions.find((row) => row.nr === test.nr && row.studentKey === student.key);
     if (schon) return res.status(409).json({ ok: false, error: "already_submitted", message: schon.testId === test.id ? "Diese Probe wurde mit diesem Code bereits abgegeben." : "Du hast Probe " + test.nr + " schon geschrieben (Variante " + schon.variante + ")." });
-    return res.json({ ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(readData(), test.nr) },
-      texte: test.texte.map(publicText), items: test.items.map(publicItem) });
+    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr) },
+      texte: test.texte.map(publicText), items: test.items.map(publicItem) };
+    if (SITZUNG) {
+      // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
+      const sd = sitzLesen(), { sitz, neu } = sitzHolen(sd, test, student, req.body.begonnenAm);
+      if (neu) sitzSchreiben(sd);
+      antwort.test.schutz = schutzVon(data, test.nr);
+      antwort.sitzung = sitzAntwort(test, sitz, data);
+      if (sitz.answers) antwort.zwischenstand = { answers: sitz.answers, plan: sitz.plan || {}, gespeichertAm: sitz.gespeichertAm };
+    }
+    return res.json(antwort);
   });
+  // Zwischenstand sichern (alle paar Sekunden, solange das Kind schreibt). Gibt nichts ab und bewertet nichts.
+  app.post(PREFIX + "/zwischenstand", async (req, res) => {
+    if (!SITZUNG) return res.status(404).json({ ok: false, error: "not_found" });
+    const test = tests[clean(req.body?.testId)];
+    if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
+    const student = await probeKind(req, res);
+    if (!student) return;
+    const answers = antwortenSauber(test, req.body.answers);
+    if (!answers) return res.status(400).json({ ok: false, error: "bad_answers" });
+    const data = readData();
+    if (data.submissions.some((row) => row.nr === test.nr && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+    if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
+    if (test.zug !== student.zug || String(student.klasse || "").indexOf(String(STUFE)) !== 0) return res.status(403).json({ ok: false, error: "falscher_zug" });
+    try {
+      const sd = sitzLesen(), { sitz } = sitzHolen(sd, test, student, req.body.begonnenAm);
+      Object.assign(sitz, { answers, plan: planSauber(test, req.body.plan), gespeichertAm: new Date().toISOString() });
+      sitzSchreiben(sd);
+      return res.json({ ok: true, gespeichertAm: sitz.gespeichertAm, sitzung: sitzAntwort(test, sitz, data) });
+    } catch (err) {
+      console.error("Deutsch " + STUFE + " Zwischenstand:", err && err.message);
+      return res.status(500).json({ ok: false, error: "server_error" });
+    }
+  });
+  // Abgabe anlegen (Kind gibt ab oder die Lehrkraft übernimmt einen Zwischenstand). mehr: zusätzliche Angaben zur Abgabe
+  function abgabeAnlegen(data, test, student, answers, mehr) {
+    const plan = SITZUNG ? planSauber(test, mehr.plan) : {};
+    const details = test.items.map((item, i) => {
+      const base = { nr: i + 1, type: item.type, prompt: item.prompt, maxPoints: item.points, vorgabe: item.vorgabe || undefined, material: item.material || undefined };
+      if (item.rs) base.rs = true;
+      if (item.zs) base.zs = true;
+      const d = OFFENE.has(item.type) ? offenStart(item, answers[i], base) : schluessel(item, answers[i], base);
+      if (plan[i + 1]) d.plan = plan[i + 1];
+      return d;
+    });
+    const kiNoetig = details.some((d) => d.kiOffen);
+    const record = { id: crypto.randomUUID(), testId: test.id, testTitle: test.title, nr: test.nr, variante: test.variante, zugProbe: test.zug, ...student, studentKey: student.key,
+      verlassen: verlassenZahl(mehr.verlassen), protokoll: protokollSauber(mehr.protokoll), rsWerten: !student.lrs, zsWerten: true, details, status: kiNoetig ? "eingegangen" : "zu-pruefen",
+      ki: { stand: kiNoetig ? "offen" : "fertig" }, submittedAt: new Date().toISOString() };
+    delete record.key;
+    if (mehr.vonLehrkraft) record.vonLehrkraftAbgegeben = true;
+    if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
+    // Zeiten der Sitzung: Beginn, Dauer, erlaubte Zeit – nur zur Information der Lehrkraft, ohne Folgen für Punkte oder Note
+    if (SITZUNG) {
+      const sd = sitzLesen(), sitz = sd.sitzungen[sitzKey(test, student)];
+      if (sitz && sitz.testId === test.id) {
+        const ende = mehr.vonLehrkraft && sitz.gespeichertAm ? Date.parse(sitz.gespeichertAm) : Date.parse(record.submittedAt);
+        const dauer = Math.max(0, Math.round((ende - Date.parse(sitz.begonnenAm)) / 60000)), erlaubt = minutenVon(test, sitz);
+        record.zeit = { begonnenAm: sitz.begonnenAm, minuten: dauer, erlaubt, ueber: Math.max(0, dauer - erlaubt), verlaengerung: Number(sitz.verlaengerung) || 0 };
+      }
+    }
+    rechne(record);
+    data.submissions.push(record); writeData(data);            // ab hier ist die Abgabe sicher
+    if (SITZUNG) { try { const sd = sitzLesen(); delete sd.sitzungen[sitzKey(test, student)]; sitzSchreiben(sd); } catch (_e) {} }
+    if (kiNoetig) kiKorrigieren(record.id);                    // läuft im Hintergrund weiter
+    return record;
+  }
   app.post(PREFIX + "/submit", async (req, res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
@@ -527,24 +746,10 @@ function registerD7ProbenRoutes(app, opts) {
       const data = readData();
       if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
       if (data.submissions.some((row) => row.nr === test.nr && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
-      const details = test.items.map((item, i) => {
-        const base = { nr: i + 1, type: item.type, prompt: item.prompt, maxPoints: item.points, vorgabe: item.vorgabe || undefined, material: item.material || undefined };
-        if (item.rs) base.rs = true;
-        if (item.zs) base.zs = true;
-        return OFFENE.has(item.type) ? offenStart(item, req.body.answers[i], base) : schluessel(item, req.body.answers[i], base);
-      });
-      const kiNoetig = details.some((d) => d.kiOffen);
-      const record = { id: crypto.randomUUID(), testId: test.id, testTitle: test.title, nr: test.nr, variante: test.variante, zugProbe: test.zug, ...student, studentKey: student.key,
-        verlassen: verlassenZahl(req.body.verlassen), protokoll: protokollSauber(req.body.protokoll), rsWerten: !student.lrs, zsWerten: true, details, status: kiNoetig ? "eingegangen" : "zu-pruefen",
-        ki: { stand: kiNoetig ? "offen" : "fertig" }, submittedAt: new Date().toISOString() };
-      delete record.key;
-      if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
-      rechne(record);
-      data.submissions.push(record); writeData(data);            // ab hier ist die Abgabe sicher
-      if (kiNoetig) kiKorrigieren(record.id);                    // läuft im Hintergrund weiter
+      const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan });
       return res.json({ ok: true, angekommen: true, abgabe: { testTitle: test.title, submittedAt: record.submittedAt } });
     } catch (err) {
-      console.error("Deutsch 7 Abgabe:", err);
+      console.error("Deutsch " + STUFE + " Abgabe:", err);
       return res.status(500).json({ ok: false, error: "server_error" });
     } finally { pending.delete(key); }
   });
@@ -582,9 +787,60 @@ function registerD7ProbenRoutes(app, opts) {
     if (!teacher(req, res)) return;
     const nr = Number(req.body.nr) || 0;
     if (!Object.values(tests).some((t) => t.nr === nr)) return res.status(404).json({ ok: false, error: "test_not_found" });
-    if (!["sperren", "protokollieren"].includes(req.body.einfuegen)) return res.status(400).json({ ok: false, error: "bad_value" });
-    const data = readData(); data.einfuegen[nr] = req.body.einfuegen; writeData(data);
-    res.json({ ok: true, nr, einfuegen: einfuegenVon(data, nr) });
+    const b = req.body, hatSchutz = SITZUNG && b.schutz && typeof b.schutz === "object";
+    if (b.einfuegen !== undefined && !["sperren", "protokollieren"].includes(b.einfuegen)) return res.status(400).json({ ok: false, error: "bad_value" });
+    if (b.einfuegen === undefined && !hatSchutz) return res.status(400).json({ ok: false, error: "bad_value" });
+    const data = readData();
+    if (b.einfuegen !== undefined) data.einfuegen[nr] = b.einfuegen;
+    if (hatSchutz) {
+      const neu = { ...(data.schutz[nr] || {}) };
+      ["wechsel", "warnen", "spruenge", "timer"].forEach((k) => { if (typeof b.schutz[k] === "boolean") neu[k] = b.schutz[k]; });
+      ["kopieren", "ausschneiden", "kontextmenue"].forEach((k) => { if (b.schutz[k] === "erlauben" || b.schutz[k] === "sperren") neu[k] = b.schutz[k]; });
+      data.schutz[nr] = neu;
+    }
+    writeData(data);
+    res.json({ ok: true, nr, einfuegen: einfuegenVon(data, nr), ...(SITZUNG ? { schutz: schutzVon(data, nr) } : {}) });
+  });
+  // Laufende Bearbeitungen einer Probe (Deutsch 8): wer schreibt gerade, seit wann, wann zuletzt gesichert
+  const sitzZeile = (test, s) => ({ code: s.code, klasse: s.klasse, testId: s.testId, variante: test ? test.variante : "", begonnenAm: s.begonnenAm, gespeichertAm: s.gespeichertAm || "",
+    minuten: test ? minutenVon(test, s) : 0, verlaengerung: Number(s.verlaengerung) || 0, endetAm: test ? new Date(Date.parse(s.begonnenAm) + minutenVon(test, s) * 60000).toISOString() : "",
+    woerter: (s.answers || []).reduce((n, a) => n + (typeof a === "string" ? wortZahl(a) : 0), 0) });
+  const sitzFinden = (sd, nr, code) => Object.values(sd.sitzungen).find((s) => s.nr === nr && String(s.code) === String(code));
+  app.post(PREFIX + "/teacher/sitzungen", (req, res) => {
+    if (!teacher(req, res)) return;
+    if (!SITZUNG) return res.json({ ok: true, sitzungen: [] });
+    const nr = Number(req.body.nr) || 0;
+    const liste = Object.values(sitzLesen().sitzungen).filter((s) => !nr || s.nr === nr).map((s) => sitzZeile(tests[s.testId], s))
+      .sort((a, b) => String(a.klasse).localeCompare(String(b.klasse), "de") || String(a.code).localeCompare(String(b.code)));
+    res.json({ ok: true, serverZeit: new Date().toISOString(), sitzungen: liste });
+  });
+  // Zeit für ein Kind verlängern (Minuten zusätzlich zur Zeit der Probe; 0 nimmt die Verlängerung zurück)
+  app.post(PREFIX + "/teacher/sitzung-zeit", (req, res) => {
+    if (!teacher(req, res)) return;
+    const nr = Number(req.body.nr) || 0, minuten = Math.round(Number(req.body.minuten));
+    if (!SITZUNG || !Number.isInteger(minuten) || minuten < 0 || minuten > 120) return res.status(400).json({ ok: false, error: "bad_value" });
+    const sd = sitzLesen(), sitz = sitzFinden(sd, nr, clean(req.body.code, 3));
+    if (!sitz) return res.status(404).json({ ok: false, error: "not_found", message: "Dieses Kind hat die Probe noch nicht begonnen oder schon abgegeben." });
+    sitz.verlaengerung = minuten; sitzSchreiben(sd);
+    res.json({ ok: true, sitzung: sitzZeile(tests[sitz.testId], sitz) });
+  });
+  // Gesicherten Zwischenstand als Abgabe übernehmen (z. B. Gerät ausgefallen, Kind konnte nicht abgeben)
+  app.post(PREFIX + "/teacher/sitzung-abgeben", (req, res) => {
+    if (!teacher(req, res)) return;
+    const nr = Number(req.body.nr) || 0;
+    const sd = SITZUNG ? sitzLesen() : { sitzungen: {} }, sitz = sitzFinden(sd, nr, clean(req.body.code, 3)), test = sitz && tests[sitz.testId];
+    if (!sitz || !test) return res.status(404).json({ ok: false, error: "not_found", message: "Zu diesem Kind gibt es keinen Zwischenstand." });
+    if (!sitz.answers) return res.status(409).json({ ok: false, error: "leer", message: "Für dieses Kind ist noch nichts gesichert." });
+    const data = readData();
+    if (data.submissions.some((row) => row.nr === test.nr && row.studentKey === sitz.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+    const student = { code: sitz.code, klasse: sitz.klasse, zug: sitz.zug, lrs: Boolean(sitz.lrs), firstName: "Code " + sitz.code, lastName: "", className: sitz.klasse, key: sitz.key };
+    try {
+      const record = abgabeAnlegen(data, test, student, sitz.answers, { plan: sitz.plan, vonLehrkraft: true });
+      res.json({ ok: true, submission: fuerLehrkraft(record) });
+    } catch (err) {
+      console.error("Deutsch " + STUFE + " Zwischenstand übernehmen:", err && err.message);
+      res.status(500).json({ ok: false, error: "server_error" });
+    }
   });
   app.post(PREFIX + "/teacher/results", (req, res) => {
     if (!teacher(req, res)) return;
@@ -628,6 +884,8 @@ function registerD7ProbenRoutes(app, opts) {
     if (Array.isArray(b.gelungen)) d.gelungen = liste(b.gelungen, 5, 300);
     if (Array.isArray(b.arbeiten)) d.arbeiten = liste(b.arbeiten, 5, 300);
     if (Array.isArray(b.begruendung) && d.kriterien) d.begruendung = d.kriterien.map((_, i) => clean(b.begruendung[i], 300));
+    // Fehlermarkierungen (Deutsch 8): Die Lehrkraft setzt die ganze Liste; der Text des Kindes bleibt unverändert
+    if (MARKEN && Array.isArray(b.marken) && typeof d.given === "string") d.marken = markenSauber(b.marken, d.given, "lehrer");
     d.lehrer = { am: new Date().toISOString() }; d.source = "lehrkraft"; d.needsReview = false; delete d.kiOffen;
     rechne(z.row); writeData(z.data);
     res.json({ ok: true, submission: fuerLehrkraft(z.row) });
@@ -638,7 +896,7 @@ function registerD7ProbenRoutes(app, opts) {
     const z = zeile(req, res); if (!z) return;
     const d = z.row.details.find((x) => x.nr === Number(req.body.nr));
     if (!d || !d.ki) return res.status(400).json({ ok: false, error: "kein_ki_vorschlag" });
-    delete d.lehrer; kiEintragen(d, d.ki);
+    delete d.lehrer; if (MARKEN) delete d.marken; kiEintragen(d, d.ki);
     rechne(z.row); writeData(z.data);
     res.json({ ok: true, submission: fuerLehrkraft(z.row) });
   });
@@ -712,11 +970,11 @@ function registerD7ProbenRoutes(app, opts) {
     const draussen = (r) => ((r.protokoll && r.protokoll.wechsel) || []).reduce((n, w) => n + (w.sekunden || 0), 0);
     const csv = ["Probe;Variante;Klasse;Code;Punkte;Gesamt;Prozent;Note;Stand;Notenschutz;Verlassen;Sekunden ausserhalb;Einfuegeversuche;Abgabe;Freigegeben;Geoeffnet",
       ...rows.map((r) => [r.testTitle, r.variante, r.className, r.code, zahl(r.score), zahl(r.total), r.percent, r.grade, STATUS_TEXT[r.status] || r.status, r.lrs ? "ja" : "nein", r.verlassen || 0, draussen(r), ((r.protokoll && r.protokoll.einfuegen) || []).length, r.submittedAt, r.freigegebenAm || "", r.geoeffnetAm || ""].map(quote).join(";"))].join("\r\n");
-    res.type("text/csv; charset=utf-8").attachment("deutsch7-proben.csv").send("﻿" + csv);
+    res.type("text/csv; charset=utf-8").attachment("deutsch" + STUFE + "-proben.csv").send("﻿" + csv);
   });
 
   // Für die Notenübersicht je Klasse (proben-noten.js): vor der Bestätigung als „nachprüfen“ gekennzeichnet
-  return { abgaben: () => readData().submissions, kiKorrigieren, nachholen, tests };
+  return { abgaben: () => readData().submissions, kiKorrigieren, nachholen, tests, markenAusKi, markenSauber };
 }
 
-module.exports = { registerD7ProbenRoutes, vorbereiten, maxPoints, anteile, kommaSatz, KATEGORIEN };
+module.exports = { registerD7ProbenRoutes, vorbereiten, maxPoints, anteile, kommaSatz, KATEGORIEN, MARKEN_ARTEN, SCHREIBFORMEN };
