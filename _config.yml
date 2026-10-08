@@ -1,0 +1,6 @@
+# GitHub Pages (joe82muc.github.io/englisch_9) liefert nur die Seiten der alten Englisch-9-Website aus.
+# Der Server-Ordner gehört nicht dazu: In backend/api stehen die Aufgaben der Proben samt Lösungen.
+# Render (englisch-9.onrender.com) braucht diese Datei nicht und sperrt backend/ ohnehin selbst (statisch.js).
+exclude:
+  - backend
+  - App_Azure/backend

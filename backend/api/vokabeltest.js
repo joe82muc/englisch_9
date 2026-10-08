@@ -408,6 +408,73 @@ function registerVokabeltestRoutes(app, opts) {
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
+  /* ---------- Auswertung: erst exakt, dann KI-Zweitmeinung ----------
+     Bei der Abgabe und wenn die Lehrkraft den Notenschutz LRS einer Abgabe nachträglich an- oder ausschaltet
+     (dann mit den gespeicherten Antworten). lrs: Rechtschreibung zählt nicht. */
+  async function werteAus(test, answers, lrs) {
+    const details = test.items.map((item, idx) => {
+      const given = clean(answers[idx]);
+      const result = checkAnswer(given, item.solutions, lrs);
+      // Zahlwörter (Hinweis „in Worten“): Eine Zahl in Ziffern ist keine Vokabel – auch nicht für die KI
+      const ziffern = !result.correct && /in worten/i.test(item.hint || "") && /\d/.test(given);
+      const regel = ziffern ? "Zahl in Worten schreiben, nicht in Ziffern" : regelHinweis(result);
+      return {
+        nr: idx + 1,
+        prompt: item.prompt,
+        given,
+        correct: result.correct,
+        typo: result.typo,
+        ai: false,
+        aiReason: "",
+        // regel: Eigenname kleingeschrieben, Verbformen fehlen oder Ziffern statt Zahlwort – das darf die KI nicht durchwinken
+        regel: Boolean(regel),
+        // Gilt eine Antwort trotz kleinem Schreibfehler, steht in der Rückgabe und im Elternausdruck, wie man das Wort schreibt
+        comment: regel || (result.correct && result.typo && result.matched ? ZAEHLT + result.matched : ""),
+        expected: item.solutions.join(" / ")
+      };
+    });
+
+    // Nur die abgelehnten Antworten mit Inhalt der KI vorlegen (ohne Verstöße gegen Großschreibung/Verbformen).
+    const pending = details
+      .map((d, idx) => ({ d, item: test.items[idx] }))
+      .filter(({ d }) => !d.correct && d.given && !d.regel)
+      .map(({ d, item }) => ({
+        nr: d.nr,
+        prompt: d.prompt,
+        given: d.given,
+        direction: item.direction,
+        hint: item.hint || "",
+        solutions: item.solutions
+      }));
+
+    if (pending.length) {
+      const verdicts = await aiReview(pending, askAnthropic, test.classLevel, lrs);
+      for (const d of details) {
+        const v = verdicts[d.nr];
+        if (v && v.correct && !d.correct) {
+          d.correct = true;
+          d.ai = true;
+          d.aiReason = v.reason;
+        }
+      }
+    }
+    return details;
+  }
+  function summe(details, scaleName) {
+    const total = details.length;
+    const score = details.filter((d) => d.correct).length;
+    const percent = total ? Math.round((score / total) * 100) : 0;
+    return {
+      total, score, percent,
+      typos: details.filter((d) => d.correct && d.typo).length,
+      aiAccepted: details.filter((d) => d.correct && d.ai).length,
+      grade: gradeFromPercent(percent, scaleName)
+    };
+  }
+  const ZAEHLT = "Zählt – richtig geschrieben: ";
+  // Schluessel einer gespeicherten Abgabe (aeltere Abgaben tragen ihn noch nicht)
+  const skalaVon = (rec) => rec.gradeScale || (TESTS[rec.testId] && TESTS[rec.testId].gradeScale) || "default";
+
   /* ---------- Oeffentlich: Liste der Tests (OHNE Loesungen) ---------- */
   app.get("/api/vokabeltest/list", (_req, res) => {
     const unlocks = store.loadUnlocks();
@@ -493,63 +560,12 @@ function registerVokabeltestRoutes(app, opts) {
       });
     }
 
-    // ---- Auswertung: erst exakt, dann KI-Zweitmeinung ----
-    const details = test.items.map((item, idx) => {
-      const given = clean(answers[idx]);
-      const result = checkAnswer(given, item.solutions, kind.lrs);
-      // Zahlwörter (Hinweis „in Worten“): Eine Zahl in Ziffern ist keine Vokabel – auch nicht für die KI
-      const ziffern = !result.correct && /in worten/i.test(item.hint || "") && /\d/.test(given);
-      const regel = ziffern ? "Zahl in Worten schreiben, nicht in Ziffern" : regelHinweis(result);
-      return {
-        nr: idx + 1,
-        prompt: item.prompt,
-        given,
-        correct: result.correct,
-        typo: result.typo,
-        ai: false,
-        aiReason: "",
-        // regel: Eigenname kleingeschrieben, Verbformen fehlen oder Ziffern statt Zahlwort – das darf die KI nicht durchwinken
-        regel: Boolean(regel),
-        comment: regel,
-        expected: item.solutions.join(" / ")
-      };
-    });
-
-    // Nur die abgelehnten Antworten mit Inhalt der KI vorlegen (ohne Verstöße gegen Großschreibung/Verbformen).
-    const pending = details
-      .map((d, idx) => ({ d, item: test.items[idx] }))
-      .filter(({ d }) => !d.correct && d.given && !d.regel)
-      .map(({ d, item }) => ({
-        nr: d.nr,
-        prompt: d.prompt,
-        given: d.given,
-        direction: item.direction,
-        hint: item.hint || "",
-        solutions: item.solutions
-      }));
-
-    if (pending.length) {
-      const verdicts = await aiReview(pending, askAnthropic, test.classLevel, kind.lrs);
-      for (const d of details) {
-        const v = verdicts[d.nr];
-        if (v && v.correct && !d.correct) {
-          d.correct = true;
-          d.ai = true;
-          d.aiReason = v.reason;
-        }
-      }
-    }
-
-    const total = details.length;
-    const score = details.filter((d) => d.correct).length;
-    const typos = details.filter((d) => d.correct && d.typo).length;
-    const aiAccepted = details.filter((d) => d.correct && d.ai).length;
-    const percent = total ? Math.round((score / total) * 100) : 0;
+    const details = await werteAus(test, answers, kind.lrs);
     // Schluessel nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3), auch wenn es
     // den Test des anderen Zugs erwischt hat. R-Tests behalten ihren eigenen R-Schluessel.
     const scaleName = kind.zug === "M" ? "default"
       : (test.gradeScale && test.gradeScale !== "default" ? test.gradeScale : "9R");
-    const grade = gradeFromPercent(percent, scaleName);
+    const { total, score, typos, aiAccepted, percent, grade } = summe(details, scaleName);
 
     const record = {
       id: `vt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
@@ -632,6 +648,84 @@ function registerVokabeltestRoutes(app, opts) {
       distribution: [1, 2, 3, 4, 5, 6].map((g) => ({ grade: g, count: grades.filter((x) => x === g).length })),
       submissions: rows
     });
+  });
+
+  /* ---------- Lehrkraft: Notenschutz LRS fuer EINE Abgabe an- oder ausschalten ----------
+     Fuer Kinder, bei denen der Notenschutz beim Code noch nicht eingetragen war, als sie geschrieben haben
+     (oder zu Unrecht eingetragen war). Die gespeicherten Antworten werden neu gewertet: Mit LRS zaehlt die
+     Rechtschreibung nicht. Antworten, die die Lehrkraft selbst gewertet hat, bleiben, wie sie sind.
+     Das Merkmal beim Code (fuer kuenftige Proben) aendert sich dadurch nicht. */
+  app.post("/api/vokabeltest/lrs", async (req, res) => {
+    if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
+
+    const id = clean(req.body?.submissionId);
+    const lrs = req.body?.lrs === true;
+    const alt = store.loadSubmissions().submissions.find((s) => s.id === id);
+    if (!alt) return res.status(404).json({ ok: false, error: "not_found" });
+    const test = TESTS[alt.testId];
+    const passt = test && Array.isArray(alt.details) && alt.details.length === test.items.length &&
+      alt.details.every((d, i) => d.prompt === test.items[i].prompt);
+    if (!passt) {
+      return res.status(409).json({ ok: false, error: "test_geaendert", message: "Die Aufgaben dieses Tests wurden seit der Abgabe geändert – neu werten geht nicht mehr." });
+    }
+
+    const neu = await werteAus(test, alt.details.map((d) => d.given), lrs);
+
+    // Erst jetzt frisch laden (waehrend der KI-Pruefung koennen andere Kinder abgegeben haben)
+    const db = store.loadSubmissions();
+    const rec = db.submissions.find((s) => s.id === id);
+    if (!rec) return res.status(404).json({ ok: false, error: "not_found" });
+    const vorher = rec.details;
+    let details;
+    if (lrs) {
+      // Stand ohne Notenschutz aufheben: Ausschalten fuehrt genau dorthin zurueck (die KI urteilt nicht jedes Mal gleich)
+      if (!rec.lrs && !rec.detailsOhneLrs) rec.detailsOhneLrs = vorher.map((d) => ({ ...d }));
+      // Mit Notenschutz wird keine Antwort schlechter gewertet als vorher
+      details = neu.map((d, i) => (vorher[i].correct && !d.correct ? vorher[i] : d));
+    } else {
+      details = rec.detailsOhneLrs || neu;
+      delete rec.detailsOhneLrs;
+    }
+    rec.details = details.map((d, i) => (vorher[i].scoredBy === "lehrkraft" ? vorher[i] : d));
+    rec.lrs = lrs;
+    Object.assign(rec, summe(rec.details, skalaVon(rec)));
+    store.saveSubmissions(db);
+    res.json({ ok: true, lrs, score: rec.score, total: rec.total, percent: rec.percent, grade: rec.grade });
+  });
+
+  /* ---------- Lehrkraft: Eine Antwort selbst werten (richtig = 1 Punkt, falsch = 0) ---------- */
+  app.post("/api/vokabeltest/override", (req, res) => {
+    if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
+
+    const id = clean(req.body?.submissionId);
+    const nr = parseInt(req.body?.nr, 10);
+    const points = Number(req.body?.points);
+    const db = store.loadSubmissions();
+    const rec = db.submissions.find((s) => s.id === id);
+    if (!rec) return res.status(404).json({ ok: false, error: "not_found" });
+    const det = (rec.details || []).find((d) => d.nr === nr);
+    if (!det) return res.status(404).json({ ok: false, error: "item_not_found" });
+    if (points !== 0 && points !== 1) return res.status(400).json({ ok: false, error: "bad_points" });
+
+    det.correct = points === 1;
+    det.scoredBy = "lehrkraft";
+    det.typo = false;
+    det.ai = false;
+    det.aiReason = "";
+    // Der Hinweis der Regel („Großschreibung: France“) passt nicht, solange die Lehrkraft die Antwort gelten laesst;
+    // nimmt sie das zurueck, steht er wieder da
+    const eigener = clean(req.body?.comment).slice(0, 220);
+    // „Zählt – richtig geschrieben: …“ gehoert nur zu einer Antwort, die zaehlt
+    const bisher = String(det.comment || "").startsWith(ZAEHLT) ? "" : det.comment || "";
+    if (det.correct) {
+      if (bisher && !det.regelHinweis) det.regelHinweis = bisher;
+      det.comment = eigener;
+    } else {
+      det.comment = eigener || bisher || det.regelHinweis || "";
+    }
+    Object.assign(rec, summe(rec.details, skalaVon(rec)));
+    store.saveSubmissions(db);
+    res.json({ ok: true, score: rec.score, percent: rec.percent, grade: rec.grade });
   });
 
   /* ---------- Lehrkraft: Einzelne Abgabe loeschen (Nachschreiben) ---------- */

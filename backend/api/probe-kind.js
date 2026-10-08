@@ -111,4 +111,24 @@ function probeKindPruefer(kindZumCode) {
   };
 }
 
-module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, NACHFRIST_MS, verlassenZahl, protokollSauber, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R };
+/* Note erst nach der Rückgabe: Die Antwort auf eine Abgabe nennt dem Kind weder Punkte noch Note noch Lösungen –
+   sonst stünden sie auf dem Bildschirm, während die Nachbarn noch schreiben. Die Lehrkraft sieht alles sofort
+   (Noten, Lehrerseite der Probe) und gibt die Probe zurück; dann steht sie beim Kind unter „Zurückbekommen“
+   (proben-rueckgabe.js). server.js hängt das vor die Abgabe-Routen aller Proben-Module (ABGABE_ROUTEN); die Module
+   selbst antworten wie bisher. Deutsch 7 und 8 haben denselben Ablauf im eigenen Modul.
+   Die Platzhalter („–“, leere Listen) sind für Seiten, die noch die frühere Antwort erwarten (offen gebliebener Tab). */
+const ABGABE_ROUTEN = ["vokabeltest", "grammatik9r", "nt7", "inf7", "inf8", "infoaustausch", "informatik8", "nt9probe",
+  "netzwerktest", "filiuspruefung"].map((modul) => "/api/" + modul + "/submit");
+function ohneErgebnis(body) {
+  if (!body || body.ok !== true || !body.result || typeof body.result !== "object") return body;
+  return { ok: true, abgegeben: true, result: { abgegeben: true, submittedAt: body.result.submittedAt || new Date().toISOString(),
+    score: "–", total: "–", percent: "–", grade: "–", typos: 0, aiAccepted: 0, needsReview: false, teile: [], details: [] } };
+}
+function abgabeOhneErgebnis(_req, res, next) {
+  const json = res.json.bind(res);
+  res.json = (body) => json(ohneErgebnis(body));
+  next();
+}
+
+module.exports = { probeKindPruefer, zugVonKlasse, probeOffen, NACHFRIST_MS, verlassenZahl, protokollSauber, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R,
+  ABGABE_ROUTEN, ohneErgebnis, abgabeOhneErgebnis };

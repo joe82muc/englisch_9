@@ -63,6 +63,10 @@ const { registerProbenSpeicher } = require("./proben-speicher");
 const probenSpeicher = registerProbenSpeicher(app, { dataDir: DATA_DIR });
 // Proben: Anmeldung mit dem Code aus dem Lernfortschritt (nt9Fortschritt wird weiter unten angelegt)
 const probeKindZumCode = (code, req) => nt9Fortschritt.kindZumCode(code, req);
+// Note erst nach der Rückgabe: Die Antwort auf eine Abgabe nennt dem Kind weder Punkte noch Note noch Lösungen.
+// Muss vor den Proben-Modulen stehen.
+const { ABGABE_ROUTEN, abgabeOhneErgebnis } = require("./probe-kind");
+app.use(ABGABE_ROUTEN, abgabeOhneErgebnis);
 
 // --- Vokabeltest-Modul (Freischaltung, Abgabe, Auswertung) ---
 const { registerVokabeltestRoutes } = require("./vokabeltest");
@@ -514,7 +518,9 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-08-deutsch8",
+    version: "2026-10-08-note-nach-rueckgabe",
+    // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
+    lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     kalenderHeft: true,
