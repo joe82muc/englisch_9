@@ -602,13 +602,20 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     } catch (error) { return fehler(res, error); }
   });
   /* --- Namensliste der Lehrkraft, damit sie auf jedem ihrer Geräte steht – hier nur als Schlüsseltext ---
-   * Der Browser der Lehrkraft verschlüsselt die Liste { Code: Name } selbst (AES-GCM, Schlüssel per PBKDF2 aus einem
-   * eigenen Namens-Schlüssel, der nie hierher geschickt wird; siehe js/namen-sync.js der Website) und legt nur den
+   * Der Browser der Lehrkraft verschlüsselt die Liste { Code: Name } selbst (AES-GCM, Schlüssel per PBKDF2 aus dem
+   * Lehrkraft-Passwort; ältere Sicherungen verwenden noch einen eigenen Namens-Schlüssel) und legt nur den
    * Schlüsseltext ab. In der Datenbank steht
    * kein lesbarer Name; der Server entschlüsselt nie. Abrufen und Speichern nur mit dem Lehrkraft-Passwort – die
    * Seiten der Kinder kommen nicht heran. version = Zähler gegen gleichzeitiges Speichern von zwei Geräten. */
   const NAMEN_KEY = "nt9:namen";
   const NAMEN_FORM = /^v1\.[A-Za-z0-9+/=]{16,64}\.[A-Za-z0-9+/=]{12,32}\.[A-Za-z0-9+/=]{16,400000}$/;
+  // Die einzelne Serverinstanz führt Versionsprüfung und Schreiben gemeinsam aus.
+  let namenSchreibfolge = Promise.resolve();
+  function namenAendern(fn) {
+    const vorgang = namenSchreibfolge.then(fn, fn);
+    namenSchreibfolge = vorgang.catch(() => {});
+    return vorgang;
+  }
   app.post("/api/nt9/fortschritt/lehrer/namen", async (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
@@ -622,18 +629,20 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const blob = String((req.body && req.body.blob) || "");
       // nur Schlüsseltext in der erwarteten Form – nie eine lesbare Liste
       if (!NAMEN_FORM.test(blob)) return res.status(400).json({ ok: false, error: "Die Namensliste muss verschlüsselt ankommen." });
-      const alt = await store.get(NAMEN_KEY), version = (alt && alt.version) || 0;
-      if (Number(req.body.version) !== version) {
-        return res.status(409).json({ ok: false, error: "Die Namensliste wurde inzwischen auf einem anderen Gerät geändert.", blob: (alt && alt.blob) || "", version });
-      }
-      await store.set(NAMEN_KEY, { blob, version: version + 1, zeit: new Date().toISOString() });
-      return res.json({ ok: true, version: version + 1 });
+      return await namenAendern(async () => {
+        const alt = await store.get(NAMEN_KEY), version = (alt && alt.version) || 0;
+        if (Number(req.body.version) !== version) {
+          return res.status(409).json({ ok: false, error: "Die Namensliste wurde inzwischen auf einem anderen Gerät geändert.", blob: (alt && alt.blob) || "", version });
+        }
+        await store.set(NAMEN_KEY, { blob, version: version + 1, zeit: new Date().toISOString() });
+        return res.json({ ok: true, version: version + 1 });
+      });
     } catch (error) { return fehler(res, error); }
   });
   app.post("/api/nt9/fortschritt/lehrer/namen/loeschen", async (req, res) => {
     if (!lehrerOk(req, res)) return;
     try {
-      await store.del([NAMEN_KEY]);
+      await namenAendern(() => store.del([NAMEN_KEY]));
       return res.json({ ok: true });
     } catch (error) { return fehler(res, error); }
   });

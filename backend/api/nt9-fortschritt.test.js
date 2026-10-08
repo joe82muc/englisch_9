@@ -459,6 +459,31 @@ test("Deutsch 7: früher angemeldete Module erscheinen unter den heutigen Bereic
   } finally { await new Promise((ok) => api.server.close(ok)); }
 });
 
+test("gleichzeitige Namenssicherungen behalten vorhandene Codes und erkennen Versionskonflikte", async () => {
+  const store = dateiStore(null);
+  const kinder = [
+    { code: "101", klasse: "7aM", angelegt: 10, p: { m01: { g: { a: 20 }, t: 20, z: 1 } } },
+    { code: "205", klasse: "9d", angelegt: 30, lrs: true, p: {} }
+  ];
+  await store.mset(kinder.map(k => ["nt9:c:" + k.code, k]));
+  await store.sadd("nt9:codes", kinder.map(k => k.code));
+  const lesen = store.get;
+  store.get = async key => {
+    const wert = await lesen(key);
+    if (key === "nt9:namen") await new Promise(ok => setTimeout(ok, 20));
+    return wert;
+  };
+  const api = await starte({ store });
+  const blob = suffix => "v1." + Buffer.alloc(16).toString("base64") + "." + Buffer.alloc(12).toString("base64") + "." + Buffer.alloc(32, suffix).toString("base64");
+  try {
+    const antworten = await Promise.all(["a", "b"].map(suffix => api.post(P + "/lehrer/namen/sichern", { password: "2", blob: blob(suffix), version: 0 })));
+    assert.deepEqual(antworten.map(r => r.status).sort(), [200, 409]);
+    assert.equal((await store.get("nt9:namen")).version, 1);
+    assert.deepEqual(await store.mget(kinder.map(k => "nt9:c:" + k.code)), kinder, "Code, Klasse und Lernstand bleiben exakt gleich");
+    assert.deepEqual(await store.smembers("nt9:codes"), ["101", "205"]);
+  } finally { await new Promise(ok => api.server.close(ok)); }
+});
+
 test("Namensliste der Lehrkraft: nur verschlüsselt, nur mit Passwort, zwei Geräte überschreiben sich nicht", async () => {
   const api = await starte({ store: dateiStore(null) });
   const N = P + "/lehrer/namen";
