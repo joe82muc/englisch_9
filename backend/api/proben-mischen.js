@@ -34,6 +34,8 @@ function reihenfolge(test, it, nr, salz) {
 
 const istAnkreuzen = (it) => it.type === "choice" && Array.isArray(it.options) && Number.isInteger(it.answer);
 const istZuordnen = (it) => it.type === "match" && Array.isArray(it.options) && Array.isArray(it.rows);
+// NT 8: mehrere richtige Antworten (answers = Indizes) – Optionen mischen, die Indizes werden umgerechnet
+const istMehrfach = (it) => it.type === "multi" && Array.isArray(it.options) && Array.isArray(it.answers);
 
 function mischen(test) {
   // eigene Kopien: dieselbe Aufgabe kann in mehreren Proben stecken
@@ -57,10 +59,11 @@ function mischen(test) {
     }
   }
   test.items.forEach((it, nr) => {
-    if (!istAnkreuzen(it) && !istZuordnen(it)) return;
+    if (!istAnkreuzen(it) && !istZuordnen(it) && !istMehrfach(it)) return;
     const idx = reihenfolge(test, it, nr, salz);
     it.options = idx.map((i) => it.options[i]);
     if (istAnkreuzen(it)) it.answer = idx.indexOf(it.answer);
+    else if (istMehrfach(it)) it.answers = it.answers.map((a) => idx.indexOf(a)).sort((a, b) => a - b);
     else it.rows = it.rows.map((r) => ({ ...r, answer: idx.indexOf(r.answer) }));
   });
   return test;

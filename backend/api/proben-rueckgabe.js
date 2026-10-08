@@ -147,11 +147,15 @@ function registerProbenRueckgabeRoutes(app, options) {
       const a = { nr: d.nr != null ? d.nr : i + 1, prompt: text(d.prompt, 3000), given: paare(d.given, d.labels), points: punkte, max, comment: text(d.comment, 1500) };
       if (e.mitLoesung && punkte < max && d.expected != null && d.expected !== "") { a.loesung = paare(d.expected, d.labels, 3000); a.beispiel = d.type === "text"; }
       Object.assign(a, herkunft(d));
+      // NT 8: Abbildung, Messwerttabelle, Diagramm, Endzustand einer Bauaufgabe und Lernhinweis – damit Korrektur und
+      // Elternausdruck dieselbe Darstellung zeigen wie die Probe (nur was bei der Abgabe gespeichert wurde)
+      ["image", "imageAlt", "tabelle", "diagramm", "labor", "zustand", "regeln", "tipp", "kompetenz"].forEach((k) => { if (d[k] !== undefined && d[k] !== "") a[k] = d[k]; });
       return a;
     });
     res.json({ ok: true, korrektur: {
       modul, id, fach: treffer.q.fach, titel: r.testTitle || r.testId, klasse: kind.klasse, code: kind.code,
-      datum: r.testDate || r.submittedAt || "", freigegebenAm: e.freigegebenAm, kommentar: e.kommentar || "",
+      ...(r.variante ? { variante: r.variante } : {}), ...(r.testId ? { testId: r.testId } : {}),
+      datum: r.testDate || r.submittedAt || "", freigegebenAm: e.freigegebenAm, kommentar: e.kommentar || r.kommentar || "",
       score: r.score, total: r.total, percent: r.percent, grade: r.grade, aufgaben
     } });
   });

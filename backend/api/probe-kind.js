@@ -66,7 +66,10 @@ function protokollSauber(p) {
     spruenge: liste(p && p.spruenge).filter((e) => e && istZeit(e.zeit))
       .map((e) => ({ zeit: e.zeit, woerter: ganz(e.woerter, 200000), sekunden: ganz(e.sekunden, 600), vorher: ganz(e.vorher, 200000), nachher: ganz(e.nachher, 200000) }))
   };
-  return aus.wechsel.length || aus.einfuegen.length || aus.kopieren.length || aus.spruenge.length ? aus : undefined;
+  // Verbindung weg / wieder da (nur wenn es welche gab – ältere Abgaben und Auswertungen kennen das Feld nicht)
+  const verbindung = liste(p && p.verbindung).filter((e) => e && istZeit(e.zeit)).map((e) => ({ zeit: e.zeit, art: e.art === "da" ? "da" : "weg" }));
+  if (verbindung.length) aus.verbindung = verbindung;
+  return aus.wechsel.length || aus.einfuegen.length || aus.kopieren.length || aus.spruenge.length || verbindung.length ? aus : undefined;
 }
 
 /* Notenschutz LRS: Rechtschreibung zählt nicht. Text für die KI-Bewertung freier Antworten. */
@@ -117,7 +120,7 @@ function probeKindPruefer(kindZumCode) {
    (proben-rueckgabe.js). server.js hängt das vor die Abgabe-Routen aller Proben-Module (ABGABE_ROUTEN); die Module
    selbst antworten wie bisher. Deutsch 7 und 8 haben denselben Ablauf im eigenen Modul.
    Die Platzhalter („–“, leere Listen) sind für Seiten, die noch die frühere Antwort erwarten (offen gebliebener Tab). */
-const ABGABE_ROUTEN = ["vokabeltest", "grammatik9r", "nt7", "inf7", "inf8", "infoaustausch", "informatik8", "nt9probe",
+const ABGABE_ROUTEN = ["vokabeltest", "grammatik9r", "nt7", "nt8", "inf7", "inf8", "infoaustausch", "informatik8", "nt9probe",
   "netzwerktest", "filiuspruefung"].map((modul) => "/api/" + modul + "/submit");
 function ohneErgebnis(body) {
   if (!body || body.ok !== true || !body.result || typeof body.result !== "object") return body;

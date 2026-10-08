@@ -138,7 +138,7 @@ async function ablauf(api) {
   assert.equal(l.module.m06.t, 72);
   assert.deepEqual(liste.body.katalog.m06, { "mc1-0": ["Ankreuzen: Welcher Vorgang …", "1"], duell: ["Duell gegen den Klimaleugner", "7"] });
   assert.equal(liste.body.module.length, 11); // inkl. NT 9 Modul 6 (m07) und Modul 7 (m08)
-  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt7", "nt9", "d7", "d8", "d9", "e7", "e8", "e9", "i7", "i8", "i9"]);
+  assert.deepEqual(liste.body.kurse.map((k) => k.id), ["nt7", "nt8", "nt9", "d7", "d8", "d9", "e7", "e8", "e9", "i7", "i8", "i9"]);
   assert.deepEqual(liste.body.kurse.find((k) => k.id === "e8").zuege, ["R"]);
   assert.equal(liste.body.kurse.find((k) => k.id === "i9").fachName, "Informatik");
   const nur9aM = await post(P + "/lehrer/liste", { password: "2", klasse: "9aM", kurs: "nt9" });
@@ -165,7 +165,7 @@ async function ablauf(api) {
   // Selbst angemeldete Übungsseiten
   assert.equal((await post(P + "/melden", { code: lena, modul: "d9-rs-01", geloest: ["ex-s1-1"] })).status, 400, "ohne meta unbekannt");
   assert.equal((await post(P + "/melden", { code: lena, modul: "x9-quatsch", geloest: ["a"], meta: { titel: "x" } })).status, 400, "falsches Präfix");
-  assert.equal((await post(P + "/melden", { code: lena, modul: "nt8-quatsch", geloest: ["a"], meta: { titel: "x" } })).status, 400, "Kurs NT 8 gibt es nicht");
+  assert.equal((await post(P + "/melden", { code: lena, modul: "nt6-quatsch", geloest: ["a"], meta: { titel: "x" } })).status, 400, "Kurs NT 6 gibt es nicht");
   assert.equal((await post(P + "/anmelden", { code: lena, modul: "d9-rs-01" })).body.modulOk, false);
   const d = await post(P + "/melden", {
     code: lena, klasse: "9aM", modul: "d9-rs-01", geloest: ["ex-s1-1", "ex-s1-3"], gesamt: 10,

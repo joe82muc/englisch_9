@@ -58,6 +58,7 @@ const FAECHER = { nt: "Natur und Technik", d: "Deutsch", e: "Englisch", i: "Info
 // Kurse je Fach und Stufe; zuege = Züge, für die es Inhalte gibt
 const KURSE = [
   { id: "nt7", fach: "nt", stufe: 7, zuege: ["M", "R"], titel: "NT 7", module: [] },
+  { id: "nt8", fach: "nt", stufe: 8, zuege: ["M", "R"], titel: "NT 8", module: [] },
   { id: "nt9", fach: "nt", stufe: 9, zuege: ["M", "R"], titel: "NT 9 · Organische Rohstoffe", module: [
     { id: "m01", nr: 1, kurz: "Modul 1", titel: "Kohlenstoff, Holz und Raps" },
     { id: "m02", nr: 2, kurz: "Modul 2", titel: "Biodiesel, Stärke und Nachhaltigkeit" },

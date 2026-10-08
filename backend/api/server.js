@@ -255,6 +255,27 @@ registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Kl
 registerAbgabenRoutes(app, { prefix: "/api/inf8", stufe: 8, teacherPassword: TEACHER_PASSWORD, speicher: inf8Abgaben,
   excelAufgaben: require("./inf8-excel-aufgaben"), scratchModul: require("./inf8-scratch-aufgaben") });
 
+// --- NT 8 (8M und 8R): je Themenbereich eine Probe, R8/M8 × Variante A und Nachschreibprobe B (nt8-block-*.js).
+// Dieselbe Technik wie die NT-7-Proben, dazu: Beginn und Zwischenstand auf dem Server (sitzung), weitere Aufgabenarten
+// samt Bauaufgaben im NT-Labor und Korrektur jeder Aufgabe durch die Lehrkraft (erweitert). Kein zweites System. ---
+const nt8Proben = registerNt7Routes(app, {
+  prefix: "/api/nt8",
+  datei: "nt8-proben.json",
+  tests: require("./nt8-fragen"),
+  fach: "Natur-und-Technik",
+  stufe: 8,
+  service: "nt8-proben",
+  csvName: "nt8-proben.csv",
+  erweitert: true,
+  sitzung: true,
+  dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
+// NT 8: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule und der Probe-Vorbereitung (ein kurzer Hinweis, nicht die Lösung)
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt8/uebung/feedback", klasse: "Klasse 8", thema: "Natur und Technik 8 (Magnetismus, Induktion, Energie, Mensch und Gesundheit, Atome und Ionen, chemische Reaktionen, Säuren, Laugen und Salze)" });
+
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
 registerNt7FreigabeRoutes(app, {
@@ -276,6 +297,16 @@ registerNt7FreigabeRoutes(app, {
   prefix: "/api/inf8",
   datei: "inf8-freigabe.json",
   name: "Informatik-8-Freigabe",
+  stufe: 8,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+// --- NT 8: Themenbereiche und Module je Klasse freischalten (Übersichten 8M/NT und 8R/NT, Verwaltung „Natur und Technik“) ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/nt8",
+  datei: "nt8-freigabe.json",
+  name: "NT-8-Freigabe",
   stufe: 8,
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
@@ -431,6 +462,7 @@ const PROBEN_QUELLEN = [
     { modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben },
     { modul: "grammatik9r", fach: "Englisch", abgaben: grammatik.abgaben },
     { modul: "nt7", fach: "NT", abgaben: nt7Proben.abgaben },
+    { modul: "nt8", fach: "NT", abgaben: nt8Proben.abgaben },
     { modul: "d7proben", fach: "Deutsch", abgaben: d7Proben.abgaben },
     { modul: "d8proben", fach: "Deutsch", abgaben: d8Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
@@ -518,7 +550,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-08-codes-geraete",
+    version: "2026-10-08-nt8",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     nt9Fortschritt: nt9Fortschritt.store.art,
