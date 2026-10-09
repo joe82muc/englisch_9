@@ -18,6 +18,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
+const { verwandt } = require("./wortformen");
 
 /* ------------------------------------------------------------------
    Notenschluessel
@@ -181,30 +182,86 @@ function checkAnswer(given, solutions, lrs, opts) {
   const vorgabe = new Set(wortTeile(normalizeAnswer(opts && opts.prompt)));
   const tabu = (wort) => vorgabe.has(wort) || Boolean(opts && opts.bekannt && opts.bekannt.has(wort));
 
-  // Englische Eigennamen (France, Northern Ireland, CV …) müssen großgeschrieben sein – außer bei Notenschutz LRS
-  const mitGross = (ergebnis, a) => {
-    const fehler = lrs ? [] : grossFehler(given, a.raw);
-    return fehler.length ? { correct: false, typo: false, matched: a.raw, gross: fehler } : ergebnis;
-  };
-  for (const a of accepted) {
-    if (g === a.norm) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
-  }
-  if (!deutscheAntwort) {
+  // Eine einzelne Antwort (die ganze Eingabe oder ein Teil davon, siehe mitZusatz) gegen die Loesungen pruefen
+  const einzeln = (roh) => {
+    const n = normalizeAnswer(roh);
+    if (!n) return { correct: false, typo: false, matched: "" };
+    // Englische Eigennamen (France, Northern Ireland, CV …) müssen großgeschrieben sein – außer bei Notenschutz LRS
+    const mitGross = (ergebnis, a) => {
+      const fehler = lrs ? [] : grossFehler(roh, a.raw);
+      return fehler.length ? { correct: false, typo: false, matched: a.raw, gross: fehler } : ergebnis;
+    };
     for (const a of accepted) {
-      if (einheitlich(g) === einheitlich(a.norm)) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
+      if (n === a.norm) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
     }
-  }
-  for (const a of accepted) {
-    let zaehlt;
-    if (lrs || deutscheAntwort) {
-      const erlaubt = lrs ? (a.norm.length >= 6 ? 2 : a.norm.length >= 3 ? 1 : 0) : (a.norm.length >= 5 ? 1 : 0);
-      zaehlt = kompakt(g) === kompakt(a.norm) || (erlaubt > 0 && editDistance(g, a.norm, erlaubt) <= erlaubt);
-    } else {
-      zaehlt = kleinerTippfehler(g, a.norm, tabu);
+    if (!deutscheAntwort) {
+      for (const a of accepted) {
+        if (einheitlich(n) === einheitlich(a.norm)) return mitGross({ correct: true, typo: false, matched: a.raw }, a);
+      }
     }
-    if (zaehlt) return mitGross({ correct: true, typo: true, matched: a.raw }, a);
+    for (const a of accepted) {
+      let zaehlt;
+      if (lrs || deutscheAntwort) {
+        const erlaubt = lrs ? (a.norm.length >= 6 ? 2 : a.norm.length >= 3 ? 1 : 0) : (a.norm.length >= 5 ? 1 : 0);
+        zaehlt = kompakt(n) === kompakt(a.norm) || (erlaubt > 0 && editDistance(n, a.norm, erlaubt) <= erlaubt);
+      } else {
+        zaehlt = kleinerTippfehler(n, a.norm, tabu);
+      }
+      if (zaehlt) return mitGross({ correct: true, typo: true, matched: a.raw }, a);
+    }
+    return { correct: false, typo: false, matched: "" };
+  };
+
+  const direkt = einzeln(given);
+  if (direkt.correct || direkt.gross) return direkt;
+  return mitZusatz(given, accepted, einzeln, !deutscheAntwort) || direkt;
+}
+
+/* ------------------------------------------------------------------
+   Mehr geschrieben als gefragt – seit 09.10.2026.
+   Gefragt ist „fahren (mit dem Auto)“, Loesung „to drive“, das Kind schreibt „to drive / drove“: Die Vokabel steht
+   richtig da, der Zusatz stimmt auch. Vorher fiel so eine Antwort im genauen Vergleich durch, und die KI lehnte sie
+   ab („eine der drei Formen fehlt“). Jetzt zaehlt eine Antwort aus mehreren Teilen, wenn
+     - mindestens ein Teil eine zugelassene Loesung ist und
+     - jeder weitere Teil ebenfalls eine Loesung ist („capital / capital city“) oder eine andere Form der Loesung:
+       simple past, past participle, 3. Person, -ing, Mehrzahl, unregelmaessige Steigerung (wortformen.js).
+   Ein falscher Zusatz („drive / drived“, „big / small“) zaehlt hier nicht; darueber urteilt die KI-Zweitmeinung,
+   und sie soll solche Antworten ablehnen. Formen gelten nur fuer englische Antworten.
+   Teile trennt das Kind mit / , ; | + Pfeil, „or“/„oder“, Gedankenstrich – oder nur mit Leerzeichen.
+   ------------------------------------------------------------------ */
+const ZUSATZ_TRENNER = /[\/,;|+]|->|=>|→|\s[-–—]\s|\s(?:or|oder)\s/i;
+const ZUSATZ_TRENNER_BINDESTRICH = /[\/,;|+\-–—]|=>|→|\s(?:or|oder)\s/i;
+function mitZusatz(given, accepted, einzeln, mitFormen) {
+  const roh = String(given || "").replace(/\([^)]*\)/g, " ");
+  const istForm = (n) => mitFormen && accepted.some((a) => verwandt(n, a.norm));
+  const pruefe = (teile) => {
+    // nur ein Teil: ein Trennzeichen ohne Zusatz („drive /“)
+    if (teile.length < 2) { const r = teile.length ? einzeln(teile[0]) : null; return r && (r.correct || r.gross) ? r : null; }
+    let treffer = null, typo = false;
+    const zusatz = [];
+    for (const teil of teile) {
+      const r = einzeln(teil);
+      if (r.gross) return r;                       // Eigenname kleingeschrieben: bleibt ein Fehler
+      if (r.correct) { treffer = treffer || r; typo = typo || r.typo; continue; }
+      if (!istForm(normalizeAnswer(teil))) return null;
+      zusatz.push(teil);
+    }
+    return treffer ? { correct: true, typo, matched: treffer.matched, zusatz } : null;
+  };
+  const teilen = (trenner) => roh.split(trenner).map((t) => t.trim()).filter(Boolean);
+  const getrennt = pruefe(teilen(ZUSATZ_TRENNER)) || pruefe(teilen(ZUSATZ_TRENNER_BINDESTRICH));
+  if (getrennt) return getrennt;
+  // Nur Leerzeichen dazwischen („drive drove driven“, „drive off drove off“): in Stuecke von der Laenge der Loesung teilen
+  const woerter = roh.split(/\s+/).filter(Boolean);
+  if (/^to$/i.test(woerter[0] || "")) woerter.shift();
+  for (const laenge of new Set(accepted.map((a) => a.norm.split(" ").length))) {
+    if (woerter.length <= laenge || woerter.length % laenge) continue;
+    const stuecke = [];
+    for (let i = 0; i < woerter.length; i += laenge) stuecke.push(woerter.slice(i, i + laenge).join(" "));
+    const r = pruefe(stuecke);
+    if (r) return r;
   }
-  return { correct: false, typo: false, matched: "" };
+  return null;
 }
 
 /* ------------------------------------------------------------------
@@ -334,6 +391,12 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
     "- Kleinschreibung gewoehnlicher Woerter, fehlende Umlautpunkte in deutschen Antworten",
     "- eine andere RICHTIGE Schreibweise desselben englischen Wortes (britisch/amerikanisch: 'color' und 'colour',",
     "  'center' und 'centre', 'traveling' und 'travelling')",
+    "- MEHR GESCHRIEBEN ALS GEFRAGT: Steht die gefragte Vokabel richtig da und daneben ein Zusatz, der ebenfalls",
+    "  stimmt, ist die Antwort richtig. Zusaetze sind weitere Formen desselben Wortes (simple past, past participle,",
+    "  Mehrzahl, Steigerung: 'to drive / drove', 'drive, drove, driven', 'child / children', 'big, bigger, biggest')",
+    "  oder eine zweite richtige Uebersetzung ('big / large').",
+    "  Was gefragt ist, zeigen die zugelassenen Loesungen: Steht dort nur die Grundform eines Verbs, genuegt sie –",
+    "  niemand muss die drei Formen nennen, und wer sie richtig dazuschreibt, verliert dadurch keinen Punkt.",
     ...(lrs ? [
       "- NOTENSCHUTZ LRS (Lese-Rechtschreib-Stoerung): Rechtschreibung zaehlt nicht, auch nicht Gross- und",
       "  Kleinschreibung. Richtig ist auch lautgetreue, verdrehte oder lueckenhafte Schreibung, wenn eindeutig",
@@ -351,7 +414,9 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
       "  ('coas' statt 'coast', 'sience' statt 'science', 'quiet' und 'quite' sind verschiedene Woerter)",
       "- ein ANDERES englisches Wort, das der Loesung nur aehnlich sieht ('clear' statt 'clean', 'cost' statt 'coast')"
     ]),
-    "- bei unregelmaessigen Verben fehlt eine der drei Formen (z. B. nur 'drive' statt 'drive, drove, driven')",
+    "- die gefragte Vokabel selbst fehlt (nur 'drove' oder 'drove / driven', wenn 'to drive' gefragt ist)",
+    "- mehrere Antworten zur Auswahl, von denen eine falsch ist ('big / small' fuer 'gross'), oder ein falscher",
+    "  Zusatz ('drive / drived')",
     "",
     lrs ? "Bewerte wohlwollend, aber nicht beliebig: Die Vokabel muss getroffen sein."
       : "Bewerte die Bedeutung wohlwollend, die Schreibweise genau: Die Vokabel muss getroffen UND richtig geschrieben sein.",
@@ -778,6 +843,48 @@ function registerVokabeltestRoutes(app, opts) {
     Object.assign(rec, summe(rec.details, skalaVon(rec)));
     store.saveSubmissions(db);
     res.json({ ok: true, lrs, score: rec.score, total: rec.total, percent: rec.percent, grade: rec.grade });
+  });
+
+  /* ---------- Lehrkraft: Abgaben nach den aktuellen Regeln nachwerten ----------
+     Wird eine Regel grosszuegiger (09.10.2026: richtige Zusaetze wie „to drive / drove“ zaehlen), gilt sie zunaechst
+     nur fuer neue Abgaben. Hier prueft der Server die gespeicherten Antworten noch einmal – nur mit dem genauen
+     Vergleich, ohne KI. Es wird nie abgewertet: Was schon zaehlt, bleibt; was die Lehrkraft selbst gewertet hat,
+     bleibt ebenfalls. Die Antwort nennt jede Aenderung, damit die Lehrkraft sieht, was sich getan hat.
+     body: { submissionIds: [...] } (die angezeigten Abgaben) oder { testId } oder nichts (alle) */
+  app.post("/api/vokabeltest/nachwerten", (req, res) => {
+    if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
+
+    const ids = Array.isArray(req.body?.submissionIds) ? new Set(req.body.submissionIds.map(String)) : null;
+    const testId = clean(req.body?.testId);
+    const db = store.loadSubmissions();
+    const abgaben = [];
+    for (const rec of db.submissions) {
+      if (ids ? !ids.has(rec.id) : testId && rec.testId !== testId) continue;
+      const test = TESTS[rec.testId];
+      if (!test || !Array.isArray(rec.details) || rec.details.length !== test.items.length) continue;
+      const nachsehen = (details, lrs) => {
+        const neu = [];
+        details.forEach((d, i) => {
+          const item = test.items[i];
+          if (d.correct || d.scoredBy === "lehrkraft" || !d.given || d.prompt !== item.prompt) return;
+          const r = checkAnswer(d.given, item.solutions, lrs, { direction: item.direction, prompt: item.prompt, bekannt: BEKANNT });
+          if (!r.correct) return;
+          Object.assign(d, { correct: true, typo: r.typo, ai: false, aiReason: "", regel: false, comment: r.typo && r.matched ? ZAEHLT + r.matched : "" });
+          neu.push({ nr: d.nr, prompt: d.prompt, given: d.given });
+        });
+        return neu;
+      };
+      const vorher = { score: rec.score, grade: rec.grade };
+      const antworten = nachsehen(rec.details, Boolean(rec.lrs));
+      // Der aufgehobene Stand ohne Notenschutz (siehe /lrs) bekommt dieselben Punkte
+      if (Array.isArray(rec.detailsOhneLrs) && rec.detailsOhneLrs.length === test.items.length) nachsehen(rec.detailsOhneLrs, false);
+      if (!antworten.length) continue;
+      Object.assign(rec, summe(rec.details, skalaVon(rec)));
+      abgaben.push({ id: rec.id, code: rec.code || "", firstName: rec.firstName, lastName: rec.lastName, className: rec.className,
+        antworten, vorher, score: rec.score, total: rec.total, grade: rec.grade });
+    }
+    if (abgaben.length) store.saveSubmissions(db);
+    res.json({ ok: true, anzahl: abgaben.reduce((n, a) => n + a.antworten.length, 0), abgaben });
   });
 
   /* ---------- Lehrkraft: Eine Antwort selbst werten (richtig = 1 Punkt, falsch = 0) ---------- */

@@ -20,7 +20,7 @@ const TESTS = {
     { prompt: "Rakete", solutions: ["rocket"], direction: "de-en" }
   ] }
 };
-const klassen = new Map([["101", "7aM"], ["102", "7aM"], ["103", "7aM"], ["104", "7aM"], ["105", "7aM"], ["201", "7b"]]);
+const klassen = new Map([["101", "7aM"], ["102", "7aM"], ["103", "7aM"], ["104", "7aM"], ["105", "7aM"], ["106", "7aM"], ["201", "7b"]]);
 const kindZumCode = async (code) => (klassen.has(code) ? { code, klasse: klassen.get(code), lrs: false } : null);
 // Die „KI“ der Tests: schweigt, solange kein Test sie umstellt
 let ki = async () => "";
@@ -196,4 +196,44 @@ test("Die Lehrkraft wertet eine Antwort selbst; LRS an/aus lässt ihre Entscheid
   assert.equal(s.details[0].correct, true); assert.equal(s.details[0].scoredBy, "lehrkraft");
   assert.equal(s.details[3].correct, false); assert.equal(s.details[3].comment, "abgeschrieben");
   assert.equal(s.score, 2);
+});
+
+test("Richtige Zusätze zählen sofort – und ältere Abgaben lassen sich nachwerten (nur aufwerten, mit Bericht)", async () => {
+  // Die „KI“ lehnt alles ab: Der Punkt für „dog / dogs“ kommt aus der festen Regel, nicht von ihr
+  const auftraege = [];
+  ki = async (system, user) => { auftraege.push(system + "\n" + user); return JSON.stringify({ results: [] }); };
+  await post("/api/vokabeltest/submit", { testId: "e7m-u1-a", code: "106", answers: ["dog / dogs", "France", "environment", "rakete"] });
+  ki = async () => "";
+  let s = await abgabe("106");
+  assert.equal(s.details[0].correct, true); assert.equal(s.details[0].ai, false); assert.equal(s.score, 3); assert.equal(s.grade, 3);
+  assert.ok(!auftraege[0].includes("dog / dogs"), "geht gar nicht erst an die KI");
+  assert.match(auftraege[0], /MEHR GESCHRIEBEN ALS GEFRAGT/);
+  assert.ok(!/fehlt eine der drei Formen/.test(auftraege[0]), "die alte Anweisung, an der „to drive / drove“ scheiterte, ist weg");
+
+  // Stand von vor der Regel nachstellen: Die Antwort galt als falsch
+  const datei = path.join(dataDir, "vokabeltest_abgaben.json");
+  const db = JSON.parse(fs.readFileSync(datei, "utf8"));
+  const rec = db.submissions.find((x) => x.code === "106");
+  rec.details[0].correct = false;
+  Object.assign(rec, { score: 2, percent: 50, grade: 4 });
+  fs.writeFileSync(datei, JSON.stringify(db), "utf8");
+
+  assert.equal((await post("/api/vokabeltest/nachwerten", { password: "falsch" })).status, 401);
+  const r = await lehrer("nachwerten", { submissionIds: [rec.id] });
+  assert.equal(r.data.anzahl, 1);
+  assert.equal(r.data.abgaben.length, 1);
+  assert.deepEqual(r.data.abgaben[0].antworten, [{ nr: 1, prompt: "Hund", given: "dog / dogs" }]);
+  assert.deepEqual(r.data.abgaben[0].vorher, { score: 2, grade: 4 });
+  assert.equal(r.data.abgaben[0].score, 3); assert.equal(r.data.abgaben[0].grade, 3); assert.equal(r.data.abgaben[0].code, "106");
+  s = await abgabe("106");
+  assert.equal(s.score, 3); assert.equal(s.percent, 75); assert.equal(s.grade, 3);
+  assert.equal(s.details[3].correct, false, "„rakete“ bleibt falsch");
+
+  // Was die Lehrkraft selbst gewertet hat, bleibt – und sonst ändert ein zweiter Lauf nichts mehr (auch nicht bei den anderen Abgaben)
+  await lehrer("override", { submissionId: rec.id, nr: 1, points: 0 });
+  const vorher = (await lehrer("results", { testId: "e7m-u1-a" })).data.submissions.map((x) => [x.id, x.score, x.grade]);
+  const nochmal = await lehrer("nachwerten", { testId: "e7m-u1-a" });
+  assert.equal(nochmal.data.anzahl, 0); assert.deepEqual(nochmal.data.abgaben, []);
+  assert.deepEqual((await lehrer("results", { testId: "e7m-u1-a" })).data.submissions.map((x) => [x.id, x.score, x.grade]), vorher);
+  assert.equal((await abgabe("106")).details[0].correct, false);
 });

@@ -123,6 +123,53 @@ test("Die Schreibweise zählt: kurze Wörter genau, ein Buchstabenfehler nur in 
   assert.equal(einBuchstabeDaneben("coast", ["coast"]), false);
 });
 
+test("Mehr geschrieben als gefragt: richtige Zusätze kosten den Punkt nicht (seit 09.10.2026)", () => {
+  // der Anlass: „fahren (mit dem Auto)“, Lösung nur die Grundform, das Kind schreibt die Vergangenheit dazu
+  const drive = ["to drive; drive"];
+  assert.deepEqual(checkAnswer("to drive / drove", drive), { correct: true, typo: false, matched: "to drive", zusatz: ["drove"] });
+  for (const antwort of ["drive, drove, driven", "to drive - drove - driven", "drive-drove-driven", "drive drove driven", "to drive drove driven",
+    "drive (drove, driven)", "drive/drove", "drive; drives", "drive or driving", "drove / drive", "Drive, Drove, Driven"]) {
+    assert.equal(richtig(antwort, drive), true, antwort);
+  }
+  // falscher Zusatz, andere Vokabel, Grundform fehlt: zählt hier nicht (darüber urteilt die KI – und soll ablehnen)
+  for (const antwort of ["drive / drived", "drive, drove, drived", "drive / ride", "drive / car", "drove / driven", "drove", "drive a", "drive /"]) {
+    assert.equal(richtig(antwort, drive), antwort === "drive /", antwort);
+  }
+  // Wendungen: genau ein Wort in anderer Form
+  assert.equal(richtig("to drive off / drove off", ["to drive off"]), true);
+  assert.equal(richtig("drive off drove off driven off", ["to drive off"]), true);
+  assert.equal(richtig("drive off / drove away", ["to drive off"]), false);
+  // Mehrzahl, regelmäßige Formen, unregelmäßige Steigerung
+  assert.equal(richtig("child / children", ["child"]), true);
+  assert.equal(richtig("children (child)", ["children"]), true);
+  assert.equal(richtig("child, childs", ["child"]), false);
+  assert.equal(richtig("city, cities", ["city"]), true);
+  assert.equal(richtig("factory - factories", ["factory"]), true);
+  assert.equal(richtig("play / played / played", ["to play; play"]), true);
+  assert.equal(richtig("stop, stopped, stopped", ["to stop; stop"]), true);
+  assert.equal(richtig("stop, stoped", ["to stop; stop"]), false);
+  assert.equal(richtig("good, better, best", ["good"]), true);
+  assert.equal(richtig("go / went / gone", ["to go; go"]), true);
+  assert.equal(richtig("go / goed", ["to go; go"]), false);
+  // zwei zugelassene Lösungen nebeneinander
+  assert.equal(richtig("capital / capital city", ["capital; capital city"]), true);
+  assert.equal(richtig("big, large", ["big; large"]), true);
+  assert.equal(richtig("big / small", ["big; large"]), false);
+  assert.equal(checkAnswer("Bezirk / Stadtteil", ["Bezirk; Stadtteil"], false, { direction: "en-de" }).correct, true);
+  assert.equal(richtig("park / parks", ["park"]), true);
+  assert.equal(checkAnswer("Park / Parks", ["Park"], false, { direction: "en-de" }).correct, false, "Formen nur bei englischen Antworten");
+  // die übrigen Regeln gelten in jedem Teil weiter
+  assert.equal(richtig("clean / clear", ["clean"]), false, "anderes Wort");
+  assert.equal(richtig("quiet / quite", ["quiet"]), false);
+  assert.equal(richtig("north-west", ["north"]), false, "Bindestrich trennt nur, wenn jeder Teil stimmt");
+  assert.deepEqual(checkAnswer("the British Isles / british isles", ["the British Isles; British Isles"]).gross, ["British", "Isles"]);
+  assert.equal(checkAnswer("enviroment / environments", ["environment"]).typo, true, "Tippfehler in einem langen Wort bleibt vermerkt");
+  assert.equal(richtig("driv / drove", drive), false);
+  assert.equal(richtig("driv / drove", drive, true), true, "Notenschutz LRS");
+  // unverändert: Wo die Lösung selbst drei Formen nennt, bleiben alle drei Pflicht
+  assert.equal(richtig("drive / drove", ["drive, drove, driven"]), false);
+});
+
 test("Alle hinterlegten Lösungen der Vokabeltests zählen weiterhin als richtig", () => {
   let n = 0;
   for (const t of Object.values(TESTS)) {
