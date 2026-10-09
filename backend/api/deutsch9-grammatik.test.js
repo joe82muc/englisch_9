@@ -3,23 +3,28 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const express = require("express");
-const { registerDeutsch9GrammatikRoutes } = require("./deutsch9-grammatik");
+const { registerDeutsch9GrammatikRoutes, SYSTEM, SYSTEM_ENGLISCH } = require("./deutsch9-grammatik");
 
 let server;
 let baseUrl;
 let kiModus = "ok";
 let letzteFrage = "";
+let letztesSystem = "";
 
 test.before(async () => {
   const app = express();
   app.use(express.json());
   registerDeutsch9GrammatikRoutes(app, {
     proStunde: 3,
-    kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "9aM", zug: "9M" } : code === "999" ? { gesperrt: true } : null),
-    askKi: async (_system, user) => {
+    kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "9aM", zug: "9M" } : code === "734" ? { code: "734", klasse: "8b", zug: "8R" }
+      : code === "999" ? { gesperrt: true } : null),
+    askKi: async (system, user) => {
       letzteFrage = user;
+      letztesSystem = system;
       if (kiModus === "weg") throw new Error("offline");
       if (kiModus === "murks") return "keine Ahnung";
+      // englisches Zitat in doppelten Anführungszeichen, nicht maskiert: kein gültiges JSON
+      if (kiModus === "zitat") return '{"richtig":false,"rueckmeldung":"Nach "How about" steht die -ing-Form."}';
       return "Bewertung: " + JSON.stringify({ richtig: true, rueckmeldung: "Passt, das ist Passiv Präteritum." });
     }
   });
@@ -47,6 +52,7 @@ test("prüft mit gültigem Code und gibt die KI-Rückmeldung weiter", async () =
   assert.equal(data.quelle, "ki");
   assert.match(letzteFrage, /<<<Von der Klasse wurden/);
   assert.match(letzteFrage, /Beispiellösung/);
+  assert.equal(letztesSystem, SYSTEM);
 });
 
 test("ohne oder mit falschem Code keine KI", async () => {
@@ -80,4 +86,40 @@ test("auch Deutsch 7 und 8 (Grammatik und Rechtschreibung) sind erlaubt", async 
   assert.notEqual((await frage({ ...gut, modul: "d8-rs-02", aufgabe: "d8-rs-02-p1" })).status, 400);
   assert.equal((await frage({ ...gut, modul: "d6-gr-01", aufgabe: "d6-gr-01-b1" })).status, 400);
   assert.equal((await frage({ ...gut, modul: "d7-xy-01", aufgabe: "d7-xy-01-b1" })).status, 400);
+});
+
+const englisch = {
+  code: "734", modul: "e8-u3-w1", aufgabe: "e8-u3-w1-p2-1", auftrag: "Mach selbst einen Vorschlag für den Klassenausflug – und begründe ihn. Dein Vorschlag:",
+  loesungen: ["Why don't we go to the climbing park because everybody likes it?"], kriterien: ["ein Vorschlag mit Let's, Why don't we, How about, We could oder Shall we"],
+  antwort: "How about going to the zoo? Its fun."
+};
+
+test("Englisch 8R: Grammatik- und Wordbank-Seiten fragen mit der englischen Anweisung", async () => {
+  kiModus = "ok";
+  const { status, data } = await frage(englisch);
+  assert.equal(status, 200);
+  assert.equal(data.richtig, true);
+  assert.equal(letztesSystem, SYSTEM_ENGLISCH);
+  assert.match(letzteFrage, /Klassenstufe: 8/);
+  assert.match(letzteFrage, /<<<How about going to the zoo/);
+  assert.match(SYSTEM_ENGLISCH, /Englisch/);
+  assert.match(SYSTEM_ENGLISCH, /milde/);
+  assert.match(SYSTEM_ENGLISCH, /Britische und amerikanische/);
+  assert.equal((await frage({ ...englisch, modul: "e8-u4-g13", aufgabe: "e8-u4-g13-b5-2" })).status, 200);
+});
+
+test("Englisch: falsche Kennungen werden abgelehnt", async () => {
+  assert.equal((await frage({ ...englisch, modul: "e8-u1-x1", aufgabe: "e8-u1-x1-b1-1" })).status, 400);
+  assert.equal((await frage({ ...englisch, modul: "e6-u1-g1", aufgabe: "e6-u1-g1-b1-1" })).status, 400);
+  assert.equal((await frage({ ...englisch, modul: "e8-u1-g1", aufgabe: "e8-u1-g10-b1-1" })).status, 400);   // Aufgabe einer anderen Seite
+  assert.equal((await frage({ ...englisch, modul: "e8-u1-vokabeln", aufgabe: "e8-u1-vokabeln-b1" })).status, 400);
+});
+
+test("nicht maskierte Anführungszeichen in der Rückmeldung: Urteil und Text bleiben lesbar", async () => {
+  kiModus = "zitat";
+  const { status, data } = await frage({ ...englisch, antwort: "How about go to the zoo?" });
+  assert.equal(status, 200);
+  assert.equal(data.richtig, false);
+  assert.equal(data.rueckmeldung, 'Nach "How about" steht die -ing-Form.');
+  kiModus = "ok";
 });
