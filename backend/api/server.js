@@ -438,6 +438,13 @@ registerDeutsch9GrammatikRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// --- Englisch 9R/9M Schreiben: Blogpost mit KI-Korrektur, Punkten und Note nach dem Zug des Kindes (nur mit Code) ---
+const { registerE9SchreibenRoutes } = require("./e9-schreiben");
+registerE9SchreibenRoutes(app, {
+  askKi: askKiMitErsatz,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- NT 9M/9R Modul 7: Diskussionsrunde zum Erdöl (allein gegen KI-Rollen oder 2 bis 4 Kinder am Tisch) ---
 const { registerNt9DiskussionRoutes } = require("./nt9-diskussion");
 registerNt9DiskussionRoutes(app, {
@@ -573,7 +580,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-09-merkliste",
+    version: "2026-10-09-blogpost",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
