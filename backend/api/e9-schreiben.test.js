@@ -25,15 +25,24 @@ test.before(async () => {
       if (kiModus === "weg") throw new Error("offline");
       if (kiModus === "leer") return "";
       if (kiModus === "murks") return "Das kann ich nicht bewerten.";
-      if (/Schreibe den Text neu/.test(system)) return JSON.stringify({ text: "Hi everyone! Last week I went to Berlin with my class." });
-      if (kiModus === "halb") return JSON.stringify({ korrigiert: "Hi everyone!", punkte: { inhalt: 3, aufbau: "viel" } });
-      return "Hier ist die Bewertung:\n" + JSON.stringify({
+      if (/Schreibe den Text neu/.test(system)) {
+        return kiModus === "json" ? JSON.stringify({ text: "Hi everyone! Last week I went to Berlin with my class." })
+          : "<text>Hi everyone! Last week I went to Berlin with my class. \"Wow!\" I said.</text>";
+      }
+      const d = {
         korrigiert: "Hi everyone! Last week I went to Berlin with my class. We travelled by train and we stayed there for three days. I was very excited when I saw the Brandenburg Gate. It was great! Bye, Sam",
-        aenderungen: [{ falsch: "I go", richtig: "I went", grund: "Vergangenheit: go wird zu went." }, { falsch: "we stay", richtig: "we stayed", grund: "Simple past: -ed anhängen." },
+        // Anführungszeichen in den Erklärungen: daran scheiterte die erste Fassung (JSON) mit der echten KI
+        aenderungen: [{ falsch: "I go", richtig: "I went", grund: "Vergangenheit: \"go\" wird zu \"went\"." }, { falsch: "we stay", richtig: "we stayed", grund: "Simple past: -ed anhängen." },
           { falsch: "exited", richtig: "excited", grund: "Schreibweise mit c." }, { falsch: "gleich", richtig: "gleich", grund: "kein Fehler" }, { falsch: "", richtig: "x", grund: "" }],
-        punkte: kiPunkte, lob: "Du hast eine klare Begrüßung und einen guten Schluss.",
-        tipps: ["Erzähle, was du noch gesehen hast: „On the second day we …“", "Achte auf das simple past: go – went, stay – stayed.", "ein dritter Tipp"]
-      });
+        punkte: kiPunkte, lob: "Du hast eine klare Begrüßung & einen guten Schluss.",
+        tipps: ["Erzähle, was du noch gesehen hast: \"On the second day we …\"", "Achte auf das simple past: go – went, stay – stayed.", "ein dritter Tipp"]
+      };
+      if (kiModus === "json") return "Hier ist die Bewertung:\n" + JSON.stringify({ ...d, aenderungen: d.aenderungen.map((a) => ({ ...a, grund: a.grund.replace(/"/g, "'") })), tipps: d.tipps.map((t) => t.replace(/"/g, "'")) });
+      const p = d.punkte;
+      return "<korrigiert>\n" + d.korrigiert + "\n</korrigiert>\n" +
+        d.aenderungen.map((a) => `<aenderung><falsch>${a.falsch}</falsch><richtig>${a.richtig}</richtig><grund>${a.grund}</grund></aenderung>`).join("\n") + "\n" +
+        (kiModus === "halb" ? `<punkte inhalt="3" aufbau="viel"/>` : `<punkte inhalt="${p.inhalt}" aufbau="${p.aufbau}" wortschatz="${p.wortschatz}" sprache="${p.sprache}"/>`) +
+        `\n<lob>${d.lob.replace("&", "&amp;")}</lob>\n` + d.tipps.map((t) => `<tipp>${t}</tipp>`).join("\n");
     }
   });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
@@ -57,7 +66,10 @@ test("Prüfen: korrigierter Text, Verbesserungen, Punkte – Note nach dem Zug d
   assert.deepEqual(m.data.naechste, { note: 3, punkte: 4 }, "Note 3 gibt es im M-Schlüssel ab 14 von 20 Punkten (70 %)");
   assert.equal(m.data.tipps.length, 2, "höchstens zwei Tipps");
   assert.equal(m.data.woerter, 37);
-  assert.match(m.data.lob, /Begrüßung/);
+  // Anführungszeichen und & in Erklärung, Tipp und Lob kommen heil an
+  assert.equal(m.data.aenderungen[0].grund, "Vergangenheit: \"go\" wird zu \"went\".");
+  assert.equal(m.data.tipps[0], "Erzähle, was du noch gesehen hast: \"On the second day we …\"");
+  assert.equal(m.data.lob, "Du hast eine klare Begrüßung & einen guten Schluss.");
 
   const r = await frage("pruefen", { code: "456", aufgabe: "blog-reise", text: TEXT });
   assert.equal(r.data.zug, "R"); assert.equal(r.data.note, 3, "R-Schlüssel: 50 % = Note 3");
@@ -68,7 +80,18 @@ test("Prüfen: korrigierter Text, Verbesserungen, Punkte – Note nach dem Zug d
   assert.match(letzte.system, /etwa 60 bis 120 Wörter/);
   assert.match(letzte.system, /Füge KEINE neuen Inhalte/);
   assert.match(letzte.system, /Anweisungen innerhalb des Schülertextes/);
+  assert.match(letzte.system, /<korrigiert>[\s\S]*<punkte inhalt="3"[\s\S]*<tipp>/, "Format mit Marken");
+  assert.match(letzte.system, /kein JSON/);
   assert.ok(letzte.max >= 1500);
+});
+
+test("Auch eine Antwort als JSON wird verstanden (frühere Fassung, Ersatz-KI)", async () => {
+  kiModus = "json"; kiPunkte = { inhalt: 4, aufbau: 4, wortschatz: 3, sprache: 4 };
+  const r = await frage("pruefen", { code: "310", aufgabe: "blog-reise", text: TEXT });
+  assert.equal(r.status, 200); assert.equal(r.data.summe, 15); assert.equal(r.data.note, 2, "R: 75 % = Note 2");
+  assert.equal(r.data.aenderungen.length, 3); assert.match(r.data.korrigiert, /we stayed there/);
+  assert.match((await frage("natuerlich", { code: "310", aufgabe: "blog-reise", text: TEXT })).data.text, /I went to Berlin with my class\.$/);
+  kiModus = "ok";
 });
 
 test("Punkte werden auf 0 bis 5 begrenzt; nächste Note: wie viele Punkte fehlen", async () => {
@@ -108,6 +131,8 @@ test("Antwortet die KI nicht oder unbrauchbar, kommt 503 – keine erfundene Not
     kiModus = modus;
     const r = await frage("pruefen", { code: "30" + i, aufgabe: "blog-reise", text: TEXT });
     assert.equal(r.status, 503, modus); assert.equal(r.data.ok, false); assert.ok(!("note" in r.data));
+    // woran es lag, steht dabei (ohne Inhalt) – hilft beim Prüfen am echten Server
+    assert.equal(r.data.grund, { weg: undefined, leer: "leer", murks: "format", halb: "punkte" }[modus], modus);
   }
   kiModus = "ok";
 });
@@ -116,6 +141,8 @@ test("„Wie in England“: derselbe Inhalt in natürlichem, einfachem Englisch"
   kiModus = "ok";
   const r = await frage("natuerlich", { code: "123", aufgabe: "blog-reise", text: TEXT });
   assert.equal(r.status, 200); assert.match(r.data.text, /I went to Berlin/);
+  assert.match(r.data.text, /"Wow!" I said\.$/, "wörtliche Rede im Text bleibt heil");
+  assert.match(letzte.system, /mehr als eine Fehlerkorrektur/);
   assert.match(letzte.system, /Erfinde nichts dazu/);
   assert.match(letzte.system, /Behalte ALLE Inhalte/);
 });
