@@ -31,8 +31,10 @@ test.before(async () => {
   const app = express();
   app.use(express.json());
   app.use(ABGABE_ROUTEN, abgabeOhneErgebnis);           // wie in server.js: vor den Proben-Modulen
-  const vokabeltest = registerVokabeltestRoutes(app, { dataDir, teacherPassword: "geheim", tests: TESTS, hashSecret: "x", kindZumCode, askAnthropic: (...a) => ki(...a) });
-  registerProbenRueckgabeRoutes(app, { dataDir, teacherPassword: "geheim", kindZumCode, quellen: [{ modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben }] });
+  let rueckgabe = null;
+  const vokabeltest = registerVokabeltestRoutes(app, { dataDir, teacherPassword: "geheim", tests: TESTS, hashSecret: "x", kindZumCode, askAnthropic: (...a) => ki(...a),
+    zurueckgegeben: (abgabe) => Boolean(rueckgabe.stand("vokabeltest", abgabe)) });   // wie in server.js
+  rueckgabe = registerProbenRueckgabeRoutes(app, { dataDir, teacherPassword: "geheim", kindZumCode, quellen: [{ modul: "vokabeltest", fach: "Englisch", abgaben: vokabeltest.abgaben }] });
   await new Promise((resolve) => { server = app.listen(0, "127.0.0.1", resolve); });
   basis = `http://127.0.0.1:${server.address().port}`;
 });
@@ -236,4 +238,51 @@ test("Richtige Zusätze zählen sofort – und ältere Abgaben lassen sich nachw
   assert.equal(nochmal.data.anzahl, 0); assert.deepEqual(nochmal.data.abgaben, []);
   assert.deepEqual((await lehrer("results", { testId: "e7m-u1-a" })).data.submissions.map((x) => [x.id, x.score, x.grade]), vorher);
   assert.equal((await abgabe("106")).details[0].correct, false);
+});
+
+test("Merkliste: falsche Wörter aus zurückgegebenen Tests, üben bis „gelernt“ – nichts vor der Rückgabe", async () => {
+  const merk = (route, body) => post("/api/vokabeltest/merkliste" + route, body);
+  // 101 hat den Test zurückbekommen (france, rakete falsch); 102 hat abgegeben, aber noch nichts zurückbekommen
+  const liste = await merk("", { code: "101" });
+  assert.equal(liste.status, 200);
+  assert.equal(liste.data.gelerntAb, 2);
+  assert.deepEqual(liste.data.woerter.map((w) => [w.frage, w.loesung, w.gegeben, w.richtig, w.gelernt]), [["Frankreich", "France", "france", 0, false], ["Rakete", "rocket", "rakete", 0, false]]);
+  assert.equal(liste.data.woerter[0].test, "Unit 1 A");
+  assert.match(liste.data.woerter[0].datum, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(!("solutions" in liste.data.woerter[0]));
+  assert.deepEqual((await merk("", { code: "102" })).data.woerter, [], "vor der Rückgabe sieht das Kind seine Fehler nicht");
+  assert.equal((await merk("", {})).status, 400);
+  assert.equal((await merk("", { code: "999" })).status, 404);
+
+  const [frankreich, rakete] = liste.data.woerter;
+  // falsch geübt: Grund wie im Test; zweimal hintereinander richtig = gelernt; ein Fehler setzt zurück
+  let r = await merk("/pruefen", { code: "101", id: frankreich.id, antwort: "france" });
+  assert.equal(r.data.richtig, false); assert.equal(r.data.hinweis, "Großschreibung: France"); assert.equal(r.data.wort.richtig, 0);
+  r = await merk("/pruefen", { code: "101", id: frankreich.id, antwort: "France" });
+  assert.equal(r.data.richtig, true); assert.equal(r.data.wort.richtig, 1); assert.equal(r.data.wort.gelernt, false);
+  r = await merk("/pruefen", { code: "101", id: frankreich.id, antwort: " France " });
+  assert.equal(r.data.wort.richtig, 2); assert.equal(r.data.wort.gelernt, true); assert.equal(r.data.wort.versuche, 3);
+  r = await merk("/pruefen", { code: "101", id: rakete.id, antwort: "rocket" });
+  assert.equal(r.data.wort.richtig, 1);
+  r = await merk("/pruefen", { code: "101", id: rakete.id, antwort: "" });
+  assert.equal(r.data.richtig, false); assert.equal(r.data.wort.richtig, 0, "ein Fehler setzt die Reihe zurück");
+  assert.equal((await merk("/pruefen", { code: "101", id: "gibt-es-nicht", antwort: "x" })).status, 404);
+  assert.equal((await merk("/pruefen", { code: "103", id: frankreich.id, antwort: "France" })).status, 404, "fremde Wörter gibt es nicht (103 hat nichts zurückbekommen)");
+
+  // der Stand bleibt gespeichert (Datei wird wie die Abgaben nach Upstash gespiegelt)
+  const danach = (await merk("", { code: "101" })).data.woerter;
+  assert.deepEqual(danach.map((w) => [w.frage, w.richtig, w.gelernt]), [["Frankreich", 2, true], ["Rakete", 0, false]]);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dataDir, "vokabel_merkliste.json"), "utf8")).stand["101"][frankreich.id].r, 2);
+  // „wieder üben“
+  r = await merk("/zurueck", { code: "101", id: frankreich.id });
+  assert.equal(r.data.wort.gelernt, false); assert.equal(r.data.wort.richtig, 0);
+
+  // Nimmt die Lehrkraft die Rückgabe zurück, ist die Liste wieder leer; wertet sie eine Antwort als richtig, fällt das Wort heraus
+  const s = await abgabe("101");
+  await post("/api/proben/rueckgabe/freigeben", { password: "geheim", eintraege: [{ modul: "vokabeltest", id: s.id }], offen: false });
+  assert.deepEqual((await merk("", { code: "101" })).data.woerter, []);
+  await post("/api/proben/rueckgabe/freigeben", { password: "geheim", eintraege: [{ modul: "vokabeltest", id: s.id }], offen: true });
+  await lehrer("override", { submissionId: s.id, nr: 4, points: 1 });
+  assert.deepEqual((await merk("", { code: "101" })).data.woerter.map((w) => w.frage), ["Frankreich"]);
+  await lehrer("override", { submissionId: s.id, nr: 4, points: 0 });
 });

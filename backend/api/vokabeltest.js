@@ -490,8 +490,18 @@ function createStore(dataDir) {
     fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(data, null, 2), "utf8");
   }
 
+  // Übungsstand der Merkliste: { stand: { "<code>": { "<wort>": { r: richtig hintereinander, n: Versuche, z: zuletzt } } } }
+  const MERK_FILE = path.join(dataDir, "vokabel_merkliste.json");
+  function loadMerk() {
+    try { const d = JSON.parse(fs.readFileSync(MERK_FILE, "utf8")); return d && typeof d.stand === "object" && d.stand ? d : { stand: {} }; }
+    catch (_e) { return { stand: {} }; }
+  }
+  function saveMerk(data) {
+    fs.writeFileSync(MERK_FILE, JSON.stringify(data), "utf8");
+  }
+
   ensure();
-  return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions };
+  return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions, loadMerk, saveMerk };
 }
 
 /* ------------------------------------------------------------------
@@ -885,6 +895,79 @@ function registerVokabeltestRoutes(app, opts) {
     }
     if (abgaben.length) store.saveSubmissions(db);
     res.json({ ok: true, anzahl: abgaben.reduce((n, a) => n + a.antworten.length, 0), abgaben });
+  });
+
+  /* ---------- Kind: Merkliste – alle Wörter, die es in einem Vokabeltest falsch hatte, aus allen Units ----------
+     Die Liste entsteht aus den gespeicherten Abgaben; deshalb stehen auch frühere Tests darin. Sie zeigt nur Tests,
+     die die Lehrkraft schon zurückgegeben hat – vorher soll das Kind seine Fehler nicht sehen (Note erst nach der
+     Rückgabe). Hatte das Kind ein Wort in einem späteren Test richtig, fällt es heraus. Geübt wird auf
+     merkliste.html: GELERNT_AB-mal hintereinander richtig = gelernt. Gespeichert wird nur dieser Übungsstand.
+       POST /api/vokabeltest/merkliste          { code }              -> { ok, klasse, gelerntAb, woerter: [...] }
+       POST /api/vokabeltest/merkliste/pruefen  { code, id, antwort } -> { ok, richtig, tippfehler, hinweis, wort }
+       POST /api/vokabeltest/merkliste/zurueck  { code, id }          -> { ok, wort }   (ein gelerntes Wort wieder üben) */
+  const GELERNT_AB = 2;
+  const zurueckgegeben = typeof opts.zurueckgegeben === "function" ? opts.zurueckgegeben : () => true;
+  const merkId = (richtung, prompt) => crypto.createHash("sha1").update(richtung + "|" + prompt).digest("hex").slice(0, 12);
+  function merklisteVon(code) {
+    const abgaben = store.loadSubmissions().submissions
+      .filter((s) => String(s.code || "") === String(code) && Array.isArray(s.details) && zurueckgegeben(s))
+      .sort((a, b) => String(a.submittedAt).localeCompare(String(b.submittedAt)));
+    const woerter = new Map();
+    for (const rec of abgaben) {
+      const test = TESTS[rec.testId];
+      rec.details.forEach((d, i) => {
+        const item = test && test.items[i] && test.items[i].prompt === d.prompt ? test.items[i] : null;
+        const richtung = (item && item.direction) || "de-en";
+        const id = merkId(richtung, d.prompt);
+        if (d.correct) { woerter.delete(id); return; }       // in einem späteren Test richtig gehabt
+        woerter.set(id, {
+          id, frage: d.prompt, richtung, hinweis: (item && item.hint) || "",
+          solutions: item ? item.solutions : String(d.expected || "").split(" / ").filter(Boolean),
+          gegeben: d.given || "", test: rec.testTitle || rec.testId, unit: rec.unit || "",
+          datum: rec.testDate || String(rec.submittedAt || "").slice(0, 10)
+        });
+      });
+    }
+    return [...woerter.values()];
+  }
+  function merkAusgabe(w, stand) {
+    // „to drive; drive“ -> Lösung „to drive“, auch richtig: „drive“
+    const formen = [...new Set(w.solutions.flatMap((s) => String(s).split(";")).map((s) => s.trim()).filter(Boolean))];
+    const r = (stand && stand.r) || 0;
+    return { id: w.id, frage: w.frage, richtung: w.richtung, hinweis: w.hinweis, loesung: formen[0] || "", auch: formen.slice(1, 4),
+      gegeben: w.gegeben, test: w.test, unit: w.unit, datum: w.datum, richtig: r, versuche: (stand && stand.n) || 0, gelernt: r >= GELERNT_AB };
+  }
+  app.post("/api/vokabeltest/merkliste", async (req, res) => {
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const stand = store.loadMerk().stand[kind.code] || {};
+    res.json({ ok: true, klasse: kind.klasse, gelerntAb: GELERNT_AB, woerter: merklisteVon(kind.code).map((w) => merkAusgabe(w, stand[w.id])) });
+  });
+  app.post("/api/vokabeltest/merkliste/pruefen", async (req, res) => {
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const id = clean(req.body?.id), antwort = clean(req.body?.antwort).slice(0, 200);
+    const w = merklisteVon(kind.code).find((x) => x.id === id);
+    if (!w) return res.status(404).json({ ok: false, error: "wort_unbekannt", message: "Dieses Wort steht nicht auf deiner Merkliste." });
+    const r = antwort ? checkAnswer(antwort, w.solutions, kind.lrs, { direction: w.richtung, prompt: w.frage, bekannt: BEKANNT }) : { correct: false };
+    const db = store.loadMerk();
+    const meins = db.stand[kind.code] = db.stand[kind.code] || {};
+    const alt = meins[id] || { r: 0, n: 0 };
+    meins[id] = { r: r.correct ? alt.r + 1 : 0, n: (alt.n || 0) + 1, z: new Date().toISOString() };
+    store.saveMerk(db);
+    res.json({ ok: true, richtig: Boolean(r.correct), tippfehler: Boolean(r.correct && r.typo), hinweis: r.correct ? "" : regelHinweis(r), wort: merkAusgabe(w, meins[id]) });
+  });
+  app.post("/api/vokabeltest/merkliste/zurueck", async (req, res) => {
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    const id = clean(req.body?.id);
+    const w = merklisteVon(kind.code).find((x) => x.id === id);
+    if (!w) return res.status(404).json({ ok: false, error: "wort_unbekannt", message: "Dieses Wort steht nicht auf deiner Merkliste." });
+    const db = store.loadMerk();
+    const meins = db.stand[kind.code] = db.stand[kind.code] || {};
+    meins[id] = { r: 0, n: (meins[id] && meins[id].n) || 0, z: new Date().toISOString() };
+    store.saveMerk(db);
+    res.json({ ok: true, wort: merkAusgabe(w, meins[id]) });
   });
 
   /* ---------- Lehrkraft: Eine Antwort selbst werten (richtig = 1 Punkt, falsch = 0) ---------- */
