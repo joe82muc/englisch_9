@@ -1,10 +1,10 @@
 "use strict";
 
-// Englisch 9: Blogpost mit KI-Korrektur – Zugang, Grenzen, Punkte und Note je Zug, robuste Auswertung der KI-Antwort
+// Englisch Schreiben (9: Blogpost, 7: Where I live) mit KI-Korrektur – Zugang, Grenzen, Punkte und Note je Zug, robuste Auswertung der KI-Antwort
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const express = require("express");
-const { registerE9SchreibenRoutes, naechsteNote, MAX } = require("./e9-schreiben");
+const { registerE9SchreibenRoutes, naechsteNote, MAX, AUFGABEN } = require("./e9-schreiben");
 
 let server, baseUrl;
 let kiModus = "ok";
@@ -19,7 +19,7 @@ test.before(async () => {
   registerE9SchreibenRoutes(app, {
     pruefenProStunde: 4, natuerlichProStunde: 2,
     kindZumCode: async (code) => ({ "123": { code: "123", klasse: "9aM" }, "456": { code: "456", klasse: "9b" }, "000": { code: "000", klasse: "Lehrkraft", lehrer: true },
-      "777": { code: "777", klasse: "9aM" }, "999": { gesperrt: true } })[code] || (/^3\d\d$/.test(code || "") ? { code, klasse: "9b" } : null),
+      "777": { code: "777", klasse: "9aM" }, "701": { code: "701", klasse: "7aM" }, "702": { code: "702", klasse: "7b" }, "999": { gesperrt: true } })[code] || (/^3\d\d$/.test(code || "") ? { code, klasse: "9b" } : null),
     askKi: async (system, user, maxTokens) => {
       letzte = { system, user, max: maxTokens };
       if (kiModus === "weg") throw new Error("offline");
@@ -157,4 +157,50 @@ test("Grenze je Code und Stunde – getrennt für Prüfen und „Wie in England�
   assert.equal((await frage("natuerlich", { code: "123", aufgabe: "blog-reise", text: TEXT })).status, 429);
   // ein anderes Kind ist davon nicht betroffen
   assert.equal((await frage("natuerlich", { code: "777", aufgabe: "blog-reise", text: TEXT })).status, 200);
+});
+
+test("7. Klasse „Where I live“: eigener Maßstab, Umfang und Mindestlänge – unter der neutralen Adresse", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 2, sprache: 2 };
+  const ORT = "Hello! I live in Unterhaching. It is a small town near Munich. About 26,000 people lives there. In the past there was many farms. My favourite place is the park because I can meet my friends there.";
+  const neu = (route, body) => fetch(baseUrl + "/api/englisch-schreiben/" + route, {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+  }).then(async (r) => ({ status: r.status, data: await r.json() }));
+
+  const m = await neu("pruefen", { code: "701", aufgabe: "where-i-live", text: ORT });
+  assert.equal(m.status, 200); assert.equal(m.data.zug, "M"); assert.equal(m.data.note, 4, "7M: 50 % = Note 4");
+  assert.match(letzte.system, /der 7\. Klasse\n\(M-Zug, Niveau A2\)\./);
+  assert.match(letzte.system, /etwa 55 bis 100 Wörter/);
+  assert.match(letzte.system, /Kurzvortrag vor der Klasse/);
+  assert.match(letzte.system, /your favourite place there; what you can do at your favourite place/);
+  assert.match(letzte.system, /Maßstab ist ein kurzer Text in der 7\. Klasse/);
+  assert.match(letzte.system, /I like it because …/);
+  assert.doesNotMatch(letzte.system, /Blogpost|Qualifizierenden|9\. Klasse/);
+  assert.match(letzte.system, /<korrigiert>[\s\S]*<punkte inhalt="3"[\s\S]*<tipp>/, "gleiches Antwortformat");
+
+  const r = await neu("pruefen", { code: "702", aufgabe: "where-i-live", text: ORT });
+  assert.equal(r.data.zug, "R"); assert.equal(r.data.note, 3, "7R: 50 % = Note 3");
+  assert.match(letzte.system, /\(Regelklasse, Niveau A1 bis A2\)\./);
+  assert.match(letzte.system, /etwa 40 bis 80 Wörter/);
+
+  // In der 7. Klasse reichen 12 Wörter zum Prüfen – beim Blogpost der 9. Klasse bleiben es 15
+  const zwoelf = "I live in Unterhaching. It is a small town near Munich. Bye!";
+  const kurz = await neu("pruefen", { code: "701", aufgabe: "where-i-live", text: "I live in Unterhaching. It is a town." });
+  assert.equal(kurz.status, 400); assert.match(kurz.data.message, /mindestens 12 Wörter/);
+  assert.equal((await neu("pruefen", { code: "701", aufgabe: "where-i-live", text: zwoelf })).status, 200);
+  assert.equal((await neu("pruefen", { code: "701", aufgabe: "blog-reise", text: zwoelf })).status, 400);
+
+  const n = await neu("natuerlich", { code: "702", aufgabe: "where-i-live", text: ORT });
+  assert.equal(n.status, 200);
+  assert.match(letzte.system, /der 7\. Klasse \(Regelklasse\)/);
+  assert.match(letzte.system, /in einem kurzen Vortrag vor der Klasse/);
+  assert.match(letzte.system, /Erfinde nichts dazu/);
+
+  // Beide Adressen kennen beide Aufgaben; der Blogpost hat seinen Maßstab behalten
+  assert.equal((await frage("pruefen", { code: "702", aufgabe: "where-i-live", text: ORT })).status, 200);
+  assert.equal((await neu("pruefen", { code: "456", aufgabe: "blog-reise", text: TEXT })).status, 200);
+  assert.match(letzte.system, /der 9\. Klasse\n\(Regelklasse, Niveau A2 – die Klasse bereitet sich auf den Qualifizierenden Abschluss vor\)\./);
+  assert.match(letzte.system, /Zeitform: simple past\.\n/);
+  assert.match(letzte.system, /aufbau     Form eines Blogposts: Begrüßung/);
+  assert.match(letzte.system, /\(z\. B\. I felt … because …\)/);
+  assert.deepEqual(AUFGABEN["where-i-live"].umfang, { R: [40, 80], M: [55, 100] });
 });
