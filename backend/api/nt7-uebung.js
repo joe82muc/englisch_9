@@ -13,6 +13,7 @@
  *
  * Mehrfach registrierbar (z. B. NT 9, Organische Rohstoffe):
  * opts.route, opts.klasse ("Klasse 9"), opts.thema (Thema im Systemtext), opts.fach ("Informatik").
+ * opts.sprache = "en" (Englisch): Aufgabe und Antwort dürfen englisch sein, die Rückmeldung bleibt deutsch.
  */
 
 const { keywordFeedback } = require("./kohlenstoff");
@@ -25,6 +26,12 @@ function registerNt7UebungRoutes(app, opts = {}) {
   const klasse = opts.klasse || "Klasse 7";
   const themaSystem = opts.thema || "Luft";
   const fach = opts.fach || "Natur und Technik";
+  // Fremdsprache: Es zählt, ob der Inhalt stimmt und verständlich ist – nicht, ob jedes Wort richtig geschrieben ist
+  const fremd = opts.sprache === "en" ? [
+    "Das Fach ist Englisch als Fremdsprache: Aufgabe und Antwort können auf Englisch oder auf Deutsch sein (bei Sprachmittlung ist die verlangte Sprache Teil der Aufgabe).",
+    "Bewerte, ob der Inhalt stimmt und die Antwort verständlich ist. Kleine Fehler in Rechtschreibung und Grammatik zählen nicht. Steht in der Aufgabe, in welcher Sprache geantwortet werden soll, und die Antwort ist in der anderen Sprache, ist sie höchstens teilweise richtig.",
+    "Rückmeldung und Tipp schreibst du auf Deutsch. Englische Wörter nennst du in einfachen Anführungszeichen, nie in doppelten."
+  ] : [];
 
   app.post(route, async (req, res) => {
     const frage = clean(req.body?.frage).slice(0, 600);
@@ -50,6 +57,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
         "auch mit eigenen Worten, in Stichpunkten, in anderer Reihenfolge oder mit Rechtschreibfehlern (auch bei Lese-Rechtschreib-Störung).",
         "Fachbegriffe müssen nicht fallen, wenn die Sache richtig beschrieben ist. Im Zweifel entscheide für das Kind.",
         "0 Punkte nur, wenn der Inhalt fehlt oder fachlich falsch ist. Ein Satz kann mehrere Punkte abdecken.",
+        ...fremd,
         "Die Rückmeldung spricht das Kind mit du an, in einfacher Sprache, höchstens 30 Wörter, und nennt zuerst, was gut war.",
         "Der Tipp sagt, welcher Schritt noch fehlt, ohne die Lösung vorzusagen (höchstens 18 Wörter, leer wenn alles da ist).",
         "Antworte nur als JSON: {\"punkte\": [1, 0, ...], \"rueckmeldung\": \"...\", \"tipp\": \"...\"}",
@@ -85,6 +93,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
       `Du prüfst eine offene Übungsaufgabe in ${fach}, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
       "Bewerte nur den fachlichen Inhalt. Rechtschreibung, Grammatik und Stil zählen nicht. Eigene Worte und Stichpunkte sind erlaubt.",
       "Sei wohlwollend, aber fachlich korrekt. Falsche Aussagen nicht belohnen.",
+      ...fremd,
       "richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt.",
       "Die Rückmeldung spricht das Kind mit du an, in einfacher Sprache, höchstens 25 Wörter.",
       "Der Tipp verrät nicht die ganze Lösung, sondern gibt einen Denkanstoß (höchstens 15 Wörter, leer wenn richtig).",

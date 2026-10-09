@@ -398,6 +398,18 @@ registerD7TexteRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d8/uebung/feedback", klasse: "Klasse 8", fach: "Deutsch", thema: "Deutsch (Lesen, Sachtexte und Medien, Argumentieren, Literatur und Textanalyse, Schreiben, Beruf und Kommunikation, Grammatik, Rechtschreibung)" });
+// --- Englisch 9 (9R): Die Skill-Module (Listening, Reading, Speaking, Writing, Mediation, Quali-Fit) nutzen die Bausteine
+// von Deutsch 7/8 mit. Schreibtrainer und Schülertexte: /api/e9/schreiben, /api/e9/texte (Datei e9-texte.json), Rückmeldung
+// zu offenen Übungsaufgaben: /api/e9/uebung/feedback. Freischalten läuft wie bisher über /api/e9 (nt7-freigabe.js). ---
+registerD7TexteRoutes(app, {
+  dataDir: DATA_DIR,
+  stufe: 9,
+  fach: { kurz: "e", name: "Englisch" },
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e9/uebung/feedback", klasse: "Klasse 9", fach: "Englisch", sprache: "en", thema: "Englisch 9 (Australia, India, South Africa, New Zealand; Gesundheit und Dienstleistungen; Arbeitswelt und Bewerbung; Hören, Lesen, Schreiben, Sprachmittlung)" });
 // Deutsch 7: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
 
@@ -580,7 +592,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-09-englisch8-grammatik",
+    version: "2026-10-10-englisch9-bausteine",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

@@ -47,9 +47,20 @@ function registerNt7FreigabeRoutes(app, options = {}) {
   const DATEI = path.join(dataDir, options.datei || "nt7-freigabe.json");
   const STUFE = parseInt(options.stufe, 10) || 7;
 
+  // Hält gerade etwas anderes die Datei offen (unter Windows z. B. Virenscanner oder Synchronisierung), kurz neu
+  // versuchen – sonst ginge ein Freischalten verloren oder ein Lesefehler sähe aus wie „noch nichts freigeschaltet“.
+  function mitGeduld(tun) {
+    for (let i = 0; ; i++) {
+      try { return tun(); }
+      catch (error) {
+        if (i >= 6 || !["EPERM", "EBUSY", "EACCES"].includes(error.code)) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 40);
+      }
+    }
+  }
   function lesen() {
     try {
-      const d = JSON.parse(fs.readFileSync(DATEI, "utf8"));
+      const d = JSON.parse(mitGeduld(() => fs.readFileSync(DATEI, "utf8")));
       return d && d.klassen && typeof d.klassen === "object" ? d : { klassen: {} };
     } catch (_error) { return { klassen: {} }; }
   }
@@ -57,7 +68,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
     const temp = DATEI + ".tmp";
     fs.writeFileSync(temp, JSON.stringify(daten, null, 1), "utf8");
-    fs.renameSync(temp, DATEI);
+    mitGeduld(() => fs.renameSync(temp, DATEI));
   }
   const stand = (daten, klasse) => {
     const k = daten.klassen[klasse] || {};
