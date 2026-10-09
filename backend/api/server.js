@@ -488,6 +488,27 @@ registerProbenNotenRoutes(app, {
   rueckgabe: (modul, abgabe) => probenRueckgabe.stand(modul, abgabe)
 });
 
+// --- Vorschau jeder Probe für die Lehrkraft (Verwaltung: „Vorschau · PDF“). Eine Route für alle Probenarten; sie
+// liest nur die Aufgaben und ändert nichts an Freischaltung oder Abgaben. Die Namen entsprechen js/proben-module.js. ---
+const { registerProbenVorschau } = require("./proben-vorschau");
+const probenVorschau = registerProbenVorschau(app, {
+  teacherPassword: TEACHER_PASSWORD,
+  quellen: {
+    vokabeltest: { form: "vokabel", tests: VOKABELTESTS },
+    grammatik9r: { form: "grammatik", tests: { ...GRAMMATIK9R, ...GRAMMATIK7 } },
+    nt7: { form: "nt", tests: require("./nt7-fragen") },
+    nt8: { form: "nt", tests: require("./nt8-fragen") },
+    inf7: { form: "nt", tests: require("./inf7-fragen") },
+    inf8: { form: "nt", tests: require("./inf8-fragen") },
+    d7proben: { form: "deutsch", tests: require("./d7-proben-daten") },
+    d8proben: { form: "deutsch", tests: require("./d8-proben-daten") },
+    infoaustausch: { form: "info", tests: INFOTESTS },
+    nt9probe: { form: "info", tests: NT9PROBEN },
+    netzwerktest: { form: "info", tests: NETZWERKTESTS },
+    filiuspruefung: { form: "info", tests: FILIUSPRUEFUNGEN }
+  }
+});
+
 // Aufgabenlösungen und Schülerdaten dürfen nicht über den statischen Dateiserver erreichbar sein – auch nicht über
 // Umwege in der Adresse wie /%62ackend/… (statisch.js prüft den Ort der Datei, nicht die Schreibweise der Adresse).
 const { geschuetzterDateiserver } = require("./statisch");
@@ -550,9 +571,11 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-08-nt8",
+    version: "2026-10-09-vorschau",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
+    // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
+    probenVorschau: probenVorschau.module,
     nt9Fortschritt: nt9Fortschritt.store.art,
     probenSpeicher: probenSpeicher.art,
     kalenderHeft: true,
