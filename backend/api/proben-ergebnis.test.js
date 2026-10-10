@@ -97,7 +97,8 @@ test("Erst die Rückgabe zeigt dem Kind Note, Punkte und Lösungen", async () =>
 test("Jedes Proben-Modul der Notenübersicht steht in ABGABE_ROUTEN (Deutsch hat den eigenen Ablauf)", () => {
   const quelltext = fs.readFileSync(path.join(__dirname, "server.js"), "utf8");
   const block = quelltext.slice(quelltext.indexOf("const PROBEN_QUELLEN = ["), quelltext.indexOf("];", quelltext.indexOf("const PROBEN_QUELLEN = [")));
-  const module = [...block.matchAll(/modul:\s*"([\w-]+)"/g)].map((m) => m[1]).filter((m) => !/^d[78]proben$/.test(m));
+  // d7proben, d8proben und e9proben (d7-proben.js) zeigen nach der Abgabe von sich aus kein Ergebnis und geben selbst zurück
+  const module = [...block.matchAll(/modul:\s*"([\w-]+)"/g)].map((m) => m[1]).filter((m) => !/^(d[78]|e9)proben$/.test(m));
   assert.ok(module.length >= 10, "Module gefunden: " + module.join(", "));
   for (const m of module) assert.ok(ABGABE_ROUTEN.includes("/api/" + m + "/submit"), m + " fehlt in ABGABE_ROUTEN (probe-kind.js)");
   assert.ok(quelltext.indexOf("app.use(ABGABE_ROUTEN, abgabeOhneErgebnis)") < quelltext.indexOf("registerVokabeltestRoutes(app"), "muss vor den Proben-Modulen stehen");

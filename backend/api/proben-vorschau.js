@@ -82,9 +82,10 @@ function ausGrammatik(test) {
 
 /* ---------- d7-proben.js: Deutsch 7 und 8 (Lesetexte mit Zeilennummern, Schreibaufgaben) ---------- */
 function ausDeutsch(test) {
-  const texte = (test.texte || []).map((t) => ({ ...nimm(t, ["id", "typ", "titel", "art", "zeilen", "einheit", "werte", "kopf", "reihen", "hinweis", "quelle"]) }));
+  // Hörtext (Englisch 9, typ "hoertext"): sprecher und mal gehen mit – die Seite zeigt der Lehrkraft die Mitschrift
+  const texte = (test.texte || []).map((t) => ({ ...nimm(t, ["id", "typ", "titel", "art", "zeilen", "einheit", "werte", "kopf", "reihen", "hinweis", "quelle", "sprecher", "mal"]) }));
   const items = test.items.map((a) => {
-    const basis = { prompt: a.prompt, points: punkte(a.points), ...(a.text ? { textRef: a.text } : {}), ...(a.hilfe ? { hilfe: a.hilfe } : {}) };
+    const basis = { prompt: a.prompt, points: punkte(a.points), ...(a.text ? { textRef: a.text } : {}), ...(a.hilfe ? { hilfe: a.hilfe } : {}), ...(a.teil ? { abschnitt: a.teil } : {}) };
     if (a.type === "choice") return { ...basis, type: "choice", options: a.options, answer: a.answer };
     if (a.type === "match") return { ...basis, type: "match", pairs: a.pairs };
     if (a.type === "order") return { ...basis, type: "order", steps: a.steps };

@@ -64,6 +64,15 @@
  *   marken: [{ start, end, type, comment, von: "ki" | "lehrer" }]   (type: spelling, grammar, punctuation, expression,
  *   structure, content, evidence, positive). Die KI schlägt sie bei längeren Texten vor, die Lehrkraft ändert sie.
  *   Der Text des Kindes (given) bleibt dabei unverändert.
+ *
+ * Anderes Fach mit denselben Bausteinen: opts.fach = { kurz: "e", name: "Englisch" } (Englisch 9R: /api/e9/proben,
+ * Kennungen e9-p<nr>-r-<a|b>, Daten in e9-proben/). Dazu gehören:
+ *   Hörtext    Text mit typ "hoertext": sprecher: [{ rolle, text }], stimmen: { Rolle: Stimme }, mal: 2 – die Seite spielt
+ *              ihn höchstens „mal“-mal ab und zeigt ihn nicht an; der KI liegt er als Ausschnitt vor.
+ *   tolerant   an felder-Aufgabe oder Feld: ein Tippfehler in einem längeren Wort zählt nicht (Notizen beim Hören)
+ *   teil       an jeder Aufgabe: Prüfungsteil ("A Listening" …) – die Seite setzt davor eine Überschrift
+ *   Die KI bekommt zusätzlich die Regeln für die Fremdsprache (Inhalt vor Form beim Hör- und Leseverstehen,
+ *   Sprachmittlung ist keine Übersetzung, Rückmeldung auf Deutsch).
  */
 
 const fs = require("fs");
@@ -121,14 +130,26 @@ function kommaSatz(satz) {
   String(satz).trim().split(/\s+/).forEach((w, i) => { if (/,$/.test(w)) { stellen.push(i); w = w.slice(0, -1); } woerter.push(w); });
   return { woerter, stellen };
 }
-function vorbereiten(tests, stufe) {
-  // Kennungen: d7-p… (Deutsch 7) oder d8-p… (Deutsch 8, opts.stufe)
-  const kennung = new RegExp("^d" + (stufe || 7) + "-p\\d+-[rm]-[ab]$");
+// Hörtext in Sätze teilen – so spielt ihn die Seite ab (ein Satz je Abruf der Sprachausgabe, höchstens 220 Zeichen)
+const hoerSaetze = (text) => String(text || "").split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+function vorbereiten(tests, stufe, fachKurz) {
+  // Kennungen: d7-p… (Deutsch 7), d8-p… (Deutsch 8, opts.stufe) oder e9-p… (Englisch 9, opts.fach.kurz)
+  const kennung = new RegExp("^" + (/^[a-z]$/.test(fachKurz || "") ? fachKurz : "d") + (stufe || 7) + "-p\\d+-[rm]-[ab]$");
   Object.values(tests).forEach((test) => {
     const wo = (i) => test.id + " Aufgabe " + (i + 1) + ": ";
     if (!kennung.test(test.id)) throw new Error("Kennung " + test.id);
     test.texte = test.texte || [];
-    test.texte.forEach((t) => { if (!t.typ) t.typ = t.verse ? "gedicht" : t.absaetze ? "text" : t.typ; if (t.typ === "text" || t.typ === "gedicht") t.zeilen = Zeilen.umbrechen(t); });
+    test.texte.forEach((t) => {
+      if (!t.typ) t.typ = t.sprecher ? "hoertext" : t.verse ? "gedicht" : t.absaetze ? "text" : t.typ;
+      if (t.typ === "text" || t.typ === "gedicht") t.zeilen = Zeilen.umbrechen(t);
+      // Hörtext (Fremdsprache): sprecher: [{ rolle, text }], stimmen: { Rolle: Stimme }, mal: wie oft er abgespielt werden darf
+      if (t.typ === "hoertext") {
+        if (!(Array.isArray(t.sprecher) && t.sprecher.length && t.sprecher.every((s) => s && s.rolle && s.text))) throw new Error(test.id + " Hörtext " + t.id + ": sprecher fehlt");
+        const zuLang = t.sprecher.flatMap((s) => hoerSaetze(s.text)).find((s) => s.length > 220);
+        if (zuLang) throw new Error(test.id + " Hörtext " + t.id + ": Satz über 220 Zeichen (" + zuLang.slice(0, 40) + " …)");
+        t.mal = Number.isInteger(t.mal) && t.mal >= 1 && t.mal <= 5 ? t.mal : 2;
+      }
+    });
     const text = (id) => test.texte.find((t) => t.id === id);
     test.items.forEach((item, i) => {
       if (!item.prompt) throw new Error(wo(i) + "prompt fehlt");
@@ -171,10 +192,14 @@ function registerD7ProbenRoutes(app, opts) {
   const PREFIX = String(opts.prefix || "/api/d7/proben").replace(/\/$/, "");
   // Jahrgangsstufe: 7 (Vorgabe) oder 8 – bestimmt Kennungen, Texte für die KI und wer die Proben schreiben darf
   const STUFE = parseInt(opts.stufe, 10) || 7;
+  // Anderes Fach mit denselben Proben-Bausteinen: opts.fach = { kurz: "e", name: "Englisch" } – Kennungen e9-p…, eigene
+  // Regeln für die KI (Antworten in der Fremdsprache, Rückmeldung auf Deutsch), Hörtexte. Ohne opts.fach: Deutsch.
+  const FACH = opts.fach && /^[a-z]$/.test(opts.fach.kurz || "") && opts.fach.name ? opts.fach : null;
+  const FREMD = Boolean(FACH && FACH.kurz === "e"), FNAME = (FACH ? FACH.name : "Deutsch") + " " + STUFE;
   // Deutsch 8: Sitzung (Zeit und Zwischenstand auf dem Server) und Fehlermarkierungen
   const SITZUNG = opts.sitzung === true, MARKEN = opts.marken === true;
   const SITZ_FILE = path.join(DATA_DIR, String(opts.datei || "d7-proben.json").replace(/\.json$/, "") + "-sitzungen.json");
-  const tests = vorbereiten(opts.tests || require("./d7-proben-daten"), STUFE);
+  const tests = vorbereiten(opts.tests || require("./d7-proben-daten"), STUFE, FACH ? FACH.kurz : "d");
   const TEACHER_PASSWORD = opts.teacherPassword || "";
   const askAnthropic = typeof opts.askAnthropic === "function" ? opts.askAnthropic : null;
   const KI_PAUSE_MS = opts.kiPauseMs === undefined ? 30000 : opts.kiPauseMs;
@@ -274,7 +299,7 @@ function registerD7ProbenRoutes(app, opts) {
 
   /* ---------- Was das Kind von einer Aufgabe sieht (ohne Lösungen) ---------- */
   function publicItem(item, index) {
-    const p = { nr: index + 1, type: item.type, prompt: item.prompt, points: item.points, text: item.text || undefined, hilfe: item.hilfe || undefined, vorgabe: item.vorgabe || undefined };
+    const p = { nr: index + 1, type: item.type, prompt: item.prompt, points: item.points, text: item.text || undefined, hilfe: item.hilfe || undefined, vorgabe: item.vorgabe || undefined, teil: item.teil || undefined };
     if (item.type === "choice") p.options = item.options;
     if (item.type === "match") { p.labels = item.pairs.map((x) => x[0]); p.targets = [...new Set(item.pairs.map((x) => x[1]))].sort((a, b) => a.localeCompare(b, "de")); }
     if (item.type === "order") p.steps = item.steps.slice().sort((a, b) => a.localeCompare(b, "de"));
@@ -283,7 +308,9 @@ function registerD7ProbenRoutes(app, opts) {
     if (item.type === "schreiben") { p.minWoerter = item.minWoerter || 0; p.material = item.material || undefined; p.raster = item.raster.map((r) => ({ name: r.name, punkte: r.punkte })); p.form = item.form || undefined; p.plan = item.plan || undefined; }
     return p;
   }
-  const publicText = (t) => ({ id: t.id, typ: t.typ, titel: t.titel || "", art: t.art || "", quelle: t.quelle || "", zeilen: t.zeilen, kopf: t.kopf, reihen: t.reihen, werte: t.werte, einheit: t.einheit, hinweis: t.hinweis });
+  // Hörtext: Die Seite braucht die Sätze zum Abspielen (Sprachausgabe des Servers oder des Geräts); sie zeigt sie nicht an.
+  const publicText = (t) => ({ id: t.id, typ: t.typ, titel: t.titel || "", art: t.art || "", quelle: t.quelle || "", zeilen: t.zeilen, kopf: t.kopf, reihen: t.reihen, werte: t.werte, einheit: t.einheit, hinweis: t.hinweis,
+    ...(t.typ === "hoertext" ? { sprecher: t.sprecher.map((s) => ({ rolle: s.rolle, text: s.text })), stimmen: t.stimmen || undefined, mal: t.mal, sprache: t.sprache || "en" } : {}) });
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
     itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
     ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
@@ -332,7 +359,10 @@ function registerD7ProbenRoutes(app, opts) {
     }
     if (item.type === "felder") {
       const roh = Array.isArray(raw) ? raw : [];
-      const trifft = (f, given) => f.loesungen.some((l) => (f.genau ? glatt(given) === glatt(l) : lose(given) === lose(l)));
+      // tolerant: true (am Feld oder an der Aufgabe, z. B. Notizen beim Hörverstehen): Ein Tippfehler in einem längeren
+      // Wort zählt nicht als Fehler – höchstens ein Buchstabe ab 5, zwei ab 9 Buchstaben.
+      const nah = (given, l) => { const a = lose(given), b = lose(l); return b.length >= 5 && abstand(a, b) <= (b.length >= 9 ? 2 : 1); };
+      const trifft = (f, given) => f.loesungen.some((l) => (f.genau ? glatt(given) === glatt(l) : lose(given) === lose(l) || ((f.tolerant || item.tolerant) && nah(given, l))));
       // menge: true – die Reihenfolge der Eingaben ist egal (z. B. „Schreibe die sechs Fehlerwörter richtig auf“):
       // Jede Eingabe wird der ersten noch freien Lösung zugeordnet, die sie trifft; der Rest bleibt der Reihe nach.
       let reihe = item.felder.map((_, j) => j);
@@ -438,11 +468,22 @@ function registerD7ProbenRoutes(app, opts) {
     }
     if (t.typ === "tabelle") return "Tabelle „" + (t.titel || "") + "“\n" + [t.kopf].concat(t.reihen).map((r) => r.join(" | ")).join("\n");
     if (t.typ === "diagramm") return "Diagramm „" + (t.titel || "") + "“ (" + (t.einheit || "") + ")\n" + t.werte.map((w) => w[0] + ": " + w[1]).join("\n");
+    if (t.typ === "hoertext") return "Hörtext „" + (t.titel || "") + "“ (das Kind hat ihn gehört, nicht gelesen)\n" + t.sprecher.map((s) => s.rolle + ": " + s.text).join("\n");
     return "";
   }
   const ZUG_TEXT = { R: "R" + STUFE + " (Regelklasse): kürzere, einfache Antworten sind in Ordnung.", M: "M" + STUFE + " (Mittlere-Reife-Klasse): Begründungen und Textbelege dürfen etwas genauer sein." };
+  // Fremdsprache (Englisch): Das Kind antwortet meist auf Englisch; die Rückmeldung bleibt deutsch und verständlich.
+  const SYSTEM_FREMD = [
+    "Die Aufgaben und die meisten Antworten sind auf Englisch. Deine Rückmeldung schreibst du auf Deutsch; englische Wörter und kurze Beispiele darin bleiben englisch.",
+    "Beim Hör- und Leseverstehen zählt der Inhalt: Rechtschreib- und Grammatikfehler kosten dort keine Punkte, solange die Antwort eindeutig verständlich ist. Stichpunkte und kurze Antworten genügen.",
+    "Sprachliche Richtigkeit (Grammatik, Wortschatz, Rechtschreibung) bewertest du nur bei Kriterien, die sie ausdrücklich nennen – dort nach dem Stand einer 9. Klasse: Fehler, die das Verstehen nicht stören, wiegen leicht.",
+    "Sprachmittlung ist keine Übersetzung: Es zählt, ob die verlangten Informationen sinngemäß, verständlich und passend für die genannte Person weitergegeben werden. Unwichtiges wegzulassen ist richtig; eine Wort-für-Wort-Übersetzung ist nicht verlangt.",
+    "Steht eine Antwort in der falschen Sprache (zum Beispiel Deutsch, wo Englisch verlangt ist), bewerte den Inhalt nach dem Erwartungshorizont und schreibe in der Korrektur, dass die Sprache nicht passt – die Lehrkraft entscheidet darüber.",
+    "Vermute nie eine Täuschung und stelle keine Diagnosen. Ein fertig verbesserter englischer Text für das Kind ist nicht erlaubt; ein einzelnes kurzes Beispiel (wenige Wörter) schon."
+  ];
   const SYSTEM_ALLE = [
-    "Du korrigierst eine Deutsch-Probe der " + STUFE + ". Klasse einer bayerischen Mittelschule. Deine Korrektur ist ein Vorschlag, die Lehrkraft entscheidet.",
+    "Du korrigierst eine " + (FACH ? FACH.name : "Deutsch") + "-Probe der " + STUFE + ". Klasse einer bayerischen Mittelschule. Deine Korrektur ist ein Vorschlag, die Lehrkraft entscheidet.",
+    ...(FREMD ? SYSTEM_FREMD : []),
     "Bewerte nur nach dem mitgeschickten Erwartungshorizont: Für jedes Kriterium vergibst du ganze Punkte von 0 bis zu seiner Höchstpunktzahl.",
     "Es zählt, ob ein Kriterium inhaltlich erfüllt ist. Eigene Worte, kurze Sätze und Stichpunkte gelten; die Antwort muss der Beispiellösung nicht gleichen. Im Zweifel für das Kind.",
     "Fehlt ein Kriterium in der Antwort, bekommt es 0 Punkte, auch wenn der Rest gut ist. Falsche Aussagen werden nicht belohnt. Erfinde keine eigenen Kriterien.",
@@ -598,7 +639,7 @@ function registerD7ProbenRoutes(app, opts) {
       if (row.status === "eingegangen") row.status = "zu-pruefen";
       rechne(row); writeData(data);
     } catch (err) {
-      console.error("Deutsch " + STUFE + " KI-Korrektur:", err && err.message);
+      console.error(FNAME + " KI-Korrektur:", err && err.message);
     } finally { laufend.delete(id); }
   }
   // Nach einem Neustart: Abgaben, deren KI-Korrektur nicht fertig wurde, holen wir nach
@@ -626,12 +667,12 @@ function registerD7ProbenRoutes(app, opts) {
   function fuerKind(row) {
     const test = tests[row.testId];
     return {
-      fach: "Deutsch " + STUFE, stufe: STUFE, testId: row.testId, nr: row.nr, title: row.testTitle, zug: row.zugProbe, variante: row.variante, klasse: row.className, code: row.code,
+      fach: FNAME, stufe: STUFE, testId: row.testId, nr: row.nr, title: row.testTitle, zug: row.zugProbe, variante: row.variante, klasse: row.className, code: row.code,
       datum: row.submittedAt, freigegebenAm: row.freigegebenAm, score: row.score, total: row.total, percent: row.percent, grade: row.grade, lehrerKommentar: row.lehrerKommentar || "",
       texte: test ? test.texte.map(publicText) : [],
       aufgaben: row.details.map((d) => {
         const w = d.gewertet || wertung(d, row), teile = d.kriterien || d.felder;
-        const a = { nr: d.nr, type: d.type, prompt: d.prompt, vorgabe: d.vorgabe, material: d.material, text: test && test.items[d.nr - 1] ? test.items[d.nr - 1].text : undefined, given: d.given, labels: d.labels,
+        const a = { nr: d.nr, type: d.type, prompt: d.prompt, vorgabe: d.vorgabe, material: d.material, teil: d.teil, text: test && test.items[d.nr - 1] ? test.items[d.nr - 1].text : undefined, given: d.given, labels: d.labels,
           points: w.points, max: w.max, nichtBewertet: w.max === 0 && d.maxPoints > 0, comment: d.comment || "", hinweis: d.hinweis || "" };
         if (!OFFENE.has(d.type)) a.loesung = d.expected;
         if (d.kriterien) a.kriterien = d.kriterien.map((k, i) => ({ text: k.text, punkte: k.punkte, max: k.max, gewertet: zaehlt(k, row), begruendung: d.begruendung ? d.begruendung[i] || "" : undefined }));
@@ -646,7 +687,7 @@ function registerD7ProbenRoutes(app, opts) {
   }
 
   /* ---------- Routen für die Kinder ---------- */
-  app.get(PREFIX + "/health", (_req, res) => res.json({ ok: true, service: "d" + STUFE + "-proben", proben: Object.keys(tests).length }));
+  app.get(PREFIX + "/health", (_req, res) => res.json({ ok: true, service: (FACH ? FACH.kurz : "d") + STUFE + "-proben", proben: Object.keys(tests).length }));
   app.get(PREFIX + "/list", (req, res) => {
     const data = readData(), alle = req.query && req.query.alle === "1";
     res.json({ ok: true, tests: Object.values(tests).map((t) => publicTest(t, data)).filter((t) => alle || t.variante !== "B" || t.unlocked) });
@@ -696,7 +737,7 @@ function registerD7ProbenRoutes(app, opts) {
       sitzSchreiben(sd);
       return res.json({ ok: true, gespeichertAm: sitz.gespeichertAm, sitzung: sitzAntwort(test, sitz, data) });
     } catch (err) {
-      console.error("Deutsch " + STUFE + " Zwischenstand:", err && err.message);
+      console.error(FNAME + " Zwischenstand:", err && err.message);
       return res.status(500).json({ ok: false, error: "server_error" });
     }
   });
@@ -704,7 +745,7 @@ function registerD7ProbenRoutes(app, opts) {
   function abgabeAnlegen(data, test, student, answers, mehr) {
     const plan = SITZUNG ? planSauber(test, mehr.plan) : {};
     const details = test.items.map((item, i) => {
-      const base = { nr: i + 1, type: item.type, prompt: item.prompt, maxPoints: item.points, vorgabe: item.vorgabe || undefined, material: item.material || undefined };
+      const base = { nr: i + 1, type: item.type, prompt: item.prompt, maxPoints: item.points, vorgabe: item.vorgabe || undefined, material: item.material || undefined, teil: item.teil || undefined };
       if (item.rs) base.rs = true;
       if (item.zs) base.zs = true;
       const d = OFFENE.has(item.type) ? offenStart(item, answers[i], base) : schluessel(item, answers[i], base);
@@ -749,7 +790,7 @@ function registerD7ProbenRoutes(app, opts) {
       const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan });
       return res.json({ ok: true, angekommen: true, abgabe: { testTitle: test.title, submittedAt: record.submittedAt } });
     } catch (err) {
-      console.error("Deutsch " + STUFE + " Abgabe:", err);
+      console.error(FNAME + " Abgabe:", err);
       return res.status(500).json({ ok: false, error: "server_error" });
     } finally { pending.delete(key); }
   });
@@ -838,7 +879,7 @@ function registerD7ProbenRoutes(app, opts) {
       const record = abgabeAnlegen(data, test, student, sitz.answers, { plan: sitz.plan, vonLehrkraft: true });
       res.json({ ok: true, submission: fuerLehrkraft(record) });
     } catch (err) {
-      console.error("Deutsch " + STUFE + " Zwischenstand übernehmen:", err && err.message);
+      console.error(FNAME + " Zwischenstand übernehmen:", err && err.message);
       res.status(500).json({ ok: false, error: "server_error" });
     }
   });
@@ -970,7 +1011,7 @@ function registerD7ProbenRoutes(app, opts) {
     const draussen = (r) => ((r.protokoll && r.protokoll.wechsel) || []).reduce((n, w) => n + (w.sekunden || 0), 0);
     const csv = ["Probe;Variante;Klasse;Code;Punkte;Gesamt;Prozent;Note;Stand;Notenschutz;Verlassen;Sekunden ausserhalb;Einfuegeversuche;Abgabe;Freigegeben;Geoeffnet",
       ...rows.map((r) => [r.testTitle, r.variante, r.className, r.code, zahl(r.score), zahl(r.total), r.percent, r.grade, STATUS_TEXT[r.status] || r.status, r.lrs ? "ja" : "nein", r.verlassen || 0, draussen(r), ((r.protokoll && r.protokoll.einfuegen) || []).length, r.submittedAt, r.freigegebenAm || "", r.geoeffnetAm || ""].map(quote).join(";"))].join("\r\n");
-    res.type("text/csv; charset=utf-8").attachment("deutsch" + STUFE + "-proben.csv").send("﻿" + csv);
+    res.type("text/csv; charset=utf-8").attachment((FACH ? FACH.name.toLowerCase() : "deutsch") + STUFE + "-proben.csv").send("﻿" + csv);
   });
 
   // Für die Notenübersicht je Klasse (proben-noten.js): vor der Bestätigung als „nachprüfen“ gekennzeichnet

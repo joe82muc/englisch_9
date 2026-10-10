@@ -410,6 +410,21 @@ registerD7TexteRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e9/uebung/feedback", klasse: "Klasse 9", fach: "Englisch", sprache: "en", thema: "Englisch 9 (Australia, India, South Africa, New Zealand; Gesundheit und Dienstleistungen; Arbeitswelt und Bewerbung; Hören, Lesen, Schreiben, Sprachmittlung)" });
+// Englisch 9R: die großen Proben (eine je Unit, Variante A und Nachschreiber B) – dieselben Routen wie Deutsch 8
+// (KI-Vorkorrektur, Lehrkraft prüft, Rückgabe; Sitzung mit Zeit und Zwischenstand, Fehlermarkierungen), dazu Hörtexte.
+const e9Proben = registerD7ProbenRoutes(app, {
+  dataDir: DATA_DIR,
+  prefix: "/api/e9/proben",
+  datei: "e9-proben.json",
+  tests: require("./e9-proben-daten"),
+  stufe: 9,
+  fach: { kurz: "e", name: "Englisch" },
+  sitzung: true,
+  marken: true,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
 // Deutsch 7: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
 
@@ -486,6 +501,7 @@ const PROBEN_QUELLEN = [
     { modul: "nt8", fach: "NT", abgaben: nt8Proben.abgaben },
     { modul: "d7proben", fach: "Deutsch", abgaben: d7Proben.abgaben },
     { modul: "d8proben", fach: "Deutsch", abgaben: d8Proben.abgaben },
+    { modul: "e9proben", fach: "Englisch", abgaben: e9Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
     { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
@@ -523,6 +539,7 @@ const probenVorschau = registerProbenVorschau(app, {
     inf8: { form: "nt", tests: require("./inf8-fragen") },
     d7proben: { form: "deutsch", tests: require("./d7-proben-daten") },
     d8proben: { form: "deutsch", tests: require("./d8-proben-daten") },
+    e9proben: { form: "deutsch", tests: require("./e9-proben-daten") },
     infoaustausch: { form: "info", tests: INFOTESTS },
     nt9probe: { form: "info", tests: NT9PROBEN },
     netzwerktest: { form: "info", tests: NETZWERKTESTS },
@@ -592,7 +609,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-10-englisch9-bausteine",
+    version: "2026-10-10-englisch9-proben",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
