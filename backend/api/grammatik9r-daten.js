@@ -210,6 +210,182 @@ const ktG4 = {
 };
 
 /* ==================================================================
+   Kurztests Units 2 bis 4 (G5 bis G10) - seit 10.10.2026
+   Eigene Saetze, nichts aus dem Schulbuch. G10 (Passiv) prueft vor allem
+   das Verstehen - so will es der Lehrplan fuer die Regelklasse.
+   ================================================================== */
+const ktG5 = {
+  id: "e9r-u2-kt-g5",
+  kind: "kurztest",
+  title: "Kurztest G5 - Simple present",
+  unit: "Englisch 9R / Unit 2",
+  classLevel: "9R",
+  items: [
+    { type: "gap", section: "Simple present", instruction: "Setze die Verben im simple present ein.",
+      prompt: "My aunt ___ (work) in a small company.", solutions: [["works"]] },
+    { type: "gap", prompt: "The workers ___ (start) at seven o'clock.", solutions: [["start"]] },
+    { type: "gap", prompt: "He ___ (not / like) early shifts.", solutions: [["doesn't like"]] },
+    { type: "gap", prompt: "We ___ (not / sell) plastic bags.", solutions: [["don't sell"]] },
+    { type: "gap", prompt: "___ your brother ___ (repair) phones?", solutions: [["Does"], ["repair"]] },
+    { type: "gap", prompt: "Where ___ they ___ (deliver) the boxes?", solutions: [["do"], ["deliver"]] },
+    { type: "gap", section: "Kurzantwort", instruction: "Antworte mit einer Kurzantwort. (–) = No",
+      prompt: "Does the shop open on Sundays? (–) ___", solutions: [["No, it doesn't"]] },
+    { type: "choice", section: "Was ist richtig?", instruction: "Kreuze an.",
+      prompt: "Which sentence is correct?",
+      options: ["She often visits her grandma.", "She visits often her grandma.", "She often visit her grandma."], answer: 0 },
+    { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch.",
+      prompt: "Meine Schwester arbeitet nicht am Samstag.", points: 2,
+      expected: "My sister doesn't work on Saturday. / My sister doesn't work on Saturdays.",
+      focus: "simple present verneint bei he/she/it (doesn't work)",
+      keywords: ["does not work", "saturday|saturdays"] }
+  ]
+};
+
+const ktG6 = {
+  id: "e9r-u2-kt-g6",
+  kind: "kurztest",
+  title: "Kurztest G6 - Word order",
+  unit: "Englisch 9R / Unit 2",
+  classLevel: "9R",
+  items: [
+    { type: "choice", section: "Word order", instruction: "Kreuze den Satz mit der richtigen Wortstellung an.",
+      prompt: "Which sentence is correct?",
+      options: ["We recycle paper at school every week.", "We recycle at school paper every week.", "We every week recycle paper at school."], answer: 0 },
+    { type: "choice", prompt: "Which sentence is correct?",
+      options: ["My dad drives carefully to work every morning.", "My dad drives every morning to work carefully.", "My dad drives to work every morning carefully."], answer: 0 },
+    { type: "choice", prompt: "Which sentence is correct?",
+      options: ["She never eats meat.", "She eats never meat.", "Never she eats meat."], answer: 0 },
+    { type: "choice", prompt: "Which sentence is correct?",
+      options: ["Every Saturday we sell cakes at the market.", "Every Saturday sell we cakes at the market.", "Every Saturday we sell at the market cakes."], answer: 0 },
+    { type: "choice", prompt: "Which question is correct?",
+      options: ["Do you often buy second-hand clothes?", "Buy you often second-hand clothes?", "Do often you buy second-hand clothes?"], answer: 0 },
+    { type: "text", section: "Bilde Sätze", instruction: "Bringe die Wörter in die richtige Reihenfolge. Schreibe den ganzen Satz.",
+      prompt: "in the workshop / the team / every day / repairs / bikes", points: 2,
+      expected: "The team repairs bikes in the workshop every day. / Every day the team repairs bikes in the workshop.",
+      focus: "Wortstellung: Subjekt – Verb – Objekt – Ort – Zeit (die Zeit darf auch ganz am Anfang stehen)",
+      keywords: ["the team repairs bikes in the workshop", "every day"] },
+    { type: "text", prompt: "always / my sister / off / the lights / switches", points: 2,
+      expected: "My sister always switches off the lights. / My sister always switches the lights off.",
+      focus: "Häufigkeitsadverb vor dem Vollverb (always switches)",
+      keywords: ["my sister always switches"] },
+    { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch. Achte auf die Wortstellung.",
+      prompt: "Wir treffen unsere Freunde jeden Freitag im Park.", points: 2,
+      expected: "We meet our friends in the park every Friday. / Every Friday we meet our friends in the park.",
+      focus: "Wortstellung: Objekt vor Ort vor Zeit (our friends – in the park – every Friday)",
+      keywords: ["we meet our friends in the park", "every friday"] }
+  ]
+};
+
+const ktG7 = {
+  id: "e9r-u3-kt-g7",
+  kind: "kurztest",
+  title: "Kurztest G7 - Past progressive",
+  unit: "Englisch 9R / Unit 3",
+  classLevel: "9R",
+  items: [
+    { type: "gap", section: "Past progressive", instruction: "Setze die Verben im past progressive ein.",
+      prompt: "At eight o'clock I ___ (wait) for the bus.", solutions: [["was waiting"]] },
+    { type: "gap", prompt: "The children ___ (play) in the street.", solutions: [["were playing"]] },
+    { type: "gap", prompt: "It ___ (not / rain) at that time.", solutions: [["wasn't raining"]] },
+    { type: "gap", prompt: "What ___ you ___ (do) when the accident happened?", solutions: [["were"], ["doing"]] },
+    { type: "gap", section: "When und while", instruction: "Past progressive oder simple past? Setze die Verben ein.",
+      prompt: "I ___ (cross) the road when a car ___ (come) round the corner.", solutions: [["was crossing"], ["came"]] },
+    { type: "gap", prompt: "While we ___ (talk), the phone ___ (ring).", solutions: [["were talking"], ["rang"]] },
+    { type: "choice", section: "Was ist richtig?", instruction: "Kreuze an.",
+      prompt: "Which sentence is correct?",
+      options: ["She was riding her bike when she fell.", "She was ride her bike when she fell.", "She were riding her bike when she fell."], answer: 0 },
+    { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch.",
+      prompt: "Ich machte gerade Hausaufgaben, als mein Freund anrief.", points: 2,
+      expected: "I was doing my homework when my friend called.",
+      focus: "past progressive + when + simple past (was doing … when … called)",
+      keywords: ["was doing", "when", "called|phoned|rang"] }
+  ]
+};
+
+const ktG8 = {
+  id: "e9r-u3-kt-g8",
+  kind: "kurztest",
+  title: "Kurztest G8 - Present perfect with for and since",
+  unit: "Englisch 9R / Unit 3",
+  classLevel: "9R",
+  items: [
+    { type: "gap", section: "Present perfect", instruction: "Setze die Verben im present perfect ein.",
+      prompt: "I ___ (know) my best friend for ten years.", solutions: [["have known"]] },
+    { type: "gap", prompt: "She ___ (live) in this town since 2020.", solutions: [["has lived"]] },
+    { type: "gap", prompt: "We ___ (not / see) him since Monday.", solutions: [["haven't seen"]] },
+    { type: "gap", prompt: "How long ___ you ___ (have) your dog?", solutions: [["have"], ["had"]] },
+    { type: "gap", section: "For oder since?", instruction: "Setze for oder since ein.",
+      prompt: "He has played football ___ five years.", solutions: [["for"]] },
+    { type: "gap", prompt: "They have been friends ___ last summer.", solutions: [["since"]] },
+    { type: "gap", prompt: "I have had this phone ___ my birthday.", solutions: [["since"]] },
+    { type: "choice", section: "Was ist richtig?", instruction: "Kreuze an.",
+      prompt: "Which sentence is correct?",
+      options: ["I have lived here for three years.", "I live here since three years.", "I have lived here since three years."], answer: 0 },
+    { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch.",
+      prompt: "Meine Tante arbeitet seit 2019 im Krankenhaus.", points: 2,
+      expected: "My aunt has worked at the hospital since 2019. / My aunt has worked in the hospital since 2019.",
+      focus: "present perfect mit since (has worked … since 2019)",
+      keywords: ["has worked|has been working", "since 2019"] }
+  ]
+};
+
+const ktG9 = {
+  id: "e9r-u4-kt-g9",
+  kind: "kurztest",
+  title: "Kurztest G9 - Going to-future",
+  unit: "Englisch 9R / Unit 4",
+  classLevel: "9R",
+  items: [
+    { type: "gap", section: "Going to-future", instruction: "Setze die Verben mit going to ein.",
+      prompt: "I ___ (apply) for an apprenticeship next year.", solutions: [["am going to apply", "'m going to apply"]] },
+    { type: "gap", prompt: "My sister ___ (start) her work experience on Monday.", solutions: [["is going to start", "'s going to start"]] },
+    { type: "gap", prompt: "We ___ (not / stay) at home in the holidays.", solutions: [["aren't going to stay", "'re not going to stay"]] },
+    { type: "gap", prompt: "___ you ___ (write) your CV tonight?", solutions: [["Are"], ["going to write"]] },
+    { type: "gap", prompt: "What ___ he ___ (do) after school?", solutions: [["is"], ["going to do"]] },
+    { type: "gap", section: "Kurzantwort", instruction: "Antworte mit einer Kurzantwort. (+) = Yes",
+      prompt: "Is she going to join the club? (+) ___", solutions: [["Yes, she is"]] },
+    { type: "choice", section: "Was ist richtig?", instruction: "Kreuze an.",
+      prompt: "Which sentence is correct?",
+      options: ["They are going to visit a factory.", "They going to visit a factory.", "They are going to visiting a factory."], answer: 0 },
+    { type: "text", section: "Übersetze", instruction: "Schreibe den Satz auf Englisch. Benutze going to.",
+      prompt: "Ich werde nächste Woche ein Praktikum machen.", points: 2,
+      expected: "I am going to do work experience next week. / I am going to do an internship next week.",
+      focus: "going to-future (am going to do)",
+      keywords: ["am going to", "next week"] }
+  ]
+};
+
+const ktG10 = {
+  id: "e9r-u4-kt-g10",
+  kind: "kurztest",
+  title: "Kurztest G10 - Passive verstehen",
+  unit: "Englisch 9R / Unit 4",
+  classLevel: "9R",
+  items: [
+    { type: "choice", section: "Wer tut etwas?", instruction: "Lies den Passivsatz und kreuze an, wer etwas tut.",
+      prompt: "The parcels are delivered by a driver. Who delivers the parcels?",
+      options: ["a driver", "the parcels", "the customers"], answer: 0 },
+    { type: "choice", prompt: "The clubhouse was built by the members. Who built the clubhouse?",
+      options: ["the members", "the clubhouse", "a company"], answer: 0 },
+    { type: "choice", section: "Gleiche Bedeutung", instruction: "Welcher Satz bedeutet dasselbe? Kreuze an.",
+      prompt: "Volunteers clean the beach every month.",
+      options: ["The beach is cleaned by volunteers every month.", "The volunteers are cleaned by the beach every month.", "The beach was cleaned by volunteers last month."], answer: 0 },
+    { type: "choice", prompt: "A teacher wrote the report.",
+      options: ["The report was written by a teacher.", "The report is written by a teacher.", "A teacher was written by the report."], answer: 0 },
+    { type: "choice", section: "Gegenwart oder Vergangenheit?", instruction: "Kreuze die richtige Übersetzung an.",
+      prompt: "The kiwis were packed by hand.",
+      options: ["Die Kiwis wurden von Hand verpackt.", "Die Kiwis werden von Hand verpackt.", "Die Kiwis packen von Hand."], answer: 0 },
+    { type: "choice", prompt: "The windows are cleaned every Friday.",
+      options: ["Die Fenster werden jeden Freitag geputzt.", "Die Fenster wurden jeden Freitag geputzt.", "Die Fenster putzen jeden Freitag."], answer: 0 },
+    { type: "gap", section: "is, are, was oder were?", instruction: "Setze die richtige Form von be ein.",
+      prompt: "English ___ spoken in New Zealand.", solutions: [["is"]] },
+    { type: "gap", prompt: "The shelves ___ filled every morning.", solutions: [["are"]] },
+    { type: "gap", prompt: "The bridge ___ built in 1990.", solutions: [["was"]] },
+    { type: "gap", prompt: "The letters ___ sent yesterday.", solutions: [["were"]] }
+  ]
+};
+
+/* ==================================================================
    Englisch 9M - Unit 1
    Dieselben Aufgaben wie 9R (9M uebernimmt die Grammatikseiten von 9R),
    aber mit M-Zug-Notenschluessel: 50 % = Note 4.
@@ -231,6 +407,8 @@ const TESTS = {
   [ktG4.id]: ktG4
 };
 m9.forEach((t) => { TESTS[t.id] = t; });
+// Units 2 bis 4 gibt es nur fuer 9R (die 9M-Klassen haben eigene Grammatikseiten)
+[ktG5, ktG6, ktG7, ktG8, ktG9, ktG10].forEach((t) => { TESTS[t.id] = t; });
 
 // Antwortreihenfolge fest mischen (beim Schreiben steht die richtige Antwort meist an derselben Stelle), siehe proben-mischen.js
 require("./proben-mischen").mischeAlle(TESTS);
