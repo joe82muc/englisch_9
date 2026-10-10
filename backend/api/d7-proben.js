@@ -85,6 +85,8 @@ const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, probeOffen, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 const Zeilen = require("./d7-zeilen");
+// Freigegebene Korrekturen sieht das Kind 7 Tage lang, dann verschwinden sie bei ihm von selbst (eine Regel für alle Proben)
+const { sichtbarBis, rueckgabeVorbei, VORBEI_TEXT } = require("./proben-rueckgabe");
 
 const OFFENE = new Set(["offen", "schreiben"]);
 const HALBOFFENE = new Set(["felder", "zeile", "komma"]);
@@ -676,7 +678,10 @@ function registerD7ProbenRoutes(app, opts) {
   // für die Lehrkraft: alles
   function fuerLehrkraft(row) {
     const test = tests[row.testId];
+    const frei = row.status === "freigegeben";
     return { ...row, statusText: STATUS_TEXT[row.status] || row.status,
+      // freigegeben: bis wann das Kind die Korrektur sieht; vorbei: Frist um, beim Kind verschwunden
+      ...(frei && sichtbarBis(row.freigegebenAm) ? { sichtbarBis: sichtbarBis(row.freigegebenAm) } : {}), ...(frei && rueckgabeVorbei(row.freigegebenAm) ? { vorbei: true } : {}),
       details: row.details.map((d) => {
         const item = test ? test.items[d.nr - 1] : null;
         return { ...d, horizont: item && OFFENE.has(item.type) ? (item.type === "schreiben" ? item.raster.map((k) => ({ text: k.name, erwartet: k.text || "", punkte: k.punkte })) : item.kriterien.map((k) => ({ text: k.text, erwartet: k.erwartet || "", punkte: k.punkte }))) : undefined,
@@ -688,7 +693,7 @@ function registerD7ProbenRoutes(app, opts) {
     const test = tests[row.testId];
     return {
       fach: FNAME, stufe: STUFE, testId: row.testId, nr: row.nr, title: row.testTitle, zug: row.zugProbe, variante: row.variante, klasse: row.className, code: row.code,
-      datum: row.submittedAt, freigegebenAm: row.freigegebenAm, score: row.score, total: row.total, percent: row.percent, grade: row.grade, lehrerKommentar: row.lehrerKommentar || "",
+      datum: row.submittedAt, freigegebenAm: row.freigegebenAm, sichtbarBis: sichtbarBis(row.freigegebenAm) || undefined, score: row.score, total: row.total, percent: row.percent, grade: row.grade, lehrerKommentar: row.lehrerKommentar || "",
       texte: test ? test.texte.map(publicText) : [],
       aufgaben: row.details.map((d) => {
         const w = d.gewertet || wertung(d, row), teile = d.kriterien || d.felder;
@@ -817,9 +822,11 @@ function registerD7ProbenRoutes(app, opts) {
   app.post(PREFIX + "/meine", async (req, res) => {
     const student = await probeKind(req, res);
     if (!student) return;
-    const rows = readData().submissions.filter((row) => row.studentKey === student.key).sort((a, b) => a.nr - b.nr);
+    // Freigegeben und Frist um: Die Probe steht beim Kind nicht mehr (die Übersicht zeigt sie dann gar nicht)
+    const rows = readData().submissions.filter((row) => row.studentKey === student.key && !(row.status === "freigegeben" && rueckgabeVorbei(row.freigegebenAm))).sort((a, b) => a.nr - b.nr);
     res.json({ ok: true, klasse: student.klasse, abgaben: rows.map((row) => ({ testId: row.testId, nr: row.nr, title: row.testTitle, variante: row.variante, abgegebenAm: row.submittedAt,
-      status: row.status === "freigegeben" ? "korrigiert" : "abgegeben", neu: row.status === "freigegeben" && !row.geoeffnetAm, freigegebenAm: row.status === "freigegeben" ? row.freigegebenAm : undefined })) });
+      status: row.status === "freigegeben" ? "korrigiert" : "abgegeben", neu: row.status === "freigegeben" && !row.geoeffnetAm, freigegebenAm: row.status === "freigegeben" ? row.freigegebenAm : undefined,
+      sichtbarBis: row.status === "freigegeben" ? sichtbarBis(row.freigegebenAm) || undefined : undefined })) });
   });
   app.post(PREFIX + "/korrektur", async (req, res) => {
     const student = await probeKind(req, res);
@@ -827,6 +834,7 @@ function registerD7ProbenRoutes(app, opts) {
     const data = readData(), row = data.submissions.find((r) => r.studentKey === student.key && r.testId === clean(req.body?.testId));
     if (!row) return res.status(404).json({ ok: false, error: "not_found", message: "Zu dieser Probe gibt es von dir keine Abgabe." });
     if (row.status !== "freigegeben") return res.status(403).json({ ok: false, error: "nicht_freigegeben", message: "Deine Lehrkraft hat die Korrektur noch nicht freigegeben." });
+    if (rueckgabeVorbei(row.freigegebenAm)) return res.status(403).json({ ok: false, error: "nicht_freigegeben", vorbei: true, message: VORBEI_TEXT });
     if (!row.geoeffnetAm) { row.geoeffnetAm = new Date().toISOString(); writeData(data); }
     res.json({ ok: true, korrektur: fuerKind(rechne(row)) });
   });
@@ -1028,7 +1036,8 @@ function registerD7ProbenRoutes(app, opts) {
     const nichtBestaetigt = rows.filter((r) => frei && r.status !== "bestaetigt" && r.status !== "freigegeben");
     if (nichtBestaetigt.length) return res.status(409).json({ ok: false, error: "nicht_bestaetigt", message: "Erst prüfen und bestätigen, dann freigeben." });
     rows.forEach((r) => {
-      if (frei && r.status !== "freigegeben") { r.status = "freigegeben"; r.freigegebenAm = jetzt; delete r.geoeffnetAm; }
+      // noch einmal freigeben, wenn die 7 Tage um sind: Die Frist beginnt neu, für das Kind ist die Korrektur wieder „neu“
+      if (frei && (r.status !== "freigegeben" || rueckgabeVorbei(r.freigegebenAm))) { r.status = "freigegeben"; r.freigegebenAm = jetzt; delete r.geoeffnetAm; }
       if (!frei && r.status === "freigegeben") { r.status = "bestaetigt"; delete r.freigegebenAm; delete r.geoeffnetAm; }
       rechne(r);
     });

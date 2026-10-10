@@ -7,8 +7,9 @@
  *
  * POST /api/proben/noten { password, klasse }
  *   -> { ok, klasse, noten: [{ id, modul, fach, testId, titel, code, note, punkte, max, prozent,
- *                              datum, abgabe, nachpruefen, lrs, verlassen, zurueck, geoeffnet }] }
- *   (zurueck / geoeffnet: wann die korrigierte Probe an das Kind zurückgegeben und von ihm geöffnet wurde – proben-rueckgabe.js)
+ *                              datum, abgabe, nachpruefen, lrs, verlassen, zurueck, geoeffnet, sichtbarBis?, vorbei? }] }
+ *   (zurueck / geoeffnet: wann die korrigierte Probe an das Kind zurückgegeben und von ihm geöffnet wurde – proben-rueckgabe.js;
+ *    sichtbarBis / vorbei: 7 Tage nach der Rückgabe verschwindet sie beim Kind von selbst)
  *   (lrs: mit Notenschutz LRS gewertet; verlassen: so oft hat das Kind die Probe verlassen)
  */
 const crypto = require("crypto");
@@ -51,7 +52,9 @@ function registerProbenNotenRoutes(app, options) {
             code: r.code, note: r.grade, punkte: r.score, max: r.total, prozent: r.percent,
             datum: r.testDate || String(r.submittedAt || "").slice(0, 10), abgabe: r.submittedAt,
             nachpruefen: Boolean(r.needsReview), lrs: Boolean(r.lrs), verlassen: Number(r.verlassen) || 0,
-            zurueck: zurueck ? zurueck.freigegebenAm || "" : "", geoeffnet: zurueck ? zurueck.geoeffnetAm || "" : ""
+            zurueck: zurueck ? zurueck.freigegebenAm || "" : "", geoeffnet: zurueck ? zurueck.geoeffnetAm || "" : "",
+            // sichtbarBis: letzter Tag, an dem das Kind die Probe sieht; vorbei: Frist um, beim Kind verschwunden
+            ...(zurueck && zurueck.sichtbarBis ? { sichtbarBis: zurueck.sichtbarBis } : {}), ...(zurueck && zurueck.vorbei ? { vorbei: true } : {})
           });
         }
       }

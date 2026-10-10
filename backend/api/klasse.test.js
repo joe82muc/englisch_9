@@ -128,6 +128,27 @@ test("Modul als Hausaufgabe: Die Kennung geht mit ins Heft des Kindes, bleibt be
   assert.equal((await post("/api/klasse/heft", { code: "456" })).data.eintraege.length, 0);
 });
 
+test("Modul als Hausaufgabe: steht noch 7 Tage nach dem Termin im Heft des Kindes, dann verschwindet es von selbst", async () => {
+  const vorher = zeit, speichern = "/api/klasse/lehrer/heft/speichern";
+  const basis = { password: PW, klasse: "9d", fach: "Englisch", faellig: "2026-10-06", typ: "aufgabe" };
+  await post(speichern, { ...basis, text: "„Feeling ill“ in GRUMI bearbeiten", link: "https://joe82muc.github.io/grumi/9R/Englisch/u1_dialogue.html", modul: "e9-u1-dialogue" });
+  await post(speichern, { ...basis, text: "Arbeitsblatt Seite 2" });
+  const heft = async () => { const d = (await post("/api/klasse/heft", { code: "456" })).data; return [d.eintraege.map((e) => e.modul || "Aufgabe").sort().join(" + "), d.modulTage]; };
+  zeit = new Date("2026-10-07T08:00:00Z");   // Tag nach dem Termin: beide noch da
+  assert.deepEqual(await heft(), ["Aufgabe + e9-u1-dialogue", 7]);
+  zeit = new Date("2026-10-08T08:00:00Z");   // die gewöhnliche Hausaufgabe ist weg, das Modul bleibt zum Nachholen
+  assert.deepEqual(await heft(), ["e9-u1-dialogue", 7]);
+  zeit = new Date("2026-10-13T21:30:00Z");   // 13.10., 23:30 Uhr in Deutschland: der siebte Tag nach dem Termin
+  assert.deepEqual(await heft(), ["e9-u1-dialogue", 7]);
+  zeit = new Date("2026-10-13T22:10:00Z");   // 14.10., 0:10 Uhr: verschwunden
+  assert.deepEqual(await heft(), ["", 7]);
+  // die Lehrkraft sieht den Eintrag weiter in ihrer Liste (30 Tage) und erfährt die Frist
+  const liste = (await post("/api/klasse/lehrer/heft/liste", { password: PW, klasse: "9d" })).data;
+  assert.equal(liste.eintraege.length, 2); assert.equal(liste.modulTage, 7);
+  zeit = vorher;
+  for (const e of liste.eintraege) await post("/api/klasse/lehrer/heft/loeschen", { password: PW, id: e.id });
+});
+
 test("Klassenrat: angenommene Nachricht landet anonym im Briefkasten der Klasse", async () => {
   kiModus = "ok";
   const r = await post("/api/klasse/rat/senden", { code: "123", kategorie: "Pause", text: "In der Pause ist es im Gang oft sehr laut." });

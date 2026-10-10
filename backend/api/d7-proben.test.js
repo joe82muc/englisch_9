@@ -185,6 +185,35 @@ test("Ganzer Ablauf: abgeben, KI, Lehrkraft ändert, bestätigt, gibt frei, Kind
   });
 });
 
+test("Freigegebene Korrektur: 7 Tage nach der Freigabe verschwindet sie beim Kind, die Lehrkraft kann sie noch einmal freigeben", async () => {
+  await mitServer(ki(), async ({ post, lehrer, fertig, datei }) => {
+    await post("submit", { testId: "d7-p9-m-a", code: "101", answers: antworten(1) });
+    let [row] = await fertig("d7-p9-m-a");
+    await lehrer("bestaetigen", { submissionId: row.id });
+    row = (await lehrer("freigeben", { submissionId: row.id })).data.submissions[0];
+    assert.match(row.sichtbarBis, /^\d{4}-\d\d-\d\d$/); assert.equal(row.vorbei, undefined);
+    const meine = async () => (await post("meine", { code: "101" })).data.abgaben;
+    assert.equal((await meine())[0].sichtbarBis, row.sichtbarBis, "das Kind erfährt, bis wann");
+    assert.equal((await post("korrektur", { testId: "d7-p9-m-a", code: "101" })).data.korrektur.sichtbarBis, row.sichtbarBis);
+    // die Freigabe liegt jetzt 6 Tage zurück: noch da; 8 Tage: weg
+    const freigabeVor = (tage) => { const d = JSON.parse(fs.readFileSync(datei, "utf8")); d.submissions[0].freigegebenAm = new Date(Date.now() - tage * 86400000).toISOString(); fs.writeFileSync(datei, JSON.stringify(d)); };
+    freigabeVor(6);
+    assert.deepEqual((await meine()).map((a) => a.status), ["korrigiert"]);
+    assert.equal((await post("korrektur", { testId: "d7-p9-m-a", code: "101" })).status, 200);
+    freigabeVor(8);
+    assert.deepEqual(await meine(), [], "die Probe steht beim Kind nicht mehr");
+    const zu = await post("korrektur", { testId: "d7-p9-m-a", code: "101" });
+    assert.equal(zu.status, 403); assert.equal(zu.data.vorbei, true); assert.match(zu.data.message, /nach 7 Tagen/);
+    // Lehrkraft: weiter freigegeben, mit Note – und dem Vermerk, dass die Frist um ist
+    row = (await lehrer("results", { testId: "d7-p9-m-a" })).data.submissions[0];
+    assert.equal(row.status, "freigegeben"); assert.equal(row.vorbei, true); assert.ok(row.grade && row.geoeffnetAm);
+    // noch einmal freigeben: neue Frist, für das Kind wieder neu
+    row = (await lehrer("freigeben", { submissionId: row.id })).data.submissions[0];
+    assert.equal(row.vorbei, undefined); assert.equal(row.geoeffnetAm, undefined);
+    assert.deepEqual((await meine()).map((a) => [a.status, a.neu]), [["korrigiert", true]]);
+  });
+});
+
 test("Eine Abgabe je Kind und Probe – auch nicht Variante B nach Variante A", async () => {
   await mitServer(ki(), async ({ post, lehrer, fertig }) => {
     assert.equal((await post("submit", { testId: "d7-p9-m-a", code: "101", answers: antworten() })).status, 200);

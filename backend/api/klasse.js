@@ -26,7 +26,8 @@
  * Die Lehrkraft kann ihre Einträge und die Nachrichten jederzeit einzeln löschen.
  *
  * Kind:
- *   POST /api/klasse/heft            { code }                          -> { ok, klasse, heute, eintraege[], eigene[], eigenTage }
+ *   POST /api/klasse/heft            { code }                          -> { ok, klasse, heute, eintraege[], eigene[], eigenTage, modulTage }
+ *        (Einträge bis zum Tag nach dem Termin; Module als Hausaufgabe noch modulTage = 7 Tage nach dem Termin)
  *   POST /api/klasse/heft/eigen/speichern { code, fach, text, faellig, typ } -> { ok, eintrag }   (faellig: heute bis heute + 14)
  *   POST /api/klasse/heft/eigen/loeschen  { code, id }                 -> { ok }                  (nur der eigene Eintrag)
  *   POST /api/klasse/rat/senden      { code, kategorie, text, zeigen } -> { ok, angenommen, privat?, hinweis?, vorschlag?, hilfe? }
@@ -50,6 +51,9 @@ const { klasseNorm } = require("./nt9-fortschritt");
 const TYPEN = ["aufgabe", "probe", "termin"];
 // Kennung eines Lernmoduls im Lernstand (z. B. „e9-u1-dialogue“, „nt7-luft-01“; ein Strich am Ende = alle, die so beginnen)
 const MODUL_KENNUNG = /^[a-z0-9][a-z0-9_-]{1,59}$/i;
+// Module als Hausaufgabe: So viele Tage nach dem Termin stehen sie noch im Heft der Kinder (Reiter „Module“, zum
+// Nachholen), dann verschwinden sie dort von selbst. Alle anderen Einträge verschwinden am Tag nach dem Termin.
+const MODUL_TAGE = 7;
 // Eigene Einträge der Kinder im Hausaufgabenheft: so viele Tage nach dem Schreiben werden sie gelöscht; höchstens so viele je Kind
 const EIGEN_TAGE = 14, EIGEN_MAX = 40;
 const KATEGORIEN = ["Klassenklima", "Unterricht", "Pause", "Organisation", "Wunsch / Idee", "Sonstiges"];
@@ -223,10 +227,10 @@ function registerKlasseRoutes(app, options = {}) {
     try {
       const k = await kind(req, res);
       if (!k) return;
-      const heute = tagBerlin(jetzt()), ab = tagPlus(heute, -1);
+      const heute = tagBerlin(jetzt()), ab = tagPlus(heute, -1), abModul = tagPlus(heute, -MODUL_TAGE);
       const gemeinsam = await gemeinsameEintraege(k.klasse);
       const eintraege = gemeinsam.eintraege
-        .filter((e) => e.faellig >= ab)
+        .filter((e) => e.faellig >= (e.modul ? abModul : ab))
         .sort((a, b) => a.faellig.localeCompare(b.faellig) || String(a.am).localeCompare(String(b.am)))
         .map(fuerKind);
       // dazu, was das Kind sich selbst eingetragen hat (nur seine eigenen Einträge)
@@ -234,7 +238,7 @@ function registerKlasseRoutes(app, options = {}) {
         .filter((e) => e.code === k.code && e.faellig >= ab)
         .sort((a, b) => a.faellig.localeCompare(b.faellig) || a.id.localeCompare(b.id))
         .map(eigenFuerKind);
-      return res.json({ ok: true, klasse: k.klasse, heute, eintraege, eigene, eigenTage: EIGEN_TAGE, ...(gemeinsam.kalenderFehler ? { kalenderFehler: gemeinsam.kalenderFehler } : {}) });
+      return res.json({ ok: true, klasse: k.klasse, heute, eintraege, eigene, eigenTage: EIGEN_TAGE, modulTage: MODUL_TAGE, ...(gemeinsam.kalenderFehler ? { kalenderFehler: gemeinsam.kalenderFehler } : {}) });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -282,7 +286,7 @@ function registerKlasseRoutes(app, options = {}) {
       const eintraege = gemeinsam.eintraege
         .filter((e) => e.faellig >= ab)
         .sort((a, b) => b.faellig.localeCompare(a.faellig) || String(b.am).localeCompare(String(a.am)));
-      return res.json({ ok: true, klasse, heute, eintraege, ...(gemeinsam.kalenderFehler ? { kalenderFehler: gemeinsam.kalenderFehler } : {}) });
+      return res.json({ ok: true, klasse, heute, eintraege, modulTage: MODUL_TAGE, ...(gemeinsam.kalenderFehler ? { kalenderFehler: gemeinsam.kalenderFehler } : {}) });
     } catch (error) { return fehler(res, error); }
   });
 

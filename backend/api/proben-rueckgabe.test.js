@@ -24,16 +24,18 @@ const abgabe = (id, code, extra) => Object.assign({ id, testId: "nt7-p1-m", test
 async function mitServer(lauf) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "rueckgabe-"));
   const nt = [abgabe("a1", 101), abgabe("a2", 102), abgabe("a3", 201)];
-  const deutsch = [{ id: "d1", testId: "d7-p2-m-a", testTitle: "Probe 2 (M7): Sachtext I", code: "101", className: "7aM", grade: 2, score: 28, total: 34, percent: 82, submittedAt: "2026-10-06T08:00:00.000Z", status: "freigegeben", freigegebenAm: "2026-10-06T12:00:00.000Z" },
+  // die Deutsch-Probe ist seit gestern freigegeben (zurückgegebene Proben verschwinden beim Kind nach 7 Tagen)
+  const deutsch = [{ id: "d1", testId: "d7-p2-m-a", testTitle: "Probe 2 (M7): Sachtext I", code: "101", className: "7aM", grade: 2, score: 28, total: 34, percent: 82, submittedAt: "2026-10-06T08:00:00.000Z", status: "freigegeben", freigegebenAm: new Date(Date.now() - 86400000).toISOString() },
     { id: "d2", testId: "d7-p2-m-a", testTitle: "Probe 2 (M7): Sachtext I", code: "102", className: "7aM", grade: 4, score: 17, total: 34, percent: 50, submittedAt: "2026-10-06T08:00:00.000Z", status: "zu-pruefen" }];
   const quellen = [{ modul: "nt7", fach: "NT", abgaben: () => nt }, { modul: "d7proben", fach: "Deutsch", abgaben: () => deutsch }];
   const app = express(); app.use(express.json());
-  const r = registerProbenRueckgabeRoutes(app, { dataDir, teacherPassword: PW, kindZumCode, quellen });
+  const uhr = { zeit: null };   // null = echte Zeit; sonst stellt der Test die Uhr des Servers
+  const r = registerProbenRueckgabeRoutes(app, { dataDir, teacherPassword: PW, kindZumCode, quellen, jetzt: () => uhr.zeit || new Date() });
   registerProbenNotenRoutes(app, { teacherPassword: PW, kindZumCode, quellen, rueckgabe: (modul, a) => r.stand(modul, a) });
   const server = await new Promise((ok) => { const s = app.listen(0, () => ok(s)); });
   const post = (route, body) => fetch(`http://127.0.0.1:${server.address().port}/api/proben/${route}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
     .then(async (x) => ({ status: x.status, data: await x.json().catch(() => null) }));
-  try { await lauf({ post, nt, dataDir }); }
+  try { await lauf({ post, nt, deutsch, dataDir, uhr }); }
   finally { await new Promise((ok) => server.close(ok)); fs.rmSync(dataDir, { recursive: true, force: true }); }
 }
 
@@ -130,11 +132,46 @@ test("Zurückgeben: eine Rückgabe bleibt mindestens 3 Tage als Kachel auf der S
     };
     setze(vor(2.9), vor(2.9)); assert.deepEqual(await eintrag(), [false, true], "knapp 3 Tage: noch da");
     setze(vor(3.1), vor(3.1)); assert.deepEqual(await eintrag(), [false, false], "nach 3 Tagen: nur noch in der Liste");
-    setze(vor(10), vor(2)); assert.deepEqual(await eintrag(), [false, true], "spät geöffnet: ab dem Öffnen noch 3 Tage");
-    setze(vor(10), ""); assert.deepEqual(await eintrag(), [true, true], "ungeöffnet bleibt stehen, egal wie lange");
-    // in der Liste steht sie in jedem Fall weiter
-    setze(vor(30), vor(20));
+    setze(vor(6), vor(2)); assert.deepEqual(await eintrag(), [false, true], "spät geöffnet: ab dem Öffnen noch 3 Tage");
+    setze(vor(6), ""); assert.deepEqual(await eintrag(), [true, true], "ungeöffnet bleibt als Kachel stehen");
+    // in der Liste steht sie weiter, solange die 7 Tage nicht um sind
+    setze(vor(6), vor(5));
     assert.ok((await post("rueckgabe/meine", { code: "101" })).data.rueckgaben.some((x) => x.id === "a1"));
+    assert.equal((await post("rueckgabe/ansehen", { code: "101", modul: "nt7", id: "a1" })).status, 200);
+  });
+});
+
+test("Zurückgeben: 7 Tage nach der Rückgabe verschwindet die Probe beim Kind von selbst – Note und Vermerk bleiben bei der Lehrkraft", async () => {
+  await mitServer(async ({ post, deutsch, uhr }) => {
+    // Rückgabe am Montag, 5.10.2026, 10 Uhr (deutsche Zeit) – zu sehen bis einschließlich Montag, 12.10.
+    uhr.zeit = new Date("2026-10-05T08:00:00.000Z");
+    deutsch[0].freigegebenAm = "2026-10-05T08:00:00.000Z";
+    const frei = await post("rueckgabe/freigeben", { password: PW, eintraege: [{ modul: "nt7", id: "a1" }] });
+    assert.equal(frei.data.stand["nt7|a1"].sichtbarBis, "2026-10-12"); assert.equal(frei.data.tage, 7);
+    const meine = async () => (await post("rueckgabe/meine", { code: "101" })).data.rueckgaben.map((x) => x.modul + ":" + x.id).sort();
+    assert.equal((await post("rueckgabe/ansehen", { code: "101", modul: "nt7", id: "a1" })).data.korrektur.sichtbarBis, "2026-10-12");
+
+    uhr.zeit = new Date("2026-10-12T21:30:00.000Z");   // Montag, 23:30 Uhr – der letzte Tag
+    assert.deepEqual(await meine(), ["d7proben:d1", "nt7:a1"]);
+    assert.equal((await post("rueckgabe/meine", { code: "101" })).data.rueckgaben[0].sichtbarBis, "2026-10-12", "das Kind erfährt, bis wann");
+    assert.equal((await post("rueckgabe/ansehen", { code: "101", modul: "nt7", id: "a1" })).status, 200);
+    assert.ok(!(await post("noten", { password: PW, klasse: "7aM" })).data.noten.find((n) => n.id === "a1").vorbei);
+
+    uhr.zeit = new Date("2026-10-12T22:10:00.000Z");   // Dienstag, 0:10 Uhr – weg
+    assert.deepEqual(await meine(), [], "weder die Probe aus NT noch die aus Deutsch (eigener Ablauf) steht noch da");
+    const zu = await post("rueckgabe/ansehen", { code: "101", modul: "nt7", id: "a1" });
+    assert.equal(zu.status, 403); assert.equal(zu.data.vorbei, true); assert.match(zu.data.message, /nach 7 Tagen/);
+    // die Lehrkraft sieht weiter: zurückgegeben, geöffnet – und dass die Frist um ist; die Note bleibt
+    const noten = (await post("noten", { password: PW, klasse: "7aM" })).data.noten;
+    const a1 = noten.find((n) => n.id === "a1"), d1 = noten.find((n) => n.id === "d1");
+    assert.ok(a1.zurueck && a1.geoeffnet && a1.vorbei === true && a1.sichtbarBis === "2026-10-12" && a1.note === 3);
+    assert.ok(d1.zurueck && d1.vorbei === true);
+    assert.equal((await post("rueckgabe/stand", { password: PW })).data.stand["nt7|a1"].vorbei, true);
+
+    // noch einmal zurückgeben: neue Frist, für das Kind wieder neu
+    await post("rueckgabe/freigeben", { password: PW, eintraege: [{ modul: "nt7", id: "a1" }] });
+    const neu = (await post("rueckgabe/meine", { code: "101" })).data.rueckgaben;
+    assert.deepEqual(neu.map((x) => [x.id, x.neu, x.sichtbarBis]), [["a1", true, "2026-10-20"]]);
     assert.equal((await post("rueckgabe/ansehen", { code: "101", modul: "nt7", id: "a1" })).status, 200);
   });
 });
