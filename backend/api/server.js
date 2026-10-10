@@ -412,6 +412,7 @@ registerD7TexteRoutes(app, {
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e9/uebung/feedback", klasse: "Klasse 9", fach: "Englisch", sprache: "en", thema: "Englisch 9 (Australia, India, South Africa, New Zealand; Gesundheit und Dienstleistungen; Arbeitswelt und Bewerbung; Hören, Lesen, Schreiben, Sprachmittlung)" });
 // Englisch 9R: die großen Proben (eine je Unit, Variante A und Nachschreiber B) – dieselben Routen wie Deutsch 8
 // (KI-Vorkorrektur, Lehrkraft prüft, Rückgabe; Sitzung mit Zeit und Zwischenstand, Fehlermarkierungen), dazu Hörtexte.
+// Den Hörtext hören die Kinder nicht am eigenen Gerät: Die Lehrkraft spielt die Aufnahme in der Verwaltung für alle ab.
 const e9Proben = registerD7ProbenRoutes(app, {
   dataDir: DATA_DIR,
   prefix: "/api/e9/proben",
@@ -419,6 +420,8 @@ const e9Proben = registerD7ProbenRoutes(app, {
   tests: require("./e9-proben-daten"),
   stufe: 9,
   fach: { kurz: "e", name: "Englisch" },
+  hoerZentral: true,
+  hoerOrdner: path.join(__dirname, "e9-proben", "audio"),
   sitzung: true,
   marken: true,
   kindZumCode: probeKindZumCode,
@@ -609,7 +612,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-10-englisch9-kurztests",
+    version: "2026-10-10-englisch9-hoertext-zentral",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

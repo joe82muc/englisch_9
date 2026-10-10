@@ -5,6 +5,8 @@
 // Beim Schreiben einer Probe: E9_PROBEN_NUR=2 prüft nur p2.js.
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const fs = require("fs");
+const path = require("path");
 const ROH = require("./e9-proben-daten");
 const { vorbereiten } = require("./d7-proben");
 
@@ -27,6 +29,18 @@ test("Jede Fassung: R9, 60 Minuten, 60 Punkte, fünf Teile mit festen Punkten in
     assert.deepEqual(summe, TEILE, p.id + ": Punkte je Teil");
     assert.deepEqual([...new Set(p.items.map((i) => i.teil))], Object.keys(TEILE), p.id + ": Reihenfolge der Teile");
     assert.ok(p.hinweis && /twice|zweimal/.test(p.hinweis), p.id + ": Hinweis nennt die Zahl der Hördurchgänge");
+    assert.ok(/your teacher plays/.test(p.hinweis) && !/you can listen/.test(p.hinweis), p.id + ": Hinweis sagt, dass die Lehrkraft den Hörtext abspielt");
+  }
+});
+
+// Die Kinder haben keinen eigenen Spieler (server.js: hoerZentral) – ohne Aufnahme könnte die Lehrkraft nur vorlesen
+test("Zu jedem Hörtext liegt eine Aufnahme bereit (e9-proben/audio/<Probe>-<Text>.mp3, etwa eine Minute)", () => {
+  for (const p of alle()) for (const h of p.texte.filter((t) => t.typ === "hoertext")) {
+    const datei = path.join(__dirname, "e9-proben", "audio", p.id + "-" + h.id + ".mp3");
+    assert.ok(fs.existsSync(datei), p.id + ": Aufnahme " + path.basename(datei) + " fehlt");
+    const b = fs.readFileSync(datei);
+    assert.ok(b.length > 300000 && b.length < 1500000, p.id + ": Aufnahme hat " + b.length + " Bytes");
+    assert.ok(b[0] === 0xff && (b[1] & 0xe0) === 0xe0, p.id + ": Aufnahme beginnt nicht wie eine MP3-Datei");
   }
 });
 

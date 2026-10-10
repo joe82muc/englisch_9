@@ -69,6 +69,11 @@
  * Kennungen e9-p<nr>-r-<a|b>, Daten in e9-proben/). Dazu gehören:
  *   Hörtext    Text mit typ "hoertext": sprecher: [{ rolle, text }], stimmen: { Rolle: Stimme }, mal: 2 – die Seite spielt
  *              ihn höchstens „mal“-mal ab und zeigt ihn nicht an; der KI liegt er als Ausschnitt vor.
+ *              Mit opts.hoerZentral (Englisch 9) hören die Kinder ihn nicht am eigenen Gerät: Die Seite bekommt weder
+ *              Text noch Stimmen, die Lehrkraft spielt die Aufnahme für alle ab. Aufnahmen liegen als
+ *              <Kennung der Probe>-<Kennung des Textes>.mp3 in opts.hoerOrdner und gehen nur mit Passwort hinaus:
+ *              POST teacher/hoertext { testId } -> Mitschrift und ob es eine Aufnahme gibt
+ *              POST teacher/hoertext-datei { testId, text } -> die Aufnahme (audio/mpeg)
  *   tolerant   an felder-Aufgabe oder Feld: ein Tippfehler in einem längeren Wort zählt nicht (Notizen beim Hören)
  *   teil       an jeder Aufgabe: Prüfungsteil ("A Listening" …) – die Seite setzt davor eine Überschrift
  *   Die KI bekommt zusätzlich die Regeln für die Fremdsprache (Inhalt vor Form beim Hör- und Leseverstehen,
@@ -196,6 +201,8 @@ function registerD7ProbenRoutes(app, opts) {
   // Regeln für die KI (Antworten in der Fremdsprache, Rückmeldung auf Deutsch), Hörtexte. Ohne opts.fach: Deutsch.
   const FACH = opts.fach && /^[a-z]$/.test(opts.fach.kurz || "") && opts.fach.name ? opts.fach : null;
   const FREMD = Boolean(FACH && FACH.kurz === "e"), FNAME = (FACH ? FACH.name : "Deutsch") + " " + STUFE;
+  // Hörtexte zentral: Die Lehrkraft spielt die Aufnahme für alle ab, die Seite der Kinder bekommt weder Text noch Spieler
+  const HOER_ZENTRAL = opts.hoerZentral === true, HOER_DIR = opts.hoerOrdner || "";
   // Deutsch 8: Sitzung (Zeit und Zwischenstand auf dem Server) und Fehlermarkierungen
   const SITZUNG = opts.sitzung === true, MARKEN = opts.marken === true;
   const SITZ_FILE = path.join(DATA_DIR, String(opts.datei || "d7-proben.json").replace(/\.json$/, "") + "-sitzungen.json");
@@ -311,8 +318,21 @@ function registerD7ProbenRoutes(app, opts) {
   // Hörtext: Die Seite braucht die Sätze zum Abspielen (Sprachausgabe des Servers oder des Geräts); sie zeigt sie nicht an.
   const publicText = (t) => ({ id: t.id, typ: t.typ, titel: t.titel || "", art: t.art || "", quelle: t.quelle || "", zeilen: t.zeilen, kopf: t.kopf, reihen: t.reihen, werte: t.werte, einheit: t.einheit, hinweis: t.hinweis,
     ...(t.typ === "hoertext" ? { sprecher: t.sprecher.map((s) => ({ rolle: s.rolle, text: s.text })), stimmen: t.stimmen || undefined, mal: t.mal, sprache: t.sprache || "en" } : {}) });
+  // Zentral abgespielter Hörtext: Das Kind erfährt nur Titel, Sprecher und wie oft es ihn hört
+  const startText = (t) => (HOER_ZENTRAL && t.typ === "hoertext"
+    ? { id: t.id, typ: t.typ, titel: t.titel || "", art: t.art || "", quelle: t.quelle || "", mal: t.mal, sprache: t.sprache || "en", zentral: true, rollen: [...new Set(t.sprecher.map((s) => s.rolle))] }
+    : publicText(t));
+  // Aufnahme eines Hörtexts (MP3 im Ordner opts.hoerOrdner) – null, wenn es keine gibt
+  function hoerDatei(test, t) {
+    if (!HOER_DIR || !/^[a-z0-9-]+$/i.test(String(t.id))) return null;
+    const datei = path.join(HOER_DIR, test.id + "-" + t.id + ".mp3");
+    try { const s = fs.statSync(datei); return s.isFile() ? { datei, bytes: s.size } : null; } catch (_e) { return null; }
+  }
+  const hoerName = (test, t) => ("Test " + test.nr + " " + test.variante + " " + (t.titel || t.id)).replace(/[^A-Za-z0-9 -]+/g, "").trim().replace(/\s+/g, "-") + ".mp3";
+  const hoertexteVon = (test) => test.texte.filter((t) => t.typ === "hoertext");
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
     itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
+    ...(HOER_ZENTRAL && hoertexteVon(test).length ? { hoertexte: hoertexteVon(test).length } : {}),
     ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
   // Einfügen in der Probe: gesperrt (Vorgabe) oder erlaubt und protokolliert – stellt die Lehrkraft je Probe ein
   const einfuegenVon = (data, nr) => ((data.einfuegen || {})[nr] === "protokollieren" ? "protokollieren" : "sperren");
@@ -707,7 +727,7 @@ function registerD7ProbenRoutes(app, opts) {
     const schon = readData().submissions.find((row) => row.nr === test.nr && row.studentKey === student.key);
     if (schon) return res.status(409).json({ ok: false, error: "already_submitted", message: schon.testId === test.id ? "Diese Probe wurde mit diesem Code bereits abgegeben." : "Du hast Probe " + test.nr + " schon geschrieben (Variante " + schon.variante + ")." });
     const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr) },
-      texte: test.texte.map(publicText), items: test.items.map(publicItem) };
+      texte: test.texte.map(startText), items: test.items.map(publicItem) };
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
       const sd = sitzLesen(), { sitz, neu } = sitzHolen(sd, test, student, req.body.begonnenAm);
@@ -896,6 +916,26 @@ function registerD7ProbenRoutes(app, opts) {
     const test = tests[clean(req.body.testId)];
     if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
     res.json({ ok: true, test: { ...test, maxPoints: maxPoints(test), anteile: anteile(test) } });
+  });
+  // Hörtexte einer Probe für die Lehrkraft: Mitschrift und ob es eine Aufnahme gibt (Verwaltung: abspielen, herunterladen)
+  app.post(PREFIX + "/teacher/hoertext", (req, res) => {
+    if (!teacher(req, res)) return;
+    const test = tests[clean(req.body.testId)];
+    if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
+    res.json({ ok: true, zentral: HOER_ZENTRAL, test: { id: test.id, nr: test.nr, title: test.title, variante: test.variante },
+      hoertexte: hoertexteVon(test).map((t) => { const a = hoerDatei(test, t); return { id: t.id, titel: t.titel || "", art: t.art || "", mal: t.mal, sprecher: t.sprecher.map((s) => ({ rolle: s.rolle, text: s.text })), aufnahme: a ? { name: hoerName(test, t), bytes: a.bytes } : null }; }) });
+  });
+  // die Aufnahme selbst – nur mit Passwort, nie über den Dateiserver
+  app.post(PREFIX + "/teacher/hoertext-datei", (req, res) => {
+    if (!teacher(req, res)) return;
+    const test = tests[clean(req.body.testId)], t = test && hoertexteVon(test).find((x) => x.id === clean(req.body.text));
+    const a = t && hoerDatei(test, t);
+    if (!a) return res.status(404).json({ ok: false, error: "aufnahme_fehlt" });
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Content-Length", a.bytes);
+    res.setHeader("Content-Disposition", 'attachment; filename="' + hoerName(test, t) + '"');
+    res.setHeader("Cache-Control", "no-store");
+    fs.createReadStream(a.datei).pipe(res);
   });
   // So sieht das Kind die korrigierte Probe (Vorschau und Ausdruck für die Lehrkraft; zählt nicht als geöffnet)
   app.post(PREFIX + "/teacher/vorschau", (req, res) => {

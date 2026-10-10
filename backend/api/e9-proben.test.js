@@ -48,12 +48,12 @@ const ki = (merk = {}) => async (system, user) => {
   return JSON.stringify({ punkte: [2], korrektur: "Beides steht in deiner Antwort.", hinweis: "", kategorie: "" });
 };
 
-async function mitServer(lauf, merk) {
+async function mitServer(lauf, merk, extra) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "e9-proben-"));
   const app = express();
   app.use(express.json());
   const modul = registerD7ProbenRoutes(app, { dataDir, prefix: "/api/e9/proben", datei: "e9-proben.json", stufe: 9, fach: { kurz: "e", name: "Englisch" }, sitzung: true, marken: true,
-    teacherPassword: PW, kindZumCode, tests: PROBEN(), askAnthropic: ki(merk), kiPauseMs: 40, nachholenMs: 0 });
+    teacherPassword: PW, kindZumCode, tests: PROBEN(), askAnthropic: ki(merk), kiPauseMs: 40, nachholenMs: 0, ...(typeof extra === "function" ? extra(dataDir) : {}) });
   const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
   const post = (route, body) => fetch(base + "/api/e9/proben/" + route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
@@ -63,7 +63,7 @@ async function mitServer(lauf, merk) {
   const fertig = async (testId) => { for (let i = 0; i < 600; i++) { const r = (await lehrer("results", { testId })).data.submissions; if (r.length && r.every((x) => x.status !== "eingegangen")) return r; await warte(25); } throw new Error("KI wurde nicht fertig"); };
   try {
     assert.equal((await lehrer("unlock", { testId: "e9-p9-r-a", open: true })).status, 200);
-    await lauf({ post, get, lehrer, fertig, modul, dataDir });
+    await lauf({ post, get, lehrer, fertig, modul, dataDir, base });
   } finally {
     await new Promise((resolve) => server.close(resolve));
     fs.rmSync(dataDir, { recursive: true, force: true });
@@ -97,6 +97,42 @@ test("Start: Hörtext mit Sprechern, Stimmen und Zahl der Durchgänge, Prüfungs
     assert.equal((await post("start", { testId: "e9-p9-r-a", code: "911" })).data.error, "falscher_zug");
     assert.equal((await post("start", { testId: "e9-p9-r-a", code: "801" })).data.error, "falsche_stufe");
   });
+});
+
+test("Hörtext zentral: Das Kind bekommt weder Text noch Stimmen; Mitschrift und Aufnahme gehen nur mit Passwort hinaus", async () => {
+  const ton = Buffer.concat([Buffer.from([0xff, 0xf3, 0x84, 0xc4]), Buffer.alloc(600, 7)]);
+  await mitServer(async ({ post, get, lehrer, dataDir, base }) => {
+    // Seite des Kindes: nur Titel, Sprecher und Zahl der Durchgänge
+    const start = await post("start", { testId: "e9-p9-r-a", code: "901" });
+    assert.equal(start.status, 200);
+    const h = start.data.texte[0];
+    assert.equal(h.typ, "hoertext"); assert.equal(h.zentral, true); assert.equal(h.mal, 2); assert.deepEqual(h.rollen, ["Speaker", "Girl"]);
+    assert.equal(h.sprecher, undefined); assert.equal(h.stimmen, undefined);
+    assert.ok(!JSON.stringify(start.data).includes("platform four"), "kein Satz des Hörtexts geht an das Kind");
+    assert.ok(start.data.texte[1].zeilen.length, "der Lesetext kommt wie bisher");
+    // die Liste nennt nur, dass es einen Hörtext gibt
+    const zeile = (await get("list")).tests.find((t) => t.id === "e9-p9-r-a");
+    assert.equal(zeile.hoertexte, 1); assert.ok(!JSON.stringify(zeile).includes("station"));
+    // Lehrkraft: Mitschrift – ohne Passwort nichts
+    assert.equal((await post("teacher/hoertext", { testId: "e9-p9-r-a" })).status, 401);
+    assert.equal((await post("teacher/hoertext-datei", { testId: "e9-p9-r-a", text: "h1" })).status, 401);
+    assert.equal((await lehrer("hoertext", { testId: "e9-p0-r-a" })).status, 404);
+    const ohne = await lehrer("hoertext", { testId: "e9-p9-r-a" });
+    assert.equal(ohne.status, 200); assert.equal(ohne.data.zentral, true);
+    assert.equal(ohne.data.hoertexte[0].sprecher[0].text, "The train to the coast leaves at half past nine. Please go to platform four.");
+    assert.equal(ohne.data.hoertexte[0].aufnahme, null, "noch keine Aufnahme im Ordner");
+    assert.equal((await lehrer("hoertext-datei", { testId: "e9-p9-r-a", text: "h1" })).status, 404);
+    // mit Aufnahme im Ordner
+    fs.mkdirSync(path.join(dataDir, "audio"), { recursive: true });
+    fs.writeFileSync(path.join(dataDir, "audio", "e9-p9-r-a-h1.mp3"), ton);
+    const mit = (await lehrer("hoertext", { testId: "e9-p9-r-a" })).data.hoertexte[0];
+    assert.deepEqual(mit.aufnahme, { name: "Test-9-A-At-the-station.mp3", bytes: ton.length });
+    const r = await fetch(base + "/api/e9/proben/teacher/hoertext-datei", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: PW, testId: "e9-p9-r-a", text: "h1" }) });
+    assert.equal(r.status, 200); assert.equal(r.headers.get("content-type"), "audio/mpeg"); assert.equal(r.headers.get("cache-control"), "no-store");
+    assert.match(r.headers.get("content-disposition"), /attachment; filename="Test-9-A-At-the-station\.mp3"/);
+    assert.deepEqual(Buffer.from(await r.arrayBuffer()), ton);
+    assert.equal((await lehrer("hoertext-datei", { testId: "e9-p9-r-a", text: "../e9-p9-r-a-h1" })).status, 404, "nur Kennungen von Hörtexten der Probe");
+  }, undefined, (dataDir) => ({ hoerZentral: true, hoerOrdner: path.join(dataDir, "audio") }));
 });
 
 test("Abgabe: tolerante Notizfelder, KI mit den Regeln für die Fremdsprache und dem Hörtext, Rückgabe nennt „Englisch 9“", async () => {

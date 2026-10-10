@@ -20,7 +20,7 @@
  */
 const { c, m, o, f, feld, z, a, kr, s, text, hoertext, teil, probe } = require("./bau");
 
-const HINWEIS = "Work on your own. Part A: you can listen to the recording twice – read the tasks first. Read every task carefully. Arbeite allein. Den Hörtext kannst du zweimal anhören. Nach der Abgabe kannst du nichts mehr ändern.";
+const HINWEIS = "Work on your own. Part A: your teacher plays the recording twice – read the tasks first. Read every task carefully. Arbeite allein. Den Hörtext spielt deine Lehrkraft zweimal für alle ab. Nach der Abgabe kannst du nichts mehr ändern.";
 
 /* ------------------------------ Variante A ------------------------------ */
 const A_HOEREN = hoertext("h1", "An interview with a potter", "Listening: an interview for the school newspaper", [
