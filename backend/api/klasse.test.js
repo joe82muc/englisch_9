@@ -105,6 +105,29 @@ test("Hausaufgaben: löschen", async () => {
   assert.equal((await post("/api/klasse/heft", { code: "456" })).data.eintraege.length, 0);
 });
 
+test("Modul als Hausaufgabe: Die Kennung geht mit ins Heft des Kindes, bleibt beim Ändern und fällt mit dem Link weg", async () => {
+  const speichern = "/api/klasse/lehrer/heft/speichern", link = "https://joe82muc.github.io/grumi/9R/Englisch/u1_dialogue.html";
+  const basis = { password: PW, klasse: "9d", fach: "Englisch", text: "„Feeling ill“ in GRUMI bearbeiten", faellig: "2026-10-06", typ: "aufgabe", link };
+  const neu = await post(speichern, { ...basis, modul: "e9-u1-dialogue" });
+  assert.equal(neu.status, 200);
+  assert.equal(neu.data.eintrag.modul, "e9-u1-dialogue");
+  const kind = (await post("/api/klasse/heft", { code: "456" })).data.eintraege;
+  assert.deepEqual(kind.map((e) => e.modul), ["e9-u1-dialogue"]);
+  assert.deepEqual(Object.keys(kind[0]).sort(), ["fach", "faellig", "id", "link", "modul", "text", "typ"]);
+  // im Reiter „Hausaufgabenheft“ geändert (dort ohne modul): Die Kennung bleibt, solange der Link derselbe ist
+  const id = neu.data.eintrag.id;
+  const anders = await post(speichern, { ...basis, id, text: "Dialogue 1 fertig machen", faellig: "2026-10-07" });
+  assert.equal(anders.data.eintrag.modul, "e9-u1-dialogue");
+  assert.equal(anders.data.eintrag.text, "Dialogue 1 fertig machen");
+  // anderer Link: kein Modul mehr; eine Probe oder ein Termin ist nie ein Modul; ungültige Kennungen fallen weg
+  assert.equal((await post(speichern, { ...basis, id, link: "https://example.org/blatt.pdf" })).data.eintrag.modul, undefined);
+  assert.equal((await post(speichern, { ...basis, modul: "e9-u1-dialogue", typ: "termin" })).data.eintrag.modul, undefined);
+  assert.equal((await post(speichern, { ...basis, modul: "../geheim x" })).data.eintrag.modul, undefined);
+  assert.equal((await post(speichern, { ...basis, modul: "e9-u1-dialogue", link: "" })).data.eintrag.modul, undefined);
+  for (const e of (await post("/api/klasse/lehrer/heft/liste", { password: PW, klasse: "9d" })).data.eintraege) await post("/api/klasse/lehrer/heft/loeschen", { password: PW, id: e.id });
+  assert.equal((await post("/api/klasse/heft", { code: "456" })).data.eintraege.length, 0);
+});
+
 test("Klassenrat: angenommene Nachricht landet anonym im Briefkasten der Klasse", async () => {
   kiModus = "ok";
   const r = await post("/api/klasse/rat/senden", { code: "123", kategorie: "Pause", text: "In der Pause ist es im Gang oft sehr laut." });

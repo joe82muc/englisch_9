@@ -32,7 +32,9 @@
  *   POST /api/klasse/rat/senden      { code, kategorie, text, zeigen } -> { ok, angenommen, privat?, hinweis?, vorschlag?, hilfe? }
  * Lehrkraft (immer mit password):
  *   POST /api/klasse/lehrer/heft/liste      { klasse }                               -> { ok, heute, eintraege[] }
- *   POST /api/klasse/lehrer/heft/speichern  { klasse, fach, text, faellig, typ, link, id? } -> { ok, eintrag }
+ *   POST /api/klasse/lehrer/heft/speichern  { klasse, fach, text, faellig, typ, link, id?, modul? } -> { ok, eintrag }
+ *        (modul: Kennung eines Lernmoduls im Lernstand – „Modul als Hausaufgabe“ aus der Freischalt-Liste der Verwaltung;
+ *         das Heft des Kindes zeigt solche Einträge im Reiter „Module“ mit „erledigt“ aus dem Lernstand)
  *   POST /api/klasse/lehrer/heft/loeschen   { id }                                   -> { ok }
  *   POST /api/klasse/lehrer/rat/liste       { klasse }                               -> { ok, eintraege[] }
  *   POST /api/klasse/lehrer/rat/status      { id, status }                           -> { ok }
@@ -46,6 +48,8 @@ const path = require("path");
 const { klasseNorm } = require("./nt9-fortschritt");
 
 const TYPEN = ["aufgabe", "probe", "termin"];
+// Kennung eines Lernmoduls im Lernstand (z. B. „e9-u1-dialogue“, „nt7-luft-01“; ein Strich am Ende = alle, die so beginnen)
+const MODUL_KENNUNG = /^[a-z0-9][a-z0-9_-]{1,59}$/i;
 // Eigene Einträge der Kinder im Hausaufgabenheft: so viele Tage nach dem Schreiben werden sie gelöscht; höchstens so viele je Kind
 const EIGEN_TAGE = 14, EIGEN_MAX = 40;
 const KATEGORIEN = ["Klassenklima", "Unterricht", "Pause", "Organisation", "Wunsch / Idee", "Sonstiges"];
@@ -198,7 +202,8 @@ function registerKlasseRoutes(app, options = {}) {
   };
 
   /* ---------- Hausaufgabenheft ---------- */
-  const fuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: e.link || "", ...(e.quelle === "kalender" ? { quelle: "kalender" } : {}) });
+  // modul: Der Eintrag ist ein Lernmodul als Hausaufgabe (Kennung im Lernstand) – das Heft zeigt dann, ob es erledigt ist
+  const fuerKind = (e) => ({ id: e.id, fach: e.fach, text: e.text, faellig: e.faellig, typ: e.typ, link: e.link || "", ...(e.modul ? { modul: e.modul } : {}), ...(e.quelle === "kalender" ? { quelle: "kalender" } : {}) });
   // Kalender bleibt die Quelle: Verschieben, Klassenwechsel und Loeschen gelten sofort auch im Heft.
   async function gemeinsameEintraege(klasse) {
     const eintraege = heftDaten().eintraege.filter((e) => e.klasse === klasse);
@@ -302,7 +307,12 @@ function registerKlasseRoutes(app, options = {}) {
         eintrag = { id: neueId("h"), am: jetzt().toISOString() };
         daten.eintraege.push(eintrag);
       }
-      Object.assign(eintrag, { klasse, fach, text: inhalt, faellig, typ, link: linkOk(b.link) });
+      // Modul als Hausaufgabe (Verwaltung → „Ins Heft“): Kennung des Moduls im Lernstand. Wird der Eintrag später im
+      // Reiter „Hausaufgabenheft“ geändert (dort ohne modul), bleibt sie, solange der Link derselbe ist.
+      const link = linkOk(b.link);
+      const modul = b.modul !== undefined ? (MODUL_KENNUNG.test(String(b.modul)) ? String(b.modul) : "") : (eintrag.modul && eintrag.link === link ? eintrag.modul : "");
+      Object.assign(eintrag, { klasse, fach, text: inhalt, faellig, typ, link });
+      if (modul && link && typ === "aufgabe") eintrag.modul = modul; else delete eintrag.modul;
       schreiben(HEFT, daten);
       return res.json({ ok: true, eintrag });
     } catch (error) { return fehler(res, error); }
