@@ -24,8 +24,8 @@ const path = require("path");
 const PROBEN = {}, FEHLER = [];
 // Nur beim Schreiben einer Probe: E9_PROBEN_NUR=2 lädt allein p2.js (die Tests prüfen dann nur diese Probe)
 const NUR = Number(process.env.E9_PROBEN_NUR) || 0;
-for (let nr = 1; nr <= 4; nr++) {
-  const datei = path.join(__dirname, "e9-proben", "p" + nr + ".js");
+for (const [nr, name] of [1, 2, 3, 4].flatMap((n) => [[n, "p" + n], [n, "m" + n]])) {   // p = Regelklasse, m = Mittlere-Reife-Klasse (9M)
+  const datei = path.join(__dirname, "e9-proben", name + ".js");
   if (!fs.existsSync(datei) || (NUR && NUR !== nr)) continue;   // noch nicht geschrieben
   try {
     const fassungen = Object.values(require(datei));
@@ -37,9 +37,9 @@ for (let nr = 1; nr <= 4; nr++) {
       PROBEN[probe.id] = probe;
     }
   } catch (error) {
-    FEHLER.push("p" + nr + ".js: " + (error && error.message));
+    FEHLER.push(name + ".js: " + (error && error.message));
     console.error("Englisch 9: Probe " + nr + " wird ausgelassen –", error && error.message);
-    Object.keys(PROBEN).forEach((id) => { if (PROBEN[id].nr === nr) delete PROBEN[id]; });
+    Object.keys(PROBEN).forEach((id) => { if (PROBEN[id].nr === nr && PROBEN[id].zug === (name[0] === "m" ? "M" : "R")) delete PROBEN[id]; });
   }
 }
 

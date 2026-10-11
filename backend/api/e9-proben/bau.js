@@ -28,4 +28,11 @@ function probe(nr, variante, inhalt) {
   return { id, nr, zug: "R", variante, ...inhalt };
 }
 
-module.exports = { ...B, hoertext, teil, probe };
+// Englisch 9M (seit 11.10.2026): dieselben Proben-Bausteine, eigene Fassungen für die Mittlere-Reife-Klasse in
+// m1.js bis m4.js – Kennung e9-p<nr>-m-<a|b>, Zug M (der Server lässt nur Kinder aus M-Klassen hinein).
+function probeM(nr, variante, inhalt) {
+  const id = "e9-p" + nr + "-m-" + variante.toLowerCase();
+  return { id, nr, zug: "M", variante, ...inhalt };
+}
+
+module.exports = { ...B, hoertext, teil, probe, probeM };
