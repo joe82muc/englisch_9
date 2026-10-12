@@ -7,7 +7,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const express = require("express");
-const { registerD7TexteRoutes, MAX_FASSUNGEN } = require("./d7-texte");
+const { registerD7TexteRoutes, MAX_FASSUNGEN, vergleiche, ausTeilen, korrekturLesen } = require("./d7-texte");
 
 const PW = "Nur-ein-Test-4711";
 const kindZumCode = async (code) => ({ 101: { code: "101", klasse: "7aM", zug: "7M" }, 102: { code: "102", klasse: "7b", zug: "7R", lrs: true }, "000": { code: "000", klasse: "Lehrkraft", lehrer: true } })[code] || null;
@@ -104,4 +104,90 @@ test("Modul neu begonnen: texte/meine nennt den Zeitpunkt, die Fassungen bleiben
     const l = (await post("lehrer/texte", { password: PW, klasse: "7aM" })).data;
     assert.equal(l.eintraege[0].fassungen.length, 1, "die Lehrkraft sieht sie weiter");
   }, { resetZeit: async (code, modul) => { gefragt.push([code, modul]); return reset; } });
+});
+
+/* ---------- KI-Korrektur (Baustein „korrigieren“) ---------- */
+const KIND = "Hey Leute, ich find das voll blöd weil wir garnicht schlaffen können.";
+const BESSER = "Sehr geehrte Redaktion, ich finde das nicht gut, weil wir gar nicht schlafen können.";
+const kurz = (teile) => teile.map((x) => (x.t !== undefined ? x.t : x.art + ":" + x.alt + ">" + x.neu));
+
+test("Vergleich: Rechtschreibung wird ausgebessert, Falsches steht alt und neu nebeneinander", () => {
+  const teile = vergleiche(KIND, BESSER);
+  assert.deepEqual(kurz(teile), ["falsch:Hey Leute,>Sehr geehrte Redaktion,", "ich", "rs:find>finde", "das", "falsch:voll blöd>nicht gut,", "weil wir", "rs:garnicht>gar nicht", "rs:schlaffen>schlafen", "können."]);
+  assert.equal(ausTeilen(teile, true), BESSER, "alles ausgebessert = die Fassung der KI");
+  assert.equal(ausTeilen(teile, false), "Hey Leute, ich finde das voll blöd weil wir gar nicht schlafen können.", "nur die Rechtschreibung: das Falsche steht noch wie beim Kind");
+  // unverändert, nur Großschreibung und Satzzeichen, Zeilenwechsel bleiben
+  assert.deepEqual(kurz(vergleiche("Ich bin dafür.", "Ich bin dafür.")), ["Ich bin dafür."]);
+  const brief = vergleiche("liebe redaktion\n\nich bin dafür das der platz offen bleibt", "Liebe Redaktion,\n\nich bin dafür, dass der Platz offen bleibt.");
+  assert.deepEqual(kurz(brief), ["rs:liebe>Liebe", "rs:redaktion>Redaktion,", "ich bin", "rs:dafür>dafür,", "rs:das>dass", "der", "rs:platz>Platz", "offen", "rs:bleibt>bleibt."]);
+  assert.equal(ausTeilen(brief, true), "Liebe Redaktion,\n\nich bin dafür, dass der Platz offen bleibt.");
+  // ein fehlendes Wort wird eingefügt, ein überflüssiges gestrichen
+  assert.deepEqual(kurz(vergleiche("Ich hoffe Sie ändern das das.", "Ich hoffe, dass Sie das ändern.")).filter((x) => /falsch/.test(x)).length > 0, true);
+});
+
+test("Vergleich: Die KI schreibt nichts dazu – eine längere Ergänzung wird verworfen", () => {
+  const alt = "Der Platz soll offen bleiben, weil wir dort spielen.";
+  const teile = vergleiche(alt, alt + " Zum Beispiel haben wir letzte Woche dort ein Turnier gespielt.");
+  assert.deepEqual(kurz(teile), [alt]);
+  assert.equal(ausTeilen(teile, true), alt);
+  // eine kurze Ersetzung mit mehr Wörtern bleibt (Anrede)
+  assert.deepEqual(kurz(vergleiche("Hi, ich bin dafür.", "Sehr geehrte Redaktion, ich bin dafür.")), ["falsch:Hi,>Sehr geehrte Redaktion,", "ich bin dafür."]);
+});
+
+test("Antwort der KI lesen: Bausteine, Lob, Hinweis, Text", () => {
+  const p = korrekturLesen("BAUSTEINE: ja, Ja, nein\nLOB: Deine Behauptung ist klar.\nHINWEIS: Dir fehlt noch ein Beispiel.\nTEXT:\nIch bin dafür.\n\nViele Grüße", 3);
+  assert.deepEqual(p, { bausteine: [true, true, false], lob: "Deine Behauptung ist klar.", hinweis: "Dir fehlt noch ein Beispiel.", text: "Ich bin dafür.\n\nViele Grüße" });
+  assert.deepEqual(korrekturLesen("BAUSTEINE: ja\nLOB: Gut.\nHINWEIS:\nTEXT: Ich bin dafür.", 2).bausteine, [true, false], "fehlt eine Angabe, gilt der Baustein nicht als da");
+  assert.equal(korrekturLesen("BAUSTEINE: ja\nLOB: Gut.", 1), null, "ohne TEXT keine Korrektur");
+  assert.equal(korrekturLesen("", 1), null);
+});
+
+const kor = (extra) => ({ modul: "arg-08", aufgabe: "arg1", titel: "Mein erstes Argument", auftrag: "Schreibe ein Argument mit Behauptung, Begründung und Beispiel.",
+  bausteine: ["Behauptung: Was meinst du?", "Begründung: Warum?", "Beispiel: ein einzelner Fall"], text: KIND, ...extra });
+const kiKor = (merke, antwort) => async (system, user, maxTokens, optionen) => {
+  if (merke) merke.push({ system, user: JSON.parse(user), maxTokens, optionen });
+  return antwort || "BAUSTEINE: ja, ja, nein\nLOB: Deine Meinung ist klar.\nHINWEIS: Ein Beispiel fehlt noch.\nTEXT:\n" + BESSER;
+};
+
+test("Korrektur: Teile, beide Fassungen, Bausteine; mit Code bleibt der Text des Kindes für die Lehrkraft", async () => {
+  const gesehen = [];
+  await mitServer(kiKor(gesehen), async ({ post }) => {
+    const r = (await post("schreiben/korrektur", kor({ code: "101", zug: "M" }))).data;
+    assert.equal(r.quelle, "ki"); assert.equal(r.rs, 3); assert.equal(r.falsch, 2);
+    assert.equal(r.korrigiert, BESSER);
+    assert.equal(r.bereinigt, "Hey Leute, ich finde das voll blöd weil wir gar nicht schlafen können.");
+    assert.deepEqual(r.bausteine, [true, true, false]); assert.equal(r.vollstaendig, false);
+    assert.equal(r.hinweis, "Ein Beispiel fehlt noch."); assert.equal(r.gespeichert, true); assert.equal(r.fassung, 1);
+    // Auftrag an die KI: großzügig bei den Bausteinen, nichts dazuschreiben, ohne den allgemeinen Milde-Zusatz
+    assert.equal(gesehen[0].user.text, KIND); assert.deepEqual(gesehen[0].user.bausteine.length, 3);
+    assert.ok(/Im Zweifel „ja“/.test(gesehen[0].system) && /Du schreibst nichts dazu/.test(gesehen[0].system) && /7\. Klasse/.test(gesehen[0].system));
+    assert.deepEqual(gesehen[0].optionen, { milde: false });
+    // für die Lehrkraft: Fassung 1 ist der Text, wie das Kind ihn geschrieben hat
+    const liste = (await post("lehrer/texte", { password: PW, klasse: "7aM" })).data.eintraege;
+    assert.equal(liste[0].fassungen[0].text, KIND);
+    assert.equal(liste[0].fassungen[0].feedback.naechstes, "Ein Beispiel fehlt noch.");
+    assert.deepEqual(liste[0].fassungen[0].feedback.korrektur.bausteine, [{ text: "Behauptung", ok: true }, { text: "Begründung", ok: true }, { text: "Beispiel", ok: false }]);
+    assert.equal(liste[0].fassungen[0].feedback.korrektur.korrigiert, BESSER);
+    // zu wenig, unbekannter Auftrag, ohne Code
+    assert.equal((await post("schreiben/korrektur", kor({ text: "Hallo" }))).status, 400);
+    assert.equal((await post("schreiben/korrektur", kor({ modul: "x" }))).status, 400);
+    assert.equal((await post("schreiben/korrektur", kor())).data.gespeichert, false);
+  });
+});
+
+test("Korrektur: alle Bausteine da -> vollständig; ohne KI bleibt der Text, wie er ist", async () => {
+  await mitServer(kiKor(null, "BAUSTEINE: ja, ja, ja\nLOB: Alles da.\nHINWEIS:\nTEXT:\n" + KIND), async ({ post }) => {
+    const r = (await post("schreiben/korrektur", kor())).data;
+    assert.equal(r.vollstaendig, true); assert.equal(r.rs + r.falsch, 0); assert.equal(r.hinweis, "");
+    assert.deepEqual(r.teile, [{ t: KIND, ws: "" }]);
+  });
+  await mitServer(async () => { throw new Error("aus"); }, async ({ post }) => {
+    const r = (await post("schreiben/korrektur", kor({ code: "101" }))).data;
+    assert.equal(r.quelle, "lokal"); assert.deepEqual(r.bausteine, [null, null, null]); assert.equal(r.vollstaendig, false);
+    assert.equal(r.korrigiert, KIND); assert.equal(r.gespeichert, true);
+  });
+  // unbrauchbare Antwort der KI (kein TEXT): wie ohne KI
+  await mitServer(kiKor(null, "Das kann ich nicht."), async ({ post }) => {
+    assert.equal((await post("schreiben/korrektur", kor())).data.quelle, "lokal");
+  });
 });
