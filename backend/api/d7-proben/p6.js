@@ -3,11 +3,11 @@
 /**
  * Deutsch 7 · Probe 6: Grammatik I (Wortarten mit Relativ- und Demonstrativpronomen, M7 zusätzlich Reflexivpronomen ·
  * Zeitformen bestimmen und bilden bis Futur II · Aktiv und Passiv erkennen und umformen). LehrplanPLUS D7 4.2.
- * R7: 30 Punkte (Passiv im Präsens und Präteritum) · M7: 33 Punkte (Passiv auch im Perfekt und Futur I) · 40 Minuten.
+ * R7: 30 Punkte (Passiv im Präsens und Präteritum) · M7: 31 Punkte (Passiv auch im Perfekt und Futur I) · 40 Minuten.
  * Keine Lesetexte. Jede Fassung hat ihr eigenes Wortfeld, aus dem alle Beispielsätze stammen:
  * R7 A Sportfest · R7 B Wochenmarkt · M7 Fahrradwerkstatt. Kein Satz steht in einem Lernmodul.
  * M7 gibt es seit 12.10.2026 nur in einer Fassung (Wunsch der Lehrkraft): Variante B (Wortfeld Tierheim) ist entfernt,
- * Aufgabe 10 ist zum Ankreuzen (2 Punkte), Aufgabe 11 verlangt keine Fachbegriffe mehr (Partizip II, Infinitiv).
+ * Aufgabe 10 ist zum Ankreuzen (1 Punkt), Aufgabe 11 (2 Punkte) verlangt keine Fachbegriffe mehr (Partizip II, Infinitiv).
  * Bleibt auf dem Server (Lösungen). Bausteine: bau.js.
  */
 const { c, m, f, feld, a, kr, probe } = require("./bau");
@@ -254,13 +254,12 @@ const M_A = [
     "Wichtig ist, was gemacht wird – nicht, wer es macht.",
     "Wichtig ist, wer die Arbeit macht – nicht, was gemacht wird.",
     "Das Passiv zeigt, dass die Arbeit erst später gemacht wird.",
-    "Das Passiv zeigt, dass die Arbeit schon erledigt ist."], 0, { points: 2, hinweis: H_ANLEITUNG }),
+    "Das Passiv zeigt, dass die Arbeit schon erledigt ist."], 0, { hinweis: H_ANLEITUNG }),
   a("Vergleiche: „Die Klingel wird angebracht.“ – „Die Klingel wird läuten.“" + ZWEIMAL_WIRD, [
     kr("Passivsatz richtig bestimmt", 1, "Der erste Satz („Die Klingel wird angebracht.“) steht im Passiv."),
-    kr("Passivsatz begründet", 1, "In eigenen Worten: Mit der Klingel wird etwas gemacht (jemand bringt sie an), sie tut selbst nichts. Fachbegriffe sind nicht verlangt; wer richtig mit ihnen erklärt („wird“ + Partizip II), bekommt den Punkt auch."),
-    kr("den anderen Satz erklärt", 1, "In eigenen Worten: Im zweiten Satz tut die Klingel selbst etwas (sie läutet) – oder: Der Satz sagt, was später geschehen wird. Fachbegriffe sind nicht verlangt; wer richtig mit ihnen erklärt („wird“ + Infinitiv, Futur I), bekommt den Punkt auch.")
+    kr("in eigenen Worten begründet", 1, "Eine passende Begründung genügt: Mit der Klingel wird etwas gemacht (jemand bringt sie an), sie tut selbst nichts – oder: Im zweiten Satz tut die Klingel selbst etwas (sie läutet) bzw. der Satz sagt, was später geschehen wird. Die Begründung muss zum richtigen Satz passen. Fachbegriffe sind nicht verlangt; wer richtig mit ihnen erklärt („wird“ + Partizip II, „wird“ + Infinitiv), bekommt den Punkt auch.")
   ], "Der erste Satz steht im Passiv: Mit der Klingel wird etwas gemacht, jemand bringt sie an. Im zweiten Satz tut die Klingel selbst etwas – sie läutet.",
-  ["erste|ersten|erster|1. satz|satz 1", "gemacht|geschieht|passiert|jemand|nichts selbst|nicht selbst|nichts selber|nicht selber", "selbst|selber|zukunft|später|futur"], { hilfe: HILFE_ZWEIMAL })
+  ["erste|ersten|erster|1. satz|satz 1", "gemacht|geschieht|passiert|jemand|selbst|selber|zukunft|später|futur"], { hilfe: HILFE_ZWEIMAL })
 ];
 
 const ALLE = { kurz: "Grammatik I", scope: "Wortarten und Pronomen · Zeitformen · Aktiv und Passiv", minutes: 40, texte: [] };

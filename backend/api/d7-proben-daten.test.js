@@ -83,6 +83,8 @@ for (const nr of NUMMERN) {
       assert.ok(max >= 24 && max <= 44, `${p.id}: ${max} Punkte (erwartet 24 bis 44)`);
       const offen = a.offen / max;
       if (TEXTPROBEN.has(nr)) assert.ok(offen >= 0.5 && offen <= 0.85, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (erwartet 50 bis 85 %)`);
+      // Probe 6 für M7 hat auf Wunsch der Lehrkraft nur eine kurze offene Aufgabe (2 von 31 Punkten)
+      else if (!gibtEs(nr, zug, "b")) assert.ok(offen >= 0.05 && offen <= 0.45, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (5 bis 45 %)`);
       else assert.ok(offen >= 0.08 && offen <= 0.45, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (Grammatik/Rechtschreibung: 8 bis 45 %)`);
       if (LANGTEXT.has(nr)) {
         const n = woerter(p), [von, bis] = zug === "r" ? [280, 470] : [390, 640];
