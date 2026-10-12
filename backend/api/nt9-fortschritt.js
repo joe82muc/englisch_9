@@ -54,11 +54,12 @@ const fs = require("fs");
 const path = require("path");
 const { beimBeenden } = require("./beenden");
 
-const FAECHER = { nt: "Natur und Technik", d: "Deutsch", e: "Englisch", i: "Informatik" };
+const FAECHER = { nt: "Natur und Technik", gpg: "Geschichte/Politik/Geographie", d: "Deutsch", e: "Englisch", i: "Informatik" };
 // Kurse je Fach und Stufe; zuege = Züge, für die es Inhalte gibt
 const KURSE = [
   { id: "nt7", fach: "nt", stufe: 7, zuege: ["M", "R"], titel: "NT 7", module: [] },
   { id: "nt8", fach: "nt", stufe: 8, zuege: ["M", "R"], titel: "NT 8", module: [] },
+  { id: "gpg8", fach: "gpg", stufe: 8, zuege: ["M", "R"], titel: "GPG 8", module: [] },
   { id: "nt9", fach: "nt", stufe: 9, zuege: ["M", "R"], titel: "NT 9 · Organische Rohstoffe", module: [
     { id: "m01", nr: 1, kurz: "Modul 1", titel: "Kohlenstoff, Holz und Raps" },
     { id: "m02", nr: 2, kurz: "Modul 2", titel: "Biodiesel, Stärke und Nachhaltigkeit" },
@@ -88,7 +89,7 @@ const MODULE = [];
 KURSE.forEach((k) => k.module.forEach((m) => MODULE.push({ ...m, kurs: k.id })));
 const MODUL_IDS = MODULE.map((m) => m.id);
 // Selbst angemeldete Übungsseiten: <fach><stufe>-…
-const DYN_MUSTER = /^(nt|d|e|i)([5-9]|10)-[a-z0-9-]{2,60}$/;
+const DYN_MUSTER = /^(nt|gpg|d|e|i)([5-9]|10)-[a-z0-9-]{2,60}$/;
 const MAX_DYN = 1500;
 const MAX_CODES = 900; // 3-stellige Codes: 100 bis 999
 const MAX_AUFGABEN = 300;

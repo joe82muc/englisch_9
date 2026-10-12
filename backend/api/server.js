@@ -277,6 +277,8 @@ const nt8Proben = registerNt7Routes(app, {
 });
 // NT 8: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule und der Probe-Vorbereitung (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt8/uebung/feedback", klasse: "Klasse 8", thema: "Natur und Technik 8 (Magnetismus, Induktion, Energie, Mensch und Gesundheit, Atome und Ionen, chemische Reaktionen, Säuren, Laugen und Salze)" });
+// GPG 8: KI-Rückmeldung zu offenen Aufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/gpg8/uebung/feedback", klasse: "Klasse 8", fach: "Geschichte/Politik/Geographie", thema: "Geschichte/Politik/Geographie 8 (Nordamerika, USA und Energie, Weimarer Republik, NS-Diktatur und Zweiter Weltkrieg, Widerstand und Nachkriegszeit, Grundrechte und Gesetzgebung, politische Teilhabe und Sozialstaat, Landwirtschaft und Nachhaltigkeit)" });
 
 // --- NT 7: Themen und Module je Klasse freischalten (Übersicht 7M/NT, Verwaltung „Natur und Technik“) ---
 const { registerNt7FreigabeRoutes } = require("./nt7-freigabe");
@@ -309,6 +311,16 @@ registerNt7FreigabeRoutes(app, {
   prefix: "/api/nt8",
   datei: "nt8-freigabe.json",
   name: "NT-8-Freigabe",
+  stufe: 8,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+// --- GPG 8: Themenbereiche und Module je Klasse freischalten (Übersichten 8M/GPG und 8R/GPG, Verwaltung „GPG“) ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/gpg8",
+  datei: "gpg8-freigabe.json",
+  name: "GPG-8-Freigabe",
   stufe: 8,
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
@@ -612,7 +624,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-11-englisch-9m",
+    version: "2026-10-12-gpg8",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
