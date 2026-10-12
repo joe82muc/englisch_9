@@ -52,7 +52,7 @@ async function starte(optionen) {
     return { status: r.status, body: await r.json() };
   };
   const get = async (route) => { const r = await fetch(base + route); return { status: r.status, body: await r.json() }; };
-  return { server, post, get, store: out.store, flush: out.flush, kindZumCode: out.kindZumCode };
+  return { server, post, get, store: out.store, flush: out.flush, kindZumCode: out.kindZumCode, resetZeit: out.resetZeit };
 }
 const P = "/api/nt9/fortschritt";
 
@@ -478,7 +478,7 @@ test("Fehlversuche je Aufgabe und Zurücksetzen eines Moduls (NT 7)", async () =
     assert.equal(r.body.anzahl, 1);
     l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
     kind = l.body.schueler.find((s) => s.code === a);
-    assert.deepEqual(kind.module[modul], { g: { "mc1-0": 2500 }, t: 10, z: 2500, v: { "mc1-0": 1 }, r: 2000, rn: 1, rw: "k" });
+    assert.deepEqual(kind.module[modul], { g: { "mc1-0": 2500 }, t: 10, z: 2500, v: { "mc1-0": 1 }, r: 2000, rn: 1, rw: "k", rv: [3, 10] });
 
     // Lehrkraft: ein Kind, dann die ganze Klasse (nur Kinder mit Stand in dem Modul)
     await api.post(P + "/melden", { code: b, modul, geloest: ["mc1-0"], gesamt: 10, meta });
@@ -487,13 +487,13 @@ test("Fehlversuche je Aufgabe und Zurücksetzen eines Moduls (NT 7)", async () =
     r = await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, code: a });
     assert.deepEqual(r.body, { ok: true, anzahl: 1, r: 3000 });
     l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
-    assert.deepEqual(l.body.schueler.find((s) => s.code === a).module[modul], { g: {}, t: 10, z: 3000, r: 3000, rn: 2, rw: "l" });
+    assert.deepEqual(l.body.schueler.find((s) => s.code === a).module[modul], { g: {}, t: 10, z: 3000, r: 3000, rn: 2, rw: "l", rv: [1, 10] });
     assert.equal(Object.keys(l.body.schueler.find((s) => s.code === b).module[modul].g).length, 1, "das andere Kind bleibt");
     zeit = 4000;
     r = await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, klasse: "7aM" });
     assert.deepEqual(r.body, { ok: true, anzahl: 1, r: 4000 }, "nur das Kind, das noch etwas stehen hatte");
     l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
-    assert.deepEqual(l.body.schueler.find((s) => s.code === b).module[modul], { g: {}, t: 10, z: 4000, r: 4000, rn: 1, rw: "l" });
+    assert.deepEqual(l.body.schueler.find((s) => s.code === b).module[modul], { g: {}, t: 10, z: 4000, r: 4000, rn: 1, rw: "l", rv: [1, 10] });
     assert.equal(l.body.schueler.find((s) => s.code === a).module[modul].r, 3000, "schon leer: nicht noch einmal gezählt");
 
     // Grenzen: unbekanntes Modul, falscher Code, anderes Fach, Lehrercode
@@ -503,9 +503,56 @@ test("Fehlversuche je Aufgabe und Zurücksetzen eines Moduls (NT 7)", async () =
     assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, code: "12" })).status, 400);
     assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, klasse: "quatsch" })).status, 400);
     r = await api.post(P + "/zuruecksetzen", { code: a, modul: "e8-u1-vokabeln" });
-    assert.equal(r.status, 400, "erst nur NT 7");
+    assert.equal(r.status, 400, "nur NT 7 und Deutsch 7");
     assert.match(r.body.error, /noch nicht/);
     assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul: "nt8-atom-ion", klasse: "7aM" })).status, 400);
+  } finally { await new Promise((r) => api.server.close(r)); }
+});
+
+test("Zurücksetzen merkt sich, dass das Modul schon abgeschlossen war (Deutsch 7, R-Klasse ohne Plus)", async () => {
+  let zeit = 1000;
+  const api = await starte({ store: dateiStore(null), now: () => zeit });
+  try {
+    const [m] = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 1 })).body.neu.map((k) => k.code);
+    const [r1] = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7b", anzahl: 1 })).body.neu.map((k) => k.code);
+    const modul = "d7-gr-01", meta = { bereich: "Grammatik und Sprache", titel: "Wortarten", nr: 1 };
+    const katalog = { b1: ["Basis 1", "Basis"], b2: ["Basis 2", "Basis"], p1: ["Plus 1", "Plus"] };
+    const stand = async (code, klasse) => (await api.post(P + "/lehrer/liste", { password: "2", kurs: "d7", klasse })).body.schueler.find((s) => s.code === code).module[modul];
+
+    // R-Klasse: Basis ganz gelöst = abgeschlossen, auch ohne die freiwillige Plus-Aufgabe
+    await api.post(P + "/melden", { code: r1, modul, geloest: ["b1"], gesamt: 3, meta, katalog });
+    zeit = 1500;
+    await api.post(P + "/melden", { code: r1, modul, geloest: ["b1", "b2"], gesamt: 3 });
+    zeit = 2000;
+    let r = await api.post(P + "/zuruecksetzen", { code: r1, modul });
+    assert.deepEqual(r.body, { ok: true, r: 2000 }, "Deutsch 7 darf zurücksetzen");
+    assert.deepEqual(await stand(r1, "7b"), { g: {}, t: 3, z: 2000, r: 2000, rn: 1, rw: "k", rv: [2, 2], ab: 1500, abn: 1 });
+    // Das Kind sieht davon nichts – nur, dass es neu begonnen hat
+    assert.deepEqual((await api.post(P + "/anmelden", { code: r1 })).body.fortschritt[modul], { g: [], t: 3, r: 2000 });
+
+    // M-Klasse: Plus gehört dazu – zwei von drei ist nicht abgeschlossen
+    zeit = 2100;
+    await api.post(P + "/melden", { code: m, modul, geloest: ["b1", "b2"], gesamt: 3 });
+    zeit = 2200;
+    await api.post(P + "/zuruecksetzen", { code: m, modul });
+    assert.deepEqual(await stand(m, "7aM"), { g: {}, t: 3, z: 2200, r: 2200, rn: 1, rw: "k", rv: [2, 3] });
+
+    // Der Vermerk bleibt: beim Weiterarbeiten, bei einem zweiten Zurücksetzen (auch durch die Lehrkraft, auch leer)
+    zeit = 3000;
+    await api.post(P + "/melden", { code: r1, modul, geloest: ["b1"], gesamt: 3, r: 2000 });
+    assert.deepEqual(await stand(r1, "7b"), { g: { b1: 3000 }, t: 3, z: 3000, r: 2000, rn: 1, rw: "k", rv: [2, 2], ab: 1500, abn: 1 });
+    zeit = 4000;
+    await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, code: r1 });
+    assert.deepEqual(await stand(r1, "7b"), { g: {}, t: 3, z: 4000, r: 4000, rn: 2, rw: "l", rv: [1, 2], ab: 1500, abn: 1 });
+    // Noch einmal ganz gelöst und wieder neu begonnen: zweimal abgeschlossen
+    zeit = 5000;
+    await api.post(P + "/melden", { code: r1, modul, geloest: ["b1", "b2", "p1"], gesamt: 3, r: 4000 });
+    zeit = 6000;
+    await api.post(P + "/zuruecksetzen", { code: r1, modul });
+    assert.deepEqual(await stand(r1, "7b"), { g: {}, t: 3, z: 6000, r: 6000, rn: 3, rw: "k", rv: [2, 2], ab: 5000, abn: 2 });
+    assert.equal(await api.resetZeit(r1, modul), 6000);
+    assert.equal(await api.resetZeit(m, "d7-gr-02"), 0, "nie zurückgesetzt");
+    assert.equal(await api.resetZeit("999", modul), 0, "unbekannter Code");
   } finally { await new Promise((r) => api.server.close(r)); }
 });
 

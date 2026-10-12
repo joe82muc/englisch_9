@@ -14,6 +14,8 @@ let baseUrl;
 let dataDir;
 let token;
 let aiMode = "ok";
+// Für die Prüfung „ein Kriterium darf fehlen“: Haken, die die KI je Kriterium setzt
+let aiOk = null, letzterAuftrag = "";
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "deutsch7-module-"));
@@ -28,6 +30,10 @@ test.before(async () => {
         schiedsrichter: "Du gehst auf Linus ein, aber es fehlt die Ich-Botschaft.",
         reaktion: "Na gut, vielleicht hast du ein bisschen recht."
       });
+    }
+    if (aiOk) {
+      letzterAuftrag = system;
+      return JSON.stringify({ kriterien: aiOk.map((ok, i) => ({ text: "Punkt " + i, ok })), richtig: false, rueckmeldung: "Das meiste passt.", tipp: "Nimm ein neues Beispiel." });
     }
     return "Hier ist meine Bewertung: " + JSON.stringify({
       kriterien: [{ text: "nennt ein Beispiel", ok: true }, { text: "passt zum Argument", ok: true }],
@@ -137,4 +143,30 @@ test("teacher sees the module entries, students do not", async () => {
   assert.equal(removed.status, 200);
   const after = await post("/api/de7-argument/teacher/module-results", { password: "2" });
   assert.equal(after.body.entries.length, 3);
+});
+
+test("ab drei Kriterien darf eines fehlen – die Aufgabe gilt als gelöst, der Tipp bleibt", async () => {
+  const { noetig } = require("./deutsch7-module");
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 8].map(noetig), [1, 2, 2, 3, 4, 4, 6]);
+  const vier = { ...task, aufgabe: "beispiel-4", kriterien: ["nennt ein Beispiel", "passt zum Argument", "ist ein neues Beispiel", "ist ein ganzer Satz"] };
+  try {
+    aiOk = [true, true, false, true];
+    let result = await post("/api/de7-argument/modul/check", vier, token);
+    assert.equal(result.body.richtig, true, "drei von vier genügen");
+    assert.equal(result.body.teilweise, false);
+    assert.equal(result.body.tipp, "Nimm ein neues Beispiel.", "der Tipp zum fehlenden Punkt bleibt");
+    assert.deepEqual(result.body.kriterien.map((item) => item.ok), [true, true, false, true], "die Checkliste zeigt den fehlenden Punkt");
+    assert.match(letzterAuftrag, /Sei großzügig/);
+    assert.match(letzterAuftrag, /Im Zweifel gilt ok true/);
+    aiOk = [true, false, false, true];
+    result = await post("/api/de7-argument/modul/check", vier, token);
+    assert.equal(result.body.richtig, false, "zwei von vier genügen nicht");
+    assert.equal(result.body.teilweise, true);
+    aiOk = [true, false];
+    result = await post("/api/de7-argument/modul/check", task, token);
+    assert.equal(result.body.richtig, false, "bei zwei Kriterien zählen beide");
+    aiOk = [true, true, false];
+    result = await post("/api/de7-argument/modul/check", { ...task, aufgabe: "beispiel-3", kriterien: ["a", "b", "c"] }, token);
+    assert.equal(result.body.richtig, true, "zwei von drei genügen");
+  } finally { aiOk = null; }
 });

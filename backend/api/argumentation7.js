@@ -123,6 +123,15 @@ function registerArgumentation7Routes(app, options = {}) {
   const teacherPassword = String(options.teacherPassword || process.env.TEACHER_PASSWORD || "2");
   const tokenSecret = String(options.hashSecret || `${teacherPassword}|de7-argumentation`);
   const askAnthropic = typeof options.askAnthropic === "function" ? options.askAnthropic : async () => "";
+  // Modul neu beginnen (Lernfortschritt, Modul d7-argumentationstrainer): options.resetZeit(code) nennt den Zeitpunkt
+  // des letzten Zurücksetzens. Versuche davor zählen nicht mehr zum Stand der Stufen. Sie bleiben gespeichert –
+  // die Lehrkraft sieht weiter jede Fassung. Nur mit Code; wer mit Namen angemeldet ist, hat keinen Lernstand.
+  const resetZeit = typeof options.resetZeit === "function" ? options.resetZeit : null;
+  async function seitFuer(student) {
+    const m = /^code\|(\d{3})$/.exec(String((student && student.key) || ""));
+    if (!m || !resetZeit) return 0;
+    try { return Number(await resetZeit(m[1])) || 0; } catch (_error) { return 0; }
+  }
 
   function readData() {
     fs.mkdirSync(dataDir, { recursive: true });
@@ -179,14 +188,14 @@ function registerArgumentation7Routes(app, options = {}) {
       className: student.className,
       issuedAt: Date.now()
     }, tokenSecret);
-    const progress = buildProgress(readData().attempts, student.key);
+    const progress = buildProgress(readData().attempts, student.key, await seitFuer(student));
     return res.json({ ok: true, token, student: withoutKey(student), progress });
   });
 
-  app.get("/api/de7-argument/progress", (req, res) => {
+  app.get("/api/de7-argument/progress", async (req, res) => {
     const student = requireStudent(req, res, tokenSecret);
     if (!student) return;
-    return res.json({ ok: true, progress: buildProgress(readData().attempts, student.key) });
+    return res.json({ ok: true, progress: buildProgress(readData().attempts, student.key, await seitFuer(student)) });
   });
 
   app.post("/api/de7-argument/counter", async (req, res) => {
@@ -241,7 +250,8 @@ function registerArgumentation7Routes(app, options = {}) {
     }
 
     const before = readData();
-    const progressBefore = buildProgress(before.attempts, student.key);
+    const seit = await seitFuer(student);
+    const progressBefore = buildProgress(before.attempts, student.key, seit);
     if (!progressBefore.stages[String(stage)]?.unlocked) {
       return res.status(403).json({ ok: false, error: "Schließe zuerst die vorherige Stufe mit mindestens zwei Sternen ab." });
     }
@@ -291,7 +301,7 @@ function registerArgumentation7Routes(app, options = {}) {
     const current = readData();
     current.attempts.push(attempt);
     writeData(current);
-    const progress = buildProgress(current.attempts, student.key);
+    const progress = buildProgress(current.attempts, student.key, seit);
 
     return res.json({
       ok: true,
@@ -355,6 +365,9 @@ function buildEvaluationSystemPrompt(stage) {
     stageInstruction,
     "Bewerte Inhalt und Aufbau wohlwollend. Rechtschreibung ist nur dann ein Hinweis, wenn der Sinn unklar wird.",
     "Jeder Komponentenstatus ist exakt good, partial oder missing.",
+    // Seit dem 12.10.2026 großzügiger (Wunsch: „die KI ist manchmal zu streng, lass mehr durch“)
+    "Sei großzügig: good = der Baustein ist erkennbar und passt zum Thema, auch wenn er knapp oder ungeschickt formuliert ist. partial = nur angedeutet oder passt nicht ganz. missing = fehlt wirklich oder hat nichts mit dem Thema zu tun. Im Zweifel wähle die bessere Stufe.",
+    "Eine Begründung zählt auch ohne „weil“ oder „denn“, wenn der Grund erkennbar ist. Ein Beispiel darf aus dem Alltag des Kindes stammen und muss nicht ausführlich sein.",
     "Gib kurze, konkrete Hinweise, aber schreibe niemals eine Musterlösung und formuliere keinen Schülertext um.",
     "Ein Hinweis soll nur sagen, was ergänzt oder genauer erklärt werden muss.",
     "stars ist eine ganze Zahl von 0 bis 3. Ab 2 Sternen gilt die Stufe als bestanden.",
@@ -493,8 +506,9 @@ function buildFallbackMarkings(stage, content) {
   return [];
 }
 
-function buildProgress(attempts, studentKey) {
-  const mine = attempts.filter((row) => row.studentKey === studentKey);
+// seit: Zeitpunkt des letzten Zurücksetzens (0 = nie) – ältere Versuche zählen nicht mehr
+function buildProgress(attempts, studentKey, seit = 0) {
+  const mine = attempts.filter((row) => row.studentKey === studentKey && (!seit || Date.parse(row.createdAt) > seit));
   const stages = {};
   let previousPassed = true;
   for (const stage of STAGES) {
@@ -512,7 +526,8 @@ function buildProgress(attempts, studentKey) {
   return {
     stages,
     totalAttempts: mine.length,
-    licenceReady: STAGES.every((stage) => stages[String(stage.id)].passed)
+    licenceReady: STAGES.every((stage) => stages[String(stage.id)].passed),
+    ...(seit ? { reset: seit } : {})
   };
 }
 

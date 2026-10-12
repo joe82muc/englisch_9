@@ -138,7 +138,9 @@ registerArgumentation7Routes(app, {
   hashSecret: DE7_SECRET,
   askAnthropic,
   // Anmeldung mit dem Code aus dem Lernfortschritt (nt9Fortschritt wird weiter unten angelegt)
-  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req),
+  // Modul neu beginnen: Stufen, die vor dem letzten Zurücksetzen bestanden wurden, zählen nicht mehr
+  resetZeit: (code) => nt9Fortschritt.resetZeit(code, "d7-argumentationstrainer")
 });
 
 // --- Deutsch 7M/7R: Lernmodule Argumentieren und Diskutieren (Buch S. 22-25), gleiche Anmeldung wie der Trainer ---
@@ -375,7 +377,9 @@ registerD7TexteRoutes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   askAnthropic: askAnthropic,
-  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req),
+  // Modul neu begonnen: Fassungen von davor kommen nicht mehr in das Schreibfeld zurück
+  resetZeit: (code, modul) => nt9Fortschritt.resetZeit(code, modul)
 });
 // --- Deutsch 8 (8M und 8R): dieselben Bausteine wie Deutsch 7 mit stufe: 8 – Freischalten je Klasse (/api/d8),
 // Proben 1 bis 8 je R8/M8 × A/B (/api/d8/proben, Daten in d8-proben/), Schreibtrainer (/api/d8/schreiben, /texte),
@@ -441,7 +445,8 @@ const e9Proben = registerD7ProbenRoutes(app, {
   askAnthropic: askAnthropic
 });
 // Deutsch 7: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
-registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
+// nachsicht: Die KI lässt mehr durch (Wunsch vom 12.10.2026, erst nur Deutsch 7) – der Kern genügt.
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", nachsicht: true, thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
 
 // --- Klassenbereich der Startseite: Hausaufgabenheft und Klassenrat-Briefkasten (die KI prüft jede Nachricht) ---
 const { registerKlasseRoutes } = require("./klasse");
@@ -624,7 +629,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-12-nt7-versuche",
+    version: "2026-10-12-deutsch7-reset-milde",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

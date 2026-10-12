@@ -14,11 +14,11 @@ const kindZumCode = async (code) => ({ 101: { code: "101", klasse: "7aM", zug: "
 const TEXT = "Am Morgen wachte ich auf und merkte sofort, dass etwas nicht stimmte. Im Haus war es ganz still.";
 const auftrag = (extra) => ({ modul: "erz-06", aufgabe: "werkstatt", titel: "Meine Erzählung", auftrag: "Schreibe eine spannende Erzählung.", kriterien: ["Einleitung nennt Ort und Zeit", "Es gibt einen Höhepunkt"], text: TEXT, ...extra });
 
-async function mitServer(askAnthropic, lauf) {
+async function mitServer(askAnthropic, lauf, optionen = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "d7-texte-"));
   const app = express();
   app.use(express.json());
-  registerD7TexteRoutes(app, { dataDir, teacherPassword: PW, kindZumCode, askAnthropic });
+  registerD7TexteRoutes(app, { dataDir, teacherPassword: PW, kindZumCode, askAnthropic, ...optionen });
   const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
   const post = (route, body) => fetch(`http://127.0.0.1:${server.address().port}/api/d7/` + route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
     .then(async (r) => ({ status: r.status, data: await r.json().catch(() => null) }));
@@ -86,4 +86,22 @@ test("Lehrkraft: Texte der Klasse ansehen, kommentieren, löschen", async () => 
     assert.equal((await post("lehrer/texte/loeschen", { password: PW, id: liste[0].id })).status, 200);
     assert.equal((await post("lehrer/texte", { password: PW, klasse: "7aM" })).data.eintraege.length, 0);
   });
+});
+
+test("Modul neu begonnen: texte/meine nennt den Zeitpunkt, die Fassungen bleiben für die Lehrkraft", async () => {
+  const gefragt = [];
+  let reset = 0;
+  await mitServer(ki(), async ({ post }) => {
+    await post("schreiben/feedback", auftrag({ code: "101" }));
+    let m = (await post("texte/meine", { code: "101", modul: "erz-06", aufgabe: "werkstatt" })).data;
+    assert.equal(m.neuSeit, undefined, "nie zurückgesetzt: kein Feld");
+    assert.deepEqual(gefragt[0], ["101", "d7-erz-06"], "gefragt wird mit der Kennung des Lernstands");
+    reset = Date.now() + 60000;
+    m = (await post("texte/meine", { code: "101", modul: "erz-06", aufgabe: "werkstatt" })).data;
+    assert.equal(m.neuSeit, reset);
+    assert.equal(m.fassungen.length, 1, "die Fassung von vorher ist noch da");
+    assert.ok(Date.parse(m.fassungen[0].zeit) < m.neuSeit, "sie ist älter als der Neubeginn – die Seite holt sie nicht zurück");
+    const l = (await post("lehrer/texte", { password: PW, klasse: "7aM" })).data;
+    assert.equal(l.eintraege[0].fassungen.length, 1, "die Lehrkraft sieht sie weiter");
+  }, { resetZeit: async (code, modul) => { gefragt.push([code, modul]); return reset; } });
 });

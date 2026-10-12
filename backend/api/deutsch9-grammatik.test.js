@@ -17,6 +17,7 @@ test.before(async () => {
   registerDeutsch9GrammatikRoutes(app, {
     proStunde: 3,
     kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "9aM", zug: "9M" } : code === "734" ? { code: "734", klasse: "8b", zug: "8R" }
+      : code === "225" ? { code: "225", klasse: "7aM", zug: "7M" }
       : code === "999" ? { gesperrt: true } : null),
     askKi: async (system, user) => {
       letzteFrage = user;
@@ -86,6 +87,21 @@ test("auch Deutsch 7 und 8 (Grammatik und Rechtschreibung) sind erlaubt", async 
   assert.notEqual((await frage({ ...gut, modul: "d8-rs-02", aufgabe: "d8-rs-02-p1" })).status, 400);
   assert.equal((await frage({ ...gut, modul: "d6-gr-01", aufgabe: "d6-gr-01-b1" })).status, 400);
   assert.equal((await frage({ ...gut, modul: "d7-xy-01", aufgabe: "d7-xy-01-b1" })).status, 400);
+});
+
+test("Deutsch 7 bekommt den großzügigeren Auftrag, Deutsch 8 und 9 behalten ihren", async () => {
+  const { NACHSICHT_D7 } = require("./deutsch9-grammatik");
+  kiModus = "ok";
+  // eigener Code: Die Grenze je Stunde der anderen Codes ist schon aufgebraucht oder wird noch gebraucht
+  let r = await frage({ ...gut, code: "225", modul: "d7-gr-03", aufgabe: "d7-gr-03-b2-1" });
+  assert.equal(r.status, 200);
+  assert.equal(letztesSystem, SYSTEM + "\n" + NACHSICHT_D7);
+  assert.match(letztesSystem, /Sei großzügig/);
+  assert.match(letztesSystem, /Im Zweifel ist die Antwort richtig/);
+  r = await frage({ ...gut, code: "225", modul: "d8-rs-02", aufgabe: "d8-rs-02-p1" });
+  assert.equal(r.status, 200);
+  assert.equal(letztesSystem, SYSTEM, "Deutsch 8 unverändert");
+  assert.doesNotMatch(SYSTEM + SYSTEM_ENGLISCH, /großzügig/);
 });
 
 const englisch = {

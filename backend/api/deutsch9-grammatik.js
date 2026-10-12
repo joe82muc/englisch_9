@@ -24,6 +24,14 @@ const SYSTEM = [
   "Antworte nur als JSON: {\"richtig\":true,\"rueckmeldung\":\"...\"}"
 ].join("\n");
 
+// Deutsch 7 (Wunsch vom 12.10.2026: „die KI ist manchmal zu streng, lass mehr durch“ – erst nur dort): Es zählt nur,
+// was die Aufgabe gerade übt. Alles andere im Satz darf holpern. Deutsch 8 und 9 behalten die Anweisung oben.
+const NACHSICHT_D7 = [
+  "Sei großzügig: Es zählt nur, was die Aufgabe gerade übt (das steht im Arbeitsauftrag und unter „Darauf kommt es an“). Fehler bei allem anderen zählen nicht – zum Beispiel Rechtschreibung, Groß- und Kleinschreibung oder Kommas, wenn die Aufgabe etwas anderes übt; ein fehlendes oder vertauschtes Wort; eine andere Wortwahl.",
+  "Die Beispiellösung ist nur ein Beispiel. Ein eigener, einfacher oder kurzer Satz ist genauso richtig, wenn das Geübte stimmt. Ist die verlangte Form erkennbar gemeint und nur verschrieben (z. B. „gieng“ statt „ging“), gilt die Antwort als richtig – außer die Aufgabe übt genau diese Schreibung.",
+  "Im Zweifel ist die Antwort richtig. Nicht richtig ist sie nur, wenn das Geübte fehlt oder eindeutig falsch ist."
+].join("\n");
+
 // Englisch: dieselbe Aufgabe, aber die Antwort ist ein englischer Satz – milde bei allem, was gerade nicht geübt wird
 const SYSTEM_ENGLISCH = [
   "Du prüfst eine Übung im Fach Englisch an einer bayerischen Mittelschule (Klasse 7 bis 9, die Klassenstufe steht in der Anfrage). Die Kinder lernen Englisch als Fremdsprache.",
@@ -94,7 +102,8 @@ function registerDeutsch9GrammatikRoutes(app, options = {}) {
       `Antwort des Kindes: <<<${antwort}>>>`
     ].filter(Boolean).join("\n\n");
     try {
-      const daten = jsonAus(await askKi(modul.charAt(0) === "e" ? SYSTEM_ENGLISCH : SYSTEM, user, 220));
+      const system = modul.charAt(0) === "e" ? SYSTEM_ENGLISCH : /^d7-/.test(modul) ? SYSTEM + "\n" + NACHSICHT_D7 : SYSTEM;
+      const daten = jsonAus(await askKi(system, user, 220));
       if (!daten || typeof daten.richtig !== "boolean") return res.status(503).json({ ok: false, error: "Die KI hat gerade nicht geantwortet." });
       return res.json({ ok: true, richtig: daten.richtig, rueckmeldung: text(daten.rueckmeldung, 300), quelle: "ki" });
     } catch (error) {
@@ -104,4 +113,4 @@ function registerDeutsch9GrammatikRoutes(app, options = {}) {
   });
 }
 
-module.exports = { registerDeutsch9GrammatikRoutes, SYSTEM, SYSTEM_ENGLISCH };
+module.exports = { registerDeutsch9GrammatikRoutes, SYSTEM, SYSTEM_ENGLISCH, NACHSICHT_D7 };

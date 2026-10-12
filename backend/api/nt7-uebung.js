@@ -14,6 +14,7 @@
  * Mehrfach registrierbar (z. B. NT 9, Organische Rohstoffe):
  * opts.route, opts.klasse ("Klasse 9"), opts.thema (Thema im Systemtext), opts.fach ("Informatik").
  * opts.sprache = "en" (Englisch): Aufgabe und Antwort dürfen englisch sein, die Rückmeldung bleibt deutsch.
+ * opts.nachsicht = true (Deutsch 7): Die KI lässt mehr durch – der Kern genügt, die Musterlösung ist nur ein Beispiel.
  */
 
 const { keywordFeedback } = require("./kohlenstoff");
@@ -32,6 +33,18 @@ function registerNt7UebungRoutes(app, opts = {}) {
     "Bewerte, ob der Inhalt stimmt und die Antwort verständlich ist. Kleine Fehler in Rechtschreibung und Grammatik zählen nicht. Steht in der Aufgabe, in welcher Sprache geantwortet werden soll, und die Antwort ist in der anderen Sprache, ist sie höchstens teilweise richtig.",
     "Rückmeldung und Tipp schreibst du auf Deutsch. Englische Wörter nennst du in einfachen Anführungszeichen, nie in doppelten."
   ] : [];
+
+  // Wann gilt eine offene Antwort als richtig? opts.nachsicht (erst nur Deutsch 7, Wunsch vom 12.10.2026: „die KI ist
+  // manchmal zu streng, lass mehr durch“): Es genügt, dass die Antwort zur Aufgabe passt und den Kern trifft – in
+  // Deutsch gibt es oft mehrere richtige Lösungen (eigene Überschrift, eigenes Beispiel, eigene Meinung).
+  const haltung = opts.nachsicht
+    ? "Sei großzügig. Die erwarteten Inhalte sind nur ein Beispiel für eine gute Antwort – viele Aufgaben haben mehrere richtige Lösungen (eigene Überschrift, eigenes Beispiel, eigene Frage, eigene Meinung)."
+    : "Sei wohlwollend, aber fachlich korrekt. Falsche Aussagen nicht belohnen.";
+  const massstab = opts.nachsicht ? [
+    "richtig = Die Antwort passt zur Aufgabe und trifft den Kern. Ein passender, sinnvoller Gedanke genügt – auch kurz, in Stichpunkten oder ungeschickt formuliert. Einzelheiten aus den erwarteten Inhalten dürfen fehlen. Im Zweifel ist die Antwort richtig.",
+    "teilweise = Die Antwort geht in die richtige Richtung, aber ein ausdrücklich verlangter Teil der Aufgabe fehlt ganz (z. B. die verlangte Begründung oder Zeilenangabe).",
+    "Nicht richtig ist eine Antwort nur, wenn sie am Thema vorbeigeht, inhaltlich falsch ist oder bloß die Aufgabe abschreibt."
+  ] : ["richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt."];
 
   app.post(route, async (req, res) => {
     const frage = clean(req.body?.frage).slice(0, 600);
@@ -92,9 +105,9 @@ function registerNt7UebungRoutes(app, opts = {}) {
     const system = [
       `Du prüfst eine offene Übungsaufgabe in ${fach}, ${klasse} einer bayerischen Mittelschule. Thema: ${thema || themaSystem}.`,
       "Bewerte nur den fachlichen Inhalt. Rechtschreibung, Grammatik und Stil zählen nicht. Eigene Worte und Stichpunkte sind erlaubt.",
-      "Sei wohlwollend, aber fachlich korrekt. Falsche Aussagen nicht belohnen.",
+      haltung,
       ...fremd,
-      "richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt.",
+      ...massstab,
       "Die Rückmeldung spricht das Kind mit du an, in einfacher Sprache, höchstens 25 Wörter.",
       "Der Tipp verrät nicht die ganze Lösung, sondern gibt einen Denkanstoß (höchstens 15 Wörter, leer wenn richtig).",
       "Antworte nur als JSON: {\"richtig\": false, \"teilweise\": true, \"rueckmeldung\": \"...\", \"tipp\": \"...\"}"

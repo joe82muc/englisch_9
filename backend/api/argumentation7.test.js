@@ -11,6 +11,8 @@ const { registerArgumentation7Routes } = require("./argumentation7");
 let server;
 let baseUrl;
 let dataDir;
+// Zeitpunkt des letzten Zurücksetzens je Code (kommt im Server aus dem Lernfortschritt)
+const resetZeiten = {};
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "argumentation7-"));
@@ -21,6 +23,7 @@ test.before(async () => {
     teacherPassword: "2",
     hashSecret: "test-secret",
     kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "7aM", zug: "7M" } : code === "999" ? { gesperrt: true } : null),
+    resetZeit: async (code) => resetZeiten[code] || 0,
     askAnthropic: async (system) => {
       if (system.includes("Diskussionspartner")) {
         return JSON.stringify({ counterArgument: "Bowling ist wetterunabhängig, deshalb kann der Ausflug sicher stattfinden." });
@@ -165,4 +168,47 @@ test("start accepts a progress code instead of a name", async () => {
   assert.equal(response.status, 429);
   response = await post({ firstName: "Lea", lastName: "Muster", className: "7M" });
   assert.equal(response.status, 200, "Anmeldung mit Namen geht weiter");
+});
+
+test("Modul neu beginnen: Versuche vor dem Zurücksetzen zählen nicht mehr, bleiben aber für die Lehrkraft", async () => {
+  const warte = () => new Promise((resolve) => setTimeout(resolve, 15));
+  const stufe1 = (token, exerciseId) => post("/api/de7-argument/evaluate", {
+    topicId: "wandertag", stage: 1, side: "Zoo", exerciseId,
+    content: { claim: "Wir sollten in den Zoo gehen.", reason: "Dort lernen wir viel, weil wir echte Tiere beobachten können.", example: "Zum Beispiel können wir das Verhalten der Affen vergleichen." }
+  }, token);
+  const start = await post("/api/de7-argument/start", { code: "123" });
+  const token = start.body.token;
+  const erste = await stufe1(token, "reset-1");
+  assert.equal(erste.body.progress.stages["1"].passed, true);
+  assert.equal(erste.body.progress.stages["2"].unlocked, true);
+  assert.equal(erste.body.progress.reset, undefined, "noch nie zurückgesetzt");
+  const vorher = (await post("/api/de7-argument/teacher/results", { password: "2" })).body.attempts.length;
+
+  // Das Kind (oder die Lehrkraft) setzt den Führerschein im Lernfortschritt zurück
+  await warte();
+  resetZeiten["123"] = Date.now();
+  await warte();
+  const stand = await (await fetch(`${baseUrl}/api/de7-argument/progress`, { headers: { authorization: "Bearer " + token } })).json();
+  assert.equal(stand.progress.stages["1"].passed, false);
+  assert.equal(stand.progress.stages["1"].bestStars, 0);
+  assert.equal(stand.progress.stages["2"].unlocked, false, "Stufe 2 ist wieder gesperrt");
+  assert.equal(stand.progress.reset, resetZeiten["123"]);
+  assert.equal((await post("/api/de7-argument/start", { code: "123" })).body.progress.stages["1"].passed, false);
+  const gesperrt = await post("/api/de7-argument/evaluate", {
+    topicId: "handys", stage: 2, side: "dafür",
+    content: { pro: "Handys sind nützlich, weil wir Absprachen treffen können.", contra: "Sie lenken ab, weil viele nur Videos ansehen.", weighing: "Trotzdem bin ich dafür, wenn es klare Regeln gibt." }
+  }, token);
+  assert.equal(gesperrt.response.status, 403);
+  // Die alte Fassung ist für die Lehrkraft noch da
+  assert.equal((await post("/api/de7-argument/teacher/results", { password: "2" })).body.attempts.length, vorher);
+
+  // Neu begonnen: Der nächste Versuch zählt wieder
+  const neu = await stufe1(token, "reset-2");
+  assert.equal(neu.body.progress.stages["1"].passed, true);
+  assert.equal(neu.body.progress.stages["2"].unlocked, true);
+  assert.equal(neu.body.progress.reset, resetZeiten["123"]);
+  // Wer mit Namen angemeldet ist, hat keinen Lernstand: nichts ändert sich
+  const mia = await post("/api/de7-argument/start", { firstName: "Mia", lastName: "Muster", className: "7M" });
+  assert.equal(mia.body.progress.stages["1"].passed, true);
+  delete resetZeiten["123"];
 });

@@ -68,7 +68,9 @@ const systemText = (stufe) => [
   "Ist eine „planung“ mitgeschickt, darfst du prüfen, ob der Text zur Planung passt. Bewerte die Planung nicht.",
   "Du schreibst niemals einen Satz, einen Absatz oder eine Überleitung, die das Kind übernehmen könnte. Stelle lieber eine Frage, die es weiterbringt."
 ] : []).join("\n");
-const SYSTEM = systemText(7);
+// Deutsch 7 (Wunsch vom 12.10.2026: „die KI ist manchmal zu streng, lass mehr durch“ – erst nur dort): Die Checkliste
+// hakt großzügig ab. Was noch besser werden kann, steht weiter unter „naechstes“ – die Rückmeldung bleibt ehrlich.
+const SYSTEM = systemText(7) + "\nSei bei der Checkliste großzügig: Hat das Kind einen Punkt erkennbar versucht, gilt true – auch wenn er noch nicht ganz gelungen ist. Im Zweifel true. Was noch besser werden kann, nennst du unter naechstes.";
 
 // Englisch (options.fach = { kurz: "e", name: "Englisch" }): derselbe Schreibtrainer für Texte in der Fremdsprache.
 // Die Rückmeldung ist deutsch, die zitierte Stelle englisch; auch hier schreibt der Coach nichts für das Kind.
@@ -107,6 +109,8 @@ function registerD7TexteRoutes(app, options = {}) {
   const teacherPassword = String(options.teacherPassword || "");
   const kindZumCode = options.kindZumCode;
   const askAnthropic = typeof options.askAnthropic === "function" ? options.askAnthropic : null;
+  // (code, modul im Lernstand) -> Zeitpunkt des letzten Zurücksetzens oder 0 (nur Kurse mit „Modul neu beginnen“)
+  const resetZeit = typeof options.resetZeit === "function" ? options.resetZeit : null;
   if (typeof kindZumCode !== "function") throw new Error("Deutsch-7-Texte: kindZumCode fehlt.");
 
   function lesen() {
@@ -198,7 +202,12 @@ function registerD7TexteRoutes(app, options = {}) {
     const b = req.body || {}, k = await kind(b.code, req);
     if (!k) return res.status(401).json({ ok: false, error: "Bitte melde dich mit deinem Code an." });
     const e = lesen().eintraege.find((x) => x.code === k.code && x.modul === clean(b.modul, 60) && x.aufgabe === clean(b.aufgabe, 60));
-    return res.json({ ok: true, fassungen: e ? e.fassungen : [], lehrerKommentar: e ? e.lehrerKommentar || "" : "", entwurf: e && e.entwurf ? e.entwurf : undefined, abgegeben: e && e.abgegeben ? e.abgegeben : undefined });
+    // Hat das Kind das Modul neu begonnen (Lernfortschritt, options.resetZeit)? neuSeit nennt den Zeitpunkt: Die Seite
+    // holt Fassungen von davor nicht mehr in das Schreibfeld zurück. Für die Lehrkraft bleiben alle Fassungen.
+    let neuSeit = 0;
+    if (resetZeit) { try { neuSeit = Number(await resetZeit(k.code, KURZ + STUFE + "-" + clean(b.modul, 60))) || 0; } catch (_e) { neuSeit = 0; } }
+    return res.json({ ok: true, fassungen: e ? e.fassungen : [], lehrerKommentar: e ? e.lehrerKommentar || "" : "", entwurf: e && e.entwurf ? e.entwurf : undefined, abgegeben: e && e.abgegeben ? e.abgegeben : undefined,
+      ...(neuSeit ? { neuSeit } : {}) });
   });
 
   /* ---------- Aufsatzeditor: Entwurf sichern und abgeben ---------- */
