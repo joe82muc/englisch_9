@@ -90,17 +90,20 @@ test("auch Deutsch 7 und 8 (Grammatik und Rechtschreibung) sind erlaubt", async 
 });
 
 test("Deutsch 7 bekommt den großzügigeren Auftrag, Deutsch 8 und 9 behalten ihren", async () => {
-  const { NACHSICHT_D7 } = require("./deutsch9-grammatik");
+  const { SYSTEM_D7 } = require("./deutsch9-grammatik");
   kiModus = "ok";
   // eigener Code: Die Grenze je Stunde der anderen Codes ist schon aufgebraucht oder wird noch gebraucht
   let r = await frage({ ...gut, code: "225", modul: "d7-gr-03", aufgabe: "d7-gr-03-b2-1" });
   assert.equal(r.status, 200);
-  assert.equal(letztesSystem, SYSTEM + "\n" + NACHSICHT_D7);
+  assert.equal(letztesSystem, SYSTEM_D7);
+  assert.match(letztesSystem, /Kommas zählen nur, wenn der Arbeitsauftrag ausdrücklich das Setzen von Kommas übt/);
+  assert.ok(!letztesSystem.includes("Satzart, Komma)"), "die strenge Komma-Regel ist ersetzt");
   assert.match(letztesSystem, /Sei großzügig/);
   assert.match(letztesSystem, /Im Zweifel ist die Antwort richtig/);
   r = await frage({ ...gut, code: "225", modul: "d8-rs-02", aufgabe: "d8-rs-02-p1" });
   assert.equal(r.status, 200);
   assert.equal(letztesSystem, SYSTEM, "Deutsch 8 unverändert");
+  assert.ok(SYSTEM.includes("Satzart, Komma)"), "Deutsch 8 und 9 behalten die strenge Regel");
   assert.doesNotMatch(SYSTEM + SYSTEM_ENGLISCH, /großzügig/);
 });
 

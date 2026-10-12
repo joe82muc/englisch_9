@@ -43,6 +43,7 @@ function registerNt7UebungRoutes(app, opts = {}) {
   const massstab = opts.nachsicht ? [
     "richtig = Die Antwort passt zur Aufgabe und trifft den Kern. Ein passender, sinnvoller Gedanke genügt – auch kurz, in Stichpunkten oder ungeschickt formuliert. Einzelheiten aus den erwarteten Inhalten dürfen fehlen. Im Zweifel ist die Antwort richtig.",
     "teilweise = Die Antwort geht in die richtige Richtung, aber ein ausdrücklich verlangter Teil der Aufgabe fehlt ganz (z. B. die verlangte Begründung oder Zeilenangabe).",
+    "Die äußere Form ist nie ein Grund abzuwerten: ein fehlender Punkt am Satzende, fehlende Kommas, Anführungszeichen oder Klammern, Kleinschreibung, und wie die Zeilenangabe geschrieben ist („Zeile 17“, „Z. 17“, „Z17“). Verlangt die Aufgabe einen ganzen Satz, genügt ein Satz mit Subjekt und Verb – auch ohne Punkt.",
     "Nicht richtig ist eine Antwort nur, wenn sie am Thema vorbeigeht, inhaltlich falsch ist oder bloß die Aufgabe abschreibt."
   ] : ["richtig = alle wichtigen Inhalte da. teilweise = Ansatz stimmt, etwas Wichtiges fehlt."];
 

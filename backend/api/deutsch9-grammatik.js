@@ -28,9 +28,14 @@ const SYSTEM = [
 // was die Aufgabe gerade übt. Alles andere im Satz darf holpern. Deutsch 8 und 9 behalten die Anweisung oben.
 const NACHSICHT_D7 = [
   "Sei großzügig: Es zählt nur, was die Aufgabe gerade übt (das steht im Arbeitsauftrag und unter „Darauf kommt es an“). Fehler bei allem anderen zählen nicht – zum Beispiel Rechtschreibung, Groß- und Kleinschreibung oder Kommas, wenn die Aufgabe etwas anderes übt; ein fehlendes oder vertauschtes Wort; eine andere Wortwahl.",
-  "Die Beispiellösung ist nur ein Beispiel. Ein eigener, einfacher oder kurzer Satz ist genauso richtig, wenn das Geübte stimmt. Ist die verlangte Form erkennbar gemeint und nur verschrieben (z. B. „gieng“ statt „ging“), gilt die Antwort als richtig – außer die Aufgabe übt genau diese Schreibung.",
+  "Die Beispiellösung ist nur ein Beispiel. Ein eigener, einfacher oder kurzer Satz ist genauso richtig, wenn das Geübte stimmt. Ein Schreibfehler in einer richtig gebildeten Form (z. B. „giengen“ statt „gingen“) macht die Antwort nicht falsch – außer die Aufgabe übt genau diese Schreibung; weise dann in der Rückmeldung auf die Schreibweise hin. Eine falsch gebildete Form (z. B. „gehten“ statt „gingen“) bleibt falsch.",
   "Im Zweifel ist die Antwort richtig. Nicht richtig ist sie nur, wenn das Geübte fehlt oder eindeutig falsch ist."
 ].join("\n");
+// In der Anweisung oben zählt das Komma zur verlangten Form. Für Deutsch 7 gilt das nur, wenn die Aufgabe das Komma übt –
+// sonst scheiterte fast jeder selbst gebildete Relativsatz am fehlenden Komma.
+const FORM_STRENG = "Genau die verlangte grammatische Form zählt (z. B. Zeitform, Passiv, Konjunktiv, Satzart, Komma). Ist sie falsch oder fehlt sie, ist die Antwort nicht richtig.";
+const FORM_D7 = "Es zählt die verlangte grammatische Form (z. B. Zeitform, Passiv, Konjunktiv, Satzart, Relativsatz). Fehlt sie oder ist sie eindeutig eine andere, ist die Antwort nicht richtig. Kommas zählen nur, wenn der Arbeitsauftrag ausdrücklich das Setzen von Kommas übt. Sonst macht ein fehlendes Komma – auch vor einem Nebensatz oder Relativsatz – die Antwort nicht falsch: Werte sie als richtig und erinnere in der Rückmeldung freundlich an das Komma.";
+const SYSTEM_D7 = SYSTEM.replace(FORM_STRENG, FORM_D7) + "\n" + NACHSICHT_D7;
 
 // Englisch: dieselbe Aufgabe, aber die Antwort ist ein englischer Satz – milde bei allem, was gerade nicht geübt wird
 const SYSTEM_ENGLISCH = [
@@ -102,7 +107,7 @@ function registerDeutsch9GrammatikRoutes(app, options = {}) {
       `Antwort des Kindes: <<<${antwort}>>>`
     ].filter(Boolean).join("\n\n");
     try {
-      const system = modul.charAt(0) === "e" ? SYSTEM_ENGLISCH : /^d7-/.test(modul) ? SYSTEM + "\n" + NACHSICHT_D7 : SYSTEM;
+      const system = modul.charAt(0) === "e" ? SYSTEM_ENGLISCH : /^d7-/.test(modul) ? SYSTEM_D7 : SYSTEM;
       const daten = jsonAus(await askKi(system, user, 220));
       if (!daten || typeof daten.richtig !== "boolean") return res.status(503).json({ ok: false, error: "Die KI hat gerade nicht geantwortet." });
       return res.json({ ok: true, richtig: daten.richtig, rueckmeldung: text(daten.rueckmeldung, 300), quelle: "ki" });
@@ -113,4 +118,4 @@ function registerDeutsch9GrammatikRoutes(app, options = {}) {
   });
 }
 
-module.exports = { registerDeutsch9GrammatikRoutes, SYSTEM, SYSTEM_ENGLISCH, NACHSICHT_D7 };
+module.exports = { registerDeutsch9GrammatikRoutes, SYSTEM, SYSTEM_ENGLISCH, SYSTEM_D7 };
