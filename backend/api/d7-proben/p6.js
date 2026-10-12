@@ -3,9 +3,11 @@
 /**
  * Deutsch 7 · Probe 6: Grammatik I (Wortarten mit Relativ- und Demonstrativpronomen, M7 zusätzlich Reflexivpronomen ·
  * Zeitformen bestimmen und bilden bis Futur II · Aktiv und Passiv erkennen und umformen). LehrplanPLUS D7 4.2.
- * R7: 30 Punkte (Passiv im Präsens und Präteritum) · M7: 34 Punkte (Passiv auch im Perfekt und Futur I) · 40 Minuten.
+ * R7: 30 Punkte (Passiv im Präsens und Präteritum) · M7: 33 Punkte (Passiv auch im Perfekt und Futur I) · 40 Minuten.
  * Keine Lesetexte. Jede Fassung hat ihr eigenes Wortfeld, aus dem alle Beispielsätze stammen:
- * R7 A Sportfest · R7 B Wochenmarkt · M7 A Fahrradwerkstatt · M7 B Tierheim. Kein Satz steht in einem Lernmodul.
+ * R7 A Sportfest · R7 B Wochenmarkt · M7 Fahrradwerkstatt. Kein Satz steht in einem Lernmodul.
+ * M7 gibt es seit 12.10.2026 nur in einer Fassung (Wunsch der Lehrkraft): Variante B (Wortfeld Tierheim) ist entfernt,
+ * Aufgabe 10 ist zum Ankreuzen (2 Punkte), Aufgabe 11 verlangt keine Fachbegriffe mehr (Partizip II, Infinitiv).
  * Bleibt auf dem Server (Lösungen). Bausteine: bau.js.
  */
 const { c, m, f, feld, a, kr, probe } = require("./bau");
@@ -43,7 +45,8 @@ const INS_PASSIV_M = "Forme die Sätze ins Passiv um. Die Zeitform bleibt gleich
 const INS_AKTIV = "Forme den Satz ins Aktiv um. Die Zeitform bleibt gleich.";
 const WORAN_PASSIV = " Woran erkennst du, dass dieser Satz im Passiv steht? Erkläre.";
 const WARUM_PASSIV = " Erkläre, warum das Passiv hier besser passt als ein Satz im Aktiv.";
-const ZWEIMAL_WIRD = " Nur einer der beiden Sätze steht im Passiv. Erkläre, welcher es ist und woran du den Unterschied erkennst.";
+const WARUM_ANLEITUNG = " Warum steht in Anleitungen oft das Passiv?";
+const ZWEIMAL_WIRD = " Nur einer der beiden Sätze steht im Passiv. Schreibe auf, welcher es ist, und begründe kurz in eigenen Worten.";
 
 /* ------------------------------ „Dein nächster Schritt“ ------------------------------ */
 const H_WORTART = "Frage bei jedem Wort: Was leistet es im Satz – beschreibt es, verbindet es Sätze, zeigt es auf etwas oder leitet es einen Relativsatz ein?";
@@ -62,8 +65,11 @@ const H_INS_PASSIV_M = "Das Akkusativobjekt wird zum Subjekt, das Verb wird zu �
 const H_INS_AKTIV_R = "Frage: Wer tut etwas? Diese Person wird zum Subjekt, und das Verb steht ohne „werden“ in derselben Zeitform.";
 const H_INS_AKTIV_M = "Der Handelnde hinter „von“ wird zum Subjekt; das Verb steht ohne „werden“ in derselben Zeitform, bei trennbaren Verben rückt der erste Teil ans Satzende.";
 
+const H_ANLEITUNG = "Frage dich bei einem Passivsatz: Erfährst du, wer etwas tut – oder nur, was getan wird?";
+
 const HILFE_WORAN = "Sieh dir das Verb genau an: Aus welchen zwei Teilen besteht es?";
 const HILFE_WARUM = "So kannst du beginnen: Das Passiv passt hier besser, weil man …";
+const HILFE_ZWEIMAL = "Überlege bei beiden Sätzen: Tut die Klingel selbst etwas – oder wird etwas mit ihr gemacht?";
 
 /* ============================== R7, Variante A – Wortfeld Sportfest ============================== */
 const R_A = [
@@ -189,7 +195,7 @@ const R_B = [
   ["weiß nicht|weiß man nicht|nicht weiß|unbekannt|nicht bekannt|niemand weiß|keiner weiß|weiß keiner|weiß niemand", "wer es|wer das|wer den|wer die|täter|handel|jemand", "passiert|geschehen|geschah|mittelpunkt|vorgang"], { hilfe: HILFE_WARUM })
 ];
 
-/* ============================== M7, Variante A – Wortfeld Fahrradwerkstatt ============================== */
+/* ============================== M7 (einzige Fassung) – Wortfeld Fahrradwerkstatt ============================== */
 const M_A = [
   m(WORTART, [
     ["Die Werkstatt öffnet MORGENS um acht Uhr.", "Adverb"],
@@ -244,91 +250,22 @@ const M_A = [
   f(INS_AKTIV, [
     umbau("Der Kindersitz wird von Frau Okafor abgenommen.", ["Frau Okafor nimmt den Kindersitz ab.", "Den Kindersitz nimmt Frau Okafor ab."])
   ], { hinweis: H_INS_AKTIV_M }),
-  a("In einer Anleitung der Werkstatt steht: „Zuerst wird das Hinterrad ausgebaut. Dann wird der Mantel abgezogen.“ Erkläre, warum in Anleitungen oft das Passiv steht. Gehe dabei auf den Handelnden ein.", [
-    kr("Rolle des Handelnden erklärt", 2, "Es ist nicht wichtig (und nicht festgelegt), wer die Arbeit ausführt: Die Anleitung gilt für jeden, deshalb wird der Handelnde weggelassen. 2 Punkte für die klare Erklärung, 1 Punkt, wenn sie nur angedeutet ist."),
-    kr("gesagt, worauf es in der Anleitung ankommt", 1, "Im Mittelpunkt steht der Vorgang: was der Reihe nach mit dem Rad gemacht wird.")
-  ], "In einer Anleitung ist nicht wichtig, wer die Arbeit macht, denn sie gilt für jeden. Deshalb wird der Handelnde weggelassen. Wichtig sind nur die Arbeitsschritte: Was wird der Reihe nach gemacht?",
-  ["nicht wichtig|unwichtig|egal|jeder|jede person|nicht genannt|weggelassen|fehlt", "vorgang|schritt|was gemacht|was getan|was passiert|ablauf|reihenfolge|reihe nach|tätigkeit"]),
+  c("In einer Anleitung der Werkstatt steht: „Zuerst wird das Hinterrad ausgebaut. Dann wird der Mantel abgezogen.“" + WARUM_ANLEITUNG, [
+    "Wichtig ist, was gemacht wird – nicht, wer es macht.",
+    "Wichtig ist, wer die Arbeit macht – nicht, was gemacht wird.",
+    "Das Passiv zeigt, dass die Arbeit erst später gemacht wird.",
+    "Das Passiv zeigt, dass die Arbeit schon erledigt ist."], 0, { points: 2, hinweis: H_ANLEITUNG }),
   a("Vergleiche: „Die Klingel wird angebracht.“ – „Die Klingel wird läuten.“" + ZWEIMAL_WIRD, [
     kr("Passivsatz richtig bestimmt", 1, "Der erste Satz („Die Klingel wird angebracht.“) steht im Passiv."),
-    kr("Passivform erklärt", 1, "„wird“ + Partizip II („angebracht“) – mit der Klingel geschieht etwas."),
-    kr("den anderen Satz erklärt", 1, "„wird“ + Infinitiv („läuten“) ist Futur I im Aktiv: Die Klingel tut selbst etwas.")
-  ], "Der erste Satz steht im Passiv, weil dort „wird“ mit dem Partizip II „angebracht“ steht: Mit der Klingel geschieht etwas. Im zweiten Satz steht „wird“ mit dem Infinitiv „läuten“ – das ist Futur I im Aktiv.",
-  ["erste|ersten|erster|1. satz|satz 1", "partizip|mittelwort", "infinitiv|grundform|futur|zukunft"])
-];
-
-/* ============================== M7, Variante B – Wortfeld Tierheim ============================== */
-const M_B = [
-  m(WORTART, [
-    ["Die Leinen hängen NEBEN der Tür.", "Präposition"],
-    ["Der Welpe fürchtet SICH vor dem Staubsauger.", "Reflexivpronomen"],
-    ["Die Pflegerin kommt ABENDS noch einmal vorbei.", "Adverb"],
-    ["Die Hündin, DIE neu gekommen ist, frisst noch wenig.", "Relativpronomen"],
-    ["Nuria erzählt, DASS der Igel wieder gesund ist.", "Konjunktion"],
-    ["Der Korb ist zu klein. DEN tauschen wir aus.", "Demonstrativpronomen"]], { points: 3, hinweis: H_WORTART }),
-  f(RELATIV, [
-    luecke("Dort sitzt der Hund, ___ der grüne Napf gehört.", "dem", "welchem"),
-    luecke("Die Katze, ___ Pfote verletzt ist, liegt im Körbchen.", "deren"),
-    luecke("Der Hamster, ___ wir gestern aufgenommen haben, ist ganz zahm.", "den", "welchen"),
-    luecke("Die Welpen, ___ das neue Futter schmeckt, wachsen schnell.", "denen", "welchen")
-  ], { hinweis: H_RELATIV_M }),
-  c(REFLEXIV, [
-    "Wir kümmern UNS um die jungen Katzen.",
-    "Die Pflegerin zeigt UNS den Auslauf.",
-    "Der alte Hund begrüßt UNS am Zaun.",
-    "Die Futterspende hilft UNS sehr."], 0, { hinweis: H_REFLEXIV }),
-  m(ZEITFORM, [
-    ["Im Sommer wird das Tierheim ein Fest feiern.", "Futur I"],
-    ["Die Pflegerin schließt jeden Abend die Käfige ab.", "Präsens"],
-    ["Vor der Fütterung hatte Nuria die Näpfe gespült.", "Plusquamperfekt"],
-    ["Zwei Kaninchen sind am Montag neu eingezogen.", "Perfekt"],
-    ["Bis Weihnachten werden viele Tiere ein Zuhause gefunden haben.", "Futur II"],
-    ["Gestern lief ein junger Hund durch das offene Tor.", "Präteritum"]], { points: 3, hinweis: H_ZEITFORM }),
-  f(VERBFORM + "ich (helfen) – Präsens → ich helfe", [
-    form("er (kriechen) – Präteritum", "er kroch", "kroch"),
-    form("der Hund (fliehen) – Perfekt", "der Hund ist geflohen", "ist geflohen", "er ist geflohen"),
-    form("wir (einschlafen) – Plusquamperfekt", "wir waren eingeschlafen", "waren eingeschlafen"),
-    form("ihr (füttern) – Futur II", "ihr werdet gefüttert haben", "werdet gefüttert haben")
-  ], { hinweis: H_VERBFORM }),
-  f(FUTUR2, [
-    umbau("Bis Sonntag bürstet Nuria alle Hunde.", [
-      "Bis Sonntag wird Nuria alle Hunde gebürstet haben.",
-      "Nuria wird bis Sonntag alle Hunde gebürstet haben.",
-      "Nuria wird alle Hunde bis Sonntag gebürstet haben.",
-      "Alle Hunde wird Nuria bis Sonntag gebürstet haben."])
-  ], { hinweis: H_FUTUR2_SATZ }),
-  m(AKTIV_PASSIV_ZEIT, [
-    ["Die Tierärztin wird den Igel verbinden.", "Aktiv im Futur I"],
-    ["Der Zaun wurde im Frühjahr erneuert.", "Passiv im Präteritum"],
-    ["Der Auslauf ist gründlich gekehrt worden.", "Passiv im Perfekt"],
-    ["Die Hunde werden zweimal täglich ausgeführt.", "Passiv im Präsens"],
-    ["Die Handwerker sind schon gegangen.", "Aktiv im Perfekt"],
-    ["Das Katzenhaus wird nächstes Jahr vergrößert werden.", "Passiv im Futur I"]], { points: 3, hinweis: H_AKTIV_PASSIV_ZEIT }),
-  f(INS_PASSIV_M, [
-    umbau("Man hat die Käfige gereinigt.", passiv("Die Käfige", "sind", null, "gereinigt worden")),
-    umbau("Der Pfleger wird die Näpfe füllen.", passiv("Die Näpfe", "werden", ["vom Pfleger", "von dem Pfleger"], "gefüllt werden")),
-    umbau("Die Tierärztin impfte den Kater.", passiv("Der Kater", "wurde", "von der Tierärztin", "geimpft"))
-  ], { hinweis: H_INS_PASSIV_M }),
-  f(INS_AKTIV, [
-    umbau("Der Besucher wird von Frau Lindner angesprochen.", ["Frau Lindner spricht den Besucher an.", "Den Besucher spricht Frau Lindner an."])
-  ], { hinweis: H_INS_AKTIV_M }),
-  a("Auf einem Aushang im Tierheim steht: „Zuerst wird das Gehege gefegt. Danach wird frisches Stroh verteilt.“ Erkläre, warum auf solchen Aushängen oft das Passiv steht. Gehe dabei auf den Handelnden ein.", [
-    kr("Rolle des Handelnden erklärt", 2, "Es ist nicht wichtig (und nicht festgelegt), wer die Arbeit ausführt: Der Aushang gilt für alle, die Dienst haben, deshalb wird der Handelnde weggelassen. 2 Punkte für die klare Erklärung, 1 Punkt, wenn sie nur angedeutet ist."),
-    kr("gesagt, worauf es auf dem Aushang ankommt", 1, "Im Mittelpunkt steht der Vorgang: was der Reihe nach im Gehege gemacht wird.")
-  ], "Auf dem Aushang ist egal, wer gerade Dienst hat – die Schritte gelten für alle Helfer. Deshalb wird niemand genannt. Es kommt nur darauf an, was getan wird und in welcher Reihenfolge.",
-  ["nicht wichtig|unwichtig|egal|jeder|jede person|nicht genannt|weggelassen|fehlt", "vorgang|schritt|was gemacht|was getan|was passiert|ablauf|reihenfolge|reihe nach|tätigkeit"]),
-  a("Vergleiche: „Die Katze wird fauchen.“ – „Die Katze wird gewogen.“" + ZWEIMAL_WIRD, [
-    kr("Passivsatz richtig bestimmt", 1, "Der zweite Satz („Die Katze wird gewogen.“) steht im Passiv."),
-    kr("Passivform erklärt", 1, "„wird“ + Partizip II („gewogen“) – mit der Katze geschieht etwas."),
-    kr("den anderen Satz erklärt", 1, "„wird“ + Infinitiv („fauchen“) ist Futur I im Aktiv: Die Katze tut selbst etwas.")
-  ], "Im Passiv steht der zweite Satz: „wird“ + Partizip II „gewogen“ – mit der Katze wird etwas gemacht. Der erste Satz ist Futur I im Aktiv, denn nach „wird“ folgt der Infinitiv „fauchen“.",
-  ["zweite|zweiten|zweiter|2. satz|satz 2", "partizip|mittelwort", "infinitiv|grundform|futur|zukunft"])
+    kr("Passivsatz begründet", 1, "In eigenen Worten: Mit der Klingel wird etwas gemacht (jemand bringt sie an), sie tut selbst nichts. Fachbegriffe sind nicht verlangt – „Partizip II“ muss nicht fallen."),
+    kr("den anderen Satz erklärt", 1, "In eigenen Worten: Im zweiten Satz tut die Klingel selbst etwas (sie läutet) – oder: Der Satz sagt, was später geschehen wird. Fachbegriffe sind nicht verlangt – „Infinitiv“ und „Futur I“ müssen nicht fallen.")
+  ], "Der erste Satz steht im Passiv: Mit der Klingel wird etwas gemacht, jemand bringt sie an. Im zweiten Satz tut die Klingel selbst etwas – sie läutet.",
+  ["erste|ersten|erster|1. satz|satz 1", "gemacht|geschieht|passiert|jemand|nichts selbst|nicht selbst|nichts selber|nicht selber", "selbst|selber|zukunft|später|futur"], { hilfe: HILFE_ZWEIMAL })
 ];
 
 const ALLE = { kurz: "Grammatik I", scope: "Wortarten und Pronomen · Zeitformen · Aktiv und Passiv", minutes: 40, texte: [] };
 module.exports = {
   "d7-p6-r-a": probe(6, "R", "A", { ...ALLE, title: "Probe 6 (R7): Grammatik I", items: R_A }),
   "d7-p6-r-b": probe(6, "R", "B", { ...ALLE, title: "Probe 6 (R7): Grammatik I – Variante B", items: R_B }),
-  "d7-p6-m-a": probe(6, "M", "A", { ...ALLE, title: "Probe 6 (M7): Grammatik I", items: M_A }),
-  "d7-p6-m-b": probe(6, "M", "B", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Variante B", items: M_B })
+  "d7-p6-m-a": probe(6, "M", "A", { ...ALLE, title: "Probe 6 (M7): Grammatik I", items: M_A })
 };

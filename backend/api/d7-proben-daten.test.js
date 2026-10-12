@@ -14,6 +14,9 @@ const NUMMERN = [...new Set(Object.values(PROBEN).map((p) => p.nr))].sort((a, b)
 const TEXTPROBEN = new Set([1, 2, 3, 4, 5]);            // hier kommen mindestens 50 % der Punkte aus offenen Aufgaben
 const LANGTEXT = new Set([2, 3, 5]);                    // hier steht ein längerer Lesetext
 const fassung = (nr, zug, v) => PROBEN["d7-p" + nr + "-" + zug + "-" + v];
+// Ohne Variante B (Wunsch der Lehrkraft, 12.10.2026): Probe 6 für M7 gibt es nur in einer Fassung
+const OHNE_B = new Set(["6-m"]);
+const gibtEs = (nr, zug, v) => !(v === "b" && OHNE_B.has(nr + "-" + zug));
 const saetze = (p) => p.texte.flatMap((t) => (t.absaetze || t.verse || []).join(" ").split(/(?<=[.!?])\s+/)).map((s) => s.trim()).filter((s) => s.length > 25);
 const woerter = (p) => p.texte.reduce((n, t) => n + (t.absaetze || t.verse ? Zeilen.woerter(t) : 0), 0);
 
@@ -21,6 +24,7 @@ test("Es gibt mindestens eine Probe, und jede hat vier Fassungen (R7/M7, A/B)", 
   assert.ok(NUMMERN.length >= 1, "noch keine Probe");
   for (const nr of NUMMERN) for (const zug of ["r", "m"]) for (const v of ["a", "b"]) {
     const p = fassung(nr, zug, v);
+    if (!gibtEs(nr, zug, v)) { assert.equal(p, undefined, `Probe ${nr}: Fassung ${zug}-${v} soll es nicht geben`); continue; }
     assert.ok(p, `Probe ${nr}: Fassung ${zug}-${v} fehlt`);
     assert.equal(p.zug, zug.toUpperCase()); assert.equal(p.variante, v.toUpperCase()); assert.equal(p.nr, nr);
     assert.match(p.title, new RegExp("^Probe " + nr + " \\((R7|M7)\\): "), p.id + ": Titel");
@@ -32,6 +36,7 @@ test("Es gibt mindestens eine Probe, und jede hat vier Fassungen (R7/M7, A/B)", 
 for (const nr of NUMMERN) {
   test(`Probe ${nr}: Aufgaben sind vollständig und eindeutig`, () => {
     for (const zug of ["r", "m"]) for (const v of ["a", "b"]) {
+      if (!gibtEs(nr, zug, v)) continue;
       const p = fassung(nr, zug, v), wo = (i) => `${p.id} Aufgabe ${i + 1}: `;
       assert.ok(p.items.length >= 6 && p.items.length <= 16, p.id + ": 6 bis 16 Aufgaben");
       p.items.forEach((it, i) => {
@@ -73,6 +78,7 @@ for (const nr of NUMMERN) {
 
   test(`Probe ${nr}: Punkte und Anteil offener Aufgaben`, () => {
     for (const zug of ["r", "m"]) for (const v of ["a", "b"]) {
+      if (!gibtEs(nr, zug, v)) continue;
       const p = fassung(nr, zug, v), max = maxPoints(p), a = anteile(p);
       assert.ok(max >= 24 && max <= 44, `${p.id}: ${max} Punkte (erwartet 24 bis 44)`);
       const offen = a.offen / max;
@@ -92,6 +98,7 @@ for (const nr of NUMMERN) {
 
   test(`Probe ${nr}: Variante B ist gleichwertig, aber eine andere Probe`, () => {
     for (const zug of ["r", "m"]) {
+      if (!gibtEs(nr, zug, "b")) continue;
       const a = fassung(nr, zug, "a"), b = fassung(nr, zug, "b");
       assert.equal(maxPoints(b), maxPoints(a), `${zug}: Gesamtpunkte A ${maxPoints(a)} / B ${maxPoints(b)}`);
       assert.equal(b.minutes, a.minutes, zug + ": Bearbeitungszeit");
@@ -109,7 +116,7 @@ for (const nr of NUMMERN) {
       assert.deepEqual([...stoff(a)].filter((s) => sb.has(s)), [], zug + ": Variante B verwendet Material aus Variante A");
     }
     // R7 und M7 sind verschiedene Proben (keine gemeinsamen Lesetexte)
-    for (const v of ["a", "b"]) { const sr = new Set(saetze(fassung(nr, "r", v))); assert.deepEqual(saetze(fassung(nr, "m", v)).filter((s) => sr.has(s)), [], "R7 und M7 teilen einen Text"); }
+    for (const v of ["a", "b"]) { if (!gibtEs(nr, "r", v) || !gibtEs(nr, "m", v)) continue; const sr = new Set(saetze(fassung(nr, "r", v))); assert.deepEqual(saetze(fassung(nr, "m", v)).filter((s) => sr.has(s)), [], "R7 und M7 teilen einen Text"); }
   });
 }
 
