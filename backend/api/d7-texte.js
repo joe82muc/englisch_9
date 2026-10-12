@@ -164,7 +164,42 @@ function aehnlich(a, b) {
   if (x === y) return true;
   if (!x || !y) return false;
   const lang = Math.max(x.length, y.length), d = abstand(x, y);
-  return d <= (lang <= 4 ? 1 : lang <= 8 ? 2 : 3) && d < Math.min(x.length, y.length);
+  // drei Buchstaben anders nur bei langen Wörtern mit demselben Anfang („schpilen“ → „spielen“)
+  return d <= (lang <= 4 ? 1 : lang <= 7 ? 2 : 3) && d < Math.min(x.length, y.length) && (d < 3 || x[0] === y[0]);
+}
+const wortzahl = (s) => (String(s).match(/\S+/g) || []).length;
+// Stücke mit ihrem Abstand aneinanderhängen (leere fallen weg), der letzte Abstand bleibt weg
+const klebe = (liste) => { const da = liste.filter((x) => x[0]); return da.map((x, k) => x[0] + (k < da.length - 1 ? x[1] || " " : "")).join(""); };
+/* Nach dem Vergleich aufräumen, damit die Anzeige lesbar bleibt:
+   1. Ein Wort getrennt oder zusammengeschrieben („zuhause“ → „zu Hause“): Der Vergleich findet ein ähnliches Wort und
+      daneben ein eingefügtes oder gestrichenes – das ist zusammen eine Ausbesserung der Rechtschreibung.
+   2. Umgestellte Wörter („weil sie machen alles dreckig“ → „weil sie alles dreckig machen“) ergäben ein gestrichenes
+      Wort hier und ein eingefügtes dort. Liegen höchstens zwei Wörter dazwischen, wird daraus eine Überarbeitung. */
+function aufraeumen(teile) {
+  const rein = (x) => x && x.art === "falsch" && (!x.alt || !x.neu);
+  for (let i = 0; i < teile.length; i++) {
+    const x = teile[i], davor = teile[i - 1], danach = teile[i + 1];
+    if (!rein(x)) continue;
+    const an = (rs, vorn) => {
+      const alt = vorn ? [[x.alt, " "], [rs.alt, ""]] : [[rs.alt, " "], [x.alt, ""]], neu = vorn ? [[x.neu, x.ws], [rs.neu, ""]] : [[rs.neu, rs.ws], [x.neu, ""]];
+      if (kern(klebe(alt)) !== kern(klebe(neu))) return false;
+      rs.alt = klebe(alt); rs.neu = klebe(neu); if (!vorn) rs.ws = x.ws;
+      teile.splice(i, 1); i--;
+      return true;
+    };
+    if (danach && danach.art === "rs" && an(danach, true)) continue;
+    if (davor && davor.art === "rs") an(davor, false);
+  }
+  for (let i = 0; i < teile.length; i++) {
+    if (teile[i].art !== "falsch") continue;
+    let j = i + 1, luecke = 0;
+    while (j < teile.length && teile[j].art !== "falsch" && luecke <= 2) { luecke += wortzahl(teile[j].t !== undefined ? teile[j].t : teile[j].neu); j++; }
+    if (j >= teile.length || j === i + 1 || luecke > 2 || !(rein(teile[i]) || rein(teile[j]))) continue;
+    const stueck = teile.slice(i, j + 1);
+    teile.splice(i, j - i + 1, { alt: klebe(stueck.map((x) => [x.t !== undefined ? x.t : x.alt, " "])), neu: klebe(stueck.map((x) => [x.t !== undefined ? x.t : x.neu, x.ws])), art: "falsch", ws: teile[j].ws });
+    i--;
+  }
+  return teile;
 }
 // Schülertext und korrigierte Fassung vergleichen -> [{ t, ws } | { alt, neu, art: "rs" | "falsch", ws }]
 function vergleiche(alt, neu) {
@@ -210,6 +245,7 @@ function vergleiche(alt, neu) {
     else dazu.push(B[j++]);
   }
   schliesse();
+  aufraeumen(teile);
   if (teile.length) teile[teile.length - 1].ws = "";
   return teile;
 }
@@ -223,7 +259,9 @@ function korrekturLesen(roh, anzahl) {
   const ja = (zeile("BAUSTEINE").match(/\b(ja|nein)\b/gi) || []).map((x) => /^ja$/i.test(x));
   const text = s.slice(t.index + t[0].length).replace(/^```\w*\n?|\n?```\s*$/g, "").trim();
   if (!text) return null;
-  return { bausteine: Array.from({ length: anzahl }, (_, k) => ja[k] === true), lob: zeile("LOB").replace(/^…$/, ""), hinweis: zeile("HINWEIS").replace(/^[…–-]$/, ""), text };
+  // „so" (deutsches Anführungszeichen auf, gerades zu) -> „so“
+  const satz = (s) => s.replace(/„([^“”"„]*)["”]/g, "„$1“");
+  return { bausteine: Array.from({ length: anzahl }, (_, k) => ja[k] === true), lob: satz(zeile("LOB").replace(/^…$/, "")), hinweis: satz(zeile("HINWEIS").replace(/^[…–-]$/, "")), text };
 }
 
 function registerD7TexteRoutes(app, options = {}) {

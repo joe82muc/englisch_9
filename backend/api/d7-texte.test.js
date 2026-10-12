@@ -123,6 +123,20 @@ test("Vergleich: Rechtschreibung wird ausgebessert, Falsches steht alt und neu n
   assert.equal(ausTeilen(brief, true), "Liebe Redaktion,\n\nich bin dafür, dass der Platz offen bleibt.");
   // ein fehlendes Wort wird eingefügt, ein überflüssiges gestrichen
   assert.deepEqual(kurz(vergleiche("Ich hoffe Sie ändern das das.", "Ich hoffe, dass Sie das ändern.")).filter((x) => /falsch/.test(x)).length > 0, true);
+  // viele Buchstaben falsch, aber dasselbe Wort: Rechtschreibung
+  assert.deepEqual(kurz(vergleiche("zum beischpil tischtenis schpilen", "zum Beispiel Tischtennis spielen")), ["zum", "rs:beischpil>Beispiel", "rs:tischtenis>Tischtennis", "rs:schpilen>spielen"]);
+});
+
+test("Vergleich: getrennt oder zusammen ist Rechtschreibung, umgestellte Wörter sind eine Überarbeitung", () => {
+  assert.deepEqual(kurz(vergleiche("und immer nur zuhause sitzen.", "und immer nur zu Hause sitzen.")), ["und immer nur", "rs:zuhause>zu Hause", "sitzen."]);
+  assert.deepEqual(kurz(vergleiche("Das ist gar nicht so.", "Das ist garnicht so.")), ["Das ist", "rs:gar nicht>garnicht", "so."]);
+  // Verb ans Ende gestellt: nicht „machen“ gestrichen und drei Wörter weiter wieder eingefügt, sondern ein Stück
+  const teile = vergleiche("weil die sind voll asozial und machen alles dreckig.", "weil die den Platz nicht sauber halten und alles dreckig machen.");
+  assert.deepEqual(kurz(teile), ["weil die", "falsch:sind voll asozial und machen alles dreckig.>den Platz nicht sauber halten und alles dreckig machen."]);
+  assert.equal(ausTeilen(teile, true), "weil die den Platz nicht sauber halten und alles dreckig machen.");
+  assert.equal(ausTeilen(teile, false), "weil die sind voll asozial und machen alles dreckig.");
+  // weit auseinander: zwei getrennte Stellen bleiben getrennt
+  assert.deepEqual(kurz(vergleiche("ich bin voll dafür dass er immer offen ist", "ich bin dafür, dass er nachmittags immer offen ist")), ["ich bin", "falsch:voll>", "rs:dafür>dafür,", "dass er", "falsch:>nachmittags", "immer offen ist"]);
 });
 
 test("Vergleich: Die KI schreibt nichts dazu – eine längere Ergänzung wird verworfen", () => {
@@ -140,6 +154,7 @@ test("Antwort der KI lesen: Bausteine, Lob, Hinweis, Text", () => {
   assert.deepEqual(korrekturLesen("BAUSTEINE: ja\nLOB: Gut.\nHINWEIS:\nTEXT: Ich bin dafür.", 2).bausteine, [true, false], "fehlt eine Angabe, gilt der Baustein nicht als da");
   assert.equal(korrekturLesen("BAUSTEINE: ja\nLOB: Gut.", 1), null, "ohne TEXT keine Korrektur");
   assert.equal(korrekturLesen("", 1), null);
+  assert.equal(korrekturLesen("BAUSTEINE: ja\nLOB: Gut.\nHINWEIS: Das Wort „asozial\" ist eine Beleidigung.\nTEXT:\nx y", 1).hinweis, "Das Wort „asozial“ ist eine Beleidigung.");
 });
 
 const kor = (extra) => ({ modul: "arg-08", aufgabe: "arg1", titel: "Mein erstes Argument", auftrag: "Schreibe ein Argument mit Behauptung, Begründung und Beispiel.",
