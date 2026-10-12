@@ -257,8 +257,8 @@ const M_A = [
     "Das Passiv zeigt, dass die Arbeit schon erledigt ist."], 0, { points: 2, hinweis: H_ANLEITUNG }),
   a("Vergleiche: „Die Klingel wird angebracht.“ – „Die Klingel wird läuten.“" + ZWEIMAL_WIRD, [
     kr("Passivsatz richtig bestimmt", 1, "Der erste Satz („Die Klingel wird angebracht.“) steht im Passiv."),
-    kr("Passivsatz begründet", 1, "In eigenen Worten: Mit der Klingel wird etwas gemacht (jemand bringt sie an), sie tut selbst nichts. Fachbegriffe sind nicht verlangt – „Partizip II“ muss nicht fallen."),
-    kr("den anderen Satz erklärt", 1, "In eigenen Worten: Im zweiten Satz tut die Klingel selbst etwas (sie läutet) – oder: Der Satz sagt, was später geschehen wird. Fachbegriffe sind nicht verlangt – „Infinitiv“ und „Futur I“ müssen nicht fallen.")
+    kr("Passivsatz begründet", 1, "In eigenen Worten: Mit der Klingel wird etwas gemacht (jemand bringt sie an), sie tut selbst nichts. Fachbegriffe sind nicht verlangt; wer richtig mit ihnen erklärt („wird“ + Partizip II), bekommt den Punkt auch."),
+    kr("den anderen Satz erklärt", 1, "In eigenen Worten: Im zweiten Satz tut die Klingel selbst etwas (sie läutet) – oder: Der Satz sagt, was später geschehen wird. Fachbegriffe sind nicht verlangt; wer richtig mit ihnen erklärt („wird“ + Infinitiv, Futur I), bekommt den Punkt auch.")
   ], "Der erste Satz steht im Passiv: Mit der Klingel wird etwas gemacht, jemand bringt sie an. Im zweiten Satz tut die Klingel selbst etwas – sie läutet.",
   ["erste|ersten|erster|1. satz|satz 1", "gemacht|geschieht|passiert|jemand|nichts selbst|nicht selbst|nichts selber|nicht selber", "selbst|selber|zukunft|später|futur"], { hilfe: HILFE_ZWEIMAL })
 ];
