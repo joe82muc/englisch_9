@@ -437,6 +437,88 @@ test("Fehlerwörter der Vokabeltrainer", async () => {
   } finally { await new Promise((r) => api.server.close(r)); }
 });
 
+test("Fehlversuche je Aufgabe und Zurücksetzen eines Moduls (NT 7)", async () => {
+  let zeit = 1000;
+  const api = await starte({ store: dateiStore(null), now: () => zeit });
+  try {
+    const neu = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 2 })).body.neu.map((k) => k.code);
+    const [a, b] = neu, modul = "nt7-luftdruck";
+    const meta = { bereich: "Luft", titel: "Luftdruck", nr: 3 };
+    // Fehlversuche: 0 = auf Anhieb; ungültige Einträge fallen weg, Zahlen sind begrenzt
+    let r = await api.post(P + "/melden", { code: a, modul, geloest: ["mc1-0", "mc1-1"], gesamt: 10, meta, versuche: { "mc1-0": 0, "mc1-1": 3, "tf1": 2, "x y": 5, "mc9": -1, "gap1": 500 } });
+    assert.equal(r.status, 200);
+    let an = await api.post(P + "/anmelden", { code: a });
+    assert.deepEqual(an.body.fortschritt[modul].v, { "mc1-0": 0, "mc1-1": 3, tf1: 2, gap1: 99 });
+    assert.equal(an.body.fortschritt[modul].r, undefined, "noch nie zurückgesetzt");
+    // zweites Gerät meldet kleinere Zahlen: je Aufgabe bleibt der größere Wert; ohne das Feld bleibt alles
+    await api.post(P + "/melden", { code: a, modul, geloest: ["tf1"], gesamt: 10, versuche: { "mc1-1": 1, tf1: 4 } });
+    await api.post(P + "/melden", { code: a, modul, geloest: ["tf1"], gesamt: 10 });
+    let l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
+    let kind = l.body.schueler.find((s) => s.code === a);
+    assert.deepEqual(kind.module[modul].v, { "mc1-0": 0, "mc1-1": 3, tf1: 4, gap1: 99 });
+    assert.equal(Object.keys(kind.module[modul].g).length, 3);
+
+    // Das Kind setzt das Modul zurück
+    zeit = 2000;
+    r = await api.post(P + "/zuruecksetzen", { code: a, modul });
+    assert.deepEqual(r.body, { ok: true, r: 2000 });
+    an = await api.post(P + "/anmelden", { code: a });
+    assert.deepEqual(an.body.fortschritt[modul], { g: [], t: 10, r: 2000 }, "gelöste Aufgaben und Fehlversuche sind weg");
+    // Ein Gerät mit altem Stand (r fehlt oder ist älter) meldet: nichts wird übernommen, es erfährt vom Zurücksetzen
+    r = await api.post(P + "/melden", { code: a, modul, geloest: ["mc1-0", "mc1-1", "tf1"], gesamt: 10, versuche: { tf1: 4 } });
+    assert.equal(r.body.zurueckgesetzt, 2000);
+    r = await api.post(P + "/melden", { code: a, modul, geloest: ["mc1-0"], gesamt: 10, r: 1500 });
+    assert.equal(r.body.zurueckgesetzt, 2000);
+    an = await api.post(P + "/anmelden", { code: a });
+    assert.deepEqual(an.body.fortschritt[modul].g, []);
+    // Mit dem neuen Stand geht es normal weiter, das Zurücksetzen bleibt vermerkt
+    zeit = 2500;
+    r = await api.post(P + "/melden", { code: a, modul, geloest: ["mc1-0"], gesamt: 10, r: 2000, versuche: { "mc1-0": 1 } });
+    assert.equal(r.body.zurueckgesetzt, undefined);
+    assert.equal(r.body.anzahl, 1);
+    l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
+    kind = l.body.schueler.find((s) => s.code === a);
+    assert.deepEqual(kind.module[modul], { g: { "mc1-0": 2500 }, t: 10, z: 2500, v: { "mc1-0": 1 }, r: 2000, rn: 1, rw: "k" });
+
+    // Lehrkraft: ein Kind, dann die ganze Klasse (nur Kinder mit Stand in dem Modul)
+    await api.post(P + "/melden", { code: b, modul, geloest: ["mc1-0"], gesamt: 10, meta });
+    zeit = 3000;
+    assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "falsch", modul, code: a })).status, 401);
+    r = await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, code: a });
+    assert.deepEqual(r.body, { ok: true, anzahl: 1, r: 3000 });
+    l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
+    assert.deepEqual(l.body.schueler.find((s) => s.code === a).module[modul], { g: {}, t: 10, z: 3000, r: 3000, rn: 2, rw: "l" });
+    assert.equal(Object.keys(l.body.schueler.find((s) => s.code === b).module[modul].g).length, 1, "das andere Kind bleibt");
+    zeit = 4000;
+    r = await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, klasse: "7aM" });
+    assert.deepEqual(r.body, { ok: true, anzahl: 1, r: 4000 }, "nur das Kind, das noch etwas stehen hatte");
+    l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7", klasse: "7aM" });
+    assert.deepEqual(l.body.schueler.find((s) => s.code === b).module[modul], { g: {}, t: 10, z: 4000, r: 4000, rn: 1, rw: "l" });
+    assert.equal(l.body.schueler.find((s) => s.code === a).module[modul].r, 3000, "schon leer: nicht noch einmal gezählt");
+
+    // Grenzen: unbekanntes Modul, falscher Code, anderes Fach, Lehrercode
+    assert.equal((await api.post(P + "/zuruecksetzen", { code: a, modul: "quatsch" })).status, 400);
+    const fremd = ["111", "222", "333"].find((c) => !neu.includes(c));
+    assert.equal((await api.post(P + "/zuruecksetzen", { code: fremd, modul })).status, 404);
+    assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, code: "12" })).status, 400);
+    assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul, klasse: "quatsch" })).status, 400);
+    r = await api.post(P + "/zuruecksetzen", { code: a, modul: "e8-u1-vokabeln" });
+    assert.equal(r.status, 400, "erst nur NT 7");
+    assert.match(r.body.error, /noch nicht/);
+    assert.equal((await api.post(P + "/lehrer/zuruecksetzen", { password: "2", modul: "nt8-atom-ion", klasse: "7aM" })).status, 400);
+  } finally { await new Promise((r) => api.server.close(r)); }
+});
+
+test("Zurücksetzen mit dem Lehrercode speichert nichts", async () => {
+  const api = await starte({ store: dateiStore(null), lehrerCode: "000", now: () => 5000 });
+  try {
+    const r = await api.post(P + "/zuruecksetzen", { code: "000", modul: "nt7-luftdruck" });
+    assert.deepEqual(r.body, { ok: true, r: 5000, lehrer: true });
+    const l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt7" });
+    assert.equal(l.body.schueler.length, 0);
+  } finally { await new Promise((r) => api.server.close(r)); }
+});
+
 test("Deutsch 7: früher angemeldete Module erscheinen unter den heutigen Bereichsnamen", async () => {
   const api = await starte({ store: dateiStore(null) });
   try {

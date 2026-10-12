@@ -23,8 +23,10 @@
  *
  * Schlüssel:
  *   nt9:codes                 Menge aller Codes
- *   nt9:c:<code>              { code, klasse, angelegt, lrs?, p: { modul: { g: { aufgabe: Zeitpunkt }, t, z } } }
- *                             (lrs: Notenschutz LRS, Rechtschreibung zählt in Proben nicht – setzt die Lehrkraft)
+ *   nt9:c:<code>              { code, klasse, angelegt, lrs?, p: { modul: { g: { aufgabe: Zeitpunkt }, t, z, f?, v?, r?, rn?, rw? } } }
+ *                             (lrs: Notenschutz LRS, Rechtschreibung zählt in Proben nicht – setzt die Lehrkraft;
+ *                              v: Fehlversuche je Aufgabe vor dem ersten richtigen Lösen, 0 = auf Anhieb richtig;
+ *                              r: Zeitpunkt des letzten Zurücksetzens, rn: wie oft, rw: "k" Kind / "l" Lehrkraft)
  *   nt9:k:<modul>             { aufgabe: [Bezeichnung, Station oder Teil] }  (Aufgabenkatalog von den Seiten)
  *   nt9:mods / nt9:mm:<modul> selbst angemeldete Module { id, kurs, bereich, bnr, titel, kurz, nr, klassen }
  *   (alt, wird beim ersten Laden übernommen und gelöscht: nt9:s:<code>, nt9:p:<code>:<modul>)
@@ -37,7 +39,13 @@
  *   POST /api/nt9/fortschritt/melden   { code, klasse?, modul, geloest: [ids], gesamt, katalog?, meta?, fehler? } -> { ok, anzahl }
  *        (fehler: Fehlerwörter der Vokabeltrainer { wort: [wie oft falsch, wie oft hintereinander richtig] },
  *         immer die ganze Liste des Moduls; anmelden liefert sie als fortschritt[modul].f zurück)
+ *        (versuche?: { aufgabe: Fehlversuche } – je Aufgabe gilt der größere Wert; anmelden liefert sie als .v zurück.
+ *         r?: Stand des Geräts beim Zurücksetzen. Ist das Modul seither zurückgesetzt worden, übernimmt der Server
+ *         nichts und antwortet { ok, zurueckgesetzt: r } – das Gerät leert dann seinen eigenen Stand.)
+ *   POST /api/nt9/fortschritt/zuruecksetzen { code, klasse?, modul } -> { ok, r }
+ *        (Das Kind beginnt ein Modul neu: gelöste Aufgaben und Fehlversuche weg, r/rn/rw merken es sich.)
  * Routen (Lehrkraft, Passwort im Body):
+ *   POST …/lehrer/zuruecksetzen { password, modul, code } oder { password, modul, klasse } -> { ok, anzahl, r }
  *   POST …/lehrer/liste       { password, kurs?, klasse? } -> { ok, speicher, kurse, module, klassen, klassenInfo, schueler, katalog }
  *   POST …/lehrer/anlegen     { password, klasse, anzahl } -> { ok, neu: [{ code, klasse }] }
  *   POST …/lehrer/loeschen    { password, code } oder { password, klasse }  -> { ok, anzahl }
@@ -93,6 +101,10 @@ const DYN_MUSTER = /^(nt|gpg|d|e|i)([5-9]|10)-[a-z0-9-]{2,60}$/;
 const MAX_DYN = 1500;
 const MAX_CODES = 900; // 3-stellige Codes: 100 bis 999
 const MAX_AUFGABEN = 300;
+// Kurse, in denen ein Modul zurückgesetzt werden darf (Kind auf der Modulseite, Lehrkraft in der Verwaltung).
+// Erst nur NT 7 (Erprobung, Wunsch vom 12.10.2026). Voraussetzung für einen weiteren Kurs: Alle seine Seiten melden
+// über js/lernstand.js (das schickt „r“ mit) – sonst nähme der Server nach einem Zurücksetzen nichts mehr an.
+const RESET_KURSE = ["nt7"];
 // Fehlversuche bei der Anmeldung: die ganze Schule hat oft nur eine IP, darum großzügig
 const FEHL_FENSTER_MS = 10 * 60 * 1000;
 const FEHL_MAX = 60;
@@ -460,7 +472,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const fortschritt = {};
       Object.keys(kind.p).forEach((m) => {
         const p = kind.p[m];
-        if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0, ...(p.f ? { f: p.f } : {}) };
+        if (p && p.g) fortschritt[m] = { g: Object.keys(p.g), t: p.t || 0, ...(p.f ? { f: p.f } : {}), ...(p.v ? { v: p.v } : {}), ...(p.r ? { r: p.r } : {}) };
       });
       const antwort = { ok: true, code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), fortschritt };
       if (kind.lehrer) antwort.lehrer = true;
@@ -492,6 +504,12 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const geloest = aufgabenListe(body.geloest);
       const gesamt = Math.max(0, Math.min(MAX_AUFGABEN, parseInt(body.gesamt, 10) || 0));
       const alt = kind.p[modul] || { g: {}, t: 0, z: 0 };
+      // Zurückgesetzt, seit dieses Gerät seinen Stand geholt hat: nichts übernehmen (sonst käme der alte Stand wieder)
+      if (alt.r && alt.r > (parseInt(body.r, 10) || 0)) {
+        const katalogAlt = katalogPruefen(body.katalog);
+        if (katalogAlt) await katalogSichern(modul, katalogAlt);
+        return res.json({ ok: true, anzahl: Object.keys(alt.g || {}).length, zurueckgesetzt: alt.r });
+      }
       const g = alt.g || {};
       const zeit = now();
       let neu = 0;
@@ -499,13 +517,49 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const t = gesamt || alt.t || 0;
       const fehlerNeu = body.fehler !== undefined ? fehlerPruefen(body.fehler) : alt.f;
       const fehlerAnders = JSON.stringify(fehlerNeu || null) !== JSON.stringify(alt.f || null);
-      if (neu || t !== alt.t || !kind.p[modul] || fehlerAnders) {
-        kind.p[modul] = { g, t, z: neu || fehlerAnders ? zeit : alt.z || zeit, ...(fehlerNeu && Object.keys(fehlerNeu).length ? { f: fehlerNeu } : {}) };
+      // Fehlversuche: je Aufgabe der größere Wert (zwei Geräte zählen getrennt)
+      let v = alt.v, versucheAnders = false;
+      if (body.versuche !== undefined) {
+        const gemeldet = versuchePruefen(body.versuche);
+        v = Object.assign({}, alt.v || {});
+        Object.keys(gemeldet).forEach((id) => { if (v[id] === undefined || gemeldet[id] > v[id]) { v[id] = gemeldet[id]; versucheAnders = true; } });
+      }
+      if (neu || t !== alt.t || !kind.p[modul] || fehlerAnders || versucheAnders) {
+        kind.p[modul] = { g, t, z: neu || fehlerAnders || versucheAnders ? zeit : alt.z || zeit,
+          ...(fehlerNeu && Object.keys(fehlerNeu).length ? { f: fehlerNeu } : {}),
+          ...(v && Object.keys(v).length ? { v } : {}),
+          ...(alt.r ? { r: alt.r, rn: alt.rn || 1, rw: alt.rw || "k" } : {}) };
         await geaendert(kind.code);
       }
       const katalog = katalogPruefen(body.katalog);
       if (katalog) await katalogSichern(modul, katalog);
       return res.json({ ok: true, anzahl: Object.keys(g).length });
+    } catch (error) { return fehler(res, error); }
+  });
+
+  /* --- Ein Modul neu beginnen (erst nur in den Kursen aus RESET_KURSE) ---
+     Gelöste Aufgaben und Fehlversuche des Moduls werden gelöscht. r (Zeitpunkt) sagt jedem Gerät des Kindes, dass es
+     seinen eigenen Stand leeren muss; Meldungen mit älterem r nimmt „melden“ nicht mehr an. Fehlerwörter (f) bleiben. */
+  const resetErlaubt = (modul) => RESET_KURSE.includes(kursVon(modul));
+  function modulLeeren(kind, modul, wer, zeit) {
+    const alt = kind.p[modul] || { g: {}, t: 0, z: 0 };
+    kind.p[modul] = { g: {}, t: alt.t || 0, z: zeit, ...(alt.f ? { f: alt.f } : {}), r: zeit, rn: Math.min(999, (alt.rn || 0) + 1), rw: wer };
+  }
+  app.post("/api/nt9/fortschritt/zuruecksetzen", async (req, res) => {
+    try {
+      if (gesperrt(req)) return res.status(429).json({ ok: false, error: "Zu viele falsche Codes. Warte ein paar Minuten." });
+      const body = req.body || {};
+      const modul = String(body.modul || "");
+      if (!kursVon(modul)) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
+      if (!resetErlaubt(modul)) return res.status(400).json({ ok: false, error: "Zurücksetzen gibt es in diesem Fach noch nicht." });
+      const kind = await kindPruefen(req, res, String(body.code || "").trim(), String(body.klasse || "").trim());
+      if (!kind) return;
+      const zeit = now();
+      // Lehrercode: Es ist nichts gespeichert, also auch nichts zu löschen – das Gerät leert nur seinen eigenen Stand
+      if (kind.lehrer) return res.json({ ok: true, r: zeit, lehrer: true });
+      modulLeeren(kind, modul, "k", zeit);
+      await geaendert(kind.code);
+      return res.json({ ok: true, r: zeit });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -532,7 +586,8 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const info = klassenUebersicht(kinder);
       const schueler = kinder.filter((k) => !klasse || k.klasse === klasse).sort((a, b) => a.code.localeCompare(b.code)).map((k) => {
         const m = {};
-        ids.forEach((id) => { const p = k.p[id]; if (p) m[id] = { g: p.g || {}, t: p.t || 0, z: p.z || 0, ...(p.f ? { f: p.f } : {}) }; });
+        ids.forEach((id) => { const p = k.p[id]; if (p) m[id] = { g: p.g || {}, t: p.t || 0, z: p.z || 0, ...(p.f ? { f: p.f } : {}),
+          ...(p.v ? { v: p.v } : {}), ...(p.r ? { r: p.r, rn: p.rn || 1, rw: p.rw || "k" } : {}) }; });
         return { code: k.code, klasse: k.klasse, angelegt: k.angelegt || 0, ...(k.lrs ? { lrs: true } : {}), module: m };
       });
       const katalog = await katalogeHolen(ids);
@@ -587,6 +642,35 @@ function registerNt9FortschrittRoutes(app, options = {}) {
         codes.forEach((c) => { kinder.delete(c); schmutzig.delete(c); });
       }
       return res.json({ ok: true, anzahl: codes.length });
+    } catch (error) { return fehler(res, error); }
+  });
+
+  // Ein Modul zurücksetzen: für ein Kind (code) oder für alle Kinder einer Klasse (klasse)
+  app.post("/api/nt9/fortschritt/lehrer/zuruecksetzen", async (req, res) => {
+    if (!lehrerOk(req, res)) return;
+    try {
+      const body = req.body || {};
+      const modul = String(body.modul || "");
+      if (!kursVon(modul)) return res.status(400).json({ ok: false, error: "Unbekanntes Modul." });
+      if (!resetErlaubt(modul)) return res.status(400).json({ ok: false, error: "Zurücksetzen gibt es in diesem Fach noch nicht." });
+      const kinder = await kinderLaden();
+      let liste;
+      if (body.klasse !== undefined) {
+        const klasse = klasseNorm(body.klasse);
+        if (!klasse) return res.status(400).json({ ok: false, error: "Unbekannte Klasse." });
+        liste = [...kinder.values()].filter((k) => k.klasse === klasse);
+      } else {
+        const code = String(body.code || "");
+        if (!/^\d{3}$/.test(code)) return res.status(400).json({ ok: false, error: "Ungültiger Code." });
+        const kind = kinder.get(code);
+        if (!kind) return res.status(404).json({ ok: false, error: "Diesen Code gibt es nicht." });
+        liste = [kind];
+      }
+      // Nur Kinder, die in dem Modul schon etwas stehen haben – sonst entstünden leere Einträge für die ganze Klasse
+      const zeit = now();
+      const betroffen = liste.filter((k) => { const p = k.p[modul]; return p && (Object.keys(p.g || {}).length || (p.v && Object.keys(p.v).length)); });
+      for (const kind of betroffen) { modulLeeren(kind, modul, "l", zeit); await geaendert(kind.code); }
+      return res.json({ ok: true, anzahl: betroffen.length, r: zeit });
     } catch (error) { return fehler(res, error); }
   });
 
@@ -736,6 +820,20 @@ function fehlerPruefen(v) {
     if (!falsch) continue;
     out[id] = [falsch, richtig];
     if (++n >= 400) break;
+  }
+  return out;
+}
+
+// Fehlversuche { aufgabe: Zahl } – 0 = auf Anhieb richtig; Kennungen wie bei den Aufgaben, Zahlen begrenzt
+function versuchePruefen(v) {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  const out = {};
+  let n = 0;
+  for (const [id, wert] of Object.entries(v)) {
+    const zahl = parseInt(wert, 10);
+    if (!/^[A-Za-z0-9_-]{1,60}$/.test(id) || !(zahl >= 0)) continue;
+    out[id] = Math.min(99, zahl);
+    if (++n >= MAX_AUFGABEN) break;
   }
   return out;
 }
