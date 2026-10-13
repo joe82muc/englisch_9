@@ -144,7 +144,7 @@ const KI_THEMEN_9 = [
 function kiRegeln(test, lrs) {
   const level = (test && test.level) || "9";
   const themen = (test && test.kiThemen) || KI_THEMEN_9;
-  const alter = level === "7" ? "12 bis 13" : "14 bis 15";
+  const alter = level === "7" ? "12 bis 13" : level === "8" ? "13 bis 14" : "14 bis 15";
   return [
     `Du korrigierst eine Englisch-Grammatikarbeit einer ${level}. Klasse an einer`,
     "bayerischen Mittelschule.",

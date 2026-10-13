@@ -23,11 +23,12 @@
  *
  * Schlüssel:
  *   nt9:codes                 Menge aller Codes
- *   nt9:c:<code>              { code, klasse, angelegt, lrs?, p: { modul: { g: { aufgabe: Zeitpunkt }, t, z, f?, v?, r?, rn?, rw?, rv?, ab?, abn? } } }
+ *   nt9:c:<code>              { code, klasse, angelegt, lrs?, p: { modul: { g: { aufgabe: Zeitpunkt }, t, z, f?, v?, r?, rn?, rw?, rv?, rm?, ab?, abn? } } }
  *                             (lrs: Notenschutz LRS, Rechtschreibung zählt in Proben nicht – setzt die Lehrkraft;
  *                              v: Fehlversuche je Aufgabe vor dem ersten richtigen Lösen, 0 = auf Anhieb richtig;
  *                              r: Zeitpunkt des letzten Zurücksetzens, rn: wie oft, rw: "k" Kind / "l" Lehrkraft;
  *                              rv: [gelöst, gesamt] – Stand der Pflichtaufgaben vor dem letzten Zurücksetzen;
+ *                              rm: [gelöst, gesamt] – der beste Stand vor irgendeinem Zurücksetzen, wenn er besser ist als rv;
  *                              ab: das Modul war vor einem Zurücksetzen schon vollständig gelöst (Zeitpunkt der
  *                                  letzten gelösten Aufgabe), abn: wie oft – bleibt über weitere Zurücksetzungen stehen)
  *   nt9:k:<modul>             { aufgabe: [Bezeichnung, Station oder Teil] }  (Aufgabenkatalog von den Seiten)
@@ -85,7 +86,7 @@ const KURSE = [
   { id: "d8", fach: "d", stufe: 8, zuege: ["M", "R"], titel: "Deutsch 8", module: [] },
   { id: "d9", fach: "d", stufe: 9, zuege: ["M", "R"], titel: "Deutsch 9", module: [] },
   { id: "e7", fach: "e", stufe: 7, zuege: ["M", "R"], titel: "Englisch 7", module: [] },
-  { id: "e8", fach: "e", stufe: 8, zuege: ["R"], titel: "Englisch 8", module: [] },
+  { id: "e8", fach: "e", stufe: 8, zuege: ["M", "R"], titel: "Englisch 8", module: [] },
   { id: "e9", fach: "e", stufe: 9, zuege: ["M", "R"], titel: "Englisch 9", module: [
     { id: "e9u1g1", nr: 1, kurz: "G1", titel: "Simple past" },
     { id: "e9u1g2", nr: 2, kurz: "G2", titel: "Will-future" },
@@ -110,6 +111,9 @@ const MAX_AUFGABEN = 300;
 // Kurs: Alle seine Seiten melden über js/lernstand.js (das schickt „r“ mit) – sonst nähme der Server nach einem
 // Zurücksetzen nichts mehr an. (Deutsch 7: Der Argumentations-Führerschein meldet selbst und schickt „r“ ebenfalls.)
 const RESET_KURSE = ["nt7", "d7"];
+// Englisch 8M (Wunsch vom 13.10.2026): Die 8M-Seiten liegen im Kurs „e8“ neben denen der 8R und tragen die Kennung
+// e8-m-… – nur sie dürfen neu begonnen werden, die 8R-Seiten (e8-u…) bleiben, wie sie sind.
+const RESET_PREFIXE = ["e8-m-"];
 // Fehlversuche bei der Anmeldung: die ganze Schule hat oft nur eine IP, darum großzügig
 const FEHL_FENSTER_MS = 10 * 60 * 1000;
 const FEHL_MAX = 60;
@@ -547,7 +551,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
      seinen eigenen Stand leeren muss; Meldungen mit älterem r nimmt „melden“ nicht mehr an. Fehlerwörter (f) bleiben.
      Für die Lehrkraft bleibt vermerkt, wie weit das Kind vorher war (rv) – und ob es das Modul schon einmal ganz
      abgeschlossen hatte (ab, abn): Ein neu begonnenes Modul sieht sonst aus, als hätte das Kind nichts getan. */
-  const resetErlaubt = (modul) => RESET_KURSE.includes(kursVon(modul));
+  const resetErlaubt = (modul) => RESET_KURSE.includes(kursVon(modul)) || (Boolean(kursVon(modul)) && RESET_PREFIXE.some((p) => modul.startsWith(p)));
   // [gelöst, gesamt] der Pflichtaufgaben. „Plus“-Aufgaben sind für R-Klassen freiwillig und zählen dort nicht mit
   // (so rechnet auch die Verwaltung der Lehrkraft). Ohne Aufgabenliste zählt, was das Kind gemeldet hat.
   function pflichtStand(kind, p, katalog) {
@@ -566,8 +570,13 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     const fertig = gesamt > 0 && geloest >= gesamt;
     const zuletztGeloest = Math.max(0, ...Object.values(alt.g || {}).map((z) => Number(z) || 0));
     const vorher = geloest ? [geloest, gesamt] : alt.rv;
+    // rm: der beste Stand, den das Kind vor irgendeinem Zurücksetzen je hatte (rv ist nur der Stand vor dem letzten).
+    // Steht nur da, wenn er besser ist als rv – die Verwaltung zeigt damit den „maximal erreichten Fortschritt“.
+    const anteil = (s) => (Array.isArray(s) && s[1] > 0 ? s[0] / s[1] : -1);
+    const bester = [vorher, alt.rm, alt.rv].filter((s) => anteil(s) >= 0).sort((a, b) => anteil(b) - anteil(a) || b[0] - a[0])[0];
     kind.p[modul] = { g: {}, t: alt.t || 0, z: zeit, ...(alt.f ? { f: alt.f } : {}), r: zeit, rn: Math.min(999, (alt.rn || 0) + 1), rw: wer,
       ...(vorher ? { rv: vorher } : {}),
+      ...(bester && anteil(bester) > anteil(vorher) ? { rm: bester } : {}),
       ...(fertig ? { ab: zuletztGeloest || zeit, abn: Math.min(999, (alt.abn || 0) + 1) } : alt.ab ? { ab: alt.ab, abn: alt.abn || 1 } : {}) };
   }
   app.post("/api/nt9/fortschritt/zuruecksetzen", async (req, res) => {
@@ -805,6 +814,7 @@ function resetFelder(p) {
   return {
     ...(p.r ? { r: p.r, rn: p.rn || 1, rw: p.rw || "k" } : {}),
     ...(Array.isArray(p.rv) ? { rv: p.rv } : {}),
+    ...(Array.isArray(p.rm) ? { rm: p.rm } : {}),
     ...(p.ab ? { ab: p.ab, abn: p.abn || 1 } : {})
   };
 }

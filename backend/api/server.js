@@ -499,15 +499,17 @@ registerNt9DiskussionRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
-// --- Grammatik Englisch 9R/9M und 7R/7M (Grammatikprobe + Kurztests, KI-Bewertung; R 50 % = Note 3, M 50 % = Note 4) ---
+// --- Grammatik Englisch 9R/9M, 7R/7M und 8M (Grammatikproben + Kurztests, KI-Bewertung; R 50 % = Note 3, M 50 % = Note 4) ---
 const { registerGrammatik9rRoutes } = require("./grammatik9r");
 const { TESTS: GRAMMATIK9R } = require("./grammatik9r-daten");
 const { TESTS: GRAMMATIK7 } = require("./grammatik7-daten");
+// Englisch 8M: je Unit zwei kleine Grammatikproben (e8m-u<N>-gp1, -gp2)
+const { TESTS: GRAMMATIK8M } = require("./grammatik8m-daten");
 const grammatik = registerGrammatik9rRoutes(app, {
   dataDir: DATA_DIR,
   kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
-  tests: { ...GRAMMATIK9R, ...GRAMMATIK7 },
+  tests: { ...GRAMMATIK9R, ...GRAMMATIK7, ...GRAMMATIK8M },
   hashSecret: process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi",
   askAnthropic: askAnthropic
 });
@@ -552,7 +554,7 @@ const probenVorschau = registerProbenVorschau(app, {
   teacherPassword: TEACHER_PASSWORD,
   quellen: {
     vokabeltest: { form: "vokabel", tests: VOKABELTESTS },
-    grammatik9r: { form: "grammatik", tests: { ...GRAMMATIK9R, ...GRAMMATIK7 } },
+    grammatik9r: { form: "grammatik", tests: { ...GRAMMATIK9R, ...GRAMMATIK7, ...GRAMMATIK8M } },
     nt7: { form: "nt", tests: require("./nt7-fragen") },
     nt8: { form: "nt", tests: require("./nt8-fragen") },
     inf7: { form: "nt", tests: require("./inf7-fragen") },
@@ -629,7 +631,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-13-deutsch7-probe6-31p",
+    version: "2026-10-13-englisch8m",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

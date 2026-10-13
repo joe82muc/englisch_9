@@ -729,7 +729,9 @@ const TESTS = {
   [e7mu1probe1.id]: e7mu1probe1,
   [e7mu1t3.id]: e7mu1t3,
   [e7ru1t1.id]: e7ru1t1,
-  [e7ru1t2.id]: e7ru1t2
+  [e7ru1t2.id]: e7ru1t2,
+  // Englisch 8M: je Unit zwei Tests (e8m-u<N>-test1, -test2) – eigene Datei, weil es acht sind
+  ...require("./vokabeltest-8m-daten").TESTS
 };
 
 module.exports = { TESTS };
