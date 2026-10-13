@@ -17,6 +17,9 @@
  * opts.aufgaben: { "<kennung>": { titel, auftrag: "Text für die KI", pruefe: (x) => [{ ok, text }] } }
  *   x ist die gelesene Mappe (liesXlsx): formel(a), wert(a), hatFormel(a), istZahl(a), istText(a), leer(a),
  *   istDatum(a), istProzent(a), istWaehrung(a), fett(a), bezuege(a), gleich(a, zahl, tol), formelWie(a, [..]).
+ *   x.diagramme (Informatik 9): [{ art: "saeule"|"balken"|"kreis"|"ring"|"linie"|"flaeche"|"punkt"|"sonst", gestapelt: ""|"gestapelt"|"prozent",
+ *     titel: "" (eigener Titel; leer, wenn keiner oder nur der automatische), autoTitel: true|false,
+ *     reihen: [{ name, nameRef, kategorien: "Tabelle1!$A$2:$A$6", werte: "Tabelle1!$B$2:$B$6" }] }] – leer, wenn die Mappe kein Diagramm hat.
  */
 
 const zlib = require("zlib");
@@ -86,7 +89,7 @@ function verschiebe(f, ds, dz) {
     return s < 0 || z < 1 ? "#BEZUG!" : fs + spalteName(s) + fz + z;
   });
 }
-const NAMEN = { SUM: "SUMME", AVERAGE: "MITTELWERT", COUNT: "ANZAHL", IF: "WENN", ROUND: "RUNDEN", PRODUCT: "PRODUKT", COUNTA: "ANZAHL2", TODAY: "HEUTE", AND: "UND", OR: "ODER" };
+const NAMEN = { SUM: "SUMME", AVERAGE: "MITTELWERT", COUNT: "ANZAHL", IF: "WENN", ROUND: "RUNDEN", PRODUCT: "PRODUKT", COUNTA: "ANZAHL2", TODAY: "HEUTE", AND: "UND", OR: "ODER", SQRT: "WURZEL" };
 const FEHLERWERT = { "#REF!": "#BEZUG!", "#VALUE!": "#WERT!", "#NAME?": "#NAME?", "#DIV/0!": "#DIV/0!", "#N/A": "#NV", "#NUM!": "#ZAHL!", "#NULL!": "#NULL!" };
 function deutsch(f) {
   let s = String(f).replace(/\s+/g, "");
@@ -95,6 +98,64 @@ function deutsch(f) {
   s = s.replace(/[A-Z][A-Z0-9.]*(?=\()/g, (name) => NAMEN[name] || name);
   return "=" + s.toUpperCase();
 }
+
+/* ------------------------------------------------------------------
+   Diagramme (xl/charts/chartN.xml) – nur Zeichenketten, kein require: Dieser Block wird für die Ersatzprüfung der
+   Webseite übernommen (9M/Informatik/excel-aufgaben9.js, erzeugt von .codex-build/informatik9-werkzeug/excel/mach-aufgaben9.py).
+   Was Excel schreibt (Microsoft 365, Version 16.0, geprüft am 13.10.2026):
+   - Art:    c:barChart + c:barDir "col" (Säule) / "bar" (Balken) · c:pieChart · c:doughnutChart · c:lineChart · c:areaChart · c:scatterChart
+   - Stapel: c:grouping "stacked" / "percentStacked" (100 %)
+   - Titel:  eigener Titel = c:title mit c:tx (Text in a:t, oder c:strRef mit c:v bei Zellbezug); automatischer Titel (Reihenname bei einer
+             Reihe, sonst das Wort „Diagrammtitel“) = c:title OHNE c:tx; kein Titel = kein c:title und c:autoTitleDeleted 1
+   - Daten:  c:ser mit c:tx (Reihenname), c:cat (Beschriftungen) und c:val (Werte), jeweils mit c:f = Zellbereich;
+             Streudiagramm: c:xVal / c:yVal
+   ------------------------------------------------------------------ */
+/* ---- diagramme-anfang ---- */
+const DIA_ZEICHEN = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+const diaKlar = (s) => String(s == null ? "" : s).replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (_m, k) => {
+  if (k.charAt(0) !== "#") return DIA_ZEICHEN[k.toLowerCase()];
+  const nr = k.charAt(1).toLowerCase() === "x" ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10);
+  return Number.isFinite(nr) && nr > 0 && nr < 0x110000 ? String.fromCodePoint(nr) : "";
+});
+const diaVal = (s, tag) => { const m = new RegExp("<c:" + tag + "\\s[^>]*?val=\"([^\"]*)\"").exec(s); return m ? m[1] : ""; };
+// Text eines c:tx-Blocks: frei getippt (a:t in c:rich) oder aus einer Zelle (c:strRef/c:strCache/c:v)
+function diaText(block) {
+  if (/<c:rich[\s>]/.test(block)) {
+    return (block.match(/<a:p[\s>][\s\S]*?<\/a:p>/g) || [])
+      .map((p) => (p.match(/<a:t(?:\s[^>]*)?>[\s\S]*?<\/a:t>/g) || []).map((t) => diaKlar(t.replace(/<[^>]+>/g, ""))).join(""))
+      .join(" ").replace(/\s+/g, " ").trim();
+  }
+  const v = /<c:v>([\s\S]*?)<\/c:v>/.exec(block);
+  return v ? diaKlar(v[1]).trim() : "";
+}
+const diaRef = (block) => { const f = /<c:f>([\s\S]*?)<\/c:f>/.exec(block || ""); return f ? diaKlar(f[1]).trim() : ""; };
+const DIA_ART = { bar: "balken", bar3D: "balken", pie: "kreis", pie3D: "kreis", ofPie: "kreis", doughnut: "ring", line: "linie", line3D: "linie", area: "flaeche", area3D: "flaeche", scatter: "punkt" };
+function diagrammAusXml(xml) {
+  const kopf = /<c:chart[\s>]([\s\S]*?)<c:plotArea[\s>]/.exec(xml), vorn = kopf ? kopf[1] : "";
+  const tM = /<c:title[\s>]([\s\S]*?)<\/c:title>/.exec(vorn);
+  let titel = "", autoTitel = false;
+  if (tM) { const tx = /<c:tx>([\s\S]*?)<\/c:tx>/.exec(tM[1]); if (tx) titel = diaText(tx[1]); else autoTitel = true; }
+  const pa = /<c:plotArea[\s>]([\s\S]*)<\/c:plotArea>/.exec(xml), innen = pa ? pa[1] : "";
+  let art = "", gestapelt = "";
+  const reihen = [];
+  const typen = /<c:(\w+)Chart[\s>]([\s\S]*?)<\/c:\1Chart>/g;
+  let m;
+  while ((m = typen.exec(innen))) {
+    const roh = m[1], teil = m[2];
+    if (!art) {
+      art = roh === "bar" || roh === "bar3D" ? (diaVal(teil, "barDir") === "bar" ? "balken" : "saeule") : (DIA_ART[roh] || "sonst");
+      const g = diaVal(teil, "grouping");
+      gestapelt = g === "percentStacked" ? "prozent" : g === "stacked" ? "gestapelt" : "";
+    }
+    for (const s of teil.match(/<c:ser[\s>][\s\S]*?<\/c:ser>/g) || []) {
+      const ser = s.replace(/<c:(dPt|dLbls|trendline|errBars)[\s>][\s\S]*?<\/c:\1>/g, "");
+      const tx = /<c:tx>([\s\S]*?)<\/c:tx>/.exec(ser), cat = /<c:(?:cat|xVal)>([\s\S]*?)<\/c:(?:cat|xVal)>/.exec(ser), val = /<c:(?:val|yVal)>([\s\S]*?)<\/c:(?:val|yVal)>/.exec(ser);
+      reihen.push({ name: tx ? diaText(tx[1]) : "", nameRef: tx ? diaRef(tx[1]) : "", kategorien: cat ? diaRef(cat[1]) : "", werte: val ? diaRef(val[1]) : "" });
+    }
+  }
+  return { art: art || "sonst", gestapelt, titel, autoTitel, reihen };
+}
+/* ---- diagramme-ende ---- */
 
 /* ------------------------------------------------------------------
    Mappe lesen
@@ -175,10 +236,15 @@ function liesXlsx(buf) {
     blaetter.push({ name: attribut(m[1], "name") || "", zellen: zip.hat(pfad) ? blattLesen(zip.text(pfad), texte, formate) : {} });
   }
   if (!blaetter.length) throw new Error("kein_blatt");
-  const z = (a, b) => (blaetter[b || 0] || { zellen: {} }).zellen[String(a).toUpperCase().replace(/\$/g, "")] || null;
+  // Diagramme (Informatik 9): jedes xl/charts/chartN.xml; ein Fehler in einem Diagramm macht die Mappe nicht unlesbar
+  const diagramme = [];
+  zip.namen.filter((n) => /^xl\/charts\/chart\d+\.xml$/.test(n)).sort((a, b) => parseInt(a.replace(/\D/g, ""), 10) - parseInt(b.replace(/\D/g, ""), 10))
+    .forEach((n) => { try { diagramme.push(diagrammAusXml(zip.text(n))); } catch (_e) { /* ignorieren */ } });
+  const z =(a, b) => (blaetter[b || 0] || { zellen: {} }).zellen[String(a).toUpperCase().replace(/\$/g, "")] || null;
   const glatt = (s) => String(s || "").replace(/\s/g, "").toUpperCase();
   const info = {
     blaetter,
+    diagramme,
     zelle: z,
     formel: (a, b) => { const c = z(a, b); return c ? c.f : ""; },
     wert: (a, b) => { const c = z(a, b); return c ? c.v : undefined; },
@@ -211,6 +277,11 @@ function tabellenText(x, max = 90) {
     return `${a}: ${typeof c.v === "number" ? "Zahl" : "Text"} ${wert}${anzeige}`;
   });
   if (adressen.length > max) zeilen.push(`… und ${adressen.length - max} weitere Zellen`);
+  const ARTEN = { saeule: "Säulendiagramm", balken: "Balkendiagramm", kreis: "Kreisdiagramm", ring: "Ringdiagramm", linie: "Liniendiagramm", flaeche: "Flächendiagramm", punkt: "Punktdiagramm", sonst: "anderes Diagramm" };
+  (x.diagramme || []).forEach((d, i) => {
+    const titel = d.titel ? `„${d.titel.slice(0, 60)}“` : d.autoTitel ? "noch der automatische Titel von Excel (kein eigener)" : "keiner";
+    zeilen.push(`Diagramm ${i + 1}: ${ARTEN[d.art] || d.art}${d.gestapelt === "prozent" ? " (100 % gestapelt)" : d.gestapelt ? " (gestapelt)" : ""}, Titel: ${titel}, Daten: ${d.reihen.slice(0, 6).map((r) => `${r.nameRef || "ohne Namen"} / ${r.kategorien || "ohne Beschriftung"} / ${r.werte}`).join("; ")}`);
+  });
   return zeilen.join("\n") || "(Die Tabelle ist leer.)";
 }
 

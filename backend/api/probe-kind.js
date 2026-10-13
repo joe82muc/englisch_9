@@ -120,7 +120,7 @@ function probeKindPruefer(kindZumCode) {
    (proben-rueckgabe.js). server.js hängt das vor die Abgabe-Routen aller Proben-Module (ABGABE_ROUTEN); die Module
    selbst antworten wie bisher. Deutsch 7 und 8 haben denselben Ablauf im eigenen Modul.
    Die Platzhalter („–“, leere Listen) sind für Seiten, die noch die frühere Antwort erwarten (offen gebliebener Tab). */
-const ABGABE_ROUTEN = ["vokabeltest", "grammatik9r", "nt7", "nt8", "inf7", "inf8", "infoaustausch", "informatik8", "nt9probe",
+const ABGABE_ROUTEN = ["vokabeltest", "grammatik9r", "nt7", "nt8", "inf7", "inf8", "inf9","infoaustausch", "informatik8", "nt9probe",
   "netzwerktest", "filiuspruefung"].map((modul) => "/api/" + modul + "/submit");
 function ohneErgebnis(body) {
   if (!body || body.ok !== true || !body.result || typeof body.result !== "object") return body;

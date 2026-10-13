@@ -259,6 +259,34 @@ registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf8", klasse: "8. Kl
 registerAbgabenRoutes(app, { prefix: "/api/inf8", stufe: 8, teacherPassword: TEACHER_PASSWORD, speicher: inf8Abgaben,
   excelAufgaben: require("./inf8-excel-aufgaben"), scratchModul: require("./inf8-scratch-aufgaben") });
 
+// --- Informatik 9 (9M und 9R gemeinsam), Ausbau 2026/27: fünf Module, fünf Proben. R9 und M9 lernen dasselbe und
+// schreiben dieselben Proben – Notenschlüssel R für beide (notenzug: 50 % = Note 3). Die Kennungen inf9-p<N>-r und
+// inf9-p<N>-m haben denselben Inhalt; es gibt zwei, damit die Lehrkraft je Klasse getrennt freischalten kann.
+// (Der bisherige Filius-Kurs läuft weiter unter /api/netzwerktest und /api/filiuspruefung.)
+const inf9Proben = registerNt7Routes(app, {
+  prefix: "/api/inf9",
+  datei: "inf9-proben.json",
+  tests: require("./inf9-fragen"),
+  fach: "Informatik",
+  stufe: 9,
+  notenzug: "R",
+  service: "inf9-proben",
+  csvName: "informatik9-proben.csv",
+  dataDir: DATA_DIR,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
+// Informatik 9: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf9/uebung/feedback", klasse: "Klasse 9", fach: "Informatik", thema: "Informatik (Netzwerke mit Filius, Internet: URL, DNS, HTTP und HTTPS, Tabellenkalkulation mit Excel: Funktionen und Diagramme, Programmieren mit Scratch)" });
+// Informatik 9: Excel- und Scratch-Aufträge hochladen (wie Informatik 8); mit Code wird die Datei für die Lehrkraft aufbewahrt
+const inf9Abgaben = abgabenSpeicher({ kurs: "inf9", dataDir: DATA_DIR });
+const inf9Merke = abgabeMerker({ speicher: inf9Abgaben, stufe: 9, kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req) });
+registerExcelPruefung(app, { askAnthropic, prefix: "/api/inf9", klasse: "9. Klasse", aufgaben: require("./inf9-excel-aufgaben"), merke: inf9Merke });
+registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf9", klasse: "9. Klasse", modul: require("./inf9-scratch-aufgaben"), merke: inf9Merke });
+registerAbgabenRoutes(app, { prefix: "/api/inf9", stufe: 9, teacherPassword: TEACHER_PASSWORD, speicher: inf9Abgaben,
+  excelAufgaben: require("./inf9-excel-aufgaben"), scratchModul: require("./inf9-scratch-aufgaben") });
+
 // --- NT 8 (8M und 8R): je Themenbereich eine Probe, R8/M8 × Variante A und Nachschreibprobe B (nt8-block-*.js).
 // Dieselbe Technik wie die NT-7-Proben, dazu: Beginn und Zwischenstand auf dem Server (sitzung), weitere Aufgabenarten
 // samt Bauaufgaben im NT-Labor und Korrektur jeder Aufgabe durch die Lehrkraft (erweitert). Kein zweites System. ---
@@ -304,6 +332,16 @@ registerNt7FreigabeRoutes(app, {
   datei: "inf8-freigabe.json",
   name: "Informatik-8-Freigabe",
   stufe: 8,
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+// --- Informatik 9: Module und Einheiten je Klasse freischalten (Übersicht 9M/Informatik, Verwaltung „Informatik“) ---
+registerNt7FreigabeRoutes(app, {
+  prefix: "/api/inf9",
+  datei: "inf9-freigabe.json",
+  name: "Informatik-9-Freigabe",
+  stufe: 9,
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
@@ -485,6 +523,13 @@ registerDeutsch9GrammatikRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// --- Informatik 9: KI-Lernhilfe unter jeder Aufgabe (kleiner Tipp, konkreter Hinweis, Schritt für Schritt – nie die Lösung) ---
+const { registerInf9HilfeRoutes } = require("./inf9-hilfe");
+registerInf9HilfeRoutes(app, {
+  askKi: askKiMitErsatz,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
+
 // --- Englisch 9R/9M Schreiben: Blogpost mit KI-Korrektur, Punkten und Note nach dem Zug des Kindes (nur mit Code) ---
 const { registerE9SchreibenRoutes } = require("./e9-schreiben");
 registerE9SchreibenRoutes(app, {
@@ -528,6 +573,7 @@ const PROBEN_QUELLEN = [
     { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
     { modul: "inf8", fach: "Informatik", abgaben: inf8Proben.abgaben },
+    { modul: "inf9", fach: "Informatik", abgaben: inf9Proben.abgaben },
     { modul: "nt9probe", fach: "NT", abgaben: nt9Probe.abgaben },
     { modul: "netzwerktest", fach: "Informatik", abgaben: netzwerktest.abgaben },
     { modul: "filiuspruefung", fach: "Informatik", abgaben: filiuspruefung.abgaben }
@@ -559,6 +605,7 @@ const probenVorschau = registerProbenVorschau(app, {
     nt8: { form: "nt", tests: require("./nt8-fragen") },
     inf7: { form: "nt", tests: require("./inf7-fragen") },
     inf8: { form: "nt", tests: require("./inf8-fragen") },
+    inf9: { form: "nt", tests: require("./inf9-fragen") },
     d7proben: { form: "deutsch", tests: require("./d7-proben-daten") },
     d8proben: { form: "deutsch", tests: require("./d8-proben-daten") },
     e9proben: { form: "deutsch", tests: require("./e9-proben-daten") },
@@ -631,7 +678,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-13-englisch8m-hilfe",
+    version: "2026-10-13-informatik9",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

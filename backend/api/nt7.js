@@ -23,6 +23,7 @@
  * Mehrfach registrierbar (Informatik 7): opts.prefix ("/api/inf7"), opts.datei ("inf7-proben.json"),
  * opts.tests (Fragen), opts.fach ("Informatik"), opts.csvName, opts.service.
  * opts.stufe (Informatik 8: 8) – nur Kinder dieser Jahrgangsstufe können die Proben beginnen; steht auch in den Meldungen des Servers.
+ * opts.notenzug (Informatik 9: "R") – fester Notenschlüssel für alle Kinder, unabhängig vom Zug ihrer Klasse.
  * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
  * je Schritt an der richtigen Stelle gibt es 1 Punkt.
  * Block-Proben (seit 07.10.2026, nt7-block-*.js): Jede Aufgabe nennt ihr Modul (modul, modulTitel) und ggf. transfer: true.
@@ -178,7 +179,10 @@ function registerNt7Routes(app, opts) {
   }
   function maxPoints(test) { return test.items.reduce((sum, item) => sum + item.points, 0); }
   // Notenschluessel nach dem Zug des Kindes: M-Klassen 50 % = Note 4, R-Klassen 50 % = Note 3
-  function grade(percent, zug) { return ((zug === "R" ? GRADE_SCALE_R : GRADE_SCALE_M).find(s => percent >= s.min) || {grade:6}).grade; }
+  // opts.notenzug ("R" oder "M"): fester Schluessel fuer ALLE Kinder dieser Proben, egal aus welcher Klasse.
+  // Informatik 9 (Auftrag vom 13.10.2026): R9 und M9 schreiben dieselben Proben nach dem R-Schluessel (50 % = Note 3).
+  const NOTENZUG = opts.notenzug === "R" || opts.notenzug === "M" ? opts.notenzug : "";
+  function grade(percent, zug) { return (((NOTENZUG || zug) === "R" ? GRADE_SCALE_R : GRADE_SCALE_M).find(s => percent >= s.min) || {grade:6}).grade; }
   function publicItem(item, index) {
     return {nr:index+1,type:item.type,prompt:item.prompt,points:item.points,
       options:item.options || undefined, labels:item.pairs?.map(pair => pair[0]),
@@ -212,7 +216,8 @@ function registerNt7Routes(app, opts) {
   function textFallback(answer, item) {
     if (answer.length < 3) return {points:0,comment:"Keine auswertbare Antwort.",source:"leer",needsReview:false};
     let lower = answer.toLocaleLowerCase("de");
-    if (item.dicht) lower = lower.replace(/\s*([=*\/+\-():;$])\s*/g, "$1");
+    // (Tablets machen aus " gern „ “ – für den Vergleich zählen alle Anführungszeichen gleich)
+    if (item.dicht) lower = lower.replace(/[„“”«»]/g, "\"").replace(/\s*([=*\/+\-():;$<>"])\s*/g, "$1");
     const trifft = item.dicht ? word => formelTreffer(lower, word) : word => lower.includes(word);
     const hits = item.keywords.filter(group => group.split("|").some(trifft)).length;
     const points = Math.min(item.points, hits);
