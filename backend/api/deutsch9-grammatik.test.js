@@ -18,11 +18,14 @@ test.before(async () => {
     proStunde: 3,
     kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "9aM", zug: "9M" } : code === "734" ? { code: "734", klasse: "8b", zug: "8R" }
       : code === "225" ? { code: "225", klasse: "7aM", zug: "7M" }
+      : code === "559" ? { code: "559", klasse: "8aM", zug: "8M" }
       : code === "999" ? { gesperrt: true } : null),
     askKi: async (system, user) => {
       letzteFrage = user;
       letztesSystem = system;
       if (kiModus === "weg") throw new Error("offline");
+      // KI-Hilfe (Englisch 8M): Die „KI“ verrät hier absichtlich die Lösung – der Server muss sie in Stufe 1 verdecken
+      if (kiModus === "hilfe") return JSON.stringify({ hinweise: ["Du brauchst 'has', nicht 'have'. Bei he, she, it steht immer has.", "Hier fehlt die 3. Form: eaten."] });
       if (kiModus === "murks") return "keine Ahnung";
       // englisches Zitat in doppelten Anführungszeichen, nicht maskiert: kein gültiges JSON
       if (kiModus === "zitat") return '{"richtig":false,"rueckmeldung":"Nach "How about" steht die -ing-Form."}';
@@ -140,5 +143,83 @@ test("nicht maskierte Anführungszeichen in der Rückmeldung: Urteil und Text bl
   assert.equal(status, 200);
   assert.equal(data.richtig, false);
   assert.equal(data.rueckmeldung, 'Nach "How about" steht die -ing-Form.');
+  kiModus = "ok";
+});
+
+/* ---------- KI-Hilfe in Stufen (Englisch 8M, seit 13.10.2026) ---------- */
+const hilfe = (body) => fetch(baseUrl + "/api/d9-grammatik/hilfe", {
+  method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+}).then(async (r) => ({ status: r.status, data: await r.json() }));
+
+const hilfeGut = {
+  code: "559", modul: "e8-m-u1-g1", aufgabe: "e8-m-u1-g1-b2", auftrag: "have oder has? Setze ein.", stufe: 1,
+  saetze: [
+    { satz: "My cousin ___ lived in Boston for a year.", antworten: ["have"], loesungen: ["has"] },
+    { satz: "I have never ___ sushi. (eat)", antworten: ["ate"], loesungen: ["eaten"] }
+  ]
+};
+
+test("KI-Hilfe: Die Sicherung verdeckt die Loesung, laesst aber stehen, was das Kind schrieb und was im Satz steht", () => {
+  const { loesungVerdecken } = require("./deutsch9-grammatik");
+  const s = (satz, antworten, loesungen) => ({ satz, antworten, loesungen });
+  assert.equal(loesungVerdecken("Du brauchst 'has', nicht 'have'. Bei he, she, it steht has.", s("My cousin ___ lived here.", ["have"], ["has"])),
+    "Du brauchst '___', nicht 'have'. Bei he, she, it steht ___.");
+  // mehrere Woerter: die ganze Form und ihre Teile; 'lived' hat das Kind selbst geschrieben
+  assert.equal(loesungVerdecken("Richtig ist 'have lived' - mit have, weil we mehrere sind. Dein 'lived' stimmt.", s("We ___ (live) here for six years.", ["has lived"], ["have lived"])),
+    "Richtig ist '___' - mit ___, weil we mehrere sind. Dein 'lived' stimmt.");
+  // Woerter, die es auch im Deutschen gibt, nur in Anfuehrungszeichen verdecken
+  assert.equal(loesungVerdecken("Was war gestern? Du brauchst 'was', weil es um gestern geht.", s("The email ___ sent yesterday.", ["is"], ["was"])),
+    "Was war gestern? Du brauchst '___', weil es um gestern geht.");
+  // Kurzform mit Apostroph, typografisch geschrieben
+  assert.equal(loesungVerdecken("Die Verneinung heisst hasn’t seen.", s("Omar ___ (not see) the film yet.", ["didn't saw"], ["hasn't seen"])), "Die Verneinung heisst ___.");
+  // nichts zu verdecken: Hinweis bleibt, wie er ist
+  assert.equal(loesungVerdecken("Schau auf die Person: Ist 'my cousin' einer oder mehrere?", s("My cousin ___ lived here.", ["have"], ["has"])),
+    "Schau auf die Person: Ist 'my cousin' einer oder mehrere?");
+});
+
+test("KI-Hilfe Stufe 1: eigener Auftrag ohne Aufloesung, die Loesung steht nicht im Hinweis", async () => {
+  const { systemHilfe, SYSTEM_HILFE } = require("./deutsch9-grammatik");
+  kiModus = "hilfe";
+  const { status, data } = await hilfe(hilfeGut);
+  assert.equal(status, 200);
+  assert.equal(data.stufe, 1);
+  assert.equal(data.hinweise.length, 2);
+  assert.equal(letztesSystem, systemHilfe(1));
+  assert.equal(SYSTEM_HILFE, systemHilfe(1));
+  assert.match(letztesSystem, /Verrate die L.sung nicht/);
+  assert.doesNotMatch(letztesSystem, /Nenne jetzt die richtige Form/, "die Anweisung der zweiten Stufe steht nicht in der ersten");
+  assert.match(letzteFrage, /Stufe: 1/);
+  assert.match(letzteFrage, /Satz 1: My cousin ___ lived/);
+  assert.match(letzteFrage, /Antwort des Kindes: <<<have>>>/);
+  assert.doesNotMatch(data.hinweise[0], /\bhas\b/);
+  assert.match(data.hinweise[0], /nicht 'have'/, "die Antwort des Kindes bleibt lesbar");
+  assert.doesNotMatch(data.hinweise[1], /eaten/);
+});
+
+test("KI-Hilfe Stufe 2: Jetzt darf die Form genannt werden", async () => {
+  const { systemHilfe } = require("./deutsch9-grammatik");
+  kiModus = "hilfe";
+  const { status, data } = await hilfe({ ...hilfeGut, stufe: 2 });
+  assert.equal(status, 200);
+  assert.equal(data.stufe, 2);
+  assert.equal(letztesSystem, systemHilfe(2));
+  assert.match(letztesSystem, /Nenne jetzt die richtige Form/);
+  assert.doesNotMatch(letztesSystem, /Verrate die L.sung nicht/);
+  assert.match(data.hinweise[0], /'has'/);
+  assert.match(data.hinweise[1], /eaten/);
+});
+
+test("KI-Hilfe: nur fuer die Seiten der 8M, nur mit Code, mit Grenze je Stunde", async () => {
+  kiModus = "hilfe";
+  assert.equal((await hilfe({ ...hilfeGut, modul: "e8-u1-g1", aufgabe: "e8-u1-g1-b2" })).status, 400, "8R hat keine KI-Hilfe");
+  assert.equal((await hilfe({ ...hilfeGut, modul: "d7-gr-03", aufgabe: "d7-gr-03-b2" })).status, 400);
+  assert.equal((await hilfe({ ...hilfeGut, aufgabe: "e8-m-u1-g2-b2" })).status, 400, "Aufgabe einer anderen Seite");
+  assert.equal((await hilfe({ ...hilfeGut, saetze: [] })).status, 400);
+  assert.equal((await hilfe({ ...hilfeGut, code: "" })).status, 401);
+  assert.equal((await hilfe({ ...hilfeGut, code: "999" })).status, 429);
+  assert.equal((await hilfe(hilfeGut)).status, 200, "dritte Frage dieser Stunde");
+  assert.equal((await hilfe(hilfeGut)).status, 429, "vierte Frage: Grenze erreicht");
+  kiModus = "murks";
+  assert.equal((await hilfe({ ...hilfeGut, code: "225" })).status, 503);
   kiModus = "ok";
 });
