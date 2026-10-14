@@ -8,6 +8,10 @@
  * R7 A Sportfest · R7 B Wochenmarkt · M7 Fahrradwerkstatt. Kein Satz steht in einem Lernmodul.
  * M7 gibt es seit 12.10.2026 nur in einer Fassung (Wunsch der Lehrkraft): Variante B (Wortfeld Tierheim) ist entfernt,
  * Aufgabe 10 ist zum Ankreuzen (1 Punkt), Aufgabe 11 (2 Punkte) verlangt keine Fachbegriffe mehr (Partizip II, Infinitiv).
+ * Seit 14.10.2026 steht an der Stelle von Variante B die Nachholprobe der M7 (Wortfeld Eisdiele, Wunsch der Lehrkraft):
+ * dieselben elf Aufgabenarten, aber leichter – R-Schlüssel (notenzug "R"), 26 Punkte, Aufgabe 8 mit halben Punkten
+ * (teilpunkte), Aufgabe 9 nur 1 Punkt, Aufgabe 11 zum Ankreuzen. Die Aufgaben der Fassung A stehen offen im Training
+ * zur Probe 6 (Website) – die Nachholprobe teilt mit ihr und mit dem Training keinen Satz.
  * Bleibt auf dem Server (Lösungen). Bausteine: bau.js.
  */
 const { c, m, f, feld, a, kr, probe } = require("./bau");
@@ -262,9 +266,89 @@ const M_A = [
   ["erste|ersten|erster|1. satz|satz 1", "gemacht|geschieht|passiert|jemand|selbst|selber|zukunft|später|futur"], { hilfe: HILFE_ZWEIMAL })
 ];
 
+/* ============================== M7, Nachholprobe – Wortfeld Eisdiele ==============================
+   Wie die M7-Fassung, aber leichter: klarere Sätze, leichtere Verben, keine Relativpronomen im Dativ oder Genitiv,
+   Aufgabe 8 mit kurzen Sätzen und halben Punkten, Aufgabe 11 zum Ankreuzen. Note nach dem R-Schlüssel (50 % = 3). */
+const H_WORTART_N = "Frage bei jedem Wort: Beschreibt es etwas? Verbindet es zwei Sätze? Zeigt es auf etwas? Leitet es einen Relativsatz ein? Bezieht es sich auf das Subjekt zurück?";
+const H_INS_PASSIV_N = "Das Akkusativobjekt wird zum Subjekt, das Verb wird zu „werden“ + Partizip II: im Präteritum „wurde“, im Perfekt „ist … worden“, im Futur I „wird … werden“.";
+// Halber Punkt: Passiv richtig gebildet, aber in einer anderen Zeitform (oder „worden“ fehlt)
+const umbauHalb = (satz, loesungen, halb) => feld(satz, loesungen, { breit: true, halb });
+
+const M_N = [
+  m(WORTART, [
+    ["Die Becher stehen AUF der Theke.", "Präposition"],
+    ["Ella bestellt ein KLEINES Vanilleeis.", "Adjektiv"],
+    ["Der Junge, DER an der Kasse wartet, zählt sein Geld.", "Relativpronomen"],
+    ["Wir essen draußen, WEIL die Sonne scheint.", "Konjunktion"],
+    ["Amira freut SICH über die bunten Streusel.", "Reflexivpronomen"],
+    ["DIESES Eis schmeckt nach Zitrone.", "Demonstrativpronomen"]], { points: 3, hinweis: H_WORTART_N }),
+  f(RELATIV, [
+    luecke("Das Eis, ___ nach Kokos schmeckt, ist schon ausverkauft.", "das", "welches"),
+    luecke("Der Kellner, ___ die Becher bringt, heißt Herr Demir.", "der", "welcher"),
+    luecke("Die Waffel, ___ Jonas gekauft hat, ist noch warm.", "die", "welche"),
+    luecke("Der Löffel, ___ Ella sucht, liegt unter dem Tisch.", "den", "welchen")
+  ], { hinweis: H_RELATIV_R }),
+  c(REFLEXIV, [
+    "Wir setzen UNS an den Tisch am Fenster.",
+    "Herr Demir bringt UNS die Servietten.",
+    "Frau Rossi winkt UNS freundlich zu.",
+    "Der letzte Eisbecher gehört UNS."], 0, { hinweis: H_REFLEXIV }),
+  m(ZEITFORM, [
+    ["Frau Rossi rührt die Schokoladensoße um.", "Präsens"],
+    ["Vor dem Öffnen hatte Amira die Eissorten an die Tafel geschrieben.", "Plusquamperfekt"],
+    ["Im Juli wird die Eisdiele auch sonntags öffnen.", "Futur I"],
+    ["Jonas hat zwei Kugeln Pistazieneis gegessen.", "Perfekt"],
+    ["Bis zum Abend wird Frau Rossi über hundert Kugeln verkauft haben.", "Futur II"],
+    ["Gestern blieb die Eisdiele wegen des Regens leer.", "Präteritum"]], { points: 3, hinweis: H_ZEITFORM }),
+  f(VERBFORM + "ich (lachen) – Präsens → ich lache", [
+    form("Ella (kaufen) – Präteritum", "Ella kaufte", "kaufte", "sie kaufte"),
+    form("wir (gehen) – Perfekt", "wir sind gegangen", "sind gegangen"),
+    form("ich (warten) – Plusquamperfekt", "ich hatte gewartet", "hatte gewartet"),
+    form("ihr (zahlen) – Futur II", "ihr werdet gezahlt haben", "werdet gezahlt haben")
+  ], { hinweis: H_VERBFORM }),
+  f(FUTUR2, [
+    umbau("Bis sechs Uhr spült Luca alle Becher.", [
+      "Bis sechs Uhr wird Luca alle Becher gespült haben.",
+      "Luca wird bis sechs Uhr alle Becher gespült haben.",
+      "Luca wird alle Becher bis sechs Uhr gespült haben.",
+      "Alle Becher wird Luca bis sechs Uhr gespült haben."])
+  ], { hinweis: H_FUTUR2_SATZ }),
+  m(AKTIV_PASSIV_ZEIT, [
+    ["Die Waffeln werden jeden Morgen frisch gebacken.", "Passiv im Präsens"],
+    ["Das Schild über der Tür wurde letzte Woche repariert.", "Passiv im Präteritum"],
+    ["Amira wird morgen an der Kasse helfen.", "Aktiv im Futur I"],
+    ["Die neue Eiskarte ist schon gedruckt worden.", "Passiv im Perfekt"],
+    ["Die letzten Gäste sind schon nach Hause gefahren.", "Aktiv im Perfekt"],
+    ["Die Milch wird morgen geliefert werden.", "Passiv im Futur I"]], { points: 3, hinweis: H_AKTIV_PASSIV_ZEIT }),
+  // 1 Punkt je Satz; halbe Punkte: andere Zeitform (halb) oder fast richtig, alles andere entscheidet die Lehrkraft
+  f(INS_PASSIV_M, [
+    umbauHalb("Luca deckte den Tisch.", passiv("Der Tisch", "wurde", "von Luca", "gedeckt"),
+      passiv("Der Tisch", "wird", "von Luca", "gedeckt").concat(passiv("Der Tisch", "ist", "von Luca", "gedeckt worden"))),
+    umbauHalb("Man hat die Fenster geputzt.", passiv("Die Fenster", "sind", null, "geputzt worden"),
+      passiv("Die Fenster", "wurden", null, "geputzt").concat(passiv("Die Fenster", "werden", null, "geputzt"), passiv("Die Fenster", "sind", null, "geputzt"))),
+    umbauHalb("Ella wird den Boden fegen.", passiv("Der Boden", "wird", "von Ella", "gefegt werden"),
+      passiv("Der Boden", "wird", "von Ella", "gefegt").concat(passiv("Der Boden", "wurde", "von Ella", "gefegt")))
+  ], { teilpunkte: true, hinweis: H_INS_PASSIV_N }),
+  f(INS_AKTIV, [
+    feld("Der Eisbecher wird von Frau Rossi verziert.", ["Frau Rossi verziert den Eisbecher.", "Den Eisbecher verziert Frau Rossi."], { breit: true })
+  ], { hinweis: H_INS_AKTIV_R }),
+  c("Im Rezept für Erdbeereis steht: „Zuerst werden die Erdbeeren gewaschen. Dann werden sie klein geschnitten.“ Warum stehen Rezepte und Anleitungen oft im Passiv? Kreuze die richtige Antwort an.", [
+    "Wichtig ist, was gemacht wird. Wer es macht, ist egal.",
+    "Wichtig ist, wer die Arbeit macht. Was gemacht wird, ist egal.",
+    "Das Passiv zeigt, dass die Arbeit schon fertig ist.",
+    "Das Passiv zeigt, dass die Arbeit erst morgen gemacht wird."], 0, { hinweis: H_ANLEITUNG }),
+  c("Nur einer dieser Sätze steht im Passiv. Kreuze ihn an.", [
+    "Das Eis wird gekühlt.",
+    "Das Eis wird schmelzen.",
+    "Das Eis schmilzt in der Sonne.",
+    "Das Eis ist geschmolzen."], 0, { hinweis: H_AKTIV_PASSIV })
+];
+
 const ALLE = { kurz: "Grammatik I", scope: "Wortarten und Pronomen · Zeitformen · Aktiv und Passiv", minutes: 40, texte: [] };
 module.exports = {
   "d7-p6-r-a": probe(6, "R", "A", { ...ALLE, title: "Probe 6 (R7): Grammatik I", items: R_A }),
   "d7-p6-r-b": probe(6, "R", "B", { ...ALLE, title: "Probe 6 (R7): Grammatik I – Variante B", items: R_B }),
-  "d7-p6-m-a": probe(6, "M", "A", { ...ALLE, title: "Probe 6 (M7): Grammatik I", items: M_A })
+  "d7-p6-m-a": probe(6, "M", "A", { ...ALLE, title: "Probe 6 (M7): Grammatik I", items: M_A }),
+  // Nachholprobe der M7 (Fassung B): leichter, eigene Punktzahl, Note nach dem R-Schlüssel
+  "d7-p6-m-b": probe(6, "M", "B", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Nachholprobe", notenzug: "R", nachholprobe: true, items: M_N })
 };

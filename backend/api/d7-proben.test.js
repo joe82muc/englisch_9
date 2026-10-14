@@ -382,6 +382,43 @@ test("Felder mit menge: Reihenfolge der Eingaben ist egal, jede Lösung zählt n
   }, { opts: { tests: proben } });
 });
 
+test("Halbe Punkte (halb, teilpunkte) und fester Notenschlüssel (notenzug R, z. B. Nachholprobe der M7)", async () => {
+  const proben = PROBEN();
+  const passiv = { type: "felder", prompt: "Forme ins Passiv um.", teilpunkte: true, felder: [
+    { label: "Luca deckte den Tisch.", loesungen: ["Der Tisch wurde von Luca gedeckt.", "Der Tisch wurde gedeckt."], halb: ["Der Tisch wird von Luca gedeckt."] },
+    { label: "Ella fegte den Boden.", loesungen: ["Der Boden wurde von Ella gefegt."], halb: ["Der Boden wird von Ella gefegt.", "Der Boden ist von Ella gefegt worden."] },
+    { label: "Amira putzte das Fenster.", loesungen: ["Das Fenster wurde von Amira geputzt."] },
+    { label: "Jonas holte die Milch.", loesungen: ["Die Milch wurde von Jonas geholt."] },
+    { label: "Herr Demir zählte das Geld.", loesungen: ["Das Geld wurde von Herrn Demir gezählt."] }] };
+  const frage = { type: "choice", prompt: "Welcher Satz steht im Passiv?", options: ["Das Eis wird gekühlt.", "Das Eis wird schmelzen.", "Das Eis schmilzt."], answer: 0 };
+  for (const id of ["d7-p9-m-a", "d7-p9-m-b"]) proben[id].items = [JSON.parse(JSON.stringify(passiv)), { ...frage }];
+  proben["d7-p9-m-b"].notenzug = "R";
+  // richtig · halb (andere Zeitform) · fast richtig (Tippfehler) · falsch · leer · Ankreuzen richtig = 1 + 0,5 + 0,5 + 0 + 0 + 1 = 3 von 6 (50 %)
+  const a = [["Der Tisch wurde gedeckt.", "der boden wird von ella gefegt", "Das Fenster wurde von Amira geputst.", "Jonas wurde die Milch geholt.", ""], 0];
+  await mitServer(null, async ({ post, get, abgaben, lehrer }) => {
+    assert.equal((await lehrer("unlock", { testId: "d7-p9-m-b", open: true })).status, 200);
+    const liste = (await get("list?alle=1")).tests;
+    assert.equal(liste.find((t) => t.id === "d7-p9-m-b").notenzug, "R");
+    assert.equal(liste.find((t) => t.id === "d7-p9-m-a").notenzug, undefined);
+    assert.ok(!JSON.stringify((await post("start", { testId: "d7-p9-m-b", code: "101" })).data).includes("Herrn Demir"), "keine Lösungen und keine halben Lösungen beim Kind");
+    assert.equal((await post("submit", { testId: "d7-p9-m-b", code: "101", answers: a })).status, 200);
+    assert.equal((await post("submit", { testId: "d7-p9-m-a", code: "400", answers: a })).status, 200);
+    const [b] = await abgaben("d7-p9-m-b"), [m] = await abgaben("d7-p9-m-a");
+    const felder = b.details[0].felder;
+    assert.deepEqual(felder.map((f) => f.punkte), [1, 0.5, 0.5, 0, 0]);
+    assert.deepEqual(felder.map((f) => f.warum || ""), ["", "halb", "halb", "teil", ""]);
+    assert.deepEqual(felder.map((f) => Boolean(f.pruefen)), [false, true, true, true, false]);
+    assert.equal(b.details[0].points, 2); assert.equal(b.details[0].needsReview, true);
+    assert.match(b.details[0].comment, /1 von 5 richtig, 2 zum Teil richtig/);
+    assert.equal(b.score, 3); assert.equal(b.total, 6);
+    assert.equal(b.grade, 3, "R-Schlüssel: 50 % = Note 3, obwohl das Kind in der 7aM ist");
+    assert.equal(m.grade, 4, "ohne notenzug: M-Schlüssel, 50 % = Note 4");
+    // die Lehrkraft kann halbe Punkte selbst vergeben und damit die Note ändern
+    const neu = (await lehrer("bewerten", { submissionId: b.id, nr: 1, punkte: [1, 0.5, 0.5, 0.5, 0] })).data.submission;
+    assert.equal(neu.score, 3.5); assert.equal(neu.grade, 3);
+  }, { opts: { tests: proben } });
+});
+
 test("Probenmodus: Protokoll (Wechsel, Einfügen, Kopieren, Textsprünge) kommt gesäubert bei der Lehrkraft an, nicht beim Kind; Einstellung „Einfügen“ je Probe", async () => {
   await mitServer(null, async ({ post, get, abgaben, lehrer }) => {
     assert.equal((await post("start", { testId: "d7-p9-m-a", code: "101" })).data.test.einfuegen, "sperren");

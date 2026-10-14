@@ -17,13 +17,18 @@
  *
  * Jede Probe gibt es viermal: zug "R" oder "M", variante "A" oder "B" (B = Nachschreiber, eigene Texte und Aufgaben).
  * Kennungen: d7-p<nr>-<r|m>-<a|b>. Eine gesperrte Variante B steht nicht in der Liste der Kinder.
+ * Die Note richtet sich nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3) – außer die Probe legt den
+ * Schlüssel mit notenzug: "R" | "M" selbst fest (Probe 6 M7, Nachholprobe: R-Schlüssel).
  *
  * Aufgabenarten (d7-proben-daten.js, bleibt auf dem Server):
  *   choice    Ankreuzen                                   1 Punkt (oder points)
  *   match     Zuordnen (pairs)                            1 Punkt je Paar
  *   order     Reihenfolge (steps)                         1 Punkt je Schritt an der richtigen Stelle
  *   felder    kurze Eingaben (felder: label, loesungen)   Punkte je Feld; genau: true = auch Groß-/Kleinschreibung;
- *                                                         menge: true an der Aufgabe = Reihenfolge der Eingaben egal
+ *                                                         menge: true an der Aufgabe = Reihenfolge der Eingaben egal;
+ *                                                         halb: [Antworten] am Feld = halbe Punktzahl; teilpunkte: true
+ *                                                         an der Aufgabe = auch fast Richtiges halb, alles andere prüft
+ *                                                         die Lehrkraft (halbe Punkte möglich)
  *   komma     Kommas setzen (saetze)                      1 Punkt je vollständig richtigem Satz
  *   zeile     Zeilenangabe (bereiche: [[von, bis]])       points
  *   offen     offene Antwort                              kriterien: [{ text, erwartet, punkte }] = Erwartungshorizont
@@ -145,6 +150,7 @@ function vorbereiten(tests, stufe, fachKurz) {
   Object.values(tests).forEach((test) => {
     const wo = (i) => test.id + " Aufgabe " + (i + 1) + ": ";
     if (!kennung.test(test.id)) throw new Error("Kennung " + test.id);
+    if (test.notenzug !== undefined && !["R", "M"].includes(test.notenzug)) throw new Error(test.id + ": notenzug " + test.notenzug);
     test.texte = test.texte || [];
     test.texte.forEach((t) => {
       if (!t.typ) t.typ = t.sprecher ? "hoertext" : t.verse ? "gedicht" : t.absaetze ? "text" : t.typ;
@@ -164,7 +170,7 @@ function vorbereiten(tests, stufe, fachKurz) {
       if (item.type === "choice" && !(Array.isArray(item.options) && Number.isInteger(item.answer) && item.options[item.answer] !== undefined)) throw new Error(wo(i) + "choice");
       if (item.type === "match" && !(Array.isArray(item.pairs) && item.pairs.length > 1)) throw new Error(wo(i) + "match");
       if (item.type === "order" && !(Array.isArray(item.steps) && item.steps.length > 2)) throw new Error(wo(i) + "order");
-      if (item.type === "felder" && !(Array.isArray(item.felder) && item.felder.length && item.felder.every((f) => Array.isArray(f.loesungen) && f.loesungen.length))) throw new Error(wo(i) + "felder");
+      if (item.type === "felder" && !(Array.isArray(item.felder) && item.felder.length && item.felder.every((f) => Array.isArray(f.loesungen) && f.loesungen.length && (f.halb === undefined || Array.isArray(f.halb))))) throw new Error(wo(i) + "felder");
       if (item.type === "komma") {
         if (!(Array.isArray(item.saetze) && item.saetze.length)) throw new Error(wo(i) + "komma");
         item.zs = true;
@@ -334,6 +340,7 @@ function registerD7ProbenRoutes(app, opts) {
   const hoertexteVon = (test) => test.texte.filter((t) => t.typ === "hoertext");
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
     itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
+    ...(test.notenzug ? { notenzug: test.notenzug } : {}),
     ...(HOER_ZENTRAL && hoertexteVon(test).length ? { hoertexte: hoertexteVon(test).length } : {}),
     ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
   // Einfügen in der Probe: gesperrt (Vorgabe) oder erlaubt und protokolliert – stellt die Lehrkraft je Probe ein
@@ -400,15 +407,21 @@ function registerD7ProbenRoutes(app, opts) {
         const ok = trifft(f, given);
         // fast richtig (Tippfehler?): 0 Punkte, aber die Lehrkraft sieht es sich an
         const fast = !ok && given.length >= 3 && f.loesungen.some((l) => lose(l).length >= 5 && abstand(lose(given), lose(l)) <= 2);
-        const teil = { label: item.menge ? (j + 1) + "." : f.label || "", given, max, punkte: ok ? max : 0, expected: f.loesungen[0] };
+        // Halbe Punkte: halb: [Antworten] am Feld (z. B. Passiv richtig gebildet, aber in der falschen Zeitform) – und mit
+        // teilpunkte: true an der Aufgabe auch jede fast richtige Antwort. Jede andere falsche Antwort einer solchen Aufgabe
+        // sieht sich die Lehrkraft an (warum: "teil"); sie entscheidet über die halben Punkte.
+        const halb = !ok && given !== "" && ((f.halb || []).some((l) => lose(given) === lose(l)) || (item.teilpunkte && fast));
+        const teil = { label: item.menge ? (j + 1) + "." : f.label || "", given, max, punkte: ok ? max : halb ? max / 2 : 0, expected: f.loesungen[0] };
         if (f.rs || item.rs) teil.rs = true;
         if (f.zs || item.zs) teil.zs = true;
-        if (fast) teil.pruefen = true;
+        if (fast || halb || (item.teilpunkte && !ok && given !== "")) teil.pruefen = true;
+        if (halb) teil.warum = "halb";
+        else if (item.teilpunkte && !ok && given !== "" && !fast) teil.warum = "teil";
         return teil;
       });
-      const richtig = felder.filter((f) => f.punkte === f.max).length;
+      const richtig = felder.filter((f) => f.punkte === f.max).length, zumTeil = felder.filter((f) => f.punkte > 0 && f.punkte < f.max).length;
       return { ...base, given: felder.map((f) => f.given), labels: felder.map((f) => f.label), felder, points: felder.reduce((s, f) => s + f.punkte, 0), expected: felder.map((f) => f.expected), source: "schluessel",
-        needsReview: felder.some((f) => f.pruefen), comment: richtig === felder.length ? "Alles richtig." : richtig + " von " + felder.length + " richtig.", hinweis: richtig === felder.length ? "" : item.hinweis || "" };
+        needsReview: felder.some((f) => f.pruefen), comment: richtig === felder.length ? "Alles richtig." : richtig + " von " + felder.length + " richtig" + (zumTeil ? ", " + zumTeil + " zum Teil richtig" : "") + ".", hinweis: richtig === felder.length ? "" : item.hinweis || "" };
     }
     if (item.type === "komma") {
       const roh = Array.isArray(raw) ? raw : [];
@@ -475,7 +488,9 @@ function registerD7ProbenRoutes(app, opts) {
       const w = wertung(d, record); d.gewertet = w; score += w.points; total += w.max; roh += d.maxPoints;
     });
     const percent = total ? Math.round(score / total * 100) : 0;
-    Object.assign(record, { score, total, gesamtOhneSchutz: roh, percent, grade: record.ohneNote || !total ? "" : grade(total ? score / total * 100 : 0, record.zug),
+    // Notenschlüssel: nach dem Zug des Kindes – außer die Probe legt ihn fest (notenzug "R", z. B. eine Nachholprobe der M7)
+    const test = tests[record.testId], zug = (test && test.notenzug) || record.zug;
+    Object.assign(record, { score, total, gesamtOhneSchutz: roh, percent, grade: record.ohneNote || !total ? "" : grade(total ? score / total * 100 : 0, zug),
       needsReview: record.status === "eingegangen" || record.status === "zu-pruefen" || record.details.some((d) => d.needsReview) });
     return record;
   }
@@ -962,7 +977,7 @@ function registerD7ProbenRoutes(app, opts) {
       if (!teile || b.punkte.length !== teile.length) return res.status(400).json({ ok: false, error: "invalid_points" });
       const neu = b.punkte.map((v, i) => halbe(v, teile[i].max));
       if (neu.some((v) => v === null)) return res.status(400).json({ ok: false, error: "invalid_points" });
-      teile.forEach((t, i) => { t.punkte = neu[i]; delete t.pruefen; });
+      teile.forEach((t, i) => { t.punkte = neu[i]; delete t.pruefen; delete t.warum; });
     } else if (b.points !== undefined && b.points !== null && b.points !== "") {
       const p = halbe(b.points, d.maxPoints);
       if (p === null || teile) return res.status(400).json({ ok: false, error: "invalid_points" });

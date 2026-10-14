@@ -14,9 +14,11 @@ const NUMMERN = [...new Set(Object.values(PROBEN).map((p) => p.nr))].sort((a, b)
 const TEXTPROBEN = new Set([1, 2, 3, 4, 5]);            // hier kommen mindestens 50 % der Punkte aus offenen Aufgaben
 const LANGTEXT = new Set([2, 3, 5]);                    // hier steht ein längerer Lesetext
 const fassung = (nr, zug, v) => PROBEN["d7-p" + nr + "-" + zug + "-" + v];
-// Ohne Variante B (Wunsch der Lehrkraft, 12.10.2026): Probe 6 für M7 gibt es nur in einer Fassung
-const OHNE_B = new Set(["6-m"]);
-const gibtEs = (nr, zug, v) => !(v === "b" && OHNE_B.has(nr + "-" + zug));
+// Probe 6 für M7: Variante B wurde am 12.10.2026 gelöscht; seit 14.10.2026 steht dort die Nachholprobe (Wunsch der
+// Lehrkraft) – leichter, eigene Punktzahl, nur Aufgaben mit Schlüssel, R-Schlüssel. Sie ist nicht „gleichwertig“ zu A.
+const NACHHOL = new Set(["6-m"]);
+const istNachhol = (nr, zug, v) => v === "b" && NACHHOL.has(nr + "-" + zug);
+const gibtEs = () => true;
 const saetze = (p) => p.texte.flatMap((t) => (t.absaetze || t.verse || []).join(" ").split(/(?<=[.!?])\s+/)).map((s) => s.trim()).filter((s) => s.length > 25);
 const woerter = (p) => p.texte.reduce((n, t) => n + (t.absaetze || t.verse ? Zeilen.woerter(t) : 0), 0);
 
@@ -29,7 +31,9 @@ test("Es gibt mindestens eine Probe, und jede hat vier Fassungen (R7/M7, A/B)", 
     assert.equal(p.zug, zug.toUpperCase()); assert.equal(p.variante, v.toUpperCase()); assert.equal(p.nr, nr);
     assert.match(p.title, new RegExp("^Probe " + nr + " \\((R7|M7)\\): "), p.id + ": Titel");
     assert.ok(p.kurz && p.scope && p.minutes >= 20 && p.minutes <= 90, p.id + ": kurz, scope, minutes");
-    assert.equal(/Variante B/.test(p.title), v === "b", p.id + ": „Variante B“ im Titel");
+    assert.equal(/Variante B/.test(p.title), v === "b" && !istNachhol(nr, zug, v), p.id + ": „Variante B“ im Titel");
+    assert.equal(/ – Nachholprobe$/.test(p.title), istNachhol(nr, zug, v), p.id + ": „Nachholprobe“ im Titel");
+    assert.equal(p.notenzug, istNachhol(nr, zug, v) ? "R" : undefined, p.id + ": Notenschlüssel");
   }
 });
 
@@ -83,8 +87,9 @@ for (const nr of NUMMERN) {
       assert.ok(max >= 24 && max <= 44, `${p.id}: ${max} Punkte (erwartet 24 bis 44)`);
       const offen = a.offen / max;
       if (TEXTPROBEN.has(nr)) assert.ok(offen >= 0.5 && offen <= 0.85, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (erwartet 50 bis 85 %)`);
-      // Probe 6 für M7 hat auf Wunsch der Lehrkraft nur eine kurze offene Aufgabe (2 von 31 Punkten)
-      else if (!gibtEs(nr, zug, "b")) assert.ok(offen >= 0.05 && offen <= 0.45, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (5 bis 45 %)`);
+      // Probe 6 für M7 hat auf Wunsch der Lehrkraft nur eine kurze offene Aufgabe (2 von 31 Punkten), die Nachholprobe keine
+      else if (istNachhol(nr, zug, v)) assert.equal(a.offen, 0, `${p.id}: Nachholprobe ohne offene Aufgabe`);
+      else if (NACHHOL.has(nr + "-" + zug)) assert.ok(offen >= 0.05 && offen <= 0.45, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (5 bis 45 %)`);
       else assert.ok(offen >= 0.08 && offen <= 0.45, `${p.id}: ${Math.round(offen * 100)} % offene Punkte (Grammatik/Rechtschreibung: 8 bis 45 %)`);
       if (LANGTEXT.has(nr)) {
         const n = woerter(p), [von, bis] = zug === "r" ? [280, 470] : [390, 640];
@@ -100,8 +105,16 @@ for (const nr of NUMMERN) {
 
   test(`Probe ${nr}: Variante B ist gleichwertig, aber eine andere Probe`, () => {
     for (const zug of ["r", "m"]) {
-      if (!gibtEs(nr, zug, "b")) continue;
       const a = fassung(nr, zug, "a"), b = fassung(nr, zug, "b");
+      if (istNachhol(nr, zug, "b")) {
+        // Nachholprobe: dieselben Aufgaben der Reihe nach, aber leichter – weniger Punkte, kein Satz aus Fassung A
+        assert.equal(b.items.length, a.items.length, zug + ": Nachholprobe hat so viele Aufgaben wie Fassung A");
+        assert.ok(maxPoints(b) < maxPoints(a), `${zug}: Nachholprobe ${maxPoints(b)} Punkte, Fassung A ${maxPoints(a)}`);
+        const alles = (p) => new Set(p.items.flatMap((i) => [i.prompt].concat(i.options || [], (i.pairs || []).map((x) => x[0]), (i.felder || []).flatMap((f) => [f.label].concat(f.loesungen)))).map((s) => String(s).trim()).filter((s) => s.length > 18));
+        const nb = alles(b);
+        assert.deepEqual([...alles(a)].filter((s) => nb.has(s) && !/^(Welche|In welche|Setze|Bilde|Aktiv oder|Forme)/.test(s)), [], zug + ": Nachholprobe verwendet Sätze aus Fassung A");
+        continue;
+      }
       assert.equal(maxPoints(b), maxPoints(a), `${zug}: Gesamtpunkte A ${maxPoints(a)} / B ${maxPoints(b)}`);
       assert.equal(b.minutes, a.minutes, zug + ": Bearbeitungszeit");
       assert.deepEqual(b.items.map((i) => i.type + ":" + i.points), a.items.map((i) => i.type + ":" + i.points), zug + ": dieselbe Folge von Aufgabenarten und Punkten");
