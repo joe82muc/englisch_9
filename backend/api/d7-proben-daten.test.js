@@ -34,6 +34,8 @@ test("Es gibt mindestens eine Probe, und jede hat vier Fassungen (R7/M7, A/B)", 
     assert.equal(/Variante B/.test(p.title), v === "b" && !istNachhol(nr, zug, v), p.id + ": „Variante B“ im Titel");
     assert.equal(/ – Nachholprobe$/.test(p.title), istNachhol(nr, zug, v), p.id + ": „Nachholprobe“ im Titel");
     assert.equal(p.notenzug, istNachhol(nr, zug, v) ? "R" : undefined, p.id + ": Notenschlüssel");
+    // seit 15.10.2026: Die Nachholprobe schreiben alle – auch wer Probe 6 schon geschrieben hat (eigen)
+    assert.equal(Boolean(p.eigen), istNachhol(nr, zug, v), p.id + ": eigenständige Probe");
   }
 });
 

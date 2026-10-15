@@ -350,5 +350,5 @@ module.exports = {
   "d7-p6-r-b": probe(6, "R", "B", { ...ALLE, title: "Probe 6 (R7): Grammatik I – Variante B", items: R_B }),
   "d7-p6-m-a": probe(6, "M", "A", { ...ALLE, title: "Probe 6 (M7): Grammatik I", items: M_A }),
   // Nachholprobe der M7 (Fassung B): leichter, eigene Punktzahl, Note nach dem R-Schlüssel
-  "d7-p6-m-b": probe(6, "M", "B", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Nachholprobe", notenzug: "R", nachholprobe: true, items: M_N })
+  "d7-p6-m-b": probe(6, "M", "B", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Nachholprobe", notenzug: "R", nachholprobe: true, eigen: true, items: M_N })
 };

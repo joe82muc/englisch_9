@@ -19,6 +19,8 @@
  * Kennungen: d7-p<nr>-<r|m>-<a|b>. Eine gesperrte Variante B steht nicht in der Liste der Kinder.
  * Die Note richtet sich nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3) – außer die Probe legt den
  * Schlüssel mit notenzug: "R" | "M" selbst fest (Probe 6 M7, Nachholprobe: R-Schlüssel).
+ * Wer Variante A oder B einer Nummer abgegeben hat, hat „diese Probe geschrieben“. Eine Fassung mit eigen: true steht
+ * für sich (Probe 6 M7, Nachholprobe: schreiben alle, auch wer Probe 6 schon geschrieben hat).
  *
  * Aufgabenarten (d7-proben-daten.js, bleibt auf dem Server):
  *   choice    Ankreuzen                                   1 Punkt (oder points)
@@ -257,7 +259,11 @@ function registerD7ProbenRoutes(app, opts) {
     Object.keys(d.sitzungen).forEach((k) => { if (!(Date.parse(d.sitzungen[k].begonnenAm) > grenze)) delete d.sitzungen[k]; });
     atomar(SITZ_FILE, d, 0);
   }
-  const sitzKey = (test, student) => test.nr + "|" + student.key;
+  // Dieselbe Probe? Variante A und B einer Nummer zählen als eine Probe – eine Fassung mit eigen: true nur für sich selbst
+  const eigen = (test) => Boolean(test && test.eigen);
+  const probeSchluessel = (test) => (eigen(test) ? test.id : String(test.nr));
+  const gleicheProbe = (row, test) => (eigen(test) || eigen(tests[row.testId]) ? row.testId === test.id : row.nr === test.nr);
+  const sitzKey = (test, student) => probeSchluessel(test) + "|" + student.key;
   const minutenVon = (test, s) => test.minutes + (Number(s && s.verlaengerung) || 0);
   function sitzAntwort(test, s, data) {
     const min = minutenVon(test, s);
@@ -340,7 +346,7 @@ function registerD7ProbenRoutes(app, opts) {
   const hoertexteVon = (test) => test.texte.filter((t) => t.typ === "hoertext");
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
     itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
-    ...(test.notenzug ? { notenzug: test.notenzug } : {}),
+    ...(test.notenzug ? { notenzug: test.notenzug } : {}), ...(eigen(test) ? { eigen: true } : {}),
     ...(HOER_ZENTRAL && hoertexteVon(test).length ? { hoertexte: hoertexteVon(test).length } : {}),
     ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
   // Einfügen in der Probe: gesperrt (Vorgabe) oder erlaubt und protokolliert – stellt die Lehrkraft je Probe ein
@@ -744,9 +750,9 @@ function registerD7ProbenRoutes(app, opts) {
     if (SITZUNG && !probeOffen(freigabe)) { const laufend = sitzLesen().sitzungen[sitzKey(test, student)]; if (!laufend || laufend.testId !== test.id) return res.status(403).json({ ok: false, error: "locked" }); }
     if (String(student.klasse || "").indexOf(String(STUFE)) !== 0) return res.status(403).json({ ok: false, error: "falsche_stufe", message: "Diese Probe ist für die " + STUFE + ". Klassen." });
     if (test.zug !== student.zug) return res.status(403).json({ ok: false, error: "falscher_zug", message: `Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.` });
-    const schon = readData().submissions.find((row) => row.nr === test.nr && row.studentKey === student.key);
+    const schon = readData().submissions.find((row) => gleicheProbe(row, test) && row.studentKey === student.key);
     if (schon) return res.status(409).json({ ok: false, error: "already_submitted", message: schon.testId === test.id ? "Diese Probe wurde mit diesem Code bereits abgegeben." : "Du hast Probe " + test.nr + " schon geschrieben (Variante " + schon.variante + ")." });
-    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr) },
+    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr), ...(eigen(test) ? { eigen: true } : {}) },
       texte: test.texte.map(startText), items: test.items.map(publicItem) };
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
@@ -768,7 +774,7 @@ function registerD7ProbenRoutes(app, opts) {
     const answers = antwortenSauber(test, req.body.answers);
     if (!answers) return res.status(400).json({ ok: false, error: "bad_answers" });
     const data = readData();
-    if (data.submissions.some((row) => row.nr === test.nr && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+    if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
     if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
     if (test.zug !== student.zug || String(student.klasse || "").indexOf(String(STUFE)) !== 0) return res.status(403).json({ ok: false, error: "falscher_zug" });
     try {
@@ -820,13 +826,13 @@ function registerD7ProbenRoutes(app, opts) {
     const student = await probeKind(req, res);
     if (!student) return;
     if (!Array.isArray(req.body.answers) || req.body.answers.length !== test.items.length) return res.status(400).json({ ok: false, error: "bad_answers" });
-    const key = `${test.nr}|${student.key}`;
+    const key = sitzKey(test, student);
     if (pending.has(key)) return res.status(409).json({ ok: false, error: "submission_in_progress" });
     pending.add(key);
     try {
       const data = readData();
       if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
-      if (data.submissions.some((row) => row.nr === test.nr && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+      if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
       const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan });
       return res.json({ ok: true, angekommen: true, abgabe: { testTitle: test.title, submittedAt: record.submittedAt } });
     } catch (err) {
@@ -916,7 +922,7 @@ function registerD7ProbenRoutes(app, opts) {
     if (!sitz || !test) return res.status(404).json({ ok: false, error: "not_found", message: "Zu diesem Kind gibt es keinen Zwischenstand." });
     if (!sitz.answers) return res.status(409).json({ ok: false, error: "leer", message: "Für dieses Kind ist noch nichts gesichert." });
     const data = readData();
-    if (data.submissions.some((row) => row.nr === test.nr && row.studentKey === sitz.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+    if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === sitz.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
     const student = { code: sitz.code, klasse: sitz.klasse, zug: sitz.zug, lrs: Boolean(sitz.lrs), firstName: "Code " + sitz.code, lastName: "", className: sitz.klasse, key: sitz.key };
     try {
       const record = abgabeAnlegen(data, test, student, sitz.answers, { plan: sitz.plan, vonLehrkraft: true });

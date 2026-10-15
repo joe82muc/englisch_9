@@ -419,6 +419,30 @@ test("Halbe Punkte (halb, teilpunkte) und fester Notenschlüssel (notenzug R, z.
   }, { opts: { tests: proben } });
 });
 
+test("Eigenständige Fassung (eigen, z. B. Nachholprobe der M7 für alle): schreiben auch Kinder, die die Probe schon geschrieben haben", async () => {
+  const proben = PROBEN();
+  proben["d7-p9-m-b"].eigen = true;
+  await mitServer(null, async ({ post, get, abgaben, lehrer }) => {
+    assert.equal((await lehrer("unlock", { testId: "d7-p9-m-b", open: true })).status, 200);
+    assert.equal((await get("list")).tests.find((t) => t.id === "d7-p9-m-b").eigen, true);
+    assert.equal((await get("list")).tests.find((t) => t.id === "d7-p9-m-a").eigen, undefined);
+    assert.equal((await post("submit", { testId: "d7-p9-m-a", code: "101", answers: antworten() })).status, 200);
+    const start = await post("start", { testId: "d7-p9-m-b", code: "101" });
+    assert.equal(start.status, 200, "Fassung A abgegeben – die eigenständige Fassung darf das Kind trotzdem schreiben");
+    assert.equal(start.data.test.eigen, true);
+    assert.equal((await post("submit", { testId: "d7-p9-m-b", code: "101", answers: antworten() })).status, 200);
+    assert.equal((await post("submit", { testId: "d7-p9-m-b", code: "101", answers: antworten() })).data.error, "already_submitted", "aber nur einmal");
+    assert.equal((await post("start", { testId: "d7-p9-m-b", code: "101" })).data.error, "already_submitted");
+    // umgekehrt: Wer nur die eigenständige Fassung geschrieben hat, darf Fassung A noch schreiben
+    assert.equal((await post("submit", { testId: "d7-p9-m-b", code: "102", answers: antworten() })).status, 200);
+    assert.equal((await post("start", { testId: "d7-p9-m-a", code: "102" })).status, 200);
+    assert.equal((await abgaben("d7-p9-m-a")).length, 1);
+    assert.equal((await abgaben("d7-p9-m-b")).length, 2);
+    const meine = (await post("meine", { code: "101" })).data.abgaben;
+    assert.deepEqual(meine.map((m) => m.testId).sort(), ["d7-p9-m-a", "d7-p9-m-b"]);
+  }, { opts: { tests: proben } });
+});
+
 test("Probenmodus: Protokoll (Wechsel, Einfügen, Kopieren, Textsprünge) kommt gesäubert bei der Lehrkraft an, nicht beim Kind; Einstellung „Einfügen“ je Probe", async () => {
   await mitServer(null, async ({ post, get, abgaben, lehrer }) => {
     assert.equal((await post("start", { testId: "d7-p9-m-a", code: "101" })).data.test.einfuegen, "sperren");
