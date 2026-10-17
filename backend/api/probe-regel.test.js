@@ -45,12 +45,18 @@ test("Regeln: 1 Minute, 2. Kopierversuch, keine Höchstzahl für Wechsel", () =>
   assert.equal(abbruchAusAbgabe({ abbruch: { grund: "weg" } }, {}), null, "ohne regel: true (alte Seite) kein Abbruch");
   assert.equal(abbruchAusAbgabe({ regel: true, kopierversuche: 2 }, {}).grund, "kopieren");
   assert.equal(abbruchAusAbgabe({ regel: true }, { kopieren: 2 }).grund, "kopieren", "Server-Zählung reicht");
+  // insgesamt mehr als 60 Sekunden weg (Summe aller Wechsel ab 5 Sekunden, Seite oder Server)
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 60 }, {}), null, "60 Sekunden sind erlaubt");
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 61 }, {}).grund, "weg");
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 61 }, {}).sekunden, 61);
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 20 }, { wegSumme: 75 }).sekunden, 75, "Server-Summe reicht");
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 90, automatisch: "gesperrt" }, {}), null, "Bildschirm gesperrt: nur abgegeben");
 });
 
 test("Zählung beim Server: höchster Stand, nur mit gültigem Code und bekanntem Modul", async () => {
   assert.equal((await post("/api/probe-regel/vorfall", { modul: "nt7", testId: "nt7-x-m", code: "701", verlassen: 2, kopieren: 1 })).status, 200);
-  const v = await post("/api/probe-regel/vorfall", { modul: "nt7", testId: "nt7-x-m", code: "701", verlassen: 1, kopieren: 0 });
-  assert.deepEqual([v.data.verlassen, v.data.kopieren], [2, 1]);
+  const v = await post("/api/probe-regel/vorfall", { modul: "nt7", testId: "nt7-x-m", code: "701", verlassen: 1, kopieren: 0, wegSumme: 14 });
+  assert.deepEqual([v.data.verlassen, v.data.kopieren, v.data.wegSumme], [2, 1, 14]);
   assert.equal((await post("/api/probe-regel/vorfall", { modul: "gibtsnicht", testId: "x", code: "701" })).status, 404);
   assert.equal((await post("/api/probe-regel/vorfall", { modul: "nt7", testId: "nt7-x-m", code: "999x" })).status, 400);
 });
@@ -61,6 +67,7 @@ test("Ohne Verstoß: Note nach Punkten; die Kopierversuche (Server) stehen in de
   const rec = await abgabe("701");
   assert.equal(rec.grade, 1);
   assert.equal(rec.kopierversuche, 1);
+  assert.equal(rec.wegSekunden, 14, "Sekunden insgesamt verlassen (Vermerk in der Verwaltung)");
   assert.equal(rec.abbruch, undefined);
   const db = JSON.parse(fs.readFileSync(path.join(dataDir, "probe_regel.json"), "utf8"));
   assert.equal(db.eintraege["nt7|nt7-x-m|code|701"], undefined);

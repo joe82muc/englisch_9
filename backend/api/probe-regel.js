@@ -5,9 +5,11 @@
    „mach bei allen proben mehr als 1 minute verlassen automatisch note 6, kopierversuch einmal dann automatisch
    note 6 mit vorwarnungen“)
 
-   - Länger als 1 Minute am Stück weg (anderer Tab, andere App, Fenster ohne Fokus, Seite geschlossen): Die Probe ist
-     beendet – Note 6. Ausnahme: Hat das Kind davor schon 2 Minuten nichts mehr eingegeben oder angetippt (fertig,
-     Bildschirm hat sich von selbst gesperrt), wird die Probe nur abgegeben – ohne Note 6.
+   - Insgesamt länger als 1 Minute weg (anderer Tab, andere App, Fenster ohne Fokus, Seite geschlossen; alle Wechsel
+     zusammengezählt – Nachtrag der Lehrkraft: „in summe länger als eine minute = note 6 … alles unter 5 sekunden zählt
+     nicht“): Die Probe ist beendet – Note 6, mit Vermerk in der Verwaltung (proben-noten.js). Ausnahme: Hat das Kind vor dem
+     letzten Verlassen schon 2 Minuten nichts mehr eingegeben oder angetippt (fertig, Bildschirm hat sich von selbst
+     gesperrt), wird die Probe nur abgegeben – ohne Note 6.
    - Kopieren oder Einfügen: eine Warnung, beim 2. Versuch ist die Probe beendet – Note 6.
    - Nur die Vokabeltests zusätzlich: beim 5. Verlassen beendet (4 Warnungen) – das regelt vokabeltest.js selbst.
    Zählen und Warnen macht die Seite (js/probe-schutz.js, Angabe regel). Beendet = die Seite gibt sofort ab, das
@@ -32,7 +34,7 @@ const GRUENDE = ["verlassen", "kopieren", "weg"];
 const ABBRUCH_TEXT = {
   verlassen: (a) => `Test beendet: Die Testseite wurde ${a.verlassen}-mal verlassen (nach 4 Warnungen). Deshalb Note 6.`,
   kopieren: () => "Probe beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6.",
-  weg: (a) => `Probe beendet: Die Seite war ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} am Stück verlassen (erlaubt ist höchstens 1 Minute). Deshalb Note 6.`
+  weg: (a) => `Probe beendet: Die Seite war insgesamt ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} verlassen (erlaubt ist höchstens 1 Minute; Wechsel unter 5 Sekunden zählen nicht). Deshalb Note 6.`
 };
 // automatisch abgegeben, aber ohne Note 6
 const AUTOMATISCH = ["ruhe", "gesperrt", "server"];
@@ -47,12 +49,16 @@ function abbruchAusAbgabe(body, gezaehlt, regel = REGEL, verlassenSeite = 0) {
   const angabe = body.abbruch && typeof body.abbruch === "object" ? body.abbruch : {};
   const verlassen = Math.max(anzahl(verlassenSeite || body.verlassen), anzahl(gezaehlt && gezaehlt.verlassen));
   const kopierversuche = Math.max(anzahl(body.kopierversuche), anzahl(gezaehlt && gezaehlt.kopieren));
+  // Sekunden insgesamt verlassen (Seite und Server zählen mit, es gilt der höhere Stand)
+  const wegSumme = Math.max(anzahl(body.wegSumme), anzahl(gezaehlt && gezaehlt.wegSumme), anzahl(angabe.sekunden));
   let grund = GRUENDE.includes(angabe.grund) ? angabe.grund : "";
+  // Die Seite hat ohne Note 6 abgegeben (Bildschirm gesperrt nach 2 Minuten Ruhe): dann zählt die Summe nicht als Abbruch
+  if (!grund && regel.wegSekunden && wegSumme > regel.wegSekunden && body.automatisch !== "gesperrt") grund = "weg";
   if (!grund && regel.verlassen && verlassen >= regel.verlassen) grund = "verlassen";
   if (!grund && regel.kopieren && kopierversuche >= regel.kopieren) grund = "kopieren";
   if (!grund) return null;
   const a = { grund, verlassen, kopierversuche, zeit: new Date().toISOString() };
-  if (grund === "weg") a.sekunden = anzahl(angabe.sekunden) || undefined;
+  if (grund === "weg") a.sekunden = wegSumme || undefined;
   a.text = ABBRUCH_TEXT[grund](a);
   return a;
 }
@@ -71,12 +77,14 @@ function ausAbgabe(body, modul, testId, studentKey, regel = REGEL) {
   const gz = gezaehlt(modul, testId, studentKey);
   const abbruch = abbruchAusAbgabe(body, gz, regel);
   return { abbruch, automatisch: abbruch ? "" : automatischAusAbgabe(body),
-    kopierversuche: Math.max(anzahl(body.kopierversuche), anzahl(gz.kopieren)) };
+    kopierversuche: Math.max(anzahl(body.kopierversuche), anzahl(gz.kopieren)),
+    wegSekunden: Math.max(anzahl(body.wegSumme), anzahl(gz.wegSumme)) };
 }
 // Testregeln in eine neue Abgabe eintragen (nach dem Rechnen, vor dem Speichern)
 function eintragen(rec, stand) {
   if (!stand) return rec;
   rec.kopierversuche = stand.kopierversuche;
+  rec.wegSekunden = stand.wegSekunden;   // Sekunden insgesamt verlassen (Vermerk in der Verwaltung)
   if (stand.automatisch) rec.automatisch = stand.automatisch;
   if (!stand.abbruch) return rec;
   rec.abbruch = stand.abbruch;
@@ -149,11 +157,12 @@ function registerProbeRegel(app, opts = {}) {
     const stand = {
       verlassen: Math.max(anzahl(vorher.verlassen), anzahl(req.body.verlassen)),
       kopieren: Math.max(anzahl(vorher.kopieren), anzahl(req.body.kopieren)),
+      wegSumme: Math.max(anzahl(vorher.wegSumme), anzahl(req.body.wegSumme)),
       zeit: new Date().toISOString()
     };
     db.eintraege[k] = stand;
     speicher.schreiben(db);
-    res.json({ ok: true, verlassen: stand.verlassen, kopieren: stand.kopieren, regel: REGEL });
+    res.json({ ok: true, verlassen: stand.verlassen, kopieren: stand.kopieren, wegSumme: stand.wegSumme, regel: REGEL });
   });
 
   app.post("/api/probe-regel/aufheben", async (req, res) => {

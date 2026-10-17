@@ -52,6 +52,12 @@ function registerProbenNotenRoutes(app, options) {
             code: r.code, note: r.grade, punkte: r.score, max: r.total, prozent: r.percent,
             datum: r.testDate || String(r.submittedAt || "").slice(0, 10), abgabe: r.submittedAt,
             nachpruefen: Boolean(r.needsReview), lrs: Boolean(r.lrs), verlassen: Number(r.verlassen) || 0,
+            // Testregeln (17.10.2026): Vermerk in der Verwaltung – Probe beendet (Note 6, ggf. aufgehoben), automatisch abgegeben,
+            // Sekunden insgesamt verlassen
+            ...(r.abbruch ? { abbruch: { grund: r.abbruch.grund, text: r.abbruch.text || "", sekunden: r.abbruch.sekunden || 0,
+              kopierversuche: r.abbruch.kopierversuche || 0, verlassen: r.abbruch.verlassen || 0, aufgehoben: Boolean(r.abbruch.aufgehoben) } } : {}),
+            ...(r.automatisch ? { automatisch: r.automatisch } : {}),
+            ...(Number(r.wegSekunden) > 0 ? { wegSekunden: Number(r.wegSekunden) } : {}),
             zurueck: zurueck ? zurueck.freigegebenAm || "" : "", geoeffnet: zurueck ? zurueck.geoeffnetAm || "" : "",
             // sichtbarBis: letzter Tag, an dem das Kind die Probe sieht; vorbei: Frist um, beim Kind verschwunden
             ...(zurueck && zurueck.sichtbarBis ? { sichtbarBis: zurueck.sichtbarBis } : {}), ...(zurueck && zurueck.vorbei ? { vorbei: true } : {})

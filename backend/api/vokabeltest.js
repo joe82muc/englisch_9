@@ -522,8 +522,9 @@ function createStore(dataDir) {
    Test beendet. Ein beendeter Test wird sofort abgegeben und mit Note 6 bewertet; die Lehrkraft kann die Note 6
    aufheben (/abbruch). Zählen und Warnen macht die Seite (js/probe-schutz.js, Angabe regel), der Server zählt mit
    (/vorfall) – so zählt es auch nach einem Gerätewechsel weiter.
-   Seit 17.10.2026 (für alle Proben, probe-regel.js): Länger als 1 Minute am Stück weg = Test beendet, Note 6 (außer
-   das Kind hatte davor schon 2 Minuten nichts mehr eingegeben – Bildschirm gesperrt: dann nur abgegeben). Und nur die
+   Seit 17.10.2026 (für alle Proben, probe-regel.js): Insgesamt länger als 1 Minute weg (alle Wechsel zusammen, Wechsel
+   unter 5 Sekunden zählen nicht) = Test beendet, Note 6 (außer das Kind hatte vor dem letzten Verlassen schon 2 Minuten
+   nichts mehr eingegeben – Bildschirm gesperrt: dann nur abgegeben). Und nur die
    Vokabeltests: Wer 5 Minuten nichts eingibt, dessen Test wird automatisch abgegeben (ruheMinuten) – auch wenn die
    Seite geschlossen wurde (der Server gibt mit dem zuletzt gemeldeten Stand ab, siehe automatischAbgeben).
    ------------------------------------------------------------------ */
@@ -531,7 +532,7 @@ const TEST_REGEL = { verlassen: 5, kopieren: 2, wegSekunden: 60, ruheMinuten: 5 
 const ABBRUCH_TEXT = {
   verlassen: (a) => `Test beendet: Die Testseite wurde ${a.verlassen}-mal verlassen (nach 4 Warnungen). Deshalb Note 6.`,
   kopieren: () => "Test beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6.",
-  weg: (a) => `Test beendet: Die Testseite war ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} am Stück verlassen (erlaubt ist höchstens 1 Minute). Deshalb Note 6.`
+  weg: (a) => `Test beendet: Die Testseite war insgesamt ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} verlassen (erlaubt ist höchstens 1 Minute; Wechsel unter 5 Sekunden zählen nicht). Deshalb Note 6.`
 };
 // Ohne Note 6 automatisch abgegeben: 5 Minuten nichts eingegeben (ruhe), Seite verlassen, nachdem 2 Minuten nichts mehr
 // eingegeben wurde (gesperrt), Seite geschlossen und nicht zurückgekommen – der Server hat abgegeben (server)
@@ -539,9 +540,11 @@ const AUTOMATISCH = ["ruhe", "gesperrt", "server"];
 const istZeit = (v) => typeof v === "string" && v.length <= 30 && !Number.isNaN(Date.parse(v));
 const anzahl = (v) => Math.max(0, Math.min(999, Math.round(Number(v)) || 0));
 // Grund für das Ende des Tests: was die Seite meldet, sonst aus den Zahlen
-function abbruchGrund(angabe, verlassen, kopierversuche) {
+// wegSumme: Sekunden insgesamt verlassen; automatisch "gesperrt": ohne Note 6 abgegeben (Bildschirm gesperrt nach 2 Minuten Ruhe)
+function abbruchGrund(angabe, verlassen, kopierversuche, wegSumme = 0, automatisch = "") {
   const g = String((angabe && typeof angabe === "object" ? angabe.grund : angabe) || "");
   if (g === "verlassen" || g === "kopieren" || g === "weg") return g;
+  if (wegSumme > TEST_REGEL.wegSekunden && automatisch !== "gesperrt") return "weg";
   if (verlassen >= TEST_REGEL.verlassen) return "verlassen";
   if (kopierversuche >= TEST_REGEL.kopieren) return "kopieren";
   return "";
@@ -750,7 +753,7 @@ function registerVokabeltestRoutes(app, opts) {
       test: { id: test.id, title: test.title, unit: test.unit, direction: test.direction || "mixed" },
       items,
       regel: TEST_REGEL,
-      vorfaelle: { verlassen: anzahl(bisher.verlassen), kopieren: anzahl(bisher.kopieren),
+      vorfaelle: { verlassen: anzahl(bisher.verlassen), kopieren: anzahl(bisher.kopieren), wegSumme: anzahl(bisher.wegSumme),
         weg: bisher.sichtbar === false && istZeit(bisher.weg) ? bisher.weg : null, aktiv: istZeit(bisher.aktiv) ? bisher.aktiv : null }
     });
   });
@@ -781,6 +784,7 @@ function registerVokabeltestRoutes(app, opts) {
     const stand = {
       verlassen: Math.max(anzahl(vorher.verlassen), anzahl(b.verlassen)),
       kopieren: Math.max(anzahl(vorher.kopieren), anzahl(b.kopieren)),
+      wegSumme: Math.max(anzahl(vorher.wegSumme), anzahl(b.wegSumme)),
       zeit: jetzt,
       // Stand der Seite (ältere Seiten schicken ihn nicht – dann bleibt der vorige)
       kontakt: jetzt,
@@ -816,9 +820,10 @@ function registerVokabeltestRoutes(app, opts) {
     const gezaehlt = store.loadVorfaelle().vorfaelle[vorfallKey(testId, key)] || {};
     const verlassen = Math.max(verlassenZahl(angaben.verlassen), anzahl(gezaehlt.verlassen));
     const kopierversuche = Math.max(anzahl(angaben.kopierversuche), anzahl(gezaehlt.kopieren));
-    const grund = angaben.regel === true ? abbruchGrund(angaben.abbruch, verlassen, kopierversuche) : "";
+    const wegSumme = Math.max(anzahl(angaben.wegSumme), anzahl(gezaehlt.wegSumme), anzahl(angaben.abbruch && angaben.abbruch.sekunden));
+    const grund = angaben.regel === true ? abbruchGrund(angaben.abbruch, verlassen, kopierversuche, wegSumme, angaben.automatisch) : "";
     const submittedAt = new Date().toISOString();
-    const sekunden = grund === "weg" ? anzahl(angaben.abbruch && angaben.abbruch.sekunden) : 0;
+    const sekunden = grund === "weg" ? wegSumme : 0;
     const abbruch = grund ? { grund, verlassen, kopierversuche, ...(sekunden ? { sekunden } : {}), zeit: submittedAt, text: ABBRUCH_TEXT[grund]({ verlassen, sekunden }) } : null;
     const automatisch = !abbruch && angaben.regel === true && AUTOMATISCH.includes(angaben.automatisch) ? angaben.automatisch : "";
     const grade = abbruch ? 6 : punkte.grade;
@@ -829,7 +834,7 @@ function registerVokabeltestRoutes(app, opts) {
       testTitle: test.title,
       unit: test.unit,
       code, zug: kind.zug, lrs: kind.lrs, verlassen, protokoll: protokollSauber(angaben.protokoll),
-      ...(angaben.regel === true ? { kopierversuche } : {}),
+      ...(angaben.regel === true ? { kopierversuche, wegSekunden: wegSumme } : {}),
       ...(abbruch ? { abbruch, kommentar: abbruch.text } : {}),
       ...(automatisch ? { automatisch } : {}),
       firstName, lastName, className,
@@ -872,8 +877,15 @@ function registerVokabeltestRoutes(app, opts) {
         const testId = k.slice(0, k.indexOf("|")), test = TESTS[testId];
         if (!test) continue;
         if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === v.kind.key)) { vorfallWeg(testId, v.kind.key); continue; }
-        const r = await abgabeSpeichern(test, v.kind, v.answers, { testDate: v.testDate, verlassen: v.verlassen, protokoll: null, regel: true,
-          kopierversuche: v.kopieren, abbruch: null, automatisch: "server" });
+        // Seit dem Verlassen bis jetzt weg: zählt zur Summe. Insgesamt mehr als 1 Minute = Note 6 – außer das Kind hatte vor dem
+        // Verlassen schon 2 Minuten nichts mehr eingegeben (fertig, Bildschirm gesperrt): dann nur abgegeben
+        const wegSeit = v.sichtbar === false && istZeit(v.weg) ? Math.round((jetzt - Date.parse(v.weg)) / 1000) : 0;
+        const summe = anzahl(v.wegSumme) + (wegSeit >= 5 ? wegSeit : 0);
+        const ruhigVorher = istZeit(v.weg) && istZeit(v.aktiv) && Date.parse(v.weg) - Date.parse(v.aktiv) >= 110 * 1000;
+        const beendet = summe > TEST_REGEL.wegSekunden && !ruhigVorher;
+        const r = await abgabeSpeichern(test, v.kind, v.answers, { testDate: v.testDate, verlassen: anzahl(v.verlassen) + (wegSeit >= 5 ? 1 : 0), protokoll: null, regel: true,
+          kopierversuche: v.kopieren, wegSumme: Math.min(999, summe), abbruch: beendet ? { grund: "weg", sekunden: Math.min(999, summe) } : null,
+          automatisch: beendet ? "" : ruhigVorher && wegSeit ? "gesperrt" : "server" });
         if (r.record) n++;
       }
     } catch (err) {
@@ -914,7 +926,7 @@ function registerVokabeltestRoutes(app, opts) {
     }
 
     const r = await abgabeSpeichern(test, kind, answers, { testDate, verlassen: req.body?.verlassen, protokoll: req.body?.protokoll,
-      regel: req.body?.regel, kopierversuche: req.body?.kopierversuche, abbruch: req.body?.abbruch, automatisch: req.body?.automatisch,
+      regel: req.body?.regel, kopierversuche: req.body?.kopierversuche, wegSumme: req.body?.wegSumme, abbruch: req.body?.abbruch, automatisch: req.body?.automatisch,
       deviceHash: deviceHash(req, HASH_SECRET) });
     if (r.error) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
