@@ -91,6 +91,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, probeOffen, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+const probeRegel = require("./probe-regel");
 const Zeilen = require("./d7-zeilen");
 // Freigegebene Korrekturen sieht das Kind 7 Tage lang, dann verschwinden sie bei ihm von selbst (eine Regel für alle Proben)
 const { sichtbarBis, rueckgabeVorbei, VORBEI_TEXT } = require("./proben-rueckgabe");
@@ -205,6 +206,8 @@ function registerD7ProbenRoutes(app, opts) {
   const DATA_DIR = opts.dataDir;
   const DATA_FILE = path.join(DATA_DIR, opts.datei || "d7-proben.json");
   const PREFIX = String(opts.prefix || "/api/d7/proben").replace(/\/$/, "");
+  // Name für Rückgabe und Testregeln: d7proben, d8proben, e9proben
+  const REGEL_MODUL = PREFIX.replace(/^\/api\//, "").replace(/\//g, "");
   // Jahrgangsstufe: 7 (Vorgabe) oder 8 – bestimmt Kennungen, Texte für die KI und wer die Proben schreiben darf
   const STUFE = parseInt(opts.stufe, 10) || 7;
   // Anderes Fach mit denselben Proben-Bausteinen: opts.fach = { kurz: "e", name: "Englisch" } – Kennungen e9-p…, eigene
@@ -498,6 +501,8 @@ function registerD7ProbenRoutes(app, opts) {
     const test = tests[record.testId], zug = (test && test.notenzug) || record.zug;
     Object.assign(record, { score, total, gesamtOhneSchutz: roh, percent, grade: record.ohneNote || !total ? "" : grade(total ? score / total * 100 : 0, zug),
       needsReview: record.status === "eingegangen" || record.status === "zu-pruefen" || record.details.some((d) => d.needsReview) });
+    // Testregeln: nach den Warnungen beendet = Note 6, bis die Lehrkraft sie aufhebt
+    if (record.grade !== "") probeRegel.note6(record);
     return record;
   }
 
@@ -814,6 +819,12 @@ function registerD7ProbenRoutes(app, opts) {
         record.zeit = { begonnenAm: sitz.begonnenAm, minuten: dauer, erlaubt, ueber: Math.max(0, dauer - erlaubt), verlaengerung: Number(sitz.verlaengerung) || 0 };
       }
     }
+    if (mehr.regelStand) {
+      probeRegel.eintragen(record, mehr.regelStand);
+      // Das Kind liest in der Rückgabe den Kommentar der Lehrkraft – dort steht zuerst, warum die Probe beendet wurde
+      if (record.abbruch && !record.lehrerKommentar) record.lehrerKommentar = record.abbruch.text;
+      delete record.kommentar;
+    }
     rechne(record);
     data.submissions.push(record); writeData(data);            // ab hier ist die Abgabe sicher
     if (SITZUNG) { try { const sd = sitzLesen(); delete sd.sitzungen[sitzKey(test, student)]; sitzSchreiben(sd); } catch (_e) {} }
@@ -833,7 +844,9 @@ function registerD7ProbenRoutes(app, opts) {
       const data = readData();
       if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
       if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
-      const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan });
+      const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan,
+        regelStand: probeRegel.ausAbgabe(req.body, REGEL_MODUL, test.id, student.key) });
+      probeRegel.vergessen(REGEL_MODUL, test.id, student.key);
       return res.json({ ok: true, angekommen: true, abgabe: { testTitle: test.title, submittedAt: record.submittedAt } });
     } catch (err) {
       console.error(FNAME + " Abgabe:", err);
@@ -1068,6 +1081,8 @@ function registerD7ProbenRoutes(app, opts) {
   app.post(PREFIX + "/teacher/delete", (req, res) => {
     if (!teacher(req, res)) return;
     const data = readData(), before = data.submissions.length;
+    const weg = data.submissions.find((s) => s.id === clean(req.body.submissionId));
+    if (weg) probeRegel.vergessen(REGEL_MODUL, weg.testId, weg.studentKey);   // Nachschreiben: Testregeln zählen von vorn
     data.submissions = data.submissions.filter((s) => s.id !== clean(req.body.submissionId));
     if (data.submissions.length === before) return res.status(404).json({ ok: false, error: "not_found" });
     writeData(data); res.json({ ok: true });
@@ -1085,6 +1100,18 @@ function registerD7ProbenRoutes(app, opts) {
   });
 
   // Für die Notenübersicht je Klasse (proben-noten.js): vor der Bestätigung als „nachprüfen“ gekennzeichnet
+  // Testregeln: Die Lehrkraft hebt die Note 6 einer beendeten Probe auf (/api/probe-regel/aufheben)
+  probeRegel.modulAnmelden(REGEL_MODUL, { aufheben: probeRegel.aufhebenMit({
+    lesen: () => { const d = readData(); return { daten: d, liste: d.submissions }; },
+    schreiben: writeData,
+    neu: (rec) => {
+      if (rec.abbruch && rec.abbruch.aufgehoben && rec.lehrerKommentar === rec.abbruch.text) rec.lehrerKommentar = "";
+      if (rec.abbruch && !rec.abbruch.aufgehoben && !rec.lehrerKommentar) rec.lehrerKommentar = rec.abbruch.text;
+      delete rec.kommentar;
+      rechne(rec);
+    }
+  }) });
+
   return { abgaben: () => readData().submissions, kiKorrigieren, nachholen, tests, markenAusKi, markenSauber };
 }
 

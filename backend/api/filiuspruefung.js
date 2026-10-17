@@ -25,6 +25,7 @@ const path = require("path");
 const zlib = require("zlib");
 const crypto = require("crypto");
 const { probeKindPruefer, GRADE_SCALE_R, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
+const probeRegel = require("./probe-regel");
 
 /* ------------------------------------------------------------------
    Notenschluessel (wie bei den anderen Proben)
@@ -442,6 +443,7 @@ function registerFiliusPruefungRoutes(app, opts) {
   const PW = opts.teacherPassword;
   const askAnthropic = opts.askAnthropic;
   const probeKind = probeKindPruefer(opts.kindZumCode);
+  const REGEL_MODUL = "filiuspruefung";   // Name für Rückgabe und Testregeln
 
   const isTeacher = (req) => clean(req.body?.password) === PW;
   const maxA = (t) => t.items.reduce((s, i) => s + (Number(i.points) || 1), 0);
@@ -562,8 +564,10 @@ function registerFiliusPruefungRoutes(app, opts) {
     if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
+    probeRegel.eintragen(record, probeRegel.ausAbgabe(req.body, REGEL_MODUL, testId, key));   // Testregeln: beendet = Note 6
     fresh.submissions.push(record);
     store.saveSubmissions(fresh);
+    probeRegel.vergessen(REGEL_MODUL, testId, key);
 
     res.json({
       ok: true,
@@ -651,6 +655,8 @@ function registerFiliusPruefungRoutes(app, opts) {
     const id = clean(req.body?.submissionId);
     const db = store.loadSubmissions();
     const vor = db.submissions.length;
+    const weg = db.submissions.find((s) => s.id === id);
+    if (weg) probeRegel.vergessen(REGEL_MODUL, weg.testId, weg.studentKey);
     db.submissions = db.submissions.filter((s) => s.id !== id);
     if (db.submissions.length === vor) return res.status(404).json({ ok: false, error: "not_found" });
     store.saveSubmissions(db);
@@ -673,6 +679,13 @@ function registerFiliusPruefungRoutes(app, opts) {
     res.setHeader("Content-Disposition", `attachment; filename="filiuspruefung.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
+
+  // Testregeln: Die Lehrkraft hebt die Note 6 einer beendeten Probe auf (/api/probe-regel/aufheben)
+  probeRegel.modulAnmelden(REGEL_MODUL, { aufheben: probeRegel.aufhebenMit({
+    lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
+    schreiben: (d) => store.saveSubmissions(d),
+    neu: (rec) => { rec.grade = gradeFromPercent(rec.percent, rec.zug); }
+  }) });
 
   return { abgaben: () => store.loadSubmissions().submissions };
 }

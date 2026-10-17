@@ -45,7 +45,8 @@ Object.assign(module.exports, JSON.parse(JSON.stringify(require("./nt7-fragen-au
 // sind weiter einsehbar, zum Freischalten werden diese Proben nicht mehr angeboten.
 Object.values(module.exports).forEach((probe) => { probe.alt = true; });
 const MODUL_TITEL = require("./nt7-module");
-["luft", "atome", "tiere", "mensch", "strom"].forEach((bereich) => {
+// luft2 (17.10.2026): zweite Luft-Probe über die Module 1 bis 5, überwiegend wie auf den Arbeitsblättern
+["luft", "atome", "tiere", "mensch", "strom", "luft2"].forEach((bereich) => {
   const proben = JSON.parse(JSON.stringify(require("./nt7-block-" + bereich)));
   Object.values(proben).forEach((probe) => probe.items.forEach((item) => { item.modulTitel = MODUL_TITEL[item.modul] || ""; }));
   Object.assign(module.exports, proben);

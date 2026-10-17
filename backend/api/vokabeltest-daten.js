@@ -75,6 +75,70 @@ const e9ru1t1 = {
 };
 
 /* ==================================================================
+   Englisch 9R - Unit 1 - Nachholprobe zu Test 1 (Stand 16.10.2026, 9M seit 17.10.2026 mit M-Schluessel)
+   Derselbe Stoff wie Test 1 (Zoom in, Intro, Topic 1, adjectives),
+   gleich viele Woerter (34), nur Deutsch -> Englisch, Notenschluessel
+   "9R". 12 Woerter kamen in Test 1 nicht vor (Programm, halten,
+   unterwegs in, Australier, britisch, Hinterland, weit, Aborigine-,
+   aengstlich, davon halten, ueberrascht, langweilig); die uebrigen
+   stehen in neuer Reihenfolge. Woerter 1:1 aus der Wortliste
+   (progress/englisch9r/vokabeln/unit1.txt).
+   ================================================================== */
+const e9ru1t1nach = {
+  id: "e9r-u1-test1-nach",
+  title: "Vokabeltest 1 (Nachholprobe) - A world language & Around Australia",
+  unit: "Englisch 9R / Unit 1",
+  classLevel: "9R",
+  gradeScale: "9R",
+  direction: "de-en",
+  items: [
+    // --- Zoom in: A world language ---
+    { prompt: "(Software-)Programm", direction: "de-en", solutions: ["program; software program; computer program"], hint: "am Computer" },
+    { prompt: "Wettbewerb", direction: "de-en", solutions: ["competition"] },
+    { prompt: "halten", direction: "de-en", solutions: ["to give; give; to give a talk; give a talk"], hint: "Tomorrow I have to ... a talk." },
+    { prompt: "Milliarde", direction: "de-en", solutions: ["billion"] },
+    { prompt: "englischsprachig", direction: "de-en", solutions: ["English-speaking; English speaking"] },
+    { prompt: "Mehrheit; Mehrzahl", direction: "de-en", solutions: ["majority"] },
+    { prompt: "Amtssprache", direction: "de-en", solutions: ["official language"] },
+    { prompt: "die Hälfte", direction: "de-en", solutions: ["half"] },
+
+    // --- Unit 1: Around Australia ---
+    { prompt: "unterwegs in", direction: "de-en", solutions: ["around"], hint: "We travelled ... Scotland by bus." },
+
+    // --- Intro ---
+    { prompt: "Australier; Australierin", direction: "de-en", solutions: ["Australian"] },
+    { prompt: "Lebewesen; Geschöpf", direction: "de-en", solutions: ["creature"] },
+    { prompt: "britisch", direction: "de-en", solutions: ["British"] },
+    { prompt: "kämpfen; Mühe haben", direction: "de-en", solutions: ["to struggle; struggle"] },
+    { prompt: "das australische Hinterland", direction: "de-en", solutions: ["the outback; outback"] },
+    { prompt: "töten", direction: "de-en", solutions: ["to kill; kill"] },
+    { prompt: "weit", direction: "de-en", solutions: ["long"], hint: "It's a ... way to the next town." },
+    { prompt: "Siedler; Siedlerin", direction: "de-en", solutions: ["settler"] },
+    { prompt: "flach; eben", direction: "de-en", solutions: ["flat"] },
+    { prompt: "beginnen; anfangen", direction: "de-en", solutions: ["to begin; begin; to start; start"] },
+
+    // --- Topic 1: Uluru ---
+    { prompt: "Aborigine-; zur Aborigine-Kultur gehörend", direction: "de-en", solutions: ["Aboriginal"], hint: "z. B. ... art" },
+    { prompt: "Lebensstil; Lebensweise", direction: "de-en", solutions: ["lifestyle; life style"] },
+    { prompt: "ängstlich", direction: "de-en", solutions: ["afraid; scared"] },
+    { prompt: "Hubschrauber", direction: "de-en", solutions: ["helicopter"] },
+    { prompt: "davon halten", direction: "de-en", solutions: ["to think of; think of"], hint: "What did you ... the film?" },
+    { prompt: "Stamm; Volksstamm", direction: "de-en", solutions: ["tribe"] },
+    { prompt: "enttäuscht", direction: "de-en", solutions: ["disappointed"] },
+    { prompt: "Gemälde", direction: "de-en", solutions: ["painting"] },
+    { prompt: "riesig; Riesen-", direction: "de-en", solutions: ["giant; huge"] },
+    { prompt: "bunt", direction: "de-en", solutions: ["colourful; colorful"] },
+    { prompt: "lecker; köstlich", direction: "de-en", solutions: ["delicious; tasty"] },
+
+    // --- Adjectives for talking about experiences ---
+    { prompt: "überrascht", direction: "de-en", solutions: ["surprised"] },
+    { prompt: "langweilig", direction: "de-en", solutions: ["boring"] },
+    { prompt: "aufgeregt; begeistert", direction: "de-en", solutions: ["excited"], hint: "wie jemand sich fühlt" },
+    { prompt: "selbstsicher; selbstbewusst", direction: "de-en", solutions: ["confident"] }
+  ]
+};
+
+/* ==================================================================
    Englisch 9R - Unit 1 - Test 2
    Topic 2 (At the doctor's) + Das kenne ich schon (at the doctor's)
    + Text (Great Barrier Reef) + Film
@@ -375,6 +439,8 @@ const asM = (t, id) => {
   return copy;
 };
 const e9mu1t1 = asM(e9ru1t1, "e9m-u1-test1");
+// Nachholprobe zu Test 1 (17.10.2026): dieselben Wörter wie der Nachschreibtest der 9R, M-Schlüssel
+const e9mu1t1nach = asM(e9ru1t1nach, "e9m-u1-test1-nach");
 const e9mu1t2 = asM(e9ru1t2, "e9m-u1-test2");
 
 /* ==================================================================
@@ -720,9 +786,11 @@ const TESTS = {
   [e8ru3t2.id]: e8ru3t2,
   [e8ru4t2.id]: e8ru4t2,
   [e9ru1t1.id]: e9ru1t1,
+  [e9ru1t1nach.id]: e9ru1t1nach,
   [e9ru1t2.id]: e9ru1t2,
   [e9ru1versuch.id]: e9ru1versuch,
   [e9mu1t1.id]: e9mu1t1,
+  [e9mu1t1nach.id]: e9mu1t1nach,
   [e9mu1t2.id]: e9mu1t2,
   [e7mu1t1.id]: e7mu1t1,
   [e7mu1t2.id]: e7mu1t2,

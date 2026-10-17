@@ -59,6 +59,7 @@ const path = require("path");
 const crypto = require("crypto");
 const nt7Tests = require("./nt7-fragen");
 const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+const probeRegel = require("./probe-regel");
 
 /**
  * @param app            Express-App
@@ -70,6 +71,8 @@ function registerNt7Routes(app, opts) {
   const DATA_DIR = opts.dataDir;
   const DATA_FILE = path.join(DATA_DIR, opts.datei || "nt7-proben.json");
   const PREFIX = String(opts.prefix || "/api/nt7").replace(/\/$/, "");
+  // Name des Moduls für Rückgabe und Testregeln (nt7, nt8, inf7, inf8, inf9)
+  const MODUL = PREFIX.replace(/^\/api\//, "");
   const tests = opts.tests || nt7Tests;
   const FACH = opts.fach || "Natur-und-Technik";
   const SERVICE = opts.service || "nt7-proben";
@@ -365,6 +368,7 @@ function registerNt7Routes(app, opts) {
   function rechne(record, test) {
     const total = maxPoints(test), score = record.details.reduce((sum,d) => sum+d.points,0);
     Object.assign(record, {score,total,percent:Math.round(score/total*100),grade:grade(score/total*100,record.zug),needsReview:record.details.some(d => d.needsReview)});
+    probeRegel.note6(record);   // nach den Testregeln beendet: Note 6, bis die Lehrkraft sie aufhebt
   }
   // KI-Bewertung der freien Antworten in den gespeicherten Satz eintragen. Lesen, ändern und schreiben geschieht
   // ohne Unterbrechung – gleichzeitige Abgaben anderer Kinder gehen dabei nicht verloren.
@@ -471,13 +475,16 @@ function registerNt7Routes(app, opts) {
       if (!probeOffen(data.unlocked[test.id], true) && !laufend) return res.status(403).json({ok:false,error:"locked"});
       if (schonAbgegeben(data, test, student)) return res.status(409).json({ok:false,error:"already_submitted"});
       const {details, frei} = auswerten(test, req.body.answers);
+      const regelStand = probeRegel.ausAbgabe(req.body, MODUL, test.id, student.key);
       const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),protokoll:protokollSauber(req.body.protokoll),details,submittedAt:new Date().toISOString()};
       // nach dem Sperren von Hand abgegeben (Nachfrist): für die Lehrkraft vermerkt
       if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
       sitzungAngaben(test, student, record);
       rechne(record, test);
+      probeRegel.eintragen(record, regelStand);                // Testregeln: Probe beendet = Note 6
       data.submissions.push(record); writeData(data);          // ab hier ist die Abgabe sicher
       sitzungLoeschen(test, student);
+      probeRegel.vergessen(MODUL, test.id, student.key);
       if (frei.length) await Promise.race([kiNachtragen(record.id, test, frei), warte(KI_GEDULD_MS)]);
       const stand = readData().submissions.find(row => row.id === record.id) || record;
       return res.json({ok:true,result:{score:stand.score,total:stand.total,percent:stand.percent,grade:stand.grade,needsReview:stand.needsReview,details:stand.details,submittedAt:stand.submittedAt}});
@@ -511,6 +518,7 @@ function registerNt7Routes(app, opts) {
     item.points = points; item.source = "lehrkraft"; item.needsReview = false; item.comment = clean(req.body.comment,ERWEITERT ? 600 : 220) || item.comment;
     if (ERWEITERT && typeof req.body.tipp === "string") item.tipp = clean(req.body.tipp,300);
     row.score = row.details.reduce((sum,d) => sum+d.points,0); row.percent = Math.round(row.score/row.total*100); row.grade = grade(row.score/row.total*100,row.zug); row.needsReview = row.details.some(d => d.needsReview);
+    probeRegel.note6(row);
     if (ERWEITERT) delete row.bestaetigtAm;                    // nach einer Änderung neu bestätigen
     writeData(data); res.json({ok:true,score:row.score,percent:row.percent,grade:row.grade});
   });
@@ -598,6 +606,9 @@ function registerNt7Routes(app, opts) {
   app.post(PREFIX + "/teacher/delete", (req,res) => {
     if (!teacher(req,res)) return;
     const data = readData(), before = data.submissions.length;
+    // Nachschreiben: Die Testregeln zählen von vorn
+    const weg = data.submissions.find(s => s.id === clean(req.body.submissionId));
+    if (weg) probeRegel.vergessen(MODUL, weg.testId, weg.studentKey);
     data.submissions = data.submissions.filter(s => s.id !== clean(req.body.submissionId));
     if (data.submissions.length === before) return res.status(404).json({ok:false,error:"not_found"});
     writeData(data); res.json({ok:true});
@@ -613,6 +624,13 @@ function registerNt7Routes(app, opts) {
     const csv = ["Probe;Klasse;Nachname;Vorname;Punkte;Gesamt;Prozent;Note;Nachpruefen;Abgabe", ...rows.map(r => [r.testTitle,r.className,r.lastName,r.firstName,r.score,r.total,r.percent,r.grade,r.needsReview ? "ja":"nein",r.submittedAt].map(quote).join(";"))].join("\r\n");
     res.type("text/csv; charset=utf-8").attachment(opts.csvName || "nt7-proben.csv").send("\ufeff"+csv);
   });
+
+  // Testregeln: Die Lehrkraft hebt die Note 6 einer beendeten Probe auf (/api/probe-regel/aufheben)
+  probeRegel.modulAnmelden(MODUL, { aufheben: probeRegel.aufhebenMit({
+    lesen: () => { const d = readData(); return {daten: d, liste: d.submissions}; },
+    schreiben: writeData,
+    neu: rec => { if (tests[rec.testId]) rechne(rec, tests[rec.testId]); }
+  }) });
 
   // Fuer die Notenuebersicht je Klasse
   return { abgaben: () => readData().submissions };

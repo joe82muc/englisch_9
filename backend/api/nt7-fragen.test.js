@@ -103,7 +103,7 @@ test("R-Kinder schreiben die R-Fassung, M-Kinder die M-Fassung", async () => {
   const post = (route, body) => fetch(base + route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, data: await r.json() }));
   try {
     const liste = (await (await fetch(base + "/api/nt7/list")).json()).tests;
-    assert.equal(liste.length, 20);
+    assert.equal(liste.length, 22);   // seit 17.10.2026 mit der zweiten Luft-Probe (nt7-luft2-r/-m)
     assert.deepEqual(liste.find((t) => t.id === "nt7-p3-r"), { ...liste.find((t) => t.id === "nt7-p3-r"), zug: "R", thema: "mensch", alt: true, unlocked: false });
     assert.equal(liste.find((t) => t.id === "nt7-luft-1").zug, "");
     for (const id of ["nt7-p1-r", "nt7-p1-m"]) assert.equal((await post("/api/nt7/teacher/unlock", { password: "pw", testId: id, open: true })).status, 200);

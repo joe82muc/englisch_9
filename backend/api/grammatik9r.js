@@ -31,6 +31,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
+const probeRegel = require("./probe-regel");
 
 /* ------------------------------------------------------------------
    Notenschluessel
@@ -324,6 +325,7 @@ function registerGrammatik9rRoutes(app, opts) {
   const HASH_SECRET = opts.hashSecret || "grumi-fallback-secret";
   const askAnthropic = opts.askAnthropic;
   const probeKind = probeKindPruefer(opts.kindZumCode);
+  const REGEL_MODUL = "grammatik9r";   // Name für Rückgabe und Testregeln
 
   const isTeacher = (req) => clean(req.body?.password) === TEACHER_PASSWORD;
 
@@ -518,8 +520,10 @@ function registerGrammatik9rRoutes(app, opts) {
     if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
+    probeRegel.eintragen(record, probeRegel.ausAbgabe(req.body, REGEL_MODUL, testId, key));   // Testregeln: beendet = Note 6
     fresh.submissions.push(record);
     store.saveSubmissions(fresh);
+    probeRegel.vergessen(REGEL_MODUL, testId, key);
 
     res.json({
       ok: true,
@@ -593,6 +597,7 @@ function registerGrammatik9rRoutes(app, opts) {
     rec.score = rec.details.reduce((sum, d) => sum + d.points, 0);
     rec.percent = rec.total ? Math.round((rec.score / rec.total) * 100) : 0;
     rec.grade = gradeFromPercent(rec.percent, rec.gradeScale || TESTS[rec.testId]?.gradeScale);
+    probeRegel.note6(rec);
     rec.needsReview = rec.details.some((d) => d.scoredBy === "keywords");
     store.saveSubmissions(db);
     res.json({ ok: true, score: rec.score, percent: rec.percent, grade: rec.grade });
@@ -604,6 +609,8 @@ function registerGrammatik9rRoutes(app, opts) {
     const id = clean(req.body?.submissionId);
     const db = store.loadSubmissions();
     const before = db.submissions.length;
+    const weg = db.submissions.find((s) => s.id === id);
+    if (weg) probeRegel.vergessen(REGEL_MODUL, weg.testId, weg.studentKey);
     db.submissions = db.submissions.filter((s) => s.id !== id);
     if (db.submissions.length === before) return res.status(404).json({ ok: false, error: "not_found" });
     store.saveSubmissions(db);
@@ -630,6 +637,13 @@ function registerGrammatik9rRoutes(app, opts) {
     res.setHeader("Content-Disposition", `attachment; filename="grammatik9r_${testId || "alle"}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
   });
+
+  // Testregeln: Die Lehrkraft hebt die Note 6 einer beendeten Probe auf (/api/probe-regel/aufheben)
+  probeRegel.modulAnmelden(REGEL_MODUL, { aufheben: probeRegel.aufhebenMit({
+    lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
+    schreiben: (d) => store.saveSubmissions(d),
+    neu: (rec) => { rec.grade = gradeFromPercent(rec.percent, rec.gradeScale || TESTS[rec.testId]?.gradeScale); }
+  }) });
 
   return { abgaben: () => store.loadSubmissions().submissions };
 }

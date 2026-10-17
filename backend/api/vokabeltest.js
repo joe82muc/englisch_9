@@ -500,8 +500,51 @@ function createStore(dataDir) {
     fs.writeFileSync(MERK_FILE, JSON.stringify(data), "utf8");
   }
 
+  // Testregeln: was die Testseite während des Tests schon gezählt hat, je Test und Kind (bis zur Abgabe)
+  // { vorfaelle: { "<testId>|<studentKey>": { verlassen, kopieren, zeit } } }
+  const VORFALL_FILE = path.join(dataDir, "vokabeltest_vorfaelle.json");
+  function loadVorfaelle() {
+    try { const d = JSON.parse(fs.readFileSync(VORFALL_FILE, "utf8")); return d && typeof d.vorfaelle === "object" && d.vorfaelle ? d : { vorfaelle: {} }; }
+    catch (_e) { return { vorfaelle: {} }; }
+  }
+  function saveVorfaelle(data) {
+    fs.writeFileSync(VORFALL_FILE, JSON.stringify(data), "utf8");
+  }
+
   ensure();
-  return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions, loadMerk, saveMerk };
+  return { loadUnlocks, saveUnlocks, loadSubmissions, saveSubmissions, loadMerk, saveMerk, loadVorfaelle, saveVorfaelle };
+}
+
+/* ------------------------------------------------------------------
+   Testregeln (Wunsch der Lehrkraft, 16.10.2026)
+   Verlässt ein Kind die Testseite (anderer Tab, andere App), warnt die Seite: 1., 2., 3. und 4. (letzte) Warnung –
+   beim 5. Mal ist der Test beendet. Versucht es zu kopieren oder einzufügen: eine Warnung, beim 2. Versuch ist der
+   Test beendet. Ein beendeter Test wird sofort abgegeben und mit Note 6 bewertet; die Lehrkraft kann die Note 6
+   aufheben (/abbruch). Zählen und Warnen macht die Seite (js/probe-schutz.js, Angabe regel), der Server zählt mit
+   (/vorfall) – so zählt es auch nach einem Gerätewechsel weiter.
+   Seit 17.10.2026 (für alle Proben, probe-regel.js): Länger als 1 Minute am Stück weg = Test beendet, Note 6 (außer
+   das Kind hatte davor schon 2 Minuten nichts mehr eingegeben – Bildschirm gesperrt: dann nur abgegeben). Und nur die
+   Vokabeltests: Wer 5 Minuten nichts eingibt, dessen Test wird automatisch abgegeben (ruheMinuten) – auch wenn die
+   Seite geschlossen wurde (der Server gibt mit dem zuletzt gemeldeten Stand ab, siehe automatischAbgeben).
+   ------------------------------------------------------------------ */
+const TEST_REGEL = { verlassen: 5, kopieren: 2, wegSekunden: 60, ruheMinuten: 5 };
+const ABBRUCH_TEXT = {
+  verlassen: (a) => `Test beendet: Die Testseite wurde ${a.verlassen}-mal verlassen (nach 4 Warnungen). Deshalb Note 6.`,
+  kopieren: () => "Test beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6.",
+  weg: (a) => `Test beendet: Die Testseite war ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} am Stück verlassen (erlaubt ist höchstens 1 Minute). Deshalb Note 6.`
+};
+// Ohne Note 6 automatisch abgegeben: 5 Minuten nichts eingegeben (ruhe), Seite verlassen, nachdem 2 Minuten nichts mehr
+// eingegeben wurde (gesperrt), Seite geschlossen und nicht zurückgekommen – der Server hat abgegeben (server)
+const AUTOMATISCH = ["ruhe", "gesperrt", "server"];
+const istZeit = (v) => typeof v === "string" && v.length <= 30 && !Number.isNaN(Date.parse(v));
+const anzahl = (v) => Math.max(0, Math.min(999, Math.round(Number(v)) || 0));
+// Grund für das Ende des Tests: was die Seite meldet, sonst aus den Zahlen
+function abbruchGrund(angabe, verlassen, kopierversuche) {
+  const g = String((angabe && typeof angabe === "object" ? angabe.grund : angabe) || "");
+  if (g === "verlassen" || g === "kopieren" || g === "weg") return g;
+  if (verlassen >= TEST_REGEL.verlassen) return "verlassen";
+  if (kopierversuche >= TEST_REGEL.kopieren) return "kopieren";
+  return "";
 }
 
 /* ------------------------------------------------------------------
@@ -636,6 +679,19 @@ function registerVokabeltestRoutes(app, opts) {
   const ZAEHLT = "Zählt – richtig geschrieben: ";
   // Schluessel einer gespeicherten Abgabe (aeltere Abgaben tragen ihn noch nicht)
   const skalaVon = (rec) => rec.gradeScale || (TESTS[rec.testId] && TESTS[rec.testId].gradeScale) || "default";
+  // Punkte und Note einer gespeicherten Abgabe neu rechnen – ein nach den Testregeln beendeter Test bleibt Note 6,
+  // solange die Lehrkraft das nicht aufhebt
+  function neuRechnen(rec) {
+    Object.assign(rec, summe(rec.details, skalaVon(rec)));
+    if (rec.abbruch && !rec.abbruch.aufgehoben) rec.grade = 6;
+  }
+  const vorfallKey = (testId, studentKey) => testId + "|" + studentKey;
+  function vorfallWeg(testId, studentKey) {
+    const db = store.loadVorfaelle();
+    if (!db.vorfaelle[vorfallKey(testId, studentKey)]) return;
+    delete db.vorfaelle[vorfallKey(testId, studentKey)];
+    store.saveVorfaelle(db);
+  }
 
   /* ---------- Oeffentlich: Liste der Tests (OHNE Loesungen) ---------- */
   app.get("/api/vokabeltest/list", (_req, res) => {
@@ -686,12 +742,147 @@ function registerVokabeltestRoutes(app, opts) {
       hint: [it.hint, verbFormen(it.solutions).length ? VERB_HINWEIS : ""].filter(Boolean).join(" · ")
     }));
 
+    // Testregeln: Was schon gezählt ist (auch auf einem anderen Gerät), zählt weiter – auch seit wann die Seite
+    // verlassen ist (weg) und wann zuletzt etwas eingegeben wurde (aktiv)
+    const bisher = store.loadVorfaelle().vorfaelle[vorfallKey(testId, key)] || {};
     res.json({
       ok: true,
       test: { id: test.id, title: test.title, unit: test.unit, direction: test.direction || "mixed" },
-      items
+      items,
+      regel: TEST_REGEL,
+      vorfaelle: { verlassen: anzahl(bisher.verlassen), kopieren: anzahl(bisher.kopieren),
+        weg: bisher.sichtbar === false && istZeit(bisher.weg) ? bisher.weg : null, aktiv: istZeit(bisher.aktiv) ? bisher.aktiv : null }
     });
   });
+
+  /* ---------- Schueler: Testregeln – die Seite meldet jedes gezählte Verlassen und jeden Kopierversuch ----------
+     body: { testId, code, verlassen, kopieren } (Zahlen bisher). Gespeichert wird je Zahl der hoechste Stand.
+     Seit 17.10.2026 meldet die Seite auch ihren Stand: answers, sichtbar (false = verlassen), weg (seit wann),
+     aktiv (letzte Eingabe), testDate – mindestens jede Minute, solange sie sichtbar ist. Damit gibt der Server ab,
+     wenn die Seite nicht mehr kommt (automatischAbgeben). */
+  app.post("/api/vokabeltest/vorfall", async (req, res) => {
+    const testId = clean(req.body?.testId);
+    const test = TESTS[testId];
+    if (!test) return res.status(404).json({ ok: false, error: "test_not_found" });
+    if (!probeOffen(store.loadUnlocks().unlocked[testId], true)) {
+      return res.status(403).json({ ok: false, error: "locked", message: "Dieser Test ist nicht freigeschaltet." });
+    }
+    const kind = await probeKind(req, res);
+    if (!kind) return;
+    if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === kind.key)) {
+      return res.status(409).json({ ok: false, error: "already_submitted" });
+    }
+    const db = store.loadVorfaelle();
+    // Liegen gebliebene Stände (Test nie abgegeben) nach einer Woche entfernen
+    const alt = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    for (const [k, v] of Object.entries(db.vorfaelle)) if (!v || !(Date.parse(v.zeit) > alt)) delete db.vorfaelle[k];
+    const vorher = db.vorfaelle[vorfallKey(testId, kind.key)] || {};
+    const jetzt = new Date().toISOString(), b = req.body || {};
+    const stand = {
+      verlassen: Math.max(anzahl(vorher.verlassen), anzahl(b.verlassen)),
+      kopieren: Math.max(anzahl(vorher.kopieren), anzahl(b.kopieren)),
+      zeit: jetzt,
+      // Stand der Seite (ältere Seiten schicken ihn nicht – dann bleibt der vorige)
+      kontakt: jetzt,
+      sichtbar: b.sichtbar === false ? false : b.sichtbar === true ? true : vorher.sichtbar,
+      weg: b.sichtbar === false ? (istZeit(b.weg) ? b.weg : vorher.weg || jetzt) : b.sichtbar === true ? null : vorher.weg || null,
+      aktiv: istZeit(b.aktiv) ? b.aktiv : vorher.aktiv || null,
+      answers: Array.isArray(b.answers) ? test.items.map((_it, i) => clean(b.answers[i]).slice(0, 200)) : vorher.answers,
+      testDate: clean(b.testDate).slice(0, 10) || vorher.testDate || "",
+      kind: { code: kind.code, klasse: kind.klasse, zug: kind.zug, lrs: kind.lrs, firstName: kind.firstName, lastName: kind.lastName, className: kind.className, key: kind.key }
+    };
+    for (const k of Object.keys(stand)) if (stand[k] === undefined) delete stand[k];
+    db.vorfaelle[vorfallKey(testId, kind.key)] = stand;
+    store.saveVorfaelle(db);
+    res.json({ ok: true, verlassen: stand.verlassen, kopieren: stand.kopieren, regel: TEST_REGEL });
+  });
+
+  /* ---------- Abgabe anlegen: das Kind gibt ab (submit) oder der Server (automatischAbgeben) ----------
+     angaben: { testDate, verlassen, protokoll, regel, kopierversuche, abbruch, automatisch, deviceHash }
+     Ergebnis: { record } oder { error: "already_submitted" } */
+  async function abgabeSpeichern(test, kind, answers, angaben) {
+    const testId = test.id, key = kind.key;
+    const { code, firstName, lastName, className } = kind;
+    const details = await werteAus(test, answers, kind.lrs);
+    // Schluessel nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3), auch wenn es
+    // den Test des anderen Zugs erwischt hat. R-Tests behalten ihren eigenen R-Schluessel.
+    const scaleName = kind.zug === "M" ? "default"
+      : (test.gradeScale && test.gradeScale !== "default" ? test.gradeScale : "9R");
+    const punkte = summe(details, scaleName);
+    const { total, score, typos, aiAccepted, percent } = punkte;
+
+    // Testregeln: 5× verlassen, länger als 1 Minute weg oder 2. Kopierversuch -> Test beendet, Note 6. Nur fuer Seiten,
+    // die die Regel kennen (regel: true) – eine alte, noch offene Seite hat nicht gewarnt. Es zaehlt der hoechste Stand.
+    const gezaehlt = store.loadVorfaelle().vorfaelle[vorfallKey(testId, key)] || {};
+    const verlassen = Math.max(verlassenZahl(angaben.verlassen), anzahl(gezaehlt.verlassen));
+    const kopierversuche = Math.max(anzahl(angaben.kopierversuche), anzahl(gezaehlt.kopieren));
+    const grund = angaben.regel === true ? abbruchGrund(angaben.abbruch, verlassen, kopierversuche) : "";
+    const submittedAt = new Date().toISOString();
+    const sekunden = grund === "weg" ? anzahl(angaben.abbruch && angaben.abbruch.sekunden) : 0;
+    const abbruch = grund ? { grund, verlassen, kopierversuche, ...(sekunden ? { sekunden } : {}), zeit: submittedAt, text: ABBRUCH_TEXT[grund]({ verlassen, sekunden }) } : null;
+    const automatisch = !abbruch && angaben.regel === true && AUTOMATISCH.includes(angaben.automatisch) ? angaben.automatisch : "";
+    const grade = abbruch ? 6 : punkte.grade;
+
+    const record = {
+      id: `vt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
+      testId,
+      testTitle: test.title,
+      unit: test.unit,
+      code, zug: kind.zug, lrs: kind.lrs, verlassen, protokoll: protokollSauber(angaben.protokoll),
+      ...(angaben.regel === true ? { kopierversuche } : {}),
+      ...(abbruch ? { abbruch, kommentar: abbruch.text } : {}),
+      ...(automatisch ? { automatisch } : {}),
+      firstName, lastName, className,
+      studentKey: key,
+      testDate: angaben.testDate || new Date().toISOString().slice(0, 10),
+      score, total, percent, grade, typos, aiAccepted,
+      gradeScale: scaleName,
+      details,
+      deviceHash: angaben.deviceHash || "",
+      submittedAt
+    };
+
+    // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
+    // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+    const fresh = store.loadSubmissions();
+    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) return { error: "already_submitted" };
+    fresh.submissions.push(record);
+    store.saveSubmissions(fresh);
+    vorfallWeg(testId, key);   // die Zahlen stehen jetzt in der Abgabe
+    return { record };
+  }
+
+  /* ---------- Automatisch abgeben (Wunsch der Lehrkraft 17.10.2026: „wenn schüler nicht auf abgeben klickt
+     automatisch abgeben nach 5 minuten“) ----------
+     Die Testseite gibt selbst ab, wenn 5 Minuten lang nichts eingegeben wurde (js/probe-schutz.js, ruhe). Ist die Seite
+     zu oder das Gerät gesperrt, läuft dort nichts mehr – dann gibt der Server mit dem zuletzt gemeldeten Stand ab:
+     5 Minuten nach dem Verlassen, sonst 30 Minuten nach der letzten Meldung (Verbindung weg, Gerät aus). Ohne Note 6:
+     Wer nicht zurückkam, konnte nichts nachschlagen und eintragen. Ohne eine einzige Antwort gibt der Server nicht ab. */
+  const WEG_MS = (TEST_REGEL.ruheMinuten || 5) * 60 * 1000, STILL_MS = 30 * 60 * 1000;
+  let automatischLaeuft = false;
+  async function automatischAbgeben(jetzt = Date.now()) {
+    if (automatischLaeuft) return 0;
+    automatischLaeuft = true;
+    let n = 0;
+    try {
+      for (const [k, v] of Object.entries(store.loadVorfaelle().vorfaelle)) {
+        if (!v || !v.kind || !Array.isArray(v.answers) || !v.answers.some((a) => a)) continue;
+        const kontakt = Date.parse(v.kontakt || v.zeit);
+        if (!(jetzt - kontakt >= (v.sichtbar === false ? WEG_MS : STILL_MS))) continue;
+        const testId = k.slice(0, k.indexOf("|")), test = TESTS[testId];
+        if (!test) continue;
+        if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === v.kind.key)) { vorfallWeg(testId, v.kind.key); continue; }
+        const r = await abgabeSpeichern(test, v.kind, v.answers, { testDate: v.testDate, verlassen: v.verlassen, protokoll: null, regel: true,
+          kopierversuche: v.kopieren, abbruch: null, automatisch: "server" });
+        if (r.record) n++;
+      }
+    } catch (err) {
+      console.error("Vokabeltest automatisch abgeben:", err && err.message);
+    } finally { automatischLaeuft = false; }
+    return n;
+  }
+  const automatischTakt = setInterval(() => { automatischAbgeben().catch(() => {}); }, opts.automatischTaktMs || 30000);
+  if (automatischTakt.unref) automatischTakt.unref();
 
   /* ---------- Schueler: Abgabe ---------- */
   app.post("/api/vokabeltest/submit", async (req, res) => {
@@ -722,42 +913,20 @@ function registerVokabeltestRoutes(app, opts) {
       });
     }
 
-    const details = await werteAus(test, answers, kind.lrs);
-    // Schluessel nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3), auch wenn es
-    // den Test des anderen Zugs erwischt hat. R-Tests behalten ihren eigenen R-Schluessel.
-    const scaleName = kind.zug === "M" ? "default"
-      : (test.gradeScale && test.gradeScale !== "default" ? test.gradeScale : "9R");
-    const { total, score, typos, aiAccepted, percent, grade } = summe(details, scaleName);
-
-    const record = {
-      id: `vt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
-      testId,
-      testTitle: test.title,
-      unit: test.unit,
-      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen), protokoll: protokollSauber(req.body?.protokoll),
-      firstName, lastName, className,
-      studentKey: key,
-      testDate: testDate || new Date().toISOString().slice(0, 10),
-      score, total, percent, grade, typos, aiAccepted,
-      gradeScale: scaleName,
-      details,
-      deviceHash: deviceHash(req, HASH_SECRET),
-      submittedAt: new Date().toISOString()
-    };
-
-    // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
-    // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
-    const fresh = store.loadSubmissions();
-    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
+    const r = await abgabeSpeichern(test, kind, answers, { testDate, verlassen: req.body?.verlassen, protokoll: req.body?.protokoll,
+      regel: req.body?.regel, kopierversuche: req.body?.kopierversuche, abbruch: req.body?.abbruch, automatisch: req.body?.automatisch,
+      deviceHash: deviceHash(req, HASH_SECRET) });
+    if (r.error) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
-    fresh.submissions.push(record);
-    store.saveSubmissions(fresh);
+    const record = r.record, details = record.details, abbruch = record.abbruch || null;
+    const { score, total, percent, grade, typos, aiAccepted } = record;
 
     res.json({
       ok: true,
       result: {
         score, total, percent, grade, typos, aiAccepted,
+        abbruch: abbruch ? abbruch.grund : "",
         details: details.map((d) => ({
           nr: d.nr, prompt: d.prompt, given: d.given,
           correct: d.correct, typo: d.typo,
@@ -850,7 +1019,7 @@ function registerVokabeltestRoutes(app, opts) {
     }
     rec.details = details.map((d, i) => (vorher[i].scoredBy === "lehrkraft" ? vorher[i] : d));
     rec.lrs = lrs;
-    Object.assign(rec, summe(rec.details, skalaVon(rec)));
+    neuRechnen(rec);
     store.saveSubmissions(db);
     res.json({ ok: true, lrs, score: rec.score, total: rec.total, percent: rec.percent, grade: rec.grade });
   });
@@ -889,7 +1058,7 @@ function registerVokabeltestRoutes(app, opts) {
       // Der aufgehobene Stand ohne Notenschutz (siehe /lrs) bekommt dieselben Punkte
       if (Array.isArray(rec.detailsOhneLrs) && rec.detailsOhneLrs.length === test.items.length) nachsehen(rec.detailsOhneLrs, false);
       if (!antworten.length) continue;
-      Object.assign(rec, summe(rec.details, skalaVon(rec)));
+      neuRechnen(rec);
       abgaben.push({ id: rec.id, code: rec.code || "", firstName: rec.firstName, lastName: rec.lastName, className: rec.className,
         antworten, vorher, score: rec.score, total: rec.total, grade: rec.grade });
     }
@@ -1000,9 +1169,35 @@ function registerVokabeltestRoutes(app, opts) {
     } else {
       det.comment = eigener || bisher || det.regelHinweis || "";
     }
-    Object.assign(rec, summe(rec.details, skalaVon(rec)));
+    neuRechnen(rec);
     store.saveSubmissions(db);
     res.json({ ok: true, score: rec.score, percent: rec.percent, grade: rec.grade });
+  });
+
+  /* ---------- Lehrkraft: Note 6 eines nach den Testregeln beendeten Tests aufheben (oder wieder setzen) ----------
+     body: { submissionId, aufheben: true | false }. Aufgehoben zaehlen die Punkte wie bei jeder Abgabe; der Vermerk
+     bleibt in der Abgabe stehen (abbruch.aufgehoben). */
+  app.post("/api/vokabeltest/abbruch", (req, res) => {
+    if (!isTeacher(req)) return res.status(401).json({ ok: false, error: "bad_password" });
+
+    const id = clean(req.body?.submissionId);
+    const aufheben = req.body?.aufheben === true;
+    const db = store.loadSubmissions();
+    const rec = db.submissions.find((s) => s.id === id);
+    if (!rec) return res.status(404).json({ ok: false, error: "not_found" });
+    if (!rec.abbruch) return res.status(409).json({ ok: false, error: "kein_abbruch", message: "Dieser Test wurde nicht vorzeitig beendet." });
+
+    rec.abbruch.aufgehoben = aufheben;
+    if (aufheben) {
+      rec.abbruch.aufgehobenAm = new Date().toISOString();
+      if (rec.kommentar === rec.abbruch.text) delete rec.kommentar;
+    } else {
+      delete rec.abbruch.aufgehobenAm;
+      if (!rec.kommentar) rec.kommentar = rec.abbruch.text;
+    }
+    neuRechnen(rec);
+    store.saveSubmissions(db);
+    res.json({ ok: true, score: rec.score, total: rec.total, percent: rec.percent, grade: rec.grade, abbruch: rec.abbruch });
   });
 
   /* ---------- Lehrkraft: Einzelne Abgabe loeschen (Nachschreiben) ---------- */
@@ -1012,11 +1207,14 @@ function registerVokabeltestRoutes(app, opts) {
     const id = clean(req.body?.submissionId);
     const db = store.loadSubmissions();
     const before = db.submissions.length;
+    const weg = db.submissions.find((s) => s.id === id);
     db.submissions = db.submissions.filter((s) => s.id !== id);
     if (db.submissions.length === before) {
       return res.status(404).json({ ok: false, error: "not_found" });
     }
     store.saveSubmissions(db);
+    // Neu schreiben heisst: Die Testregeln zaehlen von vorn
+    if (weg) vorfallWeg(weg.testId, weg.studentKey);
     res.json({ ok: true, removed: before - db.submissions.length });
   });
 
@@ -1043,7 +1241,7 @@ function registerVokabeltestRoutes(app, opts) {
     res.send("﻿" + lines.join("\r\n"));
   });
 
-  return { abgaben: () => store.loadSubmissions().submissions };
+  return { abgaben: () => store.loadSubmissions().submissions, automatischAbgeben };
 }
 
 module.exports = {
@@ -1056,6 +1254,7 @@ module.exports = {
   kleinerTippfehler,
   einBuchstabeDaneben,
   TIPPFEHLER_AB,
+  TEST_REGEL,
   GRADE_SCALE,
   GRADE_SCALE_8R,
   GRADE_SCALE_9R

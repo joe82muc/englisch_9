@@ -67,6 +67,10 @@ const probeKindZumCode = (code, req) => nt9Fortschritt.kindZumCode(code, req);
 // Muss vor den Proben-Modulen stehen.
 const { ABGABE_ROUTEN, abgabeOhneErgebnis } = require("./probe-kind");
 app.use(ABGABE_ROUTEN, abgabeOhneErgebnis);
+// Testregeln aller Proben (17.10.2026): länger als 1 Minute weg oder 2. Kopierversuch = Probe beendet, Note 6.
+// Die Proben-Module melden sich selbst an (probe-regel.js); hier nur Zählung und „Note 6 aufheben“.
+const { registerProbeRegel } = require("./probe-regel");
+registerProbeRegel(app, { dataDir: DATA_DIR, kindZumCode: probeKindZumCode, teacherPassword: TEACHER_PASSWORD });
 
 // --- Vokabeltest-Modul (Freischaltung, Abgabe, Auswertung) ---
 const { registerVokabeltestRoutes } = require("./vokabeltest");
@@ -678,7 +682,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-15-d7-nachholprobe-alle",
+    version: "2026-10-17-testregeln-alle-proben",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

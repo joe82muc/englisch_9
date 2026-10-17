@@ -18,8 +18,12 @@ const NT7_BLOECKE = {
   luft: ["luft-modul", "windkraft-strom", "windkraft-procontra", "luft-verbrennung", "achtung-explosiv", "brand-schutz", "oxidation", "luftdruck", "forschen"],
   atome: ["atommodelle", "atombau-pse"], tiere: ["wirbeltiere", "fortbewegung"],
   mensch: ["atmungsorgane", "atmen-gasaustausch", "blut", "herz-kreislauf", "herz-gesund"],
-  strom: ["stromkreis", "strom-wirkungen", "spannung-stromstaerke", "widerstand", "strom-sicher"]
+  strom: ["stromkreis", "strom-wirkungen", "spannung-stromstaerke", "widerstand", "strom-sicher"],
+  // zweite Luft-Probe (17.10.2026): nur die Module 1 bis 5, überwiegend wie auf den Arbeitsblättern
+  luft2: ["luft-modul", "windkraft-strom", "windkraft-procontra", "luft-verbrennung", "achtung-explosiv"]
 };
+// Themenbereich, unter dem eine Probe steht (sonst der Name des Blocks)
+const NT7_THEMA = { luft2: "luft" };
 const NT9_BLOECKE = {
   rohstoffe: ["m1", "m2", "m3", "m4", "m5", "m6", "m7"],
   radioaktivitaet: ["ra-nachweis", "ra-strahlungsarten", "ra-halbwertszeit", "ra-c14", "ra-folgen", "ra-anwendung"],
@@ -35,7 +39,7 @@ test("NT 7: je Themenbereich eine Probe für R und M – alle Module, 30 bis 45 
     for (const zug of ["R", "M"]) {
       const id = "nt7-" + block + "-" + zug.toLowerCase(), t = nt7[id];
       assert.equal(t.id, id);
-      assert.deepEqual([t.zug, t.thema, t.alt], [zug, block, undefined], id);
+      assert.deepEqual([t.zug, t.thema, t.alt], [zug, NT7_THEMA[block] || block, undefined], id);
       assert.match(t.title, new RegExp("\\(7" + zug + "\\)"), id);
       const jeModul = {}, arten = {};
       let zeit = 0, punkte = 0;
@@ -125,7 +129,7 @@ test("NT 7: Modul und Transfer stehen in der Liste, in der Probe und in der gesp
   const post = (route, body) => fetch(base + route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, data: await r.json() }));
   try {
     const liste = (await (await fetch(base + "/api/nt7/list")).json()).tests;
-    assert.equal(liste.length, 20);
+    assert.equal(liste.length, 22);
     assert.deepEqual(liste.filter((t) => t.alt).map((t) => t.id).sort(), ALT7.slice().sort());
     const eintrag = liste.find((t) => t.id === "nt7-atome-r");
     assert.deepEqual([eintrag.zug, eintrag.thema, eintrag.alt, eintrag.unlocked], ["R", "atome", undefined, false]);
