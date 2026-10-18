@@ -30,6 +30,9 @@
  *   (je Feld 1 Punkt: genau diese eine Adresse bzw. diese Datei), criteria + keywords + textBeispiel = Betreff und
  *   Text, die die KI bewertet (je Kriterium 1 Punkt). points = 4 + criteria.length. Antwort der Seite:
  *   { an: [...], cc: [...], bcc: [...], betreff, text, anhang }.
+ * tf mit wahl: ["ausfüllen", "leer lassen"] (Informatik 8, Probe 1b/2b) – eigene Beschriftung der beiden Knöpfe statt
+ *   „richtig“/„falsch“ (true = erste, false = zweite); so steht es auch in Ergebnis, Korrektur und Vorschau.
+ * tabelle { kopf, zeilen } steht seit 18.10.2026 bei jeder Probe mit in der Abgabe (Rückgabe zeigt sie), nicht nur in NT 8.
  * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
  * je Schritt an der richtigen Stelle gibt es 1 Punkt.
  * Block-Proben (seit 07.10.2026, nt7-block-*.js): Jede Aufgabe nennt ihr Modul (modul, modulTitel) und ggf. transfer: true.
@@ -201,7 +204,7 @@ function registerNt7Routes(app, opts) {
       image:item.image || undefined,imageAlt:item.imageAlt || undefined,...herkunft(item),...zusatz(item),
       // NT 8: Lückentext (je Lücke die Auswahl, nach dem Alphabet), Richtig/Falsch-Aussagen, Zahl mit Einheit
       ...(item.type === "gaps" ? {gapText:item.text,gapOptions:item.gaps.map(g => g.slice().sort((a,b) => a.localeCompare(b,"de")))} : {}),
-      ...(item.type === "tf" ? {statements:item.statements.map(s => s[0])} : {}),
+      ...(item.type === "tf" ? {statements:item.statements.map(s => s[0]),...(item.wahl ? {wahl:item.wahl.slice(0, 2)} : {})} : {}),
       ...(item.type === "number" ? {units:item.units ? item.units.slice() : undefined,unit:item.units ? undefined : item.unit || undefined} : {}),
       // E-Mail: Kontakte (ohne An/Cc/Bcc) und Dateien zum Anhängen – der Schlüssel (soll) bleibt auf dem Server
       ...(item.type === "email" ? {kontakte:item.kontakte.map(k => ({name:k.name,adresse:k.adresse})),dateien:item.dateien.slice()} : {})};
@@ -439,7 +442,7 @@ function registerNt7Routes(app, opts) {
       const details = [], frei = [];
       for (let i=0; i<test.items.length; i++) {
         const item = test.items[i], raw = answers[i];
-        const base = {nr:i+1,type:item.type,prompt:item.prompt,maxPoints:item.points,...herkunft(item),...(ERWEITERT ? {...zusatz(item),...(item.image ? {image:item.image,imageAlt:item.imageAlt || ""} : {})} : {})};
+        const base = {nr:i+1,type:item.type,prompt:item.prompt,maxPoints:item.points,...herkunft(item),...(item.tabelle ? {tabelle:item.tabelle} : {}),...(ERWEITERT ? {...zusatz(item),...(item.image ? {image:item.image,imageAlt:item.imageAlt || ""} : {})} : {})};
         if (item.type === "multi") {
           // mehrere richtige Antworten: je richtig gewählter 1 Punkt, je falsch gewählter 1 Punkt Abzug (nie unter 0)
           const picked = Array.isArray(raw) ? [...new Set(raw.filter(Number.isInteger))].filter(n => n >= 0 && n < item.options.length) : [];
@@ -457,8 +460,9 @@ function registerNt7Routes(app, opts) {
           const expected = item.gaps.map(g => g[0]);
           details.push({...base,prompt:item.prompt + " – " + item.text,given,labels:item.gaps.map((_,j) => "Lücke " + (j+1)),points:expected.filter((v,j) => given[j] === v).length,expected,source:"schluessel"});
         } else if (item.type === "tf") {
-          const given = Array.isArray(raw) ? raw.slice(0,item.statements.length).map(v => v === true ? "richtig" : v === false ? "falsch" : "") : [];
-          const expected = item.statements.map(s => s[1] ? "richtig" : "falsch");
+          const [ja, nein] = item.wahl || ["richtig", "falsch"];
+          const given = Array.isArray(raw) ? raw.slice(0,item.statements.length).map(v => v === true ? ja : v === false ? nein : "") : [];
+          const expected = item.statements.map(s => s[1] ? ja : nein);
           details.push({...base,given,labels:item.statements.map(s => s[0]),points:expected.filter((v,j) => given[j] === v).length,expected,source:"schluessel"});
         } else if (item.type === "labor") {
           // Bauaufgabe: Es zählt der fachliche Endzustand – je erfüllter Regel 1 Punkt

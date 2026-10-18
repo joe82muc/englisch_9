@@ -126,7 +126,8 @@ test("KI-Rückmeldung: eigene Route, das Fach steht im Auftrag an die KI", async
 });
 
 /* ---------- Die echten Proben (inf8-fragen.js) ---------- */
-const IDS = Object.keys(proben);
+// die fünf Modul-Proben; Probe 1b und 2b (nach den Hefteinträgen) haben eigene Regeln, siehe unten
+const IDS = Object.keys(proben).filter((id) => /^inf8-p[1-5]-[rm]$/.test(id));
 
 test("Proben: Kennungen, Zug, Modul und Dauer", () => {
   IDS.forEach((id) => {
@@ -207,5 +208,122 @@ test("Proben: nur Kinder der 8. Klassen können eine Probe von Informatik 8 begi
     const fremd = await post("/api/inf8/start", { testId: "inf8-x-m", code: "333" });
     assert.deepEqual([fremd.status, fremd.data.error], [403, "falsche_stufe"]);
     assert.equal((await post("/api/inf8/start", { testId: "inf8-x-m", code: "111" })).status, 200);
+  });
+});
+
+/* ---------- Probe 1b und 2b: nach den Hefteinträgen der Module 1 und 2 (18.10.2026) ----------
+   Wunsch der Lehrkraft: wie Informatik 7 Probe 1b – nur Anklicken, je eine kurze Aufgabe für die KI, dieselbe Probe
+   für 8R und 8M, Notenschlüssel R für beide. */
+const HEFT = { "inf8-p1b": "infosys", "inf8-p2b": "daten" };
+
+test("Probe 1b und 2b: R und M gleich, nur Anklicken plus eine KI-Aufgabe, R-Schlüssel", () => {
+  Object.keys(HEFT).forEach((basis) => {
+    const r = proben[basis + "-r"], m = proben[basis + "-m"];
+    [r, m].forEach((p) => {
+      const id = p.id;
+      assert.equal(p.thema, HEFT[basis], id);
+      assert.equal(p.notenzug, "R", id + ": Notenschlüssel R für beide Züge");
+      assert.match(p.title, p.zug === "R" ? /\(8R\)/ : /\(8M\)/, id);
+      const arten = p.items.map((i) => i.type);
+      assert.equal(arten.filter((a) => a === "text").length, 1, id + ": genau eine Aufgabe für die KI");
+      assert.ok(arten.every((a) => ["choice", "match", "order", "tf", "multi", "text"].includes(a)), id);
+      const module = [...new Set(p.items.map((i) => i.modul))];
+      assert.equal(module.length, 4, id + ": alle vier Einheiten kommen vor");
+      p.items.forEach((it, n) => {
+        const wo = `${id} Aufgabe ${n + 1}`;
+        assert.ok(it.modulTitel, wo + ": Einheit fehlt");
+        if (it.type === "choice") {
+          assert.equal(new Set(it.options).size, it.options.length, wo);
+          const laengen = it.options.map((x) => x.length), andere = Math.max(...laengen.filter((_, i) => i !== it.answer));
+          assert.ok(laengen[it.answer] - andere <= 6, wo + ": die richtige Antwort ist deutlich die längste");
+        }
+        if (it.type === "match") {
+          assert.equal(new Set(it.pairs.map((x) => x[1])).size, it.pairs.length, wo);
+          const sortiert = it.pairs.map((x) => x[1]).sort((a, b) => a.localeCompare(b, "de"));
+          assert.ok(it.pairs.some((x, i) => sortiert.indexOf(x[1]) !== i), wo + ": Lösung wäre „der Reihe nach“");
+        }
+        if (it.type === "order") {
+          const sortiert = it.steps.slice().sort((a, b) => a.localeCompare(b, "de"));
+          assert.ok(it.steps.filter((s, i) => sortiert[i] === s).length <= 1, wo + ": gemischte Anzeige verrät die Reihenfolge");
+        }
+        if (it.type === "tf") {
+          assert.equal(it.points, it.statements.length, wo);
+          assert.ok(it.statements.some((x) => x[1]) && it.statements.some((x) => !x[1]), wo);
+          if (it.wahl) assert.ok(it.wahl.length === 2 && it.wahl.every((w) => typeof w === "string" && w), wo);
+        }
+        if (it.type === "multi") assert.equal(it.points, it.answers.length, wo);
+        if (it.type === "text") {
+          assert.equal(it.criteria.length, it.points, wo);
+          assert.equal(it.keywords.length, it.points, wo);
+          const klein = it.expected.toLocaleLowerCase("de");
+          it.keywords.forEach((g, k) => assert.ok(g.split("|").some((w) => klein.includes(w)), `${wo}: Musterlösung erfüllt Stichwortgruppe ${k + 1} nicht`));
+        }
+      });
+      const punkte = p.items.reduce((s, i) => s + i.points, 0);
+      assert.ok(punkte >= 35 && punkte <= 50, id + ": " + punkte + " Punkte");
+    });
+    const inhalt = (p) => p.items.map((i) => i.prompt + "|" + (i.options || []).slice().sort().join("/"));
+    assert.deepEqual(inhalt(r), inhalt(m), basis + ": R und M haben denselben Inhalt");
+  });
+});
+
+test("Probe 2b: eigene Knöpfe (wahl) gehen an das Kind und stehen im Ergebnis, Note nach dem R-Schlüssel", async () => {
+  await mitServer((app, dataDir) => {
+    registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf8", datei: "inf8-proben.json", tests: proben, fach: "Informatik", stufe: 8 });
+  }, async ({ post }) => {
+    const alt = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    try {
+      const kind = "111";   // 8aM
+      await post("/api/inf8/teacher/unlock", { password: PW, testId: "inf8-p2b-m", open: true });
+      const start = await post("/api/inf8/start", { testId: "inf8-p2b-m", code: kind });
+      assert.equal(start.status, 200, JSON.stringify(start.data));
+      const nrTf = start.data.items.findIndex((i) => i.type === "tf" && /Rätselrakete/.test(i.prompt));
+      assert.deepEqual(start.data.items[nrTf].wahl, ["ausfüllen", "leer lassen"]);
+      const p = proben["inf8-p2b-m"];
+      const richtig = (it) => (it.type === "choice" ? it.answer : it.type === "match" ? it.pairs.map((x) => x[1]) : it.type === "order" ? it.steps.slice()
+        : it.type === "tf" ? it.statements.map((x) => x[1]) : it.type === "multi" ? it.answers.slice() : null);
+      // die Pflichtfeld-Aufgabe richtig, dann weitere Klick-Aufgaben, bis genau die Hälfte der Punkte (aufgerundet) erreicht ist
+      const gesamt = p.items.reduce((s, i) => s + i.points, 0), ziel = Math.ceil(gesamt / 2);
+      let summe = p.items[nrTf].points;
+      const antworten = p.items.map((it, i) => {
+        if (i === nrTf) return richtig(it);
+        if (it.type === "text" || summe + it.points > ziel) return null;
+        summe += it.points;
+        return richtig(it);
+      });
+      assert.equal(summe, ziel, "Testaufbau: genau die Hälfte");
+      const r = await post("/api/inf8/submit", { testId: "inf8-p2b-m", code: kind, answers: antworten });
+      assert.equal(r.status, 200);
+      const res = (await post("/api/inf8/teacher/results", { password: PW, testId: "inf8-p2b-m" })).data.submissions[0];
+      const d = res.details[nrTf];
+      assert.deepEqual(d.given, ["ausfüllen", "leer lassen", "ausfüllen", "leer lassen"]);
+      assert.deepEqual(d.expected, d.given);
+      assert.equal(d.points, 4);
+      assert.equal(res.score, ziel);
+      const prozent = res.score / res.total * 100;
+      assert.ok(prozent >= 50 && prozent < 67, Math.round(prozent) + " %");
+      assert.equal(res.zug, "M");
+      assert.equal(res.grade, 3, "R-Schlüssel: 50 % = Note 3 (mit dem M-Schlüssel wäre es eine 4)");
+    } finally {
+      if (alt !== undefined) process.env.ANTHROPIC_API_KEY = alt;
+    }
+  });
+});
+
+test("Probe 1b: die Tabelle geht an das Kind und steht in der Abgabe (Rückgabe)", async () => {
+  await mitServer((app, dataDir) => {
+    registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf8", datei: "inf8-proben.json", tests: proben, fach: "Informatik", stufe: 8 });
+  }, async ({ post }) => {
+    const kind = "111";
+    await post("/api/inf8/teacher/unlock", { password: PW, testId: "inf8-p1b-m", open: true });
+    const start = await post("/api/inf8/start", { testId: "inf8-p1b-m", code: kind });
+    const mitTab = start.data.items.filter((i) => i.tabelle);
+    assert.equal(mitTab.length, 2);
+    assert.deepEqual(mitTab[0].tabelle.kopf, ["Betrieb", "Bereich", "Entfernung", "Arbeitsbeginn"]);
+    const r = await post("/api/inf8/submit", { testId: "inf8-p1b-m", code: kind, answers: start.data.items.map(() => null) });
+    assert.equal(r.status, 200);
+    const res = (await post("/api/inf8/teacher/results", { password: PW, testId: "inf8-p1b-m" })).data.submissions[0];
+    assert.equal(res.details.filter((d) => d.tabelle).length, 2);
   });
 });

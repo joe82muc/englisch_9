@@ -23,6 +23,122 @@ const m = (prompt, pairs, extra) => ({ type: "match", prompt, pairs, points: pai
 const o = (prompt, steps, extra) => ({ type: "order", prompt, steps, points: steps.length, ...(extra || {}) });
 const t = (prompt, expected, criteria, keywords, extra) => ({ type: "text", prompt, expected, criteria, keywords, points: criteria.length, ...(extra || {}) });
 
+// Richtig/falsch (1 Punkt je Aussage; wahl = eigene Beschriftung der beiden Knöpfe, true = erste) und mehrere richtige
+// Antworten (answers = Indizes, je falsches Kreuz 1 Punkt Abzug, nie unter 0) – ausgewertet in nt7.js
+const rf = (prompt, statements, extra) => ({ type: "tf", prompt, statements, points: statements.length, ...(extra || {}) });
+const mk = (prompt, options, answers, extra) => ({ type: "multi", prompt, options, answers, points: answers.length, ...(extra || {}) });
+
+/* Probe 1b und 2b (18.10.2026): nach den Hefteinträgen der Module 1 und 2 (8M/Informatik/arbeitsblaetter/I1–I4, D1–D4).
+   Wunsch der Lehrkraft (wie Informatik 7, Probe 1b): nur zum Anklicken, dazu je eine kurze Aufgabe, die die KI prüft;
+   dieselben Aufgaben für 8R und 8M, Notenschlüssel R für beide (notenzug: "R"). Die bisherigen Proben 1 und 2 bleiben.
+   modul/modulTitel: Einheit, in der der Stoff steht (steht bei der Aufgabe und in der Rückgabe). */
+const I1 = { modul: "eva", modulTitel: "Was ist ein Informationssystem?" };
+const I2 = { modul: "aufbau", modulTitel: "Aufbau eines Informationssystems" };
+const I3 = { modul: "entscheiden", modulTitel: "Informationen gezielt nutzen" };
+const I4 = { modul: "vergleichen", modulTitel: "Informationssysteme vergleichen" };
+const D1 = { modul: "spuren", modulTitel: "Welche Daten gebe ich preis?" };
+const D2 = { modul: "bedingungen", modulTitel: "Datenschutzbedingungen" };
+const D3 = { modul: "bigdata", modulTitel: "Big Data" };
+const D4 = { modul: "schuetzen", modulTitel: "Wie schütze ich meine Daten?" };
+// Trefferliste einer erfundenen Praktikumsbörse (Aufgaben 16 und 17 der Probe 1b)
+const BOERSE = { kopf: ["Betrieb", "Bereich", "Entfernung", "Arbeitsbeginn"], zeilen: [
+  ["Anzeige · Technikwelt Blitz", "Technik", "25 km", "6:00 Uhr"], ["Autohaus Glanz", "Technik", "3 km", "7:00 Uhr"],
+  ["Gärtnerei Grünblatt", "Handwerk", "6 km", "7:30 Uhr"], ["Kfz-Werkstatt Ölwechsel", "Technik", "9 km", "8:00 Uhr"],
+  ["Bäckerei Krümel", "Handwerk", "2 km", "5:30 Uhr"]] };
+
+const HEFT1 = [
+  c("Was ist ein digitales Informationssystem?",
+    ["ein System, das Daten speichert und auf Anfragen Informationen liefert", "ein Gerät, das einen Bildschirm und eine Tastatur zum Tippen hat",
+      "ein Programm, mit dem man eigene Bilder und Texte gestalten kann", "ein besonders schnelles WLAN, das die ganze Schule versorgt"], 0, I1),
+  m("Die Kino-App: Ordne zu – Eingabe, Verarbeitung oder Ausgabe?",
+    [["Du tippst „Samstag, 18 Uhr“ ein.", "Eingabe"], ["Die App sucht in den gespeicherten Filmzeiten.", "Verarbeitung"], ["Die passenden Filme erscheinen als Liste.", "Ausgabe"]], I1),
+  c("Eine Wetter-App hat die Messwerte von 500 Wetterstationen gespeichert. Du fragst: „Regnet es morgen in Wiesental?“ Was ist für dich die Information?",
+    ["die Antwort: „Morgen bleibt es trocken.“", "die Messwerte aller 500 Stationen", "das Feld, in das du den Ort tippst", "der Knopf „Vorhersage anzeigen“"], 0, I1),
+  rf("Ist das ein digitales Informationssystem?",
+    [["die Fahrplanauskunft im Internet", true], ["die Taschenlampe im Handy", false], ["ein Online-Shop", true]], { wahl: ["ja", "nein"], ...I1 }),
+  m("Ordne jedem Teil eines Informationssystems seine Aufgabe zu.",
+    [["Nutzer", "stellt die Anfrage und liest die Ausgabe"], ["Anwendung", "nimmt die Eingabe an und zeigt die Ausgabe"], ["Internet", "verbindet das Gerät mit dem Server"],
+      ["Server", "verarbeitet die Anfragen vieler Geräte"], ["Datenbank", "speichert alle Daten geordnet"]], I2),
+  c("Der Speiseplan der Mensa ist eingetragen. Trotzdem meldet die Mensa-App auf Bens Handy „Keine Verbindung“. Welcher Teil ist gestört?",
+    ["der Weg über das Internet zum Server", "die Datenbank mit dem Speiseplan", "der Speiseplan, der falsch eingetragen ist", "der Nutzer, der die App bedient"], 0, I2),
+  c("Seit Montag hat die Bücherei neue Öffnungszeiten. Die Bücherei-App lädt ganz normal, zeigt aber noch die alten Zeiten an. Woran liegt das?",
+    ["Die Daten in der Datenbank wurden nicht geändert.", "Das Handy hat gerade keine Verbindung zum Internet.", "Der Server der Bücherei ist ausgeschaltet.", "Die App kann grundsätzlich keine Uhrzeiten anzeigen."], 0, I2),
+  c("Lukas meldet sich am Laptop seines Bruders bei der Lernplattform an. Er sieht dieselben Aufgaben wie an seinem Tablet. Warum?",
+    ["Die Daten liegen auf dem Server, nicht auf dem Gerät.", "Jedes Gerät hat die Aufgaben fest eingebaut.", "Der Bruder hat ihm die Aufgaben geschickt.", "Die Aufgaben sind auf der SIM-Karte gespeichert."], 0, I2),
+  rf("Filtern oder sortieren?",
+    [["nur Fahrräder bis 300 € anzeigen", true], ["das günstigste Angebot nach oben holen", false], ["alle Plätze über 10 km ausblenden", true], ["die Liste nach dem Abc ordnen", false]], { wahl: ["filtern", "sortieren"], ...I3 }),
+  c("Ganz oben in der Trefferliste steht ein Treffer mit dem Wort „Anzeige“. Was bedeutet das?",
+    ["Jemand hat dafür bezahlt, dass er oben steht.", "Er passt von allen Treffern am besten zu dir.", "Er wurde von allen am häufigsten angeklickt.", "Er ist der neueste Treffer in der ganzen Liste."], 0, I3),
+  o("Mara sucht einen Kopfhörer. Bringe ihr Vorgehen in die richtige Reihenfolge.",
+    ["Sie überlegt, was ihr wichtig ist: höchstens 40 €, langer Akku.", "Sie filtert nach dem Preis: „bis 40 €“.", "Sie sortiert die Treffer nach der Akkulaufzeit.", "Sie wählt einen Kopfhörer aus und kann sagen, warum."], I3),
+  c("Zwei Freunde nutzen dieselbe Vergleichstabelle und wählen verschiedene Kopfhörer. Warum?",
+    ["Sie haben verschiedene Kriterien.", "Das Portal zeigt jedem andere Daten.", "Einer von beiden hat falsch gelesen.", "Die Tabelle ändert ständig die Preise."], 0, I3),
+  m("Welches System passt? Ordne jede Frage dem passenden Informationssystem zu.",
+    [["Was kostet die Sporttasche, und ist sie lieferbar?", "Online-Shop"], ["Wann fährt morgen früh ein Zug nach Ulm?", "Fahrplanauskunft"],
+      ["Warum leuchten Glühwürmchen? Ich weiß nicht, wo das steht.", "Suchmaschine"], ["Wo gibt es freie Ausbildungsplätze als Gärtnerin?", "Berufsportal"],
+      ["Wo finde ich das Übungsblatt meiner Lehrerin?", "Lernplattform"]], I4),
+  mk("Du prüfst ein Portal über Berufe. Woran erkennst du ein gutes Portal? Kreuze die drei richtigen Antworten an. Für ein falsches Kreuz gibt es einen Punkt Abzug.",
+    ["Die Angaben wurden erst vor Kurzem geändert.", "Im Impressum steht, wer es anbietet.", "Werbung ist als „Anzeige“ gekennzeichnet.",
+      "Es verlangt vorher deine Handynummer.", "Es hat besonders viele bunte Bilder."], [0, 1, 2], I4),
+  c("Du brauchst die Öffnungszeiten der Eishalle. Wo ist die Angabe am zuverlässigsten?",
+    ["auf der Internetseite der Eishalle selbst", "in einem drei Jahre alten Forumsbeitrag", "in einer Werbeanzeige für Schlittschuhe", "in einem Video eines Urlaubers"], 0, I4),
+  c("Sieh dir die Trefferliste der Praktikumsbörse an. Jonas filtert nach dem Bereich „Technik“. Wie viele Treffer bleiben übrig? Die Anzeige zählt nicht mit.",
+    ["2", "1", "3", "4"], 0, { tabelle: BOERSE, ...I3 }),
+  t("Jonas will einen Platz im Bereich Technik. Vor 7:30 Uhr möchte er nicht anfangen. Welcher Betrieb passt zu ihm? Nenne den Betrieb und schreibe dazu seinen Bereich und seinen Arbeitsbeginn aus der Tabelle. Stichworte genügen.",
+    "Die Kfz-Werkstatt Ölwechsel passt. Sie gehört zum Bereich Technik, und die Arbeit beginnt erst um 8:00 Uhr – also nicht vor 7:30 Uhr.",
+    ["nennt die Kfz-Werkstatt Ölwechsel (den Namen ungefähr richtig)", "nennt als Grund den Bereich Technik (zählt nur zusammen mit der Kfz-Werkstatt)",
+      "nennt als Grund den Arbeitsbeginn um 8:00 Uhr, also nicht vor 7:30 Uhr (zählt nur zusammen mit der Kfz-Werkstatt; die Entfernung ist kein Grund)"],
+    ["ölwechsel|oelwechsel|kfz|werkstatt", "technik", "8|acht|nicht vor|später"], { tabelle: BOERSE, ...I3 })
+];
+
+const HEFT2 = [
+  rf("Sagt die Angabe etwas über eine bestimmte Person?",
+    [["deine Handynummer", true], ["der Preis einer Pizza", false], ["dein Standort um 15 Uhr", true], ["die Höhe des Eiffelturms", false]], { wahl: ["personenbezogen", "nicht personenbezogen"], ...D1 }),
+  rf("Wie entstehen diese Daten?",
+    [["Du lädst ein Profilbild hoch.", true], ["Du schaust 20 Minuten Tanzvideos – die App zählt mit.", false], ["Die Schul-App bekommt die Krankmeldung, die du schreibst.", true],
+      ["Die App merkt sich, wann du zuletzt online warst.", false]], { wahl: ["bewusst angegeben", "nebenbei entstanden"], ...D1 }),
+  c("Was bedeutet Datensparsamkeit?",
+    ["nur angeben, was ein Dienst wirklich braucht", "das Handy nur eine Stunde am Tag nutzen", "möglichst wenig Speicherplatz verbrauchen", "alle Fotos jeden Abend vom Handy löschen"], 0, D1),
+  rf("Du meldest dich bei der Quiz-App „Rätselrakete“ an. Felder mit * sind Pflichtfelder. Was füllst du aus, was lässt du leer?",
+    [["Spielername *", true], ["Vor- und Nachname", false], ["E-Mail-Adresse *", true], ["Handynummer", false]],
+    { wahl: ["ausfüllen", "leer lassen"], ...D1 }),
+  c("Paul erlaubt einem Spiel den Zugriff auf seine Kontakte. Was bedeutet das für seine Freunde?",
+    ["Ihre Nummern landen beim Anbieter – ungefragt.", "Nichts – es geht ja nur um Pauls eigene Daten.", "Sie bekommen das Spiel automatisch geschenkt.", "Ihre Handys werden durch das Spiel langsamer."], 0, D1),
+  m("Drei Fragen an eine Datenschutzerklärung: Zu welcher Frage passt die Textstelle?",
+    [["„Wir speichern deinen Namen und deine Fotos.“", "Welche Daten?"], ["„Wir nutzen deine Daten, um dir passende Werbung zu zeigen.“", "Wozu?"],
+      ["„Deine Bestellungen teilen wir mit unseren Werbepartnern.“", "Wer bekommt sie?"]], D2),
+  c("Wozu sagst du Ja, wenn du bei den Datenschutzbedingungen auf „Akzeptieren“ tippst?",
+    ["zum ganzen Text – auch zu dem, was du nicht gelesen hast", "nur zu dem, was die App für ihre Aufgabe wirklich braucht", "zu nichts – der Knopf startet nur ganz normal die App", "nur zu dem, was auf der ersten Seite der Bedingungen steht"], 0, D2),
+  m("Deine Rechte beim Datenschutz: Ordne zu.",
+    [["Auskunft", "fragen, welche Daten über dich gespeichert sind"], ["Widerruf", "deine Einwilligung zurücknehmen"], ["Löschen", "deine Daten entfernen lassen"]], D2),
+  c("Ein Spiel schreibt: „Wir geben deine Daten an Dritte weiter.“ Was bedeutet das?",
+    ["Andere Firmen bekommen deine Daten.", "Du darfst das Spiel an drei Freunde geben.", "Deine Daten werden nach drei Tagen gelöscht.", "Drei Personen müssen vorher zustimmen."], 0, D2),
+  c("Was ist Big Data?",
+    ["riesige Datenmengen, die Computer auswerten", "eine besonders große Festplatte im Computer", "ein Foto mit sehr vielen Bildpunkten", "ein sehr langes und sicheres Passwort"], 0, D3),
+  c("Ein Shop zeigt: „Kunden, die diese Schuhe kauften, kauften auch Socken.“ Was hat der Computer gefunden?",
+    ["ein Muster in den Käufen vieler Kunden", "einen Fehler in der Datenbank des Shops", "deinen Namen und deine Wohnadresse", "einen Zufall, der nur heute gilt"], 0, D3),
+  c("Ein Spiel ist kostenlos, und man kann darin nichts kaufen. Wie verdient der Anbieter trotzdem Geld?",
+    ["mit Werbung, die zu deinem Profil passt", "mit dem Verkauf von neuen Handys", "mit Spenden, die die Spieler schicken", "gar nicht – er verschenkt alles"], 0, D3),
+  rf("Big Data: Chance oder Risiko?",
+    [["Das Navi warnt dich vor einem Stau.", true], ["Gesammelte Daten werden gestohlen.", false], ["Ein falscher Schluss bleibt in deinem Profil.", false],
+      ["Ärzte erkennen Krankheiten früher.", true]], { wahl: ["Chance", "Risiko"], ...D3 }),
+  c("In einem Profil steht kein Name. Ist die Person damit sicher unerkannt?",
+    ["Nein – die Angaben zusammen verraten die Person.", "Nein – Profile ohne Namen werden sofort gelöscht.", "Ja – ohne Namen kann niemand etwas zuordnen.", "Ja – ein Computer erkennt ohne Namen nichts."], 0, D3),
+  rf("Räum Ninas Handy auf: Erlauben oder ablehnen? Entscheide danach, ob die App die Berechtigung für ihre Aufgabe braucht.",
+    [["Karten-App: Standort", true], ["Karten-App: Kontakte", false], ["Taschenlampen-App: Mikrofon", false], ["Sprachnachrichten-App: Mikrofon", true]], { wahl: ["erlauben", "ablehnen"], ...D4 }),
+  c("Welche Cookies erlaubst du im Cookie-Fenster am besten?",
+    ["nur die notwendigen Cookies", "alle – dann geht es am schnellsten", "nur die Werbe-Cookies", "nur die Cookies der Partnerfirmen"], 0, D4),
+  c("Lia stellt ihr Profil auf privat. Was stimmt?",
+    ["Fremde sehen nichts – der Anbieter sammelt weiter.", "Fremde sehen nichts – der Anbieter sammelt nichts.", "Fremde sehen alles – der Anbieter sammelt nichts.", "Fremde sehen alles – der Anbieter sammelt weiter."], 0, D4),
+  c("Was bringt der Inkognito-Modus des Browsers?",
+    ["Der Browser vergisst den Verlauf – Seiten sammeln trotzdem.", "Keine Internetseite kann dann noch Daten über dich sammeln.", "Alle Werbe-Cookies sind dann auf jeder Seite verboten.", "Dein Standort ist dann für alle Apps und Seiten unsichtbar."], 0, D4),
+  t("Dein Freund sagt: „Ich habe doch nichts zu verbergen. Mir ist egal, welche Daten Apps über mich sammeln.“ Nenne zwei Gründe, warum er trotzdem sparsam mit seinen Daten sein sollte. Stichworte genügen.",
+    "Aus vielen kleinen Daten entsteht ein genaues Profil von ihm: Firmen wissen dann, wo er ist, was er mag und wann er was tut. Sie nutzen das für Werbung. Außerdem können die Daten an andere Firmen weitergegeben oder gestohlen werden.",
+    ["ein richtiger Grund (z. B. aus vielen Daten entsteht ein genaues Profil; Firmen nutzen die Daten für Werbung; Weitergabe an andere Firmen; Daten können gestohlen werden; ein falscher Schluss bleibt im Profil)",
+      "ein zweiter, anderer richtiger Grund aus derselben Liste (Profil und Werbung zählen als zwei Gründe)"],
+    ["profil|bild|wissen|weiß|zusammen|werbung", "weiter|dritte|gestohl|klau|hack|lösch|falsch|missbrauch|verkauf"], D1)
+];
+
 const PROBEN = {
   /* ================= Probe 1: Digitale Informationssysteme (Modul 1) ================= */
   "inf8-p1-r": {
@@ -164,6 +280,33 @@ const PROBEN = {
       c("Du willst wissen, welche Daten ein Shop über dich gespeichert hat. Was darfst du tun?",
         ["beim Shop Auskunft verlangen", "gar nichts – das ist ein Geschäftsgeheimnis", "nichts – das dürfen nur Erwachsene fragen", "die Daten selbst vom Server des Shops holen"], 0)
     ]
+  },
+
+  /* ================= Probe 1b und 2b: nach den Hefteinträgen der Module 1 und 2 (18.10.2026) ================= */
+  // Zwei Kennungen je Probe mit demselben Inhalt, damit die Lehrkraft 8R und 8M getrennt freischalten kann; R-Schlüssel für beide
+  "inf8-p1b-r": {
+    id: "inf8-p1b-r", zug: "R", thema: "infosys", minutes: 25, notenzug: "R",
+    title: "Probe 1b (8R): Digitale Informationssysteme – Hefteinträge",
+    scope: "Einheiten 1 bis 4 nach den Hefteinträgen: EVA-Prinzip, Daten und Information, Aufbau (Nutzer, Anwendung, Internet, Server, Datenbank), filtern und sortieren, Anzeige, Kriterien, passendes System wählen, Portale prüfen",
+    items: HEFT1
+  },
+  "inf8-p1b-m": {
+    id: "inf8-p1b-m", zug: "M", thema: "infosys", minutes: 25, notenzug: "R",
+    title: "Probe 1b (8M): Digitale Informationssysteme – Hefteinträge",
+    scope: "Einheiten 1 bis 4 nach den Hefteinträgen: EVA-Prinzip, Daten und Information, Aufbau (Nutzer, Anwendung, Internet, Server, Datenbank), filtern und sortieren, Anzeige, Kriterien, passendes System wählen, Portale prüfen",
+    items: HEFT1
+  },
+  "inf8-p2b-r": {
+    id: "inf8-p2b-r", zug: "R", thema: "daten", minutes: 25, notenzug: "R",
+    title: "Probe 2b (8R): Datenschutz und Big Data – Hefteinträge",
+    scope: "Einheiten 1 bis 4 nach den Hefteinträgen: personenbezogene Daten, Datenspur, Datensparsamkeit, Pflichtfelder, Datenschutzbedingungen und Rechte, Big Data, Profil, Werbung, Berechtigungen, Cookies, privates Profil",
+    items: HEFT2
+  },
+  "inf8-p2b-m": {
+    id: "inf8-p2b-m", zug: "M", thema: "daten", minutes: 25, notenzug: "R",
+    title: "Probe 2b (8M): Datenschutz und Big Data – Hefteinträge",
+    scope: "Einheiten 1 bis 4 nach den Hefteinträgen: personenbezogene Daten, Datenspur, Datensparsamkeit, Pflichtfelder, Datenschutzbedingungen und Rechte, Big Data, Profil, Werbung, Berechtigungen, Cookies, privates Profil",
+    items: HEFT2
   },
 
   /* ================= Probe 3: Excel Grundlagen (Modul 3) ================= */
@@ -378,4 +521,4 @@ require("./proben-mischen").mischeAlle(module.exports);
 // nur für Tests: die Vorlage ohne Mischen
 Object.defineProperty(module.exports, "__vorlage", { value: PROBEN, enumerable: false });
 // (c, m, o, t werden mit den Proben gebraucht)
-void [c, m, o, t];
+void [c, m, o, t, rf, mk];

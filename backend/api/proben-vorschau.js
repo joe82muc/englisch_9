@@ -50,7 +50,7 @@ function ausNt(test) {
             .concat((a.criteria || []).map((k) => k + " (KI)")) };
       }
       const z = { type: a.type, prompt: a.prompt, points: punkte(a.points),
-        ...nimm(a, BEIWERK.concat(["options", "answer", "answers", "statements", "pairs", "steps", "text", "gaps", "unit", "units", "tolerance", "labor", "expected", "criteria"])) };
+        ...nimm(a, BEIWERK.concat(["options", "answer", "answers", "statements", "wahl", "pairs", "steps", "text", "gaps", "unit", "units", "tolerance", "labor", "expected", "criteria"])) };
       if (Array.isArray(a.regeln)) z.regeln = a.regeln.map((r) => ({ text: r.text }));
       return z;
     })
