@@ -38,6 +38,17 @@ function ausNt(test) {
   return {
     title: test.title, minutes: test.minutes, scope: test.scope,
     items: test.items.map((a) => {
+      // E-Mail schreiben (Informatik 7): auf dem Papier als Schreibaufgabe mit Kontakten und Dateien; Erwartungshorizont =
+      // Schlüssel für An, Cc, Bcc und Anhang plus die Kriterien, die die KI für Betreff und Text prüft
+      if (a.type === "email") {
+        const s = a.soll || {};
+        return { type: "text", prompt: a.prompt, points: punkte(a.points), ...nimm(a, BEIWERK), lines: 10,
+          material: "Deine Kontakte: " + (a.kontakte || []).map((k) => k.name + ": " + k.adresse).join(" · ") + "\nDateien zum Anhängen: " + (a.dateien || []).join(" · ") +
+            "\n\nAn: ……………………   Cc: ……………………   Bcc: ……………………\nBetreff: ……………………………………   Anhang: ……………………",
+          expected: a.expected || "",
+          criteria: ["An: " + s.an + " (Schlüssel)", "Cc: " + s.cc + " (Schlüssel)", "Bcc: " + s.bcc + " (Schlüssel)", "Anhang: " + s.anhang + " (Schlüssel)"]
+            .concat((a.criteria || []).map((k) => k + " (KI)")) };
+      }
       const z = { type: a.type, prompt: a.prompt, points: punkte(a.points),
         ...nimm(a, BEIWERK.concat(["options", "answer", "answers", "statements", "pairs", "steps", "text", "gaps", "unit", "units", "tolerance", "labor", "expected", "criteria"])) };
       if (Array.isArray(a.regeln)) z.regeln = a.regeln.map((r) => ({ text: r.text }));

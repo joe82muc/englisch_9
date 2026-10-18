@@ -24,6 +24,12 @@
  * opts.tests (Fragen), opts.fach ("Informatik"), opts.csvName, opts.service.
  * opts.stufe (Informatik 8: 8) – nur Kinder dieser Jahrgangsstufe können die Proben beginnen; steht auch in den Meldungen des Servers.
  * opts.notenzug (Informatik 9: "R") – fester Notenschlüssel für alle Kinder, unabhängig vom Zug ihrer Klasse.
+ *   notenzug an einer einzelnen Probe (Informatik 7, Probe 1b) gilt nur für diese Probe.
+ * Aufgabenart "email" (Informatik 7, seit 18.10.2026): Das Kind schreibt eine E-Mail in einem nachgebauten Fenster.
+ *   kontakte [{ name, adresse }], dateien [Dateinamen zum Anhängen], soll { an, cc, bcc, anhang } = Schlüssel
+ *   (je Feld 1 Punkt: genau diese eine Adresse bzw. diese Datei), criteria + keywords + textBeispiel = Betreff und
+ *   Text, die die KI bewertet (je Kriterium 1 Punkt). points = 4 + criteria.length. Antwort der Seite:
+ *   { an: [...], cc: [...], bcc: [...], betreff, text, anhang }.
  * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
  * je Schritt an der richtigen Stelle gibt es 1 Punkt.
  * Block-Proben (seit 07.10.2026, nt7-block-*.js): Jede Aufgabe nennt ihr Modul (modul, modulTitel) und ggf. transfer: true.
@@ -136,6 +142,7 @@ function registerNt7Routes(app, opts) {
     if (item.type === "tf") return Array.isArray(raw) ? raw.slice(0, 20).map((v) => (v === true ? true : v === false ? false : null)) : [];
     if (item.type === "number") return { wert: clean(raw && raw.wert !== undefined ? raw.wert : raw, 20), einheit: clean(raw && raw.einheit, 12) };
     if (item.type === "labor") return { zustand: zustandSauber(raw && raw.zustand), text: clean(raw && raw.text, 400) };
+    if (item.type === "email") return emailAntwort(item, raw);
     if (Array.isArray(raw)) return raw.slice(0, 30).map((v) => clean(v, 200));
     return clean(raw, 1500);
   }
@@ -185,7 +192,7 @@ function registerNt7Routes(app, opts) {
   // opts.notenzug ("R" oder "M"): fester Schluessel fuer ALLE Kinder dieser Proben, egal aus welcher Klasse.
   // Informatik 9 (Auftrag vom 13.10.2026): R9 und M9 schreiben dieselben Proben nach dem R-Schluessel (50 % = Note 3).
   const NOTENZUG = opts.notenzug === "R" || opts.notenzug === "M" ? opts.notenzug : "";
-  function grade(percent, zug) { return (((NOTENZUG || zug) === "R" ? GRADE_SCALE_R : GRADE_SCALE_M).find(s => percent >= s.min) || {grade:6}).grade; }
+  function grade(percent, zug, test) { return ((((test && test.notenzug) || NOTENZUG || zug) === "R" ? GRADE_SCALE_R : GRADE_SCALE_M).find(s => percent >= s.min) || {grade:6}).grade; }
   function publicItem(item, index) {
     return {nr:index+1,type:item.type,prompt:item.prompt,points:item.points,
       options:item.options || undefined, labels:item.pairs?.map(pair => pair[0]),
@@ -195,7 +202,9 @@ function registerNt7Routes(app, opts) {
       // NT 8: Lückentext (je Lücke die Auswahl, nach dem Alphabet), Richtig/Falsch-Aussagen, Zahl mit Einheit
       ...(item.type === "gaps" ? {gapText:item.text,gapOptions:item.gaps.map(g => g.slice().sort((a,b) => a.localeCompare(b,"de")))} : {}),
       ...(item.type === "tf" ? {statements:item.statements.map(s => s[0])} : {}),
-      ...(item.type === "number" ? {units:item.units ? item.units.slice() : undefined,unit:item.units ? undefined : item.unit || undefined} : {})};
+      ...(item.type === "number" ? {units:item.units ? item.units.slice() : undefined,unit:item.units ? undefined : item.unit || undefined} : {}),
+      // E-Mail: Kontakte (ohne An/Cc/Bcc) und Dateien zum Anhängen – der Schlüssel (soll) bleibt auf dem Server
+      ...(item.type === "email" ? {kontakte:item.kontakte.map(k => ({name:k.name,adresse:k.adresse})),dateien:item.dateien.slice()} : {})};
   }
   // Was die Seite zusätzlich zur Aufgabe zeigt (NT 8): Animation oder Versuch aus dem NT-Labor, Messwerttabelle,
   // Diagramm. Steht auch bei der Abgabe, damit Korrektur, Rückgabe und Ausdruck dieselbe Darstellung zeigen.
@@ -247,6 +256,37 @@ function registerNt7Routes(app, opts) {
       ].join("\n"),
       user: JSON.stringify({aufgabe:item.prompt,...(kontext ? {angaben:kontext} : {}),musterantwort:item.expected,erwartungshorizont:item.criteria,hoechstpunkte:item.points,antwortDesKindes:answer})
     };
+  }
+  /* ---------- Aufgabenart "email" (Informatik 7) ---------- */
+  // Adresse vergleichbar machen: klein, ohne Leerzeichen und ohne <>, Anführungszeichen, Komma oder Punkt am Rand
+  const adresse = (v) => String(v == null ? "" : v).trim().toLowerCase().replace(/^[<"'„“]+|[>"'„“,;.]+$/g, "").slice(0, 80);
+  function emailAntwort(item, raw) {
+    const r = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const liste = (v) => (Array.isArray(v) ? v : String(v == null ? "" : v).split(/[\s,;]+/)).map(adresse).filter(Boolean).slice(0, 6);
+    const anhang = clean(r.anhang, 80);
+    return {an:liste(r.an),cc:liste(r.cc),bcc:liste(r.bcc),betreff:clean(r.betreff,150),text:clean(r.text,1500),anhang:(item.dateien || []).includes(anhang) ? anhang : ""};
+  }
+  // Je Feld 1 Punkt: genau die eine richtige Adresse (bzw. Datei)
+  function emailTeile(item, e) {
+    const soll = item.soll || {}, feld = (k, name) => ({text:name,ok:e[k].length === 1 && e[k][0] === adresse(soll[k]),soll:soll[k]});
+    return [feld("an", "An"), feld("cc", "Cc"), feld("bcc", "Bcc"), {text:"Anhang",ok:Boolean(e.anhang) && e.anhang === soll.anhang,soll:soll.anhang}];
+  }
+  const emailKiText = (e) => "Betreff: " + (e.betreff || "–") + "\n\n" + (e.text || "–");
+  // Was die KI bewertet: nur Betreff und Text (Empfänger und Anhang zählt der Schlüssel)
+  function emailKiItem(item) {
+    return {type:"text",prompt:item.prompt + " (Bewertet werden hier nur Betreff und Text der E-Mail. Empfänger und Anhang prüft ein Schlüssel. Jeder Fehler kostet höchstens einen Punkt.)",
+      expected:item.textBeispiel || item.expected,criteria:item.criteria,keywords:item.keywords,points:item.criteria.length};
+  }
+  function emailAnzeige(e) {
+    const l = (a) => (a.length ? a.join(", ") : "–");
+    return "An: " + l(e.an) + "\nCc: " + l(e.cc) + "\nBcc: " + l(e.bcc) + "\nBetreff: " + (e.betreff || "–") + "\nAnhang: " + (e.anhang || "–") + "\n\n" + (e.text || "–");
+  }
+  function emailKommentar(teile, kiKommentar) {
+    const felder = (teile || []).map(t => (t.ok ? "✓ " + t.text : "✗ " + t.text + " (richtig: " + t.soll + ")")).join(" · ");
+    return clean(felder + (kiKommentar ? " – Betreff und Text: " + kiKommentar : ""), 600);
+  }
+  function kiBewerten(d, item, zug) {
+    return item.type === "email" ? textScore(d.kiText || "", emailKiItem(item), zug) : textScore(d.given, item, zug);
   }
   async function textScore(answer, item, zug) {
     const fallback = textFallback(answer, item);
@@ -367,7 +407,7 @@ function registerNt7Routes(app, opts) {
   // Punkte, Prozent, Note und „Nachsehen nötig“ eines Satzes aus seinen Einzelheiten
   function rechne(record, test) {
     const total = maxPoints(test), score = record.details.reduce((sum,d) => sum+d.points,0);
-    Object.assign(record, {score,total,percent:Math.round(score/total*100),grade:grade(score/total*100,record.zug),needsReview:record.details.some(d => d.needsReview)});
+    Object.assign(record, {score,total,percent:Math.round(score/total*100),grade:grade(score/total*100,record.zug,test),needsReview:record.details.some(d => d.needsReview)});
     probeRegel.note6(record);   // nach den Testregeln beendet: Note 6, bis die Lehrkraft sie aufhebt
   }
   // KI-Bewertung der freien Antworten in den gespeicherten Satz eintragen. Lesen, ändern und schreiben geschieht
@@ -378,14 +418,15 @@ function registerNt7Routes(app, opts) {
       if (versuch) await warte(KI_PAUSE_MS);
       const stand = readData().submissions.find(row => row.id === id);
       if (!stand) return;                                      // von der Lehrkraft gelöscht
-      const ergebnisse = await Promise.all(offen.map(i => textScore(stand.details[i].given, test.items[i], stand.zug).catch(() => null)));
+      const ergebnisse = await Promise.all(offen.map(i => kiBewerten(stand.details[i], test.items[i], stand.zug).catch(() => null)));
       const data = readData(), row = data.submissions.find(r => r.id === id);
       if (!row) return;
       const weiter = [];
       offen.forEach((i, k) => {
         const d = row.details[i], r = ergebnisse[k];
         if (d.source === "lehrkraft") return;                  // die Lehrkraft hat inzwischen selbst bewertet
-        if (r && r.source === "ki") Object.assign(d, {points:r.points,comment:r.comment,...(r.tipp !== undefined ? {tipp:r.tipp} : {}),source:"ki",needsReview:false});
+        if (r && r.source === "ki" && d.type === "email") Object.assign(d, {points:(d.feldPunkte || 0) + r.points,kiPunkte:r.points,comment:emailKommentar(d.teile, r.comment),source:"ki",needsReview:false});
+        else if (r && r.source === "ki") Object.assign(d, {points:r.points,comment:r.comment,...(r.tipp !== undefined ? {tipp:r.tipp} : {}),source:"ki",needsReview:false});
         else weiter.push(i);
       });
       rechne(row, test); writeData(data);
@@ -431,6 +472,13 @@ function registerNt7Routes(app, opts) {
           const expected = item.pairs.map(pair => pair[1]);
           const points = expected.filter((v,j) => given[j] === v).length;
           details.push({...base,given,labels:item.pairs.map(pair => pair[0]),points,expected,source:"schluessel"});
+        } else if (item.type === "email") {
+          // E-Mail: An, Cc, Bcc und Anhang nach dem Schlüssel; Betreff und Text vorläufig nach Stichwörtern, dann die KI
+          const e = emailAntwort(item, raw), teile = emailTeile(item, e), feldPunkte = teile.filter(t => t.ok).length;
+          const kiText = emailKiText(e), ki = e.betreff || e.text ? textFallback(kiText, emailKiItem(item)) : {points:0,comment:"Kein Betreff und kein Text.",source:"leer",needsReview:false};
+          details.push({...base,given:emailAnzeige(e),antwort:e,kiText,teile,feldPunkte,kiPunkte:ki.points,points:feldPunkte + ki.points,expected:item.expected,
+            comment:emailKommentar(teile, ki.comment),source:ki.source,needsReview:ki.needsReview});
+          if ((e.betreff || e.text) && process.env.ANTHROPIC_API_KEY) frei.push(i);
         } else if (item.type === "order") {
           const given = Array.isArray(raw) ? raw.map(v => clean(v,200)).slice(0,item.steps.length) : [];
           const points = item.steps.filter((v,j) => given[j] === v).length;
@@ -513,11 +561,11 @@ function registerNt7Routes(app, opts) {
     const points = Number(req.body.points);
     if (!row || !item) return res.status(404).json({ok:false,error:"not_found"});
     // NT 8 (erweitert): Die Lehrkraft kann jede Aufgabe ändern, nicht nur die freien Antworten
-    if ((item.type !== "text" && !ERWEITERT) || !Number.isInteger(points) || points < 0 || points > item.maxPoints) return res.status(400).json({ok:false,error:"invalid_override"});
+    if ((item.type !== "text" && item.type !== "email" && !ERWEITERT) || !Number.isInteger(points) || points < 0 || points > item.maxPoints) return res.status(400).json({ok:false,error:"invalid_override"});
     if (ERWEITERT && item.source !== "lehrkraft" && item.vorschlag === undefined) item.vorschlag = {points:item.points,source:item.source};   // was Schlüssel oder KI vorgeschlagen hatten
     item.points = points; item.source = "lehrkraft"; item.needsReview = false; item.comment = clean(req.body.comment,ERWEITERT ? 600 : 220) || item.comment;
     if (ERWEITERT && typeof req.body.tipp === "string") item.tipp = clean(req.body.tipp,300);
-    row.score = row.details.reduce((sum,d) => sum+d.points,0); row.percent = Math.round(row.score/row.total*100); row.grade = grade(row.score/row.total*100,row.zug); row.needsReview = row.details.some(d => d.needsReview);
+    row.score = row.details.reduce((sum,d) => sum+d.points,0); row.percent = Math.round(row.score/row.total*100); row.grade = grade(row.score/row.total*100,row.zug,tests[row.testId]); row.needsReview = row.details.some(d => d.needsReview);
     probeRegel.note6(row);
     if (ERWEITERT) delete row.bestaetigtAm;                    // nach einer Änderung neu bestätigen
     writeData(data); res.json({ok:true,score:row.score,percent:row.percent,grade:row.grade});

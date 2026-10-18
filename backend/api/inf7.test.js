@@ -104,7 +104,8 @@ test("KI-Rückmeldung: eigene Route, das Fach steht im Auftrag an die KI", async
 });
 
 /* ---------- Die echten Proben (inf7-fragen.js) ---------- */
-const IDS = Object.keys(proben);
+// die fünf Modul-Proben; Probe 1b (nach den Hefteinträgen) hat eigene Regeln, siehe unten
+const IDS = Object.keys(proben).filter((id) => /^inf7-p[1-5]-[rm]$/.test(id));
 
 test("Proben: Kennungen, Zug, Modul und Dauer", () => {
   IDS.forEach((id) => {
@@ -171,5 +172,131 @@ test("Proben: R- und M-Fassung prüfen denselben Stoff, die M-Fassung verlangt m
     const r = proben[id], m = proben[id.replace(/-r$/, "-m")];
     const frei = (p) => p.items.filter((i) => i.type === "text").reduce((s, i) => s + i.points, 0);
     assert.ok(frei(m) > frei(r), id + ": M-Fassung braucht mehr Punkte aus freien Antworten");
+  });
+});
+
+/* ---------- Probe 1b: nach den Hefteinträgen der Einheiten 1 bis 3 (18.10.2026) ----------
+   Wunsch der Lehrkraft: nur Anklicken, keine offenen Fragen, dazu eine E-Mail (An, Cc, Bcc, Anhang = Schlüssel,
+   Betreff und Text = KI), dieselbe Probe für 7R und 7M, Notenschlüssel R für beide. */
+const HEFT = ["inf7-p1b-r", "inf7-p1b-m"];
+
+test("Probe 1b: R und M gleich, nur Anklicken plus eine E-Mail, R-Schlüssel", () => {
+  HEFT.forEach((id) => {
+    const p = proben[id];
+    assert.equal(p.id, id);
+    assert.equal(p.zug, id.endsWith("-r") ? "R" : "M");
+    assert.equal(p.thema, "sicher");
+    assert.equal(p.notenzug, "R", id + ": Notenschlüssel R für beide Züge");
+    assert.match(p.title, p.zug === "R" ? /\(7R\)/ : /\(7M\)/);
+    const arten = p.items.map((i) => i.type);
+    assert.equal(arten.filter((a) => a === "text").length, 0, id + ": keine offenen Fragen");
+    assert.equal(arten.filter((a) => a === "email").length, 1, id + ": genau eine E-Mail");
+    assert.ok(arten.every((a) => ["choice", "match", "order", "tf", "multi", "email"].includes(a)), id + ": nur Klick-Aufgaben");
+    ["alltag", "sicher-gefaehrlich", "rechte"].forEach((e) => assert.ok(p.items.filter((i) => i.modul === e).length >= 4, id + ": zu wenig Aufgaben aus " + e));
+    p.items.forEach((it, n) => {
+      const wo = `${id} Aufgabe ${n + 1}`;
+      assert.ok(it.modulTitel, wo + ": Einheit fehlt");
+      if (it.type === "choice") {
+        assert.equal(new Set(it.options).size, it.options.length, wo);
+        const laengen = it.options.map((x) => x.length), andere = Math.max(...laengen.filter((_, i) => i !== it.answer));
+        assert.ok(laengen[it.answer] - andere <= 8, wo + ": die richtige Antwort ist deutlich die längste");
+      }
+      if (it.type === "match") assert.equal(new Set(it.pairs.map((x) => x[1])).size, it.pairs.length, wo);
+      if (it.type === "tf") { assert.equal(it.points, it.statements.length, wo); assert.ok(it.statements.some((x) => x[1]) && it.statements.some((x) => !x[1]), wo); }
+      if (it.type === "multi") assert.equal(it.points, it.answers.length, wo);
+      if (it.type === "email") {
+        assert.equal(it.points, 4 + it.criteria.length, wo);
+        assert.equal(it.keywords.length, it.criteria.length, wo);
+        ["an", "cc", "bcc"].forEach((k) => assert.ok(it.kontakte.some((x) => x.adresse === it.soll[k]), wo + ": Kontakt für " + k));
+        assert.ok(it.dateien.includes(it.soll.anhang) && it.dateien[0] !== it.soll.anhang, wo);
+        const klein = it.textBeispiel.toLocaleLowerCase("de");
+        it.keywords.forEach((g, k) => assert.ok(g.split("|").some((w) => klein.includes(w)), `${wo}: Beispiel erfüllt Stichwortgruppe ${k + 1} nicht`));
+      }
+    });
+    const punkte = p.items.reduce((s, i) => s + i.points, 0);
+    assert.ok(punkte >= 40 && punkte <= 60, id + ": " + punkte + " Punkte");
+  });
+  // derselbe Inhalt (nur die Antwortreihenfolge ist je Kennung anders gemischt)
+  const inhalt = (p) => p.items.map((i) => i.prompt + "|" + (i.options || []).slice().sort().join("/"));
+  assert.deepEqual(inhalt(proben["inf7-p1b-r"]), inhalt(proben["inf7-p1b-m"]));
+});
+
+test("Probe 1b: E-Mail wird nach Schlüssel und KI bewertet, die Note nach dem R-Schlüssel", async () => {
+  const KI = [];
+  await mitServer((app, dataDir) => {
+    registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf7", datei: "inf7-proben.json", tests: proben, fach: "Informatik",
+      kiGeduldMs: 5000, askAnthropic: async (s, u) => { KI.push(JSON.parse(u)); return '{"points": 3, "comment": "Höflich, nur der Gruß fehlt."}'; } });
+  }, async ({ base, post }) => {
+    const alt = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = "test";
+    try {
+      assert.equal((await post("/api/inf7/teacher/unlock", { password: PW, testId: "inf7-p1b-m", open: true })).status, 200);
+      const start = await post("/api/inf7/start", { testId: "inf7-p1b-m", code: "111" });
+      assert.equal(start.status, 200);
+      const nr = start.data.items.findIndex((i) => i.type === "email");
+      const mail = start.data.items[nr];
+      assert.equal(mail.kontakte.length, 3);
+      assert.ok(mail.dateien.length >= 3);
+      assert.equal(/"soll"|nowak@schule\.example"?,"cc"|textBeispiel|criteria|keywords/.test(JSON.stringify(mail)), false, "kein Schlüssel an das Kind");
+      const leer = start.data.items.map(() => null);
+      // Bcc und Cc vertauscht, Großschreibung und Leerzeichen sind egal
+      leer[nr] = { an: [" Nowak@Schule.example "], cc: ["papa@post.example"], bcc: ["ben@post.example"], betreff: "Referat Bienen",
+        text: "Sehr geehrte Frau Nowak,\nim Anhang ist mein Referat über Bienen.\nViele Grüße\nLea", anhang: "referat-bienen.pdf" };
+      const abgabe = await post("/api/inf7/submit", { testId: "inf7-p1b-m", code: "111", answers: leer });
+      assert.equal(abgabe.status, 200);
+      const d = abgabe.data.result.details[nr];
+      assert.equal(d.type, "email");
+      assert.equal(d.feldPunkte, 2, "An und Anhang richtig, Cc und Bcc vertauscht");
+      assert.equal(d.points, 5, "2 Schlüssel + 3 KI");
+      assert.equal(d.source, "ki");
+      assert.match(d.comment, /✓ An · ✗ Cc \(richtig: ben@post\.example\) · ✗ Bcc/);
+      assert.match(d.given, /^An: nowak@schule\.example\nCc: papa@post\.example/);
+      assert.equal(KI.length, 1, "nur die E-Mail geht an die KI");
+      assert.match(KI[0].studentAnswer, /^Betreff: Referat Bienen/);
+      assert.equal(KI[0].criteria.length, 4, "die KI bewertet nur Betreff und Text");
+      // M-Kind, aber R-Schlüssel: 5 von 53 Punkten (9 %) = Note 6; der Schlüssel zeigt sich an 50 %
+      const res = (await post("/api/inf7/teacher/results", { password: PW, testId: "inf7-p1b-m" })).data.submissions[0];
+      assert.equal(res.zug, "M");
+      assert.equal(res.total, 53);
+      // Lehrkraft setzt die E-Mail auf volle Punkte – erlaubt wie bei freien Antworten
+      const ov = await post("/api/inf7/teacher/override", { password: PW, submissionId: res.id, nr: nr + 1, points: 8 });
+      assert.equal(ov.status, 200);
+      assert.equal(ov.data.score, 8);
+    } finally {
+      if (alt === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = alt;
+    }
+  });
+});
+
+test("Probe 1b: Note nach R-Schlüssel auch für M-Kinder (50 % = Note 3)", async () => {
+  await mitServer((app, dataDir) => {
+    registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf7", datei: "inf7-proben.json", tests: proben, fach: "Informatik" });
+  }, async ({ post }) => {
+    const alt = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    try {
+      await post("/api/inf7/teacher/unlock", { password: PW, testId: "inf7-p1b-m", open: true });
+      const p = proben["inf7-p1b-m"];
+      // genau die Hälfte der Punkte richtig: Klick-Aufgaben der Reihe nach richtig beantworten, bis 27 von 53 erreicht sind
+      let summe = 0;
+      const antworten = p.items.map((it) => {
+        if (summe + it.points > 27 || it.type === "email") return null;
+        summe += it.points;
+        if (it.type === "choice") return it.answer;
+        if (it.type === "match") return it.pairs.map((x) => x[1]);
+        if (it.type === "order") return it.steps.slice();
+        if (it.type === "tf") return it.statements.map((x) => x[1]);
+        if (it.type === "multi") return it.answers.slice();
+        return null;
+      });
+      const r = await post("/api/inf7/submit", { testId: "inf7-p1b-m", code: "111", answers: antworten });
+      assert.equal(r.status, 200);
+      const res = (await post("/api/inf7/teacher/results", { password: PW, testId: "inf7-p1b-m" })).data.submissions[0];
+      assert.equal(res.score, summe);
+      assert.ok(res.percent >= 50 && res.percent < 67, res.percent + " %");
+      assert.equal(res.grade, 3, "R-Schlüssel: 50 % = Note 3 (mit dem M-Schlüssel wäre es eine 4)");
+    } finally {
+      if (alt !== undefined) process.env.ANTHROPIC_API_KEY = alt;
+    }
   });
 });

@@ -21,6 +21,80 @@ const c = (prompt, options, answer, extra) => ({ type: "choice", prompt, options
 const m = (prompt, pairs, extra) => ({ type: "match", prompt, pairs, points: pairs.length, ...(extra || {}) });
 const o = (prompt, steps, extra) => ({ type: "order", prompt, steps, points: steps.length, ...(extra || {}) });
 const t = (prompt, expected, criteria, keywords, extra) => ({ type: "text", prompt, expected, criteria, keywords, points: criteria.length, ...(extra || {}) });
+// Richtig/falsch (1 Punkt je Aussage) und mehrere richtige Antworten (answers = Indizes, 1 Punkt je richtigem Kreuz,
+// 1 Punkt Abzug je falschem Kreuz, nie unter 0) – ausgewertet wie in NT 8 (nt7.js)
+const rf = (prompt, statements, extra) => ({ type: "tf", prompt, statements, points: statements.length, ...(extra || {}) });
+const mk = (prompt, options, answers, extra) => ({ type: "multi", prompt, options, answers, points: answers.length, ...(extra || {}) });
+
+/* Probe 1b (18.10.2026): nach den Hefteinträgen der Einheiten 1 bis 3 (7M/Informatik/arbeitsblaetter/I1–I3).
+   Wunsch der Lehrkraft: nur zum Anklicken, keine offenen Fragen – dazu eine E-Mail wie in der Einheit „Kommunikation
+   im Alltag“ (An, Cc, Bcc, Betreff, Text, Anhang). Empfänger und Anhang prüft der Schlüssel, Betreff und Text die KI
+   (Aufgabenart "email" in nt7.js). Dieselben Aufgaben für 7R und 7M, Notenschlüssel R für beide (notenzug: "R").
+   modul/modulTitel: Einheit, in der der Stoff steht (steht bei der Aufgabe und in der Rückgabe). */
+const E1 = { modul: "alltag", modulTitel: "Kommunikation im Alltag" };
+const E2 = { modul: "sicher-gefaehrlich", modulTitel: "Sicher oder gefährlich?" };
+const E3 = { modul: "rechte", modulTitel: "Rechte im Internet" };
+const HEFT_ITEMS = [
+  m("Welcher Weg passt? Ordne jeder Situation den passenden Weg zu.",
+    [["Du fragst deinen Freund kurz, ob er heute Zeit hat.", "Messenger"], ["Du beschwerst dich bei einem Online-Shop: Deine Lieferung ist kaputt.", "E-Mail"],
+      ["Du willst mit deiner Tante in Spanien sprechen und sie dabei sehen.", "Videokonferenz"], ["Ihr schreibt zu dritt zur selben Zeit an einem Plakattext.", "Gemeinsames Dokument"]], E1),
+  c("Wofür ist das Feld Bcc in einer E-Mail da?",
+    ["Wer dort steht, bekommt die E-Mail auch – die anderen sehen die Adresse nicht.", "Wer dort steht, bekommt die E-Mail auch – alle anderen sehen die Adresse.", "Dort steht kurz und knapp, worum es in der ganzen E-Mail geht.", "Dort hängt man eine Datei wie ein Foto oder ein Referat an."], 0, E1),
+  o("Mia schickt Tom eine Nachricht. Toms Handy ist gerade ausgeschaltet. Bringe den Weg der Nachricht in die richtige Reihenfolge.",
+    ["Mia tippt auf „Senden“.", "Die Nachricht geht über das Internet zum Server des Dienstes.", "Der Server hebt die Nachricht auf.", "Tom schaltet sein Handy ein und bekommt die Nachricht."], E1),
+  rf("Richtig oder falsch? Entscheide bei jeder Aussage.",
+    [["Mit digitalen Nachrichten erreicht man schnell Menschen, die weit weg wohnen.", true], ["Geschriebene Nachrichten versteht man nie falsch.", false],
+      ["Ständig neue Nachrichten können beim Lernen ablenken.", true]], E1),
+  m("Ordne jedem Begriff die passende Erklärung zu.",
+    [["Spam", "unerwünschte Nachricht an sehr viele Menschen, meist Werbung"], ["Phishing", "gefälschte Nachricht, mit der Betrüger nach Passwörtern fischen"],
+      ["Datenspur", "alles, was Apps und Seiten über dich sammeln"], ["Berechtigung", "das, was du einer App erlaubst, z. B. die Kamera"]], E2),
+  mk("Lies die Nachricht. Kreuze alle vier Warnzeichen für Phishing an. Für ein falsches Kreuz gibt es einen Punkt Abzug.\n" +
+    "„Sehr geehrter Kunde, Ihr Konto bei der Stadtbank wird heute gesperrt! Bestätigen Sie sofort Ihre PIN: stadtbank.example.pin-pruefen.example – Ihre Stadtbank“",
+    ["unpersönliche Anrede („Sehr geehrter Kunde“)", "Zeitdruck und Drohung („heute gesperrt“, „sofort“)", "Sie will deine PIN.", "Der Link führt zu einer fremden Seite.",
+      "Der Name „Stadtbank“ steht am Ende.", "Die Nachricht ist kurz."], [0, 1, 2, 3], E2),
+  c("Was tust du mit so einer Nachricht?",
+    ["Nicht antippen, nichts eingeben, löschen oder melden.", "Schnell die PIN eingeben, damit das Konto nicht gesperrt wird.", "Nur kurz auf den Link tippen und schauen.", "Die Nachricht an alle Freunde weiterschicken."], 0, E2),
+  c("Die echte Seite des Sportvereins heißt tsv-musterstadt.example. Welche Adresse gehört wirklich zum Verein?",
+    ["https://www.tsv-musterstadt.example/training", "https://tsv-musterstadt.example.gratis-trikot.example", "https://www.tsv-musterstatd.example/training", "http://tsv-musterstadt-gewinn.example/preis"], 0, E2),
+  rf("Eine App fragt nach einer Berechtigung. Richtig oder falsch?",
+    [["Eine Navi-App braucht deinen Standort.", true], ["Eine Taschenlampen-App braucht deine Kontakte.", false], ["Ein Rechenspiel braucht das Mikrofon.", false]], E2),
+  c("Welches Passwort ist am sichersten?",
+    ["Wk7!sTb#29qM", "lena2013", "123456789", "passwort!"], 0, E2),
+  c("Wie gehst du richtig mit Passwörtern um?",
+    ["Für jeden Dienst ein eigenes Passwort – und ich verrate es niemandem.", "Ein einziges Passwort für alle Konten – dann vergesse ich es nicht.", "Ich verrate es nur meiner besten Freundin, der vertraue ich ja.", "Ich schreibe es in den Klassenchat, falls ich es mal vergesse."], 0, E2),
+  rf("Darfst du das posten? Richtig oder falsch?",
+    [["Ich darf ein Selfie posten, auf dem nur ich zu sehen bin.", true], ["Ich darf ein Gruppenfoto posten, obwohl zwei Kinder darauf „Nein“ gesagt haben.", false],
+      ["Ich darf ein Foto vom Schulgarten ohne Menschen posten, das ich selbst gemacht habe.", true], ["Ich darf ein heimliches Video aus der Umkleide in die Klassengruppe schicken.", false]], E3),
+  c("Elif ist 12. Ihre Freundin will ein Foto posten, auf dem Elif gut zu erkennen ist. Wer muss meistens zustimmen?",
+    ["Elif und ihre Eltern", "Nur die Freundin, die das Foto gemacht hat", "Niemand – Elif ist ja noch ein Kind", "Nur die Klassenlehrerin"], 0, E3),
+  m("Ordne jedem Begriff die passende Erklärung zu.",
+    [["Urheber", "wer ein Foto, Lied oder einen Text selbst erschaffen hat"], ["freie Lizenz", "Erlaubnis für alle unter Bedingungen, z. B. den Namen nennen"],
+      ["Abmahnung", "Brief: Man soll aufhören und muss oft Geld bezahlen"]], E3),
+  c("Welches fremde Bild darfst du ohne zu fragen auf deine Internetseite stellen?",
+    ["ein Foto mit freier CC-Lizenz – du hältst die Bedingungen ein", "ein Foto aus der Bildersuche – du nennst die Seite dazu", "das Profilbild einer Sängerin – du schreibst ihren Namen dazu", "ein Bild aus dem Netz – du schreibst „Quelle: Internet“"], 0, E3),
+  m("Du zeigst im Referat das Foto „Fuchs im Schnee“ von Tom Weber. Du hast es am 15.10.2026 auf tierbilder.example/fuchs gefunden. Ordne die Angaben der Quelle zu.",
+    [["Wer hat es gemacht?", "Tom Weber"], ["Wie heißt es?", "„Fuchs im Schnee“"], ["Wo habe ich es gefunden?", "tierbilder.example/fuchs"], ["Wann habe ich es abgerufen?", "am 15.10.2026"]], E3),
+  o("Jemand beleidigt dich immer wieder im Klassenchat. Bringe die Schritte in die richtige Reihenfolge.",
+    ["Nicht antworten und nicht zurückbeleidigen.", "Bildschirmfotos als Beweis machen.", "Die Bildschirmfotos einer Vertrauensperson zeigen.", "Zusammen mit der Vertrauensperson blockieren und beim Dienst melden."], E3),
+  c("Welcher Kommentar ist fair?",
+    ["„Tolles Foto! Die Farben gefallen mir.“", "„Du bist so peinlich 😂“", "„Keiner will dich in der Gruppe.“", "„Schickt das Video an alle, das ist lustig!“"], 0, E3),
+  {
+    type: "email", ...E1, points: 8,
+    prompt: "Schreibe eine E-Mail. Du hast ein Referat über Bienen gemacht. Schicke es deiner Lehrerin Frau Nowak. Ben hat dir geholfen. Er soll die E-Mail auch bekommen – das dürfen alle sehen. Dein Vater möchte eine Kopie. Seine Adresse soll aber niemand sehen. Schreibe einen kurzen Betreff, eine Anrede, zwei kurze, höfliche Sätze und einen Gruß mit deinem Namen. Hänge das Referat an (Büroklammer).",
+    // Kontakte in gemischter Reihenfolge und ohne An/Cc/Bcc – das entscheidet das Kind
+    kontakte: [{ name: "Papa", adresse: "papa@post.example" }, { name: "Frau Nowak (deine Lehrerin)", adresse: "nowak@schule.example" }, { name: "Ben (hat dir geholfen)", adresse: "ben@post.example" }],
+    soll: { an: "nowak@schule.example", cc: "ben@post.example", bcc: "papa@post.example", anhang: "referat-bienen.pdf" },
+    dateien: ["urlaub-strand.jpg", "referat-bienen.pdf", "hausaufgabe-mathe.pdf", "lieblingslied.mp3"],
+    expected: "An: nowak@schule.example · Cc: ben@post.example · Bcc: papa@post.example · Anhang: referat-bienen.pdf\nBetreff: Mein Referat über Bienen\nSehr geehrte Frau Nowak, im Anhang schicke ich Ihnen mein Referat über Bienen. Ben hat mir dabei geholfen. Mit freundlichen Grüßen, Lea",
+    // Nur Betreff und Text – das bewertet die KI (je Kriterium 1 Punkt); An, Cc, Bcc und Anhang zählt der Schlüssel (je 1 Punkt)
+    textBeispiel: "Betreff: Mein Referat über Bienen\nSehr geehrte Frau Nowak, im Anhang schicke ich Ihnen mein Referat über Bienen. Ben hat mir dabei geholfen. Mit freundlichen Grüßen, Lea",
+    criteria: ["Betreff: kurz und passend – er sagt, worum es geht (z. B. „Referat über Bienen“, „Mein Referat“)",
+      "Anrede am Anfang des Textes (z. B. „Sehr geehrte Frau Nowak,“ oder „Liebe Frau Nowak,“; „Hallo Frau Nowak“ gilt auch – nur „Hey“ oder keine Anrede nicht)",
+      "mindestens ein ganzer Satz, der sagt, was geschickt wird (das Referat) – ob „du“ oder „Sie“, ist egal",
+      "Gruß am Ende, ausgeschrieben (z. B. „Mit freundlichen Grüßen“ oder „Viele Grüße“ – nur „LG“ reicht nicht), und ein Name"],
+    keywords: ["referat|biene", "sehr geehrte|liebe frau|hallo frau|guten tag", "anhang|anbei|schicke|sende|geschickt", "grüße|grüßen|gruß|gruesse|grusse"]
+  }
+];
 
 const PROBEN = {
   /* ================= Probe 1: Internet und Sicherheit (Modul 1) ================= */
@@ -93,6 +167,21 @@ const PROBEN = {
         ["Problem: Bilder wirken wie ein Beweis – ein falscher Eindruck verbreitet sich", "eine Möglichkeit zu prüfen (z. B. wer hat es veröffentlicht, andere Quellen suchen, mit anderen Bildern vergleichen, genau hinsehen, nachfragen)"],
         ["glauben|beweis|falsch|täusch|stimmt nicht|verbreitet|lüge", "quelle|wer |vergleich|woanders|nachfragen|suchen|prüf|hinsehen|genau|doppelt"])
     ]
+  },
+
+  /* ================= Probe 1b: Internet und Sicherheit nach den Hefteinträgen (Einheiten 1–3) ================= */
+  // Zwei Kennungen mit demselben Inhalt, damit die Lehrkraft 7R und 7M getrennt freischalten kann (wie Informatik 9)
+  "inf7-p1b-r": {
+    id: "inf7-p1b-r", zug: "R", thema: "sicher", minutes: 30, notenzug: "R",
+    title: "Probe 1b (7R): Internet und Sicherheit – Hefteinträge",
+    scope: "Einheiten 1 bis 3 nach den Hefteinträgen: Wege der Kommunikation, E-Mail mit Cc, Bcc und Anhang, Server, Phishing, Adressen, Apps, Passwörter, Recht am eigenen Bild, Urheberrecht, Quelle, Cybermobbing",
+    items: HEFT_ITEMS
+  },
+  "inf7-p1b-m": {
+    id: "inf7-p1b-m", zug: "M", thema: "sicher", minutes: 30, notenzug: "R",
+    title: "Probe 1b (7M): Internet und Sicherheit – Hefteinträge",
+    scope: "Einheiten 1 bis 3 nach den Hefteinträgen: Wege der Kommunikation, E-Mail mit Cc, Bcc und Anhang, Server, Phishing, Adressen, Apps, Passwörter, Recht am eigenen Bild, Urheberrecht, Quelle, Cybermobbing",
+    items: HEFT_ITEMS
   },
 
   /* ================= Probe 2: Netzwerke mit Filius (Modul 2) ================= */
@@ -180,5 +269,5 @@ require("./proben-mischen").mischeAlle(module.exports);
 
 // nur für Tests: die Vorlage ohne Mischen
 Object.defineProperty(module.exports, "__vorlage", { value: PROBEN, enumerable: false });
-// (c, m, o, t werden mit den Proben gebraucht)
-void [c, m, o, t];
+// (c, m, o, t, rf, mk werden mit den Proben gebraucht)
+void [c, m, o, t, rf, mk];
