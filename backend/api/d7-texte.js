@@ -281,13 +281,20 @@ const WERK_MAX = 4000;
 const systemWerkstatt = (stufe) => [
   "Du hilfst einem Kind der " + stufe + ". Klasse einer bayerischen Mittelschule, seinen eigenen Leserbrief selbst zu überarbeiten. Das Kind geht Schritt für Schritt vor.",
   "Du prüfst jetzt NUR den mitgeschickten Schritt mit seinen Punkten. Andere Schwächen sprichst du nicht an – auch keine Rechtschreibung, dafür gibt es einen eigenen Schritt.",
-  "Antworte nur als JSON: {\"punkte\":[{\"ok\":true,\"hinweis\":\"\"}],\"lob\":\"…\",\"stelle\":\"…\",\"tipp\":\"…\"}",
-  "punkte: für jeden Punkt der Liste ein Eintrag, in derselben Reihenfolge.",
-  "- ok: true, sobald der Punkt erkennbar da ist – auch kurz, ungeschickt, in Alltagssprache oder mit vielen Fehlern. Im Zweifel true. false nur, wenn der Punkt wirklich fehlt oder gar nicht passt.",
-  "- hinweis: nur bei false eine kurze Frage oder ein Denkanstoß (höchstens 20 Wörter), mit dem das Kind den Punkt selbst ergänzen kann. Bei true leer.",
-  "lob: ein Satz – was ist in diesem Schritt gelungen? Mit Bezug auf den Text.",
-  "stelle: Fehlt ein Punkt, die Stelle, an der das Kind etwas ändern oder ergänzen soll – wörtlich und buchstabengenau aus dem Text kopiert, 2 bis 12 Wörter, auch mit den Fehlern des Kindes. Sind alle Punkte da, leer.",
-  "tipp: ein kurzer Tipp zu dieser Stelle (höchstens 25 Wörter), sonst leer.",
+  "",
+  "Antworte genau in dieser Form, eine Angabe je Zeile, und mit nichts sonst:",
+  "PUNKTE: ja, nein, ja",
+  "HINWEIS 2: …",
+  "LOB: …",
+  "STELLE: …",
+  "TIPP: …",
+  "",
+  "PUNKTE: für jeden Punkt der Liste „ja“ oder „nein“, in derselben Reihenfolge, durch Komma getrennt.",
+  "- „ja“, sobald der Punkt erkennbar da ist – auch kurz, ungeschickt, nebenbei, in Alltagssprache oder mit vielen Fehlern. Im Zweifel „ja“. „nein“ nur, wenn der Punkt wirklich fehlt oder gar nicht passt.",
+  "HINWEIS <Nummer>: nur für jeden Punkt mit „nein“ eine eigene Zeile – eine kurze Frage oder ein Denkanstoß (höchstens 20 Wörter), mit dem das Kind den Punkt selbst ergänzen kann.",
+  "LOB: ein Satz – was ist in diesem Schritt gelungen? Mit Bezug auf den Text.",
+  "STELLE: Fehlt ein Punkt, die Stelle, an der das Kind etwas ändern oder ergänzen soll – wörtlich und buchstabengenau aus dem Text kopiert, 2 bis 12 Wörter, auch mit den Fehlern des Kindes. Sind alle Punkte da, bleibt STELLE leer.",
+  "TIPP: ein kurzer Tipp zu dieser Stelle (höchstens 25 Wörter). Sind alle Punkte da, bleibt TIPP leer.",
   "Du schreibst niemals einen Satz, den das Kind übernehmen könnte: keine fertige Begründung, kein fertiges Beispiel, kein Mustertext. Erlaubt sind Fragen und Satzanfänge mit „…“ wie „Zum Beispiel …“.",
   "du-Anrede, einfache Wörter, freundlich und ermutigend.",
   "Passt der Text gar nicht zum Thema oder ist er kein Leserbrief, setze alle Punkte auf false und sag es freundlich im tipp.",
@@ -299,6 +306,7 @@ const systemWerkstattRs = (stufe) => [
   "- Rechtschreibung, Groß- und Kleinschreibung, getrennt oder zusammen",
   "- Zeichensetzung: Punkt am Satzende, Komma vor weil, dass, denn, aber, wenn, damit, und nach der Anrede eines Briefs",
   "- falsche Wortformen (z. B. „ich find“ statt „ich finde“)",
+  "Nach der Grußformel am Schluss eines Briefs (z. B. „Viele Grüße“, „Mit freundlichen Grüßen“) steht kein Komma – dort setzt du keines.",
   "Sonst änderst du nichts: keine anderen oder schöneren Wörter, keine umgestellten oder neuen Sätze, nichts dazu, nichts weg.",
   "Ist nichts falsch, gib den Text unverändert zurück.",
   "Antworte nur mit dem Text, ohne Überschrift und ohne Erklärung.",
@@ -346,12 +354,25 @@ function fehlerArt(alt, neu) {
   if (ka.length > 2 && ende(ka) === ende(kn)) return "auslaut";
   return aehnlich(a0, n0) ? "wort" : "grammatik";
 }
-// Antwort der KI (Inhaltsschritt) lesen; stelle nur, wenn sie wirklich so im Text steht
+// Antwort der KI (Inhaltsschritt) lesen: Zeilen PUNKTE / HINWEIS n / LOB / STELLE / TIPP (Zeilen statt JSON – Tipps mit
+// Anführungszeichen wie „Zum Beispiel …“ zerbrachen das JSON: erste Messung mit der echten KI, 19.10.2026). JSON geht auch.
+// Die Stelle gilt nur, wenn sie wirklich so im Text steht und höchstens 20 Wörter lang ist.
+function werkstattZeilen(roh, anzahl) {
+  const s = String(roh || "").replace(/\r\n?/g, "\n").replace(/^```\w*\n?|\n?```\s*$/g, "");
+  const zeile = (name) => { const m = new RegExp("(?:^|\\n)[ \\t*]*" + name + "[ \\t*]*:[ \\t]*([^\\n]*)", "i").exec(s); return m ? m[1].replace(/^\*+\s*|\s*\*+$/g, "").trim() : null; };
+  const ja = zeile("PUNKTE");
+  if (ja === null) return null;
+  const urteile = (ja.match(/\b(ja|nein)\b/gi) || []).map((x) => /^ja$/i.test(x));
+  if (!urteile.length) return null;
+  const leer = (v) => (v && !/^[…–-]$/.test(v) && !/^(leer|keine?|-)$/i.test(v) ? v : "");
+  return { punkte: Array.from({ length: anzahl }, (_, k) => ({ ok: urteile[k] === true, hinweis: urteile[k] === true ? "" : leer(zeile("HINWEIS " + (k + 1))) || "" })),
+    lob: leer(zeile("LOB")), stelle: leer(zeile("STELLE")), tipp: leer(zeile("TIPP")) };
+}
 function werkstattLesen(roh, anzahl, text) {
-  const m = String(roh || "").match(/\{[\s\S]*\}/);
-  if (!m) return null;
-  let p;
-  try { p = JSON.parse(m[0]); } catch (_e) { return null; }
+  let p = null;
+  const m = String(roh || "").match(/^\s*\{[\s\S]*\}\s*$/);
+  if (m) { try { p = JSON.parse(m[0]); } catch (_e) { p = null; } }
+  if (!p || !Array.isArray(p.punkte)) p = werkstattZeilen(roh, anzahl);
   if (!p || !Array.isArray(p.punkte)) return null;
   const punkte = Array.from({ length: anzahl }, (_, k) => {
     const x = p.punkte[k], ok = x === true || (x && typeof x === "object" && x.ok === true);
@@ -363,6 +384,7 @@ function werkstattLesen(roh, anzahl, text) {
     const i = eng(text).toLocaleLowerCase("de").indexOf(stelle.toLocaleLowerCase("de"));
     stelle = i >= 0 ? eng(text).slice(i, i + stelle.length) : "";
   }
+  if (wortzahl(stelle) > 20) stelle = "";       // der halbe Text markiert hilft dem Kind nicht weiter
   return { punkte, lob: clean(p.lob, 300), stelle: punkte.every((x) => x.ok) ? "" : stelle, tipp: clean(p.tipp, 260) };
 }
 
@@ -525,8 +547,10 @@ function registerD7TexteRoutes(app, options = {}) {
         if (schritt.art === "rs") {
           const roh = String(await askAnthropic(systemWerkstattRs(STUFE), text, Math.min(2400, 200 + Math.ceil(text.length / 2)), { milde: false }) || "").replace(/^```\w*\n?|\n?```\s*$/g, "").trim();
           const teile = roh ? vergleiche(text, roh) : null;
-          const geaendert = teile ? teile.filter((x) => x.t === undefined).reduce((n, x) => n + Math.max(wortzahl(x.alt), wortzahl(x.neu), 1), 0) : 0;
-          // Hat die KI den Text umgeschrieben statt nur auszubessern (mehr als 40 % der Wörter), gilt die Antwort nicht
+          // Hat die KI den Text umgeschrieben statt nur auszubessern (mehr als 40 % der Wörter durch andere ersetzt), gilt die
+          // Antwort nicht. Ähnliche Wörter (Groß-/Kleinschreibung, Buchstaben, Komma) zählen dafür nicht – sonst bekäme gerade
+          // ein Kind mit sehr vielen Fehlern keine Hilfe (erste Messung, 19.10.2026)
+          const geaendert = teile ? teile.filter((x) => x.art === "falsch").reduce((n, x) => n + Math.max(wortzahl(x.alt), wortzahl(x.neu), 1), 0) : 0;
           if (teile && geaendert <= Math.max(3, wortzahl(text) * 0.4)) {
             const fehler = [];
             const liste = teile.map((x) => {

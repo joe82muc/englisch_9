@@ -281,3 +281,27 @@ test("Werkstatt, Rechtschreibung: Stellen mit Fehlerart und Tipp – die Lösung
     assert.equal(r.quelle, "lokal"); assert.deepEqual(r.punkte.map((x) => x.ok), [null, null]);
   });
 });
+test("Werkstatt: Antwort in Zeilen (PUNKTE / HINWEIS / LOB / STELLE / TIPP), auch mit Sternchen und Anführungszeichen", () => {
+  const roh = "**PUNKTE:** ja, nein, ja, nein\nHINWEIS 2: Worum geht es? Schreib „In Ihrem Artikel geht es um …“.\nHINWEIS 4: Wie beendest du deinen Brief?\nLOB: Deine \"Anrede\" passt.\nSTELLE: Mit freundlichen Grüßen\nTIPP: Sag vor dem Gruß noch einmal deine Meinung.";
+  const p = werkstattLesen(roh, 4, BRIEF);
+  assert.deepEqual(p.punkte.map((x) => x.ok), [true, false, true, false]);
+  assert.equal(p.punkte[1].hinweis, "Worum geht es? Schreib „In Ihrem Artikel geht es um …“.");
+  assert.equal(p.punkte[3].hinweis, "Wie beendest du deinen Brief?");
+  assert.equal(p.lob, "Deine \"Anrede\" passt.");
+  assert.equal(p.stelle, "Mit freundlichen Grüßen");
+  // alle da: Stelle fällt weg; eine Stelle über 20 Wörter auch
+  assert.equal(werkstattLesen("PUNKTE: ja, ja\nLOB: Gut.\nSTELLE: Mit freundlichen Grüßen\nTIPP:", 2, BRIEF).stelle, "");
+  assert.equal(werkstattLesen("PUNKTE: nein\nSTELLE: " + BRIEF.split("\n").slice(1, 4).join(" "), 1, BRIEF).stelle, "");
+  assert.equal(werkstattLesen("Ich weiß nicht.", 2, BRIEF), null);
+});
+
+test("Werkstatt, Rechtschreibung: sehr viele Kleinschreibfehler sind kein Umschreiben – das Kind bekommt seine Stellen", async () => {
+  const klein = "ich finde handys in der pause sollten erlaubt sein weil man dan musik hören kann und das ist gut für die entspanung.";
+  const gross = "Ich finde, Handys in der Pause sollten erlaubt sein, weil man dann Musik hören kann und das gut für die Entspannung ist.";
+  await mitServer(async () => gross, async ({ post }) => {
+    const r = (await post("schreiben/werkstatt", werk({ text: klein, schritt: { id: "rechtschreibung", titel: "Rechtschreibung", art: "rs" } }))).data;
+    assert.equal(r.quelle, "ki");
+    assert.ok(r.fehler.length >= 7, r.fehler.length + " Stellen");
+    assert.ok(r.fehler.some((f) => f.art === "gross") && r.fehler.some((f) => f.art === "komma"));
+  });
+});
