@@ -139,6 +139,108 @@ const HEFT2 = [
     ["profil|bild|wissen|weiß|zusammen|werbung", "weiter|dritte|gestohl|klau|hack|lösch|falsch|missbrauch|verkauf"], D1)
 ];
 
+/* Probe 1c und 2c (19.10.2026). Wunsch der Lehrkraft: „probe zu informatik 8 r und m zu modul I1 und I2. mit animationen,
+   ankreuzen, sortiern, richtig falsch. 30 punkte nur r-schlüssel“ und „genauso zu modul 1 und 2 inkl ähnliche aufgabe zu
+   e-mail schrieben mit anhang, cc, bcc, betreff ki prüfunng. Beide proben einfach. ki korrektur r schlüssel, rechtschreibung
+   nicht werten, 30 punkte. ohne Note 6 regel.“
+   - je 30 Punkte, dieselben Aufgaben für 8R und 8M, Notenschlüssel R (notenzug), je eine Aufgabe für die KI (1c: Eingabe und
+     Ausgabe, 2c: Betreff und Text der E-Mail); die KI wertet Rechtschreibung nicht (steht auch in der Aufgabe)
+   - ohne Note-6-Regel: wegSekunden 0 und kopieren 0 an der Probe (nt7.js regelVon) – Verlassen und Kopierversuche werden
+     nur gewarnt und für die Lehrkraft festgehalten
+   - Animationen: animierte SVG-Bilder in 8M/Informatik/assets/proben/inf8-p1c-*.svg und inf8-p2c-*.svg (laufen in Schleife,
+     ohne Skript; die Dateien sind öffentlich und verraten keine Lösung) */
+const ANIM_TIERPARK = { image: "assets/proben/inf8-p1c-a.svg", imageAlt: "Animation in drei Bildern. Bild 1: Auf einem Handy mit der Tierpark-App wird „Pinguine“ in das Suchfeld getippt, dann wird auf „Suchen“ getippt. Bild 2: Eine Lupe geht eine gespeicherte Liste mit den Fütterungszeiten aller Tiere durch und bleibt bei „Pinguine 14:30“ stehen. Bild 3: Auf dem Handy erscheint: „Pinguine – Fütterung heute um 14:30 Uhr am Pinguinfelsen“." };
+const ANIM_VEREIN = { image: "assets/proben/inf8-p1c-b.svg", imageAlt: "Animation: Nutzer, Handy mit der Vereins-App, Internet, Server und Datenbank stehen nebeneinander. Auf dem Handy wird „Nächstes Spiel“ angetippt. Ein Briefumschlag „Anfrage“ wandert vom Handy durch das Internet zum Server und weiter zur Datenbank. Dort wird der Termin „Sa 10:00 Sportplatz Nord“ markiert. Ein Umschlag „Antwort“ wandert zurück über Server und Internet zum Handy. Das Handy zeigt: „Samstag, 10 Uhr, Sportplatz Nord“." };
+const ANIM_ZUG = { image: "assets/proben/inf8-p1c-c.svg", imageAlt: "Animation: Ein Handy mit der Vereins-App im fahrenden Zug, die Empfangsbalken sind durchgestrichen. Der Umschlag „Anfrage“ startet, kommt aber nicht beim Internet an – die Linie zum Internet ist unterbrochen. Server und Datenbank leuchten grün und laufen. Auf dem Handy steht: „Keine Verbindung“." };
+const ANIM_KINO = { image: "assets/proben/inf8-p2c-a.svg", imageAlt: "Animation: Drei Handys mit der Kino-App haben volles WLAN. Von jedem Handy wandert eine Anfrage durch das Internet bis zum Server des Kinos. Der Server ist dunkel, seine Lämpchen leuchten nicht, der Ein-Knopf ist aus. Die Anfragen kommen nicht weiter. Auf allen drei Handys steht nach einer Weile: „Keine Antwort“." };
+const ANIM_HELME = { image: "assets/proben/inf8-p2c-b.svg", imageAlt: "Animation: Trefferliste „Fahrradhelme“ mit fünf Helmen: Rakete 79 €, Wolke 25 €, Sturm 59 €, Kiesel 35 €, Blitz 49 €. Schritt 1: Der Knopf „Preis ↑“ wird gedrückt, alle fünf Helme bleiben, stehen danach aber in der Reihenfolge 25 €, 35 €, 49 €, 59 €, 79 €. Schritt 2: Der Knopf „bis 50 €“ wird gedrückt, die Helme für 59 € und 79 € verschwinden, es bleiben 3 Treffer." };
+const ANIM_PROFIL = { image: "assets/proben/inf8-p2c-c.svg", imageAlt: "Animation: Links Jana mit ihrem Handy. Nacheinander erscheinen kleine Datenkärtchen: „Standort: Skatepark, 16 Uhr“, „Suche: Skateboard-Rollen“, „40 Minuten Skate-Videos“, „jeden Abend bis 22 Uhr online“. Jedes Kärtchen fliegt nach rechts in eine Karte „Das weiß die App:“, die dabei Zeile um Zeile voller wird. Am Ende erscheint auf Janas Handy eine Anzeige: „Skateboard – heute 20 % billiger!“." };
+// Die E-Mail gehört zu keiner Einheit von Informatik 8 – sie wiederholt die E-Mail aus Klasse 7 (Kontakte, Cc, Bcc, Anhang)
+const MAIL = { modul: "email", modulTitel: "E-Mail schreiben (aus Klasse 7)" };
+
+const PROBE1C = [
+  m("Sieh dir die Animation an: Lena fragt die Tierpark-App, wann die Pinguine gefüttert werden. Ordne zu – ist das die Eingabe, die Verarbeitung oder die Ausgabe?",
+    [["Die App sucht in allen gespeicherten Fütterungszeiten.", "Verarbeitung"], ["Lena tippt „Pinguine“ ein und tippt auf „Suchen“.", "Eingabe"],
+      ["„Fütterung heute um 14:30 Uhr“ erscheint auf dem Bildschirm.", "Ausgabe"]], { ...ANIM_TIERPARK, ...I1 }),
+  // Gegenlesen 19.10.2026: Richtig/falsch wird nicht gemischt (proben-mischen.js kennt tf nicht) – die Reihenfolge der
+  // Aussagen ist deshalb von Hand gewählt (erste Aussage mal richtig, mal falsch, kein festes Muster)
+  c("Noch einmal die Animation: Was ist für Lena die Information?",
+    ["die Uhrzeit, zu der die Pinguine heute gefüttert werden", "die Fütterungszeiten aller Tiere im ganzen Tierpark", "das Suchfeld, in das Lena das Wort „Pinguine“ tippt", "der grüne Knopf „Suchen“ unter dem Suchfeld der App"], 0, { ...ANIM_TIERPARK, ...I1 }),
+  c("Was ist bei einem Informationssystem eine Anfrage?",
+    ["was ich vom System wissen will, z. B. ein Suchwort", "was das System anzeigt, z. B. eine Liste mit Treffern", "wo das System seine Daten speichert, z. B. auf dem Server", "eine Meldung bei einer Störung, z. B. „Keine Verbindung“"], 0, I1),
+  rf("Ist das ein digitales Informationssystem?",
+    [["die Kamera-App: Mit ihr machst du Fotos und kurze Videos.", false], ["eine Fahrradverleih-App: Sie zeigt dir, wo gerade freie Räder stehen.", true],
+      ["ein Online-Wörterbuch: Es sucht dir die Bedeutung eines Wortes heraus.", true], ["die Stoppuhr: Sie misst, wie lange du für eine Runde brauchst.", false]], { wahl: ["ja", "nein"], ...I1 }),
+  rf("Daten oder Information?",
+    [["die Preisliste mit allen 800 Artikeln eines Baumarkts", true], ["der Preis des Hammers, den du kaufen willst: 12,99 €", false],
+      ["die Abfahrt deines Schiffs nach Lindau: 10:15 Uhr", false]], { wahl: ["Daten", "Information"], ...I1 }),
+  o("Sieh dir die Animation an: Tom fragt in der App seines Fußballvereins, wann das nächste Spiel ist. Bringe den Weg seiner Anfrage in die richtige Reihenfolge.",
+    ["Tom tippt in der Vereins-App auf „Nächstes Spiel“.", "Die Anfrage geht vom Handy durch das Internet zum Server.", "Der Server sucht in der Datenbank nach dem nächsten Spiel.",
+      "Die Antwort läuft vom Server über das Internet zurück zum Handy.", "Die App zeigt: „Samstag, 10 Uhr, Sportplatz Nord“."], { ...ANIM_VEREIN, ...I2 }),
+  m("Ordne jedem Teil des Informationssystems seine Aufgabe zu.",
+    [["Nutzer", "stellt die Anfrage und liest die Antwort"], ["Anwendung", "nimmt die Eingabe an und zeigt die Antwort auf dem Handy"], ["Internet", "verbindet das Handy mit dem Server"],
+      ["Server", "Computer, der Tag und Nacht läuft und die Anfragen beantwortet"], ["Datenbank", "geordneter Speicher für alle Daten"]], I2),
+  c("Sieh dir die Animation an: Tom sitzt im Zug. Die Vereins-App meldet „Keine Verbindung“. Welcher Teil des Informationssystems fehlt hier?",
+    ["das Internet", "die Datenbank", "der Server des Vereins", "die Vereins-App"], 0, { ...ANIM_ZUG, ...I2 }),
+  c("Der Trainer ändert in der Datenbank die Uhrzeit des Spiels auf 11 Uhr. Was zeigt die Vereins-App danach auf Toms Handy und auf dem Handy seiner Mutter?",
+    ["auf beiden Handys 11 Uhr", "bei Tom 11 Uhr, bei der Mutter noch 10 Uhr", "auf beiden Handys weiter 10 Uhr", "nur auf dem Handy des Trainers 11 Uhr"], 0, I2),
+  rf("Richtig oder falsch?",
+    [["Das Internet speichert alle Spieltermine.", false], ["Die Spieltermine sind beim Verein gespeichert, nicht auf Toms Handy.", true],
+      ["Ist der Server aus, bekommt niemand eine Antwort.", true], ["Ein Gerät, das beim Server etwas anfragt, heißt Datenbank.", false]], I2),
+  t("Du willst in der App einer Kletterhalle nachsehen, wann sie am Sonntag öffnet. Schreibe auf: Was ist die Eingabe? Was ist die Ausgabe? Stichworte genügen. Rechtschreibung zählt nicht.",
+    "Eingabe: Ich tippe „Sonntag“ ein oder wähle den Tag aus. Ausgabe: Die App zeigt die Öffnungszeiten für Sonntag an, zum Beispiel „10 bis 20 Uhr“.",
+    ["Eingabe richtig benannt (z. B. „Sonntag“ eintippen oder auswählen, nach den Öffnungszeiten fragen, auf einen Knopf tippen)",
+      "Ausgabe richtig benannt (z. B. die App zeigt die Öffnungszeiten bzw. die Uhrzeit für Sonntag an)"],
+    ["tipp|eingeb|eingegeb|schreib|wähl|such|frag|sonntag|klick|drück", "zeig|erschein|bildschirm|öffnungszeit|uhr|offen|geöffnet|ergebnis|antwort|liste"], I1)
+];
+
+const PROBE2C = [
+  o("Die Musik-App: Du suchst das Lied „Sommerregen“. Bringe die Schritte in die richtige Reihenfolge.",
+    ["Du tippst „Sommerregen“ in das Suchfeld.", "Die App sucht in Millionen gespeicherter Lieder.", "Das Lied erscheint in der Trefferliste."], I1),
+  c("Sieh dir die Animation an: Am Freitagabend wollen viele Kinder in der Kino-App nachsehen, welche Filme laufen. Die WLAN-Anzeige ist auf allen Handys voll. Welcher Teil des Informationssystems ist gestört?",
+    ["der Server des Kinos", "das WLAN auf einem der Handys", "die Kino-App auf einem Handy", "das Display von jedem Handy"], 0, { ...ANIM_KINO, ...I2 }),
+  rf("Sieh dir die Animation an: Die Trefferliste für Fahrradhelme ändert sich zweimal. Was passiert in Schritt 1, was in Schritt 2 – wird gefiltert oder sortiert?",
+    [["Schritt 1 in der Animation", false], ["Schritt 2 in der Animation", true]], { wahl: ["filtern", "sortieren"], ...ANIM_HELME, ...I3 }),
+  o("Ole sucht ein Skateboard. Bringe sein Vorgehen in die richtige Reihenfolge.",
+    ["Ole legt fest: höchstens 60 €, und die Rollen sollen leise sein.", "Ole stellt den Filter „bis 60 €“ ein.",
+      "Ole sortiert die Treffer nach den Bewertungen und vergleicht die besten drei.", "Ole entscheidet sich für ein Board und begründet seine Wahl."], I3),
+  c("Du gibst eine Frage in eine Suchmaschine ein und bekommst viele Treffer. Was stimmt?",
+    ["Ob stimmt, was dort steht, musst du selbst prüfen.", "Alles, was sie findet, hat jemand geprüft.", "Der erste Treffer ist sicher die richtige Antwort.", "Sie zeigt nur Seiten von Schulen und Ämtern."], 0, I4),
+  c("Sieh dir die Animation an. Was passiert hier?",
+    ["Aus vielen kleinen Daten wird ein Profil – dann kommt passende Werbung.", "Jana schreibt selbst einen Steckbrief und schickt ihn an eine Firma.",
+      "Die App löscht alle Daten, sobald Jana ihr Handy ausschaltet.", "Die Daten bleiben auf Janas Handy und gehen nirgends hin."], 0, { ...ANIM_PROFIL, ...D3 }),
+  rf("Richtig oder falsch?",
+    [["Dein Standort gehört zu deinen personenbezogenen Daten.", true], ["Daten über dich entstehen nur, wenn du etwas eintippst.", false],
+      ["Als Spielername nimmst du am besten einen Fantasienamen.", true]], D1),
+  c("In einem Anmeldeformular stehen manche Felder mit einem Sternchen *. Was bedeutet das?",
+    ["Diese Felder musst du ausfüllen.", "Diese Felder sind besonders geheim.", "Diese Felder lässt du am besten leer.", "Diese Felder sind nur für Erwachsene."], 0, D1),
+  c("In den Bedingungen eines Spiels steht: „Du kannst deine Einwilligung jederzeit widerrufen.“ Was bedeutet das?",
+    ["Du darfst dein Ja später wieder zurücknehmen.", "Du musst das Spiel jeden Tag neu starten.", "Du darfst das Spiel an Freunde verschenken.", "Du musst deine Daten jeden Monat eingeben."], 0, D2),
+  c("Woher weiß eine Karten-App, dass auf der Autobahn gerade Stau ist?",
+    ["Sie wertet die Standorte sehr vieler Handys aus.", "Ein Mitarbeiter sieht jede Straße mit dem Fernglas an.", "Der Stau steht jeden Tag gleich im Kalender.", "Die Autofahrer schicken ihr eine Postkarte."], 0, D3),
+  rf("Erlauben oder ablehnen? Braucht die App die Berechtigung für ihre Aufgabe?",
+    [["Taschenrechner-App: Zugriff auf deine Kontakte", false], ["Foto-App: Zugriff auf deine Fotos", true], ["Wecker-App: Zugriff auf deinen Standort", false]], { wahl: ["erlauben", "ablehnen"], ...D4 }),
+  c("Eine Wetter-App will deinen Standort wissen. Was stellst du am besten ein?",
+    ["nur beim Verwenden der App", "immer, auch im Hintergrund", "nur nachts, wenn du schläfst", "immer – sonst geht die App nicht"], 0, D4),
+  {
+    type: "email", ...MAIL, points: 8,
+    prompt: "Schreibe eine E-Mail. Du hast mit Sofia ein Plakat „Sicher im Netz“ gemacht. Schicke es eurem Klassenleiter Herrn Albrecht. Sofia soll eine Kopie bekommen – das dürfen alle sehen. Deine Oma möchte das Plakat auch sehen. Ihre Adresse soll aber niemand sehen. Schreibe einen kurzen Betreff, eine Anrede, ein bis zwei kurze Sätze und einen Gruß mit deinem Namen. Hänge das Plakat an (Büroklammer). Rechtschreibung zählt nicht.",
+    // Kontakte in gemischter Reihenfolge und ohne An/Cc/Bcc – das entscheidet das Kind
+    kontakte: [{ name: "Oma Helga", adresse: "oma.helga@post.example" }, { name: "Herr Albrecht (euer Klassenleiter)", adresse: "albrecht@schule.example" }, { name: "Sofia (hat mitgemacht)", adresse: "sofia@post.example" }],
+    soll: { an: "albrecht@schule.example", cc: "sofia@post.example", bcc: "oma.helga@post.example", anhang: "plakat-sicher-im-netz.pdf" },
+    dateien: ["geburtstag-party.jpg", "plakat-sicher-im-netz.pdf", "mathe-hausaufgabe.pdf", "lieblingssong.mp3"],
+    expected: "An: albrecht@schule.example · Cc: sofia@post.example · Bcc: oma.helga@post.example · Anhang: plakat-sicher-im-netz.pdf\nBetreff: Unser Plakat „Sicher im Netz“\nSehr geehrter Herr Albrecht, im Anhang schicke ich Ihnen unser Plakat „Sicher im Netz“. Sofia und ich haben es zusammen gemacht. Mit freundlichen Grüßen, Lea",
+    // Nur Betreff und Text – das bewertet die KI (je Kriterium 1 Punkt); An, Cc, Bcc und Anhang zählt der Schlüssel (je 1 Punkt)
+    textBeispiel: "Betreff: Unser Plakat „Sicher im Netz“\nSehr geehrter Herr Albrecht, im Anhang schicke ich Ihnen unser Plakat „Sicher im Netz“. Sofia und ich haben es zusammen gemacht. Mit freundlichen Grüßen, Lea",
+    // Rechtschreibung zählt nicht – auch nicht bei Anrede und Gruß; die Stichwörter (nur ohne KI) erkennen deshalb auch Schreibfehler
+    criteria: ["Betreff: kurz und passend – er sagt, worum es geht (z. B. „Plakat Sicher im Netz“, „Unser Plakat“), auch mit Schreibfehlern",
+      "Anrede mit Namen am Anfang des Textes (z. B. „Sehr geehrter Herr Albrecht,“, „Lieber Herr Albrecht,“ oder „Hallo Herr Albrecht“, auch mit Fehlern – nur „Hey“, „Hallo“ ohne Namen oder keine Anrede nicht)",
+      "ein Satz (auch kurz oder mit Fehlern), der sagt, dass das Plakat dabei ist oder geschickt wird – ob „du“ oder „Sie“, ist egal",
+      "Gruß am Ende, ausgeschrieben (z. B. „Mit freundlichen Grüßen“ oder „Viele Grüße“, auch mit Fehlern – nur „LG“ reicht nicht), und ein Name"],
+    keywords: ["plakat|plakart|sicher im netz", "geehr|geer|lieb|hallo|guten tag", "anhang|anbei|schick|schik|send", "grü|gruß|grus|grues"]
+  }
+];
+
 const PROBEN = {
   /* ================= Probe 1: Digitale Informationssysteme (Modul 1) ================= */
   "inf8-p1-r": {
@@ -307,6 +409,33 @@ const PROBEN = {
     title: "Probe 2b (8M): Datenschutz und Big Data – Hefteinträge",
     scope: "Einheiten 1 bis 4 nach den Hefteinträgen: personenbezogene Daten, Datenspur, Datensparsamkeit, Pflichtfelder, Datenschutzbedingungen und Rechte, Big Data, Profil, Werbung, Berechtigungen, Cookies, privates Profil",
     items: HEFT2
+  },
+
+  /* ================= Probe 1c und 2c: einfach, mit Animationen, ohne Note-6-Regel (19.10.2026) ================= */
+  // wegSekunden 0 und kopieren 0: Verlassen und Kopierversuche geben keine Note 6 – sie werden nur gewarnt und vermerkt
+  "inf8-p1c-r": {
+    id: "inf8-p1c-r", zug: "R", thema: "infosys", minutes: 20, notenzug: "R", wegSekunden: 0, kopieren: 0,
+    title: "Probe 1c (8R): Informationssysteme – Einheiten 1 und 2",
+    scope: "Einheiten 1 und 2: digitales Informationssystem, EVA-Prinzip, Anfrage, Daten und Information, Aufbau (Nutzer, Anwendung, Internet, Server, Datenbank), Fehler finden – mit Animationen",
+    items: PROBE1C
+  },
+  "inf8-p1c-m": {
+    id: "inf8-p1c-m", zug: "M", thema: "infosys", minutes: 20, notenzug: "R", wegSekunden: 0, kopieren: 0,
+    title: "Probe 1c (8M): Informationssysteme – Einheiten 1 und 2",
+    scope: "Einheiten 1 und 2: digitales Informationssystem, EVA-Prinzip, Anfrage, Daten und Information, Aufbau (Nutzer, Anwendung, Internet, Server, Datenbank), Fehler finden – mit Animationen",
+    items: PROBE1C
+  },
+  "inf8-p2c-r": {
+    id: "inf8-p2c-r", zug: "R", thema: "daten", minutes: 25, notenzug: "R", wegSekunden: 0, kopieren: 0,
+    title: "Probe 2c (8R): Module 1 und 2 – Informationssysteme, Datenschutz, E-Mail",
+    scope: "Module 1 und 2: EVA, Aufbau, filtern und sortieren, passendes System, personenbezogene Daten, Bedingungen, Big Data, Berechtigungen – dazu eine E-Mail mit Cc, Bcc und Anhang, mit Animationen",
+    items: PROBE2C
+  },
+  "inf8-p2c-m": {
+    id: "inf8-p2c-m", zug: "M", thema: "daten", minutes: 25, notenzug: "R", wegSekunden: 0, kopieren: 0,
+    title: "Probe 2c (8M): Module 1 und 2 – Informationssysteme, Datenschutz, E-Mail",
+    scope: "Module 1 und 2: EVA, Aufbau, filtern und sortieren, passendes System, personenbezogene Daten, Bedingungen, Big Data, Berechtigungen – dazu eine E-Mail mit Cc, Bcc und Anhang, mit Animationen",
+    items: PROBE2C
   },
 
   /* ================= Probe 3: Excel Grundlagen (Modul 3) ================= */

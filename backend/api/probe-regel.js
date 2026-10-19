@@ -54,6 +54,8 @@ function abbruchAusAbgabe(body, gezaehlt, regel = REGEL, verlassenSeite = 0) {
   let grund = GRUENDE.includes(angabe.grund) ? angabe.grund : "";
   // Probe ohne Grenze für das Verlassen (wegSekunden 0, z. B. Nachholprobe 2 Deutsch 7): auch eine ältere Seite beendet dann nicht
   if (grund === "weg" && !regel.wegSekunden) grund = "";
+  // Probe ohne Grenze für Kopierversuche (kopieren 0, Informatik 8 Probe 1c/2c): ebenso, auch wenn eine ältere Seite „kopieren“ meldet
+  if (grund === "kopieren" && !regel.kopieren) grund = "";
   // Die Seite hat ohne Note 6 abgegeben (Bildschirm gesperrt nach 2 Minuten Ruhe): dann zählt die Summe nicht als Abbruch
   if (!grund && regel.wegSekunden && wegSumme > regel.wegSekunden && body.automatisch !== "gesperrt") grund = "weg";
   if (!grund && regel.verlassen && verlassen >= regel.verlassen) grund = "verlassen";

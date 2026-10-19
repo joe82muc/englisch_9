@@ -56,6 +56,10 @@ test("Regeln: 1 Minute, 2. Kopierversuch, keine Höchstzahl für Wechsel", () =>
   assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 500 }, {}, ohne), null);
   assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 500, abbruch: { grund: "weg", sekunden: 500 } }, {}, ohne), null);
   assert.equal(abbruchAusAbgabe({ regel: true, kopierversuche: 2 }, {}, ohne).grund, "kopieren", "Kopieren zählt weiter");
+  // Probe ganz ohne Note-6-Regel (Informatik 8 Probe 1c/2c: wegSekunden 0 und kopieren 0)
+  const frei = { ...REGEL, wegSekunden: 0, kopieren: 0 };
+  assert.equal(abbruchAusAbgabe({ regel: true, kopierversuche: 9, wegSumme: 500 }, { kopieren: 9 }, frei), null);
+  assert.equal(abbruchAusAbgabe({ regel: true, kopierversuche: 2, abbruch: { grund: "kopieren", kopieren: 2 } }, {}, frei), null, "auch wenn eine ältere Seite „kopieren“ meldet");
 });
 
 test("Zählung beim Server: höchster Stand, nur mit gültigem Code und bekanntem Modul", async () => {

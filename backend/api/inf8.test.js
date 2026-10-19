@@ -327,3 +327,156 @@ test("Probe 1b: die Tabelle geht an das Kind und steht in der Abgabe (Rückgabe)
     assert.equal(res.details.filter((d) => d.tabelle).length, 2);
   });
 });
+
+/* ---------- Probe 1c und 2c (19.10.2026) ----------
+   Wunsch der Lehrkraft: einfach, mit Animationen, Ankreuzen, Sortieren, Richtig/falsch, 30 Punkte, R-Schlüssel, eine
+   Aufgabe für die KI (2c: E-Mail mit Cc, Bcc, Anhang und Betreff), Rechtschreibung zählt nicht, ohne Note-6-Regel. */
+const EINFACH = {
+  "inf8-p1c": { thema: "infosys", ki: "text", module: ["eva", "aufbau"] },
+  "inf8-p2c": { thema: "daten", ki: "email", module: ["eva", "aufbau", "entscheiden", "vergleichen", "spuren", "bedingungen", "bigdata", "schuetzen", "email"] }
+};
+const richtigVon = (it) => (it.type === "choice" ? it.answer : it.type === "match" ? it.pairs.map((x) => x[1]) : it.type === "order" ? it.steps.slice()
+  : it.type === "tf" ? it.statements.map((x) => x[1]) : it.type === "multi" ? it.answers.slice()
+  : it.type === "email" ? { an: it.soll.an, cc: it.soll.cc, bcc: it.soll.bcc, betreff: "Plakat", text: "Hallo", anhang: it.soll.anhang } : null);
+
+test("Probe 1c und 2c: 30 Punkte, R und M gleich, R-Schlüssel, ohne Note-6-Regel, mit Animationen", () => {
+  Object.keys(EINFACH).forEach((basis) => {
+    const soll = EINFACH[basis], r = proben[basis + "-r"], m = proben[basis + "-m"];
+    [r, m].forEach((p) => {
+      const id = p.id;
+      assert.equal(p.thema, soll.thema, id);
+      assert.equal(p.notenzug, "R", id + ": Notenschlüssel R für beide Züge");
+      assert.deepEqual([p.wegSekunden, p.kopieren], [0, 0], id + ": ohne Note-6-Regel");
+      assert.match(p.title, p.zug === "R" ? /\(8R\)/ : /\(8M\)/, id);
+      assert.equal(p.items.reduce((s, i) => s + i.points, 0), 30, id + ": 30 Punkte");
+      const arten = p.items.map((i) => i.type);
+      assert.ok(arten.every((a) => ["choice", "match", "order", "tf", "multi", "text", "email"].includes(a)), id);
+      ["choice", "order", "tf"].forEach((a) => assert.ok(arten.includes(a), id + ": " + a + " fehlt (Ankreuzen, Sortieren, Richtig/falsch)"));
+      assert.equal(arten.filter((a) => a === "text" || a === "email").length, 1, id + ": genau eine Aufgabe für die KI");
+      assert.ok(arten.includes(soll.ki), id + ": KI-Aufgabe " + soll.ki);
+      const bilder = p.items.map((i) => i.image).filter(Boolean);
+      assert.ok(new Set(bilder).size >= 3, id + ": mindestens drei Animationen");
+      bilder.forEach((b) => assert.match(b, new RegExp("^assets/proben/" + basis + "-[a-z]\\.svg$"), id));
+      assert.deepEqual([...new Set(p.items.map((i) => i.modul))].sort(), soll.module.slice().sort(), id + ": Einheiten");
+      // Richtig/falsch wird nicht gemischt: Die erste Aussage darf nicht immer richtig (oder immer falsch) sein
+      const erste = p.items.filter((i) => i.type === "tf").map((i) => i.statements[0][1]);
+      assert.ok(erste.includes(true) && erste.includes(false), id + ": erste Aussage bei Richtig/falsch immer gleich (" + erste.join(",") + ")");
+      p.items.forEach((it, n) => {
+        const wo = `${id} Aufgabe ${n + 1}`;
+        assert.ok(it.modulTitel, wo + ": Einheit fehlt");
+        if (it.image) assert.ok(it.imageAlt && it.imageAlt.length > 40, wo + ": Beschreibung der Animation fehlt");
+        if (it.type === "choice") {
+          assert.ok(it.options.length === 4 && new Set(it.options).size === 4, wo);
+          const laengen = it.options.map((x) => x.length), andere = Math.max(...laengen.filter((_, i) => i !== it.answer));
+          assert.ok(laengen[it.answer] - andere <= 6, wo + ": die richtige Antwort ist deutlich die längste");
+        }
+        if (it.type === "match") {
+          assert.equal(new Set(it.pairs.map((x) => x[1])).size, it.pairs.length, wo);
+          const sortiert = it.pairs.map((x) => x[1]).sort((a, b) => a.localeCompare(b, "de"));
+          assert.ok(it.pairs.some((x, i) => sortiert.indexOf(x[1]) !== i), wo + ": Lösung wäre „der Reihe nach“");
+        }
+        if (it.type === "order") {
+          const sortiert = it.steps.slice().sort((a, b) => a.localeCompare(b, "de"));
+          assert.ok(it.steps.filter((s, i) => sortiert[i] === s).length <= 1, wo + ": gemischte Anzeige verrät die Reihenfolge");
+        }
+        if (it.type === "tf") {
+          assert.equal(it.points, it.statements.length, wo);
+          assert.ok(it.statements.some((x) => x[1]) && it.statements.some((x) => !x[1]), wo);
+        }
+        if (it.type === "text" || it.type === "email") assert.match(it.prompt, /Rechtschreibung zählt nicht/, wo + ": Hinweis für die Kinder");
+        if (it.type === "text") {
+          assert.equal(it.criteria.length, it.points, wo);
+          assert.equal(it.keywords.length, it.points, wo);
+          const klein = it.expected.toLocaleLowerCase("de");
+          it.keywords.forEach((g, k) => assert.ok(g.split("|").some((w) => klein.includes(w)), `${wo}: Musterlösung erfüllt Stichwortgruppe ${k + 1} nicht`));
+        }
+        if (it.type === "email") {
+          assert.equal(it.points, 4 + it.criteria.length, wo);
+          assert.equal(it.keywords.length, it.criteria.length, wo);
+          const adressen = it.kontakte.map((k) => k.adresse);
+          assert.deepEqual([it.soll.an, it.soll.cc, it.soll.bcc].sort(), adressen.slice().sort(), wo + ": jeder Kontakt gehört in genau ein Feld");
+          assert.ok(it.dateien.includes(it.soll.anhang), wo);
+          const klein = it.textBeispiel.toLocaleLowerCase("de");
+          it.keywords.forEach((g, k) => assert.ok(g.split("|").some((w) => klein.includes(w)), `${wo}: Beispiel erfüllt Stichwortgruppe ${k + 1} nicht`));
+        }
+      });
+    });
+    const inhalt = (p) => p.items.map((i) => i.prompt + "|" + (i.options || []).slice().sort().join("/"));
+    assert.deepEqual(inhalt(r), inhalt(m), basis + ": R und M haben denselben Inhalt");
+  });
+});
+
+test("Probe 1c: Liste und Start nennen die Regeln; Verlassen und Kopieren geben keine Note 6 (Probe 1b schon)", async () => {
+  await mitServer((app, dataDir) => {
+    registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf8", datei: "inf8-proben.json", tests: proben, fach: "Informatik", stufe: 8 });
+  }, async ({ base, post }) => {
+    const alt = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    try {
+      const liste = (await (await fetch(base + "/api/inf8/list")).json()).tests;
+      const c = liste.find((t) => t.id === "inf8-p1c-r"), b = liste.find((t) => t.id === "inf8-p1b-r");
+      assert.deepEqual([c.notenzug, c.wegSekunden, c.kopieren, c.maxPoints], ["R", 0, 0, 30]);
+      assert.deepEqual([b.notenzug, b.wegSekunden, b.kopieren], ["R", undefined, undefined], "Probe 1b behält die Testregeln");
+      const kind = "222";   // 8d (8R)
+      for (const id of ["inf8-p1c-r", "inf8-p1b-r"]) await post("/api/inf8/teacher/unlock", { password: PW, testId: id, open: true });
+      const start = await post("/api/inf8/start", { testId: "inf8-p1c-r", code: kind });
+      assert.equal(start.status, 200, JSON.stringify(start.data));
+      assert.deepEqual([start.data.test.wegSekunden, start.data.test.kopieren, start.data.test.maxPoints], [0, 0, 30]);
+      assert.ok(start.data.items.filter((i) => /^assets\/proben\/inf8-p1c-[a-z]\.svg$/.test(i.image || "")).length >= 3, "Animationen gehen an das Kind");
+      assert.ok(start.data.items.every((i) => i.answer === undefined && i.pairs === undefined && !(i.statements || []).some(Array.isArray)), "keine Lösungen an das Kind");
+      // nach den Testregeln „beendet“: 400 Sekunden weg und drei Kopierversuche
+      const regelBruch = { regel: true, kopierversuche: 3, wegSumme: 400, abbruch: { grund: "weg", sekunden: 400 } };
+      const p = proben["inf8-p1c-r"];
+      const r = await post("/api/inf8/submit", { testId: "inf8-p1c-r", code: kind, answers: p.items.map(richtigVon), ...regelBruch });
+      assert.equal(r.status, 200);
+      const res = (await post("/api/inf8/teacher/results", { password: PW, testId: "inf8-p1c-r" })).data.submissions[0];
+      assert.equal(res.abbruch, undefined, "kein Abbruch, keine Note 6");
+      assert.deepEqual([res.score, res.total, res.grade], [28, 30, 1], "alles richtig außer der KI-Aufgabe (ohne KI keine Antwort)");
+      assert.deepEqual([res.kopierversuche, res.wegSekunden], [3, 400], "Vermerk für die Lehrkraft bleibt");
+      const p1b = proben["inf8-p1b-r"];
+      await post("/api/inf8/submit", { testId: "inf8-p1b-r", code: kind, answers: p1b.items.map(richtigVon), ...regelBruch });
+      const vergleich = (await post("/api/inf8/teacher/results", { password: PW, testId: "inf8-p1b-r" })).data.submissions[0];
+      assert.deepEqual([vergleich.abbruch && vergleich.abbruch.grund, vergleich.grade], ["weg", 6], "Probe 1b: weiter Note 6 nach den Testregeln");
+    } finally {
+      if (alt !== undefined) process.env.ANTHROPIC_API_KEY = alt;
+    }
+  });
+});
+
+test("Probe 2c: E-Mail – An, Cc, Bcc und Anhang nach dem Schlüssel, Note nach dem R-Schlüssel auch für 8M", async () => {
+  await mitServer((app, dataDir) => {
+    registerNt7Routes(app, { dataDir, teacherPassword: PW, kindZumCode, prefix: "/api/inf8", datei: "inf8-proben.json", tests: proben, fach: "Informatik", stufe: 8 });
+  }, async ({ post }) => {
+    const alt = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    try {
+      const kind = "111";   // 8aM
+      await post("/api/inf8/teacher/unlock", { password: PW, testId: "inf8-p2c-m", open: true });
+      const start = await post("/api/inf8/start", { testId: "inf8-p2c-m", code: kind });
+      assert.equal(start.status, 200, JSON.stringify(start.data));
+      const mail = start.data.items.find((i) => i.type === "email");
+      assert.equal(mail.kontakte.length, 3);
+      assert.equal(mail.soll, undefined, "der Schlüssel bleibt auf dem Server");
+      const p = proben["inf8-p2c-m"], nrMail = p.items.findIndex((i) => i.type === "email");
+      // nur die E-Mail und so viele Klick-Aufgaben, dass es genau 15 von 30 Punkten sind (50 % = Note 3 nach dem R-Schlüssel)
+      let summe = 0;
+      const antworten = p.items.map((it, i) => {
+        if (i === nrMail) return { an: "Albrecht@Schule.example", cc: "sofia@post.example", bcc: "oma.helga@post.example, sofia@post.example", betreff: "", text: "", anhang: it.soll.anhang };
+        if (summe + it.points > 12) return null;
+        summe += it.points;
+        return richtigVon(it);
+      });
+      assert.equal(summe, 12, "Testaufbau");
+      const r = await post("/api/inf8/submit", { testId: "inf8-p2c-m", code: kind, answers: antworten });
+      assert.equal(r.status, 200);
+      const res = (await post("/api/inf8/teacher/results", { password: PW, testId: "inf8-p2c-m" })).data.submissions[0];
+      const d = res.details[nrMail];
+      assert.deepEqual(d.teile.map((t) => t.ok), [true, true, false, true], "An (Groß-/Kleinschreibung egal), Cc und Anhang richtig, im Bcc eine Adresse zu viel");
+      assert.equal(d.points, 3, "ohne Betreff und Text keine KI-Punkte");
+      assert.deepEqual([res.score, res.total, res.zug], [15, 30, "M"]);
+      assert.equal(res.grade, 3, "R-Schlüssel: 50 % = Note 3");
+    } finally {
+      if (alt !== undefined) process.env.ANTHROPIC_API_KEY = alt;
+    }
+  });
+});

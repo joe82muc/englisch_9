@@ -33,6 +33,9 @@
  * tf mit wahl: ["ausfüllen", "leer lassen"] (Informatik 8, Probe 1b/2b) – eigene Beschriftung der beiden Knöpfe statt
  *   „richtig“/„falsch“ (true = erste, false = zweite); so steht es auch in Ergebnis, Korrektur und Vorschau.
  * tabelle { kopf, zeilen } steht seit 18.10.2026 bei jeder Probe mit in der Abgabe (Rückgabe zeigt sie), nicht nur in NT 8.
+ * wegSekunden / kopieren an einer Probe (Informatik 8, Probe 1c und 2c, seit 19.10.2026): eigene Testregeln statt der
+ *   Vorgabe aus probe-regel.js (1 Minute weg, 2. Kopierversuch). 0 = keine Note 6 dafür – Verlassen und Kopierversuche
+ *   werden nur gewarnt und vermerkt. /list und /start nennen beides, die Seite gibt es an ProbeSchutz weiter.
  * Aufgabenart "order" (Reihenfolge): steps = richtige Reihenfolge; die Seite bekommt die Schritte gemischt,
  * je Schritt an der richtigen Stelle gibt es 1 Punkt.
  * Block-Proben (seit 07.10.2026, nt7-block-*.js): Jede Aufgabe nennt ihr Modul (modul, modulTitel) und ggf. transfer: true.
@@ -196,6 +199,9 @@ function registerNt7Routes(app, opts) {
   // Informatik 9 (Auftrag vom 13.10.2026): R9 und M9 schreiben dieselben Proben nach dem R-Schluessel (50 % = Note 3).
   const NOTENZUG = opts.notenzug === "R" || opts.notenzug === "M" ? opts.notenzug : "";
   function grade(percent, zug, test) { return ((((test && test.notenzug) || NOTENZUG || zug) === "R" ? GRADE_SCALE_R : GRADE_SCALE_M).find(s => percent >= s.min) || {grade:6}).grade; }
+  // Testregeln dieser Probe: wegSekunden / kopieren an der Probe ersetzen die Vorgabe (0 = dafür keine Note 6)
+  const regelAngaben = (test) => ({...(Number.isInteger(test.wegSekunden) ? {wegSekunden:test.wegSekunden} : {}),...(Number.isInteger(test.kopieren) ? {kopieren:test.kopieren} : {})});
+  const regelVon = (test) => ({...probeRegel.REGEL,...regelAngaben(test)});
   function publicItem(item, index) {
     return {nr:index+1,type:item.type,prompt:item.prompt,points:item.points,
       options:item.options || undefined, labels:item.pairs?.map(pair => pair[0]),
@@ -352,7 +358,9 @@ function registerNt7Routes(app, opts) {
   app.get(PREFIX + "/health", (_req,res) => res.json({ok:true,service:SERVICE,aiConfigured:Boolean(process.env.ANTHROPIC_API_KEY),storageConfigured:Boolean(process.env.NT_DATA_DIR)}));
   app.get(PREFIX + "/list", (_req,res) => {
     const data = readData();
-    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),zug:test.zug || "",thema:test.thema || "",...(test.alt ? {alt:true} : {}),...(test.variante ? {variante:test.variante,gruppe:test.gruppe || ""} : {}),unlocked:probeOffen(data.unlocked[test.id])}))});
+    res.json({ok:true,tests:Object.values(tests).map(test => ({id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,itemCount:test.items.length,maxPoints:maxPoints(test),zug:test.zug || "",thema:test.thema || "",...(test.alt ? {alt:true} : {}),...(test.variante ? {variante:test.variante,gruppe:test.gruppe || ""} : {}),
+      // für die Verwaltung: fester Notenschlüssel und eigene Testregeln (z. B. „ohne Note-6-Regel“)
+      ...((test.notenzug || NOTENZUG) ? {notenzug:test.notenzug || NOTENZUG} : {}),...regelAngaben(test),unlocked:probeOffen(data.unlocked[test.id])}))});
   });
   // Hat das Kind diese Probe schon abgegeben – oder (Nachschreibproben) die andere Variante derselben Probe?
   const schonAbgegeben = (data, test, student) => data.submissions.some(row => row.studentKey === student.key &&
@@ -372,7 +380,7 @@ function registerNt7Routes(app, opts) {
     if (test.zug && test.zug !== student.zug) return res.status(403).json({ok:false,error:"falscher_zug",message:`Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.`});
     const data = readData();
     if (schonAbgegeben(data, test, student)) return res.status(409).json({ok:false,error:"already_submitted"});
-    const antwort = {ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test),...(test.variante ? {variante:test.variante} : {})},items:test.items.map(publicItem)};
+    const antwort = {ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test),...(test.variante ? {variante:test.variante} : {}),...regelAngaben(test)},items:test.items.map(publicItem)};
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
       const sd = sitzLesen(), k = sitzKey(test, student);
@@ -527,7 +535,7 @@ function registerNt7Routes(app, opts) {
       if (!probeOffen(data.unlocked[test.id], true) && !laufend) return res.status(403).json({ok:false,error:"locked"});
       if (schonAbgegeben(data, test, student)) return res.status(409).json({ok:false,error:"already_submitted"});
       const {details, frei} = auswerten(test, req.body.answers);
-      const regelStand = probeRegel.ausAbgabe(req.body, MODUL, test.id, student.key);
+      const regelStand = probeRegel.ausAbgabe(req.body, MODUL, test.id, student.key, regelVon(test));
       const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),protokoll:protokollSauber(req.body.protokoll),details,submittedAt:new Date().toISOString()};
       // nach dem Sperren von Hand abgegeben (Nachfrist): für die Lehrkraft vermerkt
       if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
