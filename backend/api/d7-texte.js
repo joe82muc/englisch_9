@@ -282,16 +282,16 @@ const systemWerkstatt = (stufe) => [
   "Du hilfst einem Kind der " + stufe + ". Klasse einer bayerischen Mittelschule, seinen eigenen Leserbrief selbst zu überarbeiten. Das Kind geht Schritt für Schritt vor.",
   "Du prüfst jetzt NUR den mitgeschickten Schritt mit seinen Punkten. Andere Schwächen sprichst du nicht an – auch keine Rechtschreibung, dafür gibt es einen eigenen Schritt.",
   "",
-  "Antworte genau in dieser Form, eine Angabe je Zeile, und mit nichts sonst:",
-  "PUNKTE: ja, nein, ja",
-  "HINWEIS 2: …",
+  "Antworte genau in dieser Form und mit nichts sonst – für jeden Punkt der Liste eine nummerierte Zeile mit seinem Namen:",
+  "1. <Name des 1. Punkts>: ja",
+  "2. <Name des 2. Punkts>: nein – <Denkanstoß>",
   "LOB: …",
   "STELLE: …",
   "TIPP: …",
   "",
-  "PUNKTE: für jeden Punkt der Liste „ja“ oder „nein“, in derselben Reihenfolge, durch Komma getrennt.",
+  "Je Punkt „ja“ oder „nein“, in derselben Reihenfolge wie in der Liste, mit dem Namen des Punkts:",
   "- „ja“, sobald der Punkt erkennbar da ist – auch kurz, ungeschickt, nebenbei, in Alltagssprache oder mit vielen Fehlern. Im Zweifel „ja“. „nein“ nur, wenn der Punkt wirklich fehlt oder gar nicht passt.",
-  "HINWEIS <Nummer>: nur für jeden Punkt mit „nein“ eine eigene Zeile – eine kurze Frage oder ein Denkanstoß (höchstens 20 Wörter), mit dem das Kind den Punkt selbst ergänzen kann.",
+  "- Bei „nein“ steht hinter einem Gedankenstrich ein Denkanstoß genau zu DIESEM Punkt: eine kurze Frage oder Anregung (höchstens 20 Wörter), mit der das Kind ihn selbst ergänzen kann.",
   "LOB: ein Satz – was ist in diesem Schritt gelungen? Mit Bezug auf den Text.",
   "STELLE: Fehlt ein Punkt, die Stelle, an der das Kind etwas ändern oder ergänzen soll – wörtlich und buchstabengenau aus dem Text kopiert, 2 bis 12 Wörter, auch mit den Fehlern des Kindes. Sind alle Punkte da, bleibt STELLE leer.",
   "TIPP: ein kurzer Tipp zu dieser Stelle (höchstens 25 Wörter). Sind alle Punkte da, bleibt TIPP leer.",
@@ -354,19 +354,24 @@ function fehlerArt(alt, neu) {
   if (ka.length > 2 && ende(ka) === ende(kn)) return "auslaut";
   return aehnlich(a0, n0) ? "wort" : "grammatik";
 }
-// Antwort der KI (Inhaltsschritt) lesen: Zeilen PUNKTE / HINWEIS n / LOB / STELLE / TIPP (Zeilen statt JSON – Tipps mit
-// Anführungszeichen wie „Zum Beispiel …“ zerbrachen das JSON: erste Messung mit der echten KI, 19.10.2026). JSON geht auch.
+// Antwort der KI (Inhaltsschritt) lesen: je Punkt eine Zeile „1. Name: ja“ / „2. Name: nein – Denkanstoß“, dann LOB / STELLE /
+// TIPP. Zeilen statt JSON – Tipps mit Anführungszeichen wie „Zum Beispiel …“ zerbrachen das JSON; und Urteil und Denkanstoß
+// stehen in derselben Zeile, getrennte Listen verrutschten (Messungen mit der echten KI, 19.10.2026). JSON geht auch.
 // Die Stelle gilt nur, wenn sie wirklich so im Text steht und höchstens 20 Wörter lang ist.
 function werkstattZeilen(roh, anzahl) {
-  const s = String(roh || "").replace(/\r\n?/g, "\n").replace(/^```\w*\n?|\n?```\s*$/g, "");
-  const zeile = (name) => { const m = new RegExp("(?:^|\\n)[ \\t*]*" + name + "[ \\t*]*:[ \\t]*([^\\n]*)", "i").exec(s); return m ? m[1].replace(/^\*+\s*|\s*\*+$/g, "").trim() : null; };
-  const ja = zeile("PUNKTE");
-  if (ja === null) return null;
-  const urteile = (ja.match(/\b(ja|nein)\b/gi) || []).map((x) => /^ja$/i.test(x));
-  if (!urteile.length) return null;
+  const s = String(roh || "").replace(/\r\n?/g, "\n").replace(/^```\w*\n?|\n?```\s*$/g, "").replace(/\*\*/g, "");
+  const zeile = (name) => { const m = new RegExp("(?:^|\\n)[ \\t]*" + name + "[ \\t]*:[ \\t]*([^\\n]*)", "i").exec(s); return m ? m[1].trim() : null; };
   const leer = (v) => (v && !/^[…–-]$/.test(v) && !/^(leer|keine?|-)$/i.test(v) ? v : "");
-  return { punkte: Array.from({ length: anzahl }, (_, k) => ({ ok: urteile[k] === true, hinweis: urteile[k] === true ? "" : leer(zeile("HINWEIS " + (k + 1))) || "" })),
-    lob: leer(zeile("LOB")), stelle: leer(zeile("STELLE")), tipp: leer(zeile("TIPP")) };
+  const punkte = new Array(anzahl).fill(null);
+  s.split("\n").forEach((z) => {
+    // Name des Punkts darf selbst Doppelpunkte enthalten („Einleitung: Meinung“): bis zum ersten „: ja“ bzw. „: nein“
+    const m = /^\s*(\d+)\s*[.):]\s*(?:.*?:)?\s*(ja|nein)\b\s*(?:[–—-]+\s*)?(.*)$/i.exec(z);
+    if (!m) return;
+    const k = +m[1] - 1, ok = /^ja$/i.test(m[2]);
+    if (k >= 0 && k < anzahl && !punkte[k]) punkte[k] = { ok, hinweis: ok ? "" : leer(m[3].trim()) };
+  });
+  if (punkte.every((p) => !p)) return null;
+  return { punkte: punkte.map((p) => p || { ok: false, hinweis: "" }), lob: leer(zeile("LOB")), stelle: leer(zeile("STELLE")), tipp: leer(zeile("TIPP")) };
 }
 function werkstattLesen(roh, anzahl, text) {
   let p = null;

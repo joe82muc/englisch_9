@@ -281,8 +281,8 @@ test("Werkstatt, Rechtschreibung: Stellen mit Fehlerart und Tipp – die Lösung
     assert.equal(r.quelle, "lokal"); assert.deepEqual(r.punkte.map((x) => x.ok), [null, null]);
   });
 });
-test("Werkstatt: Antwort in Zeilen (PUNKTE / HINWEIS / LOB / STELLE / TIPP), auch mit Sternchen und Anführungszeichen", () => {
-  const roh = "**PUNKTE:** ja, nein, ja, nein\nHINWEIS 2: Worum geht es? Schreib „In Ihrem Artikel geht es um …“.\nHINWEIS 4: Wie beendest du deinen Brief?\nLOB: Deine \"Anrede\" passt.\nSTELLE: Mit freundlichen Grüßen\nTIPP: Sag vor dem Gruß noch einmal deine Meinung.";
+test("Werkstatt: Antwort in Zeilen (je Punkt Name, Urteil und Denkanstoß; LOB / STELLE / TIPP), auch mit Sternchen und Anführungszeichen", () => {
+  const roh = "**1. Anrede:** ja\n2. Einleitung: Thema: nein – Worum geht es? Schreib „In Ihrem Artikel geht es um …“.\n3) Einleitung: Meinung: ja\n4. Schluss: nein - Wie beendest du deinen Brief?\nLOB: Deine \"Anrede\" passt.\nSTELLE: Mit freundlichen Grüßen\nTIPP: Sag vor dem Gruß noch einmal deine Meinung.";
   const p = werkstattLesen(roh, 4, BRIEF);
   assert.deepEqual(p.punkte.map((x) => x.ok), [true, false, true, false]);
   assert.equal(p.punkte[1].hinweis, "Worum geht es? Schreib „In Ihrem Artikel geht es um …“.");
@@ -290,8 +290,8 @@ test("Werkstatt: Antwort in Zeilen (PUNKTE / HINWEIS / LOB / STELLE / TIPP), auc
   assert.equal(p.lob, "Deine \"Anrede\" passt.");
   assert.equal(p.stelle, "Mit freundlichen Grüßen");
   // alle da: Stelle fällt weg; eine Stelle über 20 Wörter auch
-  assert.equal(werkstattLesen("PUNKTE: ja, ja\nLOB: Gut.\nSTELLE: Mit freundlichen Grüßen\nTIPP:", 2, BRIEF).stelle, "");
-  assert.equal(werkstattLesen("PUNKTE: nein\nSTELLE: " + BRIEF.split("\n").slice(1, 4).join(" "), 1, BRIEF).stelle, "");
+  assert.equal(werkstattLesen("1. Anrede: ja\n2. Gruß: ja\nLOB: Gut.\nSTELLE: Mit freundlichen Grüßen\nTIPP:", 2, BRIEF).stelle, "");
+  assert.equal(werkstattLesen("1. Schluss: nein\nSTELLE: " + BRIEF.split("\n").slice(1, 4).join(" "), 1, BRIEF).stelle, "");
   assert.equal(werkstattLesen("Ich weiß nicht.", 2, BRIEF), null);
 });
 
