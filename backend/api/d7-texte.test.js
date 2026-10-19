@@ -206,3 +206,78 @@ test("Korrektur: alle Bausteine da -> vollständig; ohne KI bleibt der Text, wie
     assert.equal((await post("schreiben/korrektur", kor())).data.quelle, "lokal");
   });
 });
+
+/* ---------- Leserbrief-Werkstatt (19.10.2026): das Kind überarbeitet selbst, Schritt für Schritt ---------- */
+const { fehlerArt, werkstattLesen } = require("./d7-texte");
+const BRIEF = "Sehr geehrte Redaktion\nin Ihrem Artikel geht es um Handys in der Pause. Ich bin dafür, weil wir dann Musik hören können.\nErstens kan man seine Eltern anrufen wenn etwas ist. Zum Beispiel wenn der Bus ausfällt.\nMit freundlichen Grüßen\nJ. M.";
+const werk = (extra) => ({ modul: "arg-09", aufgabe: "werkstatt", titel: "Mein Leserbrief", auftrag: "Überarbeite deinen Leserbrief Schritt für Schritt.", thema: "Handys in der Pause? Sollen Handys in den Pausen erlaubt sein?", seite: "dafür", text: BRIEF, ...extra });
+const AUFBAU = { id: "aufbau", titel: "Aufbau", art: "inhalt" };
+
+test("Werkstatt, Fehlerarten: Groß/klein, Komma, das/dass, s-Laut, doppelter Mitlaut, getrennt, fehlt", () => {
+  assert.equal(fehlerArt("pause", "Pause"), "gross");
+  assert.equal(fehlerArt("Weil", "weil"), "klein");
+  assert.equal(fehlerArt("Redaktion", "Redaktion,"), "komma");
+  assert.equal(fehlerArt("Pause", "Pause."), "satzzeichen");
+  assert.equal(fehlerArt("das", "dass"), "dasdass");
+  assert.equal(fehlerArt("Strasse", "Straße"), "slaut");
+  assert.equal(fehlerArt("kan", "kann"), "doppelt");
+  assert.equal(fehlerArt("garnicht", "gar nicht"), "getrennt");
+  assert.equal(fehlerArt("", "es"), "fehlt");
+  assert.equal(fehlerArt("find", "finde"), "wort");
+});
+
+test("Werkstatt, Antwort lesen: Punkte, Stelle nur, wenn sie so im Text steht", () => {
+  const p = werkstattLesen(JSON.stringify({ punkte: [{ ok: true, hinweis: "x" }, { ok: false, hinweis: "Wie beendest du deinen Brief?" }], lob: "Gut.", stelle: "„Mit freundlichen  Grüßen“", tipp: "Sag am Ende noch einmal deine Meinung." }), 2, BRIEF);
+  assert.deepEqual(p.punkte, [{ ok: true, hinweis: "" }, { ok: false, hinweis: "Wie beendest du deinen Brief?" }]);
+  assert.equal(p.stelle, "Mit freundlichen Grüßen", "Anführungszeichen und doppelte Leerzeichen fallen weg");
+  assert.equal(werkstattLesen(JSON.stringify({ punkte: [{ ok: false }], stelle: "steht nirgends im Text" }), 1, BRIEF).stelle, "");
+  assert.equal(werkstattLesen("kein JSON", 1, BRIEF), null);
+});
+
+test("Werkstatt, Inhaltsschritt: nur die Punkte des Schritts, mit Code eine Fassung für die Lehrkraft", async () => {
+  const gesehen = [];
+  const ask = async (system, user) => {
+    gesehen.push({ system, user: JSON.parse(user) });
+    return JSON.stringify({ punkte: [{ ok: true }, { ok: true }, { ok: true }, { ok: false, hinweis: "Wie soll es weitergehen?" }, { ok: true }], lob: "Deine Anrede passt.", stelle: "Zum Beispiel wenn der Bus ausfällt.", tipp: "Sag am Schluss noch einmal deine Meinung." });
+  };
+  await mitServer(ask, async ({ post }) => {
+    const r = (await post("schreiben/werkstatt", werk({ code: "101", zug: "M", schritt: AUFBAU, punkte: ["Anrede: höflich", "Einleitung: Thema", "Meinung: dafür oder dagegen", "Schluss: Meinung oder Wunsch", "Gruß und Name"] }))).data;
+    assert.equal(r.quelle, "ki"); assert.equal(r.art, "inhalt"); assert.equal(r.vollstaendig, false);
+    assert.deepEqual(r.punkte.map((x) => x.ok), [true, true, true, false, true]);
+    assert.equal(r.stelle, "Zum Beispiel wenn der Bus ausfällt.");
+    assert.equal(r.gespeichert, true); assert.equal(r.fassung, 1);
+    assert.match(gesehen[0].system, /NUR den mitgeschickten Schritt/);
+    assert.match(gesehen[0].system, /niemals einen Satz, den das Kind übernehmen könnte/);
+    assert.equal(gesehen[0].user.schritt, "Aufbau"); assert.equal(gesehen[0].user.seite, "dafür"); assert.match(gesehen[0].user.thema, /Handys/);
+    const m = (await post("texte/meine", { code: "101", modul: "arg-09", aufgabe: "werkstatt" })).data;
+    assert.equal(m.fassungen[0].text, BRIEF);
+    assert.equal(m.fassungen[0].feedback.werkstatt.schritt, "Aufbau");
+    assert.equal(m.fassungen[0].feedback.naechstes, "Fehlt noch: Schluss");
+    // ohne Punkte: kein gültiger Schritt
+    assert.equal((await post("schreiben/werkstatt", werk({ schritt: AUFBAU }))).status, 400);
+  });
+});
+
+test("Werkstatt, Rechtschreibung: Stellen mit Fehlerart und Tipp – die Lösung steht dabei, das Kind sieht sie erst auf Wunsch", async () => {
+  const verbessert = BRIEF.replace("Redaktion\n", "Redaktion,\n").replace("kan man", "kann man").replace("anrufen wenn", "anrufen, wenn");
+  await mitServer(async () => verbessert, async ({ post }) => {
+    const r = (await post("schreiben/werkstatt", werk({ code: "102", schritt: { id: "rechtschreibung", titel: "Rechtschreibung", art: "rs" } }))).data;
+    assert.equal(r.quelle, "ki"); assert.equal(r.art, "rs");
+    assert.deepEqual(r.fehler.map((f) => [f.alt, f.neu, f.art]), [["Redaktion", "Redaktion,", "komma"], ["kan", "kann", "doppelt"], ["anrufen", "anrufen,", "komma"]]);
+    assert.ok(r.fehler.every((f) => f.name && f.tipp && !f.tipp.includes(f.neu)), "der Tipp verrät die Lösung nicht");
+    // aus den Teilen entsteht wieder genau der Text des Kindes
+    const zurueck = r.teile.map((x) => (x.f ? r.fehler[x.f - 1].alt : x.t) + x.ws).join("");
+    assert.equal(zurueck, BRIEF);
+    assert.equal(r.gespeichert, true);
+  });
+  // Die KI schreibt den Text um statt auszubessern: Die Antwort gilt nicht
+  await mitServer(async () => "Liebe Zeitung, Handys sind super. Danke.", async ({ post }) => {
+    const r = (await post("schreiben/werkstatt", werk({ schritt: { id: "rechtschreibung", titel: "Rechtschreibung", art: "rs" } }))).data;
+    assert.equal(r.quelle, "lokal"); assert.deepEqual(r.fehler, []);
+  });
+  // ohne KI: Inhaltsschritt zum Selbstprüfen
+  await mitServer(async () => { throw new Error("aus"); }, async ({ post }) => {
+    const r = (await post("schreiben/werkstatt", werk({ schritt: AUFBAU, punkte: ["Anrede", "Gruß"] }))).data;
+    assert.equal(r.quelle, "lokal"); assert.deepEqual(r.punkte.map((x) => x.ok), [null, null]);
+  });
+});
