@@ -12,6 +12,8 @@
  * dieselben elf Aufgabenarten, aber leichter – R-Schlüssel (notenzug "R"), 26 Punkte, Aufgabe 8 mit halben Punkten
  * (teilpunkte), Aufgabe 9 nur 1 Punkt, Aufgabe 11 zum Ankreuzen. Die Aufgaben der Fassung A stehen offen im Training
  * zur Probe 6 (Website) – die Nachholprobe teilt mit ihr und mit dem Training keinen Satz.
+ * Seit 19.10.2026 dazu die Nachholprobe 2 als Fassung C (Wortfeld Stadtbücherei): wie die erste Nachholprobe aufgebaut
+ * (26 Punkte, R-Schlüssel, für alle), aber ohne die 1-Minuten-Regel der Testregeln (wegSekunden: 0).
  * Bleibt auf dem Server (Lösungen). Bausteine: bau.js.
  */
 const { c, m, f, feld, a, kr, probe } = require("./bau");
@@ -344,11 +346,90 @@ const M_N = [
     "Das Eis ist geschmolzen."], 0, { hinweis: H_AKTIV_PASSIV })
 ];
 
+/* ============================== M7, Nachholprobe 2 – Wortfeld Stadtbücherei ==============================
+   Wunsch der Lehrkraft (19.10.2026): eine weitere Nachholprobe, die alle noch einmal schreiben können, ohne die
+   1-Minuten-Regel (wegSekunden: 0 – Verlassen wird weiter festgehalten und gewarnt, aber nicht mit Note 6 bewertet),
+   Notenschlüssel R. Aufbau, Schwierigkeit und Punkte wie die erste Nachholprobe (26 Punkte), aber neue Sätze. */
+const M_N2 = [
+  m(WORTART, [
+    ["Ben bleibt länger, WEIL draußen ein Gewitter tobt.", "Konjunktion"],
+    ["Die Comics stehen NEBEN den Zeitschriften.", "Präposition"],
+    ["DIESES Hörbuch kennt Paul schon.", "Demonstrativpronomen"],
+    ["Lena sucht ein SPANNENDES Buch.", "Adjektiv"],
+    ["Selin setzt SICH in den roten Sessel.", "Reflexivpronomen"],
+    ["Die Frau, DIE an der Ausleihe sitzt, hilft uns gern.", "Relativpronomen"]], { points: 3, hinweis: H_WORTART_N }),
+  f(RELATIV, [
+    luecke("Der Junge, ___ neben mir sitzt, liest einen Comic.", "der", "welcher"),
+    luecke("Der Krimi, ___ Ben gerade liest, ist sehr spannend.", "den", "welchen"),
+    luecke("Das Lexikon, ___ im obersten Regal steht, ist sehr dick.", "das", "welches"),
+    luecke("Die Zeitschrift, ___ Selin ausgeliehen hat, handelt von Pferden.", "die", "welche")
+  ], { hinweis: H_RELATIV_R }),
+  c(REFLEXIV, [
+    "Wir melden UNS für den Lesewettbewerb an.",
+    "Frau Weber zeigt UNS die neuen Bücher.",
+    "Herr Kaya liest UNS eine Geschichte vor.",
+    "Die Tasche auf dem Stuhl gehört UNS."], 0, { hinweis: H_REFLEXIV }),
+  m(ZEITFORM, [
+    ["Paul hat drei Comics ausgeliehen.", "Perfekt"],
+    ["Nächste Woche wird die Bücherei eine Lesenacht veranstalten.", "Futur I"],
+    ["Frau Weber stempelt die Lesekarten.", "Präsens"],
+    ["Vor dem Lesen hatte Selin ihre Jacke aufgehängt.", "Plusquamperfekt"],
+    ["Bis Freitag wird Ben das ganze Buch gelesen haben.", "Futur II"],
+    ["Gestern fand Lena ein altes Märchenbuch.", "Präteritum"]], { points: 3, hinweis: H_ZEITFORM }),
+  f(VERBFORM + "ich (lesen) – Präsens → ich lese", [
+    form("Ben (holen) – Präteritum", "Ben holte", "holte", "er holte"),
+    form("wir (kommen) – Perfekt", "wir sind gekommen", "sind gekommen"),
+    form("ich (suchen) – Plusquamperfekt", "ich hatte gesucht", "hatte gesucht"),
+    form("ihr (lernen) – Futur II", "ihr werdet gelernt haben", "werdet gelernt haben")
+  ], { hinweis: H_VERBFORM }),
+  f(FUTUR2, [
+    umbau("Bis zur Pause liest Selin das Kapitel.", [
+      "Bis zur Pause wird Selin das Kapitel gelesen haben.",
+      "Selin wird bis zur Pause das Kapitel gelesen haben.",
+      "Selin wird das Kapitel bis zur Pause gelesen haben.",
+      "Das Kapitel wird Selin bis zur Pause gelesen haben."])
+  ], { hinweis: H_FUTUR2_SATZ }),
+  m(AKTIV_PASSIV_ZEIT, [
+    ["Die Leseecke wurde im Sommer neu eingerichtet.", "Passiv im Präteritum"],
+    ["Paul wird morgen seinen Ausweis abholen.", "Aktiv im Futur I"],
+    ["Die Bücher werden jeden Abend zurück ins Regal gestellt.", "Passiv im Präsens"],
+    ["Lena ist mit dem Fahrrad zur Bücherei gefahren.", "Aktiv im Perfekt"],
+    ["Die Lesenacht wird bald angekündigt werden.", "Passiv im Futur I"],
+    ["Die neuen Krimis sind schon bestellt worden.", "Passiv im Perfekt"]], { points: 3, hinweis: H_AKTIV_PASSIV_ZEIT }),
+  // 1 Punkt je Satz; halbe Punkte: andere Zeitform (halb) oder fast richtig, alles andere entscheidet die Lehrkraft
+  f(INS_PASSIV_M, [
+    umbauHalb("Lena holte den Stuhl.", passiv("Der Stuhl", "wurde", "von Lena", "geholt"),
+      passiv("Der Stuhl", "wird", "von Lena", "geholt").concat(passiv("Der Stuhl", "ist", "von Lena", "geholt worden"))),
+    umbauHalb("Man hat die Bücher gezählt.", passiv("Die Bücher", "sind", null, "gezählt worden"),
+      passiv("Die Bücher", "wurden", null, "gezählt").concat(passiv("Die Bücher", "werden", null, "gezählt"), passiv("Die Bücher", "sind", null, "gezählt"))),
+    umbauHalb("Selin wird den Leseraum schmücken.", passiv("Der Leseraum", "wird", "von Selin", "geschmückt werden"),
+      passiv("Der Leseraum", "wird", "von Selin", "geschmückt").concat(passiv("Der Leseraum", "wurde", "von Selin", "geschmückt")))
+  ], { teilpunkte: true, hinweis: H_INS_PASSIV_N }),
+  f(INS_AKTIV, [
+    feld("Der Comic wird von Paul gesucht.", ["Paul sucht den Comic.", "Den Comic sucht Paul."], { breit: true })
+  ], { hinweis: H_INS_AKTIV_R }),
+  c("Auf einem Schild an der Ausleihe steht: „Zuerst wird der Ausweis eingelesen. Dann werden die Bücher auf das Lesegerät gelegt.“ Warum stehen Anleitungen oft im Passiv? Kreuze die richtige Antwort an.", [
+    "Es kommt darauf an, was getan wird. Wer es tut, spielt keine Rolle.",
+    "Es kommt darauf an, wer die Arbeit tut. Was getan wird, spielt keine Rolle.",
+    "Das Passiv zeigt, dass alles schon erledigt ist.",
+    "Das Passiv zeigt, dass man erst nächste Woche ausleihen darf."], 0, { hinweis: H_ANLEITUNG }),
+  c("Nur einer dieser Sätze steht im Passiv. Kreuze ihn an.", [
+    "Die Bücherei wird umgebaut.",
+    "Die Bücherei wird bald schließen.",
+    "Die Bücherei schließt um sechs Uhr.",
+    "Die Bücherei hat ein neues Regal bekommen."], 0, { hinweis: H_AKTIV_PASSIV })
+];
+
 const ALLE = { kurz: "Grammatik I", scope: "Wortarten und Pronomen · Zeitformen · Aktiv und Passiv", minutes: 40, texte: [] };
 module.exports = {
   "d7-p6-r-a": probe(6, "R", "A", { ...ALLE, title: "Probe 6 (R7): Grammatik I", items: R_A }),
   "d7-p6-r-b": probe(6, "R", "B", { ...ALLE, title: "Probe 6 (R7): Grammatik I – Variante B", items: R_B }),
   "d7-p6-m-a": probe(6, "M", "A", { ...ALLE, title: "Probe 6 (M7): Grammatik I", items: M_A }),
   // Nachholprobe der M7 (Fassung B): leichter, eigene Punktzahl, Note nach dem R-Schlüssel
-  "d7-p6-m-b": probe(6, "M", "B", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Nachholprobe", notenzug: "R", nachholprobe: true, eigen: true, items: M_N })
+  "d7-p6-m-b": probe(6, "M", "B", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Nachholprobe", notenzug: "R", nachholprobe: true, eigen: true, items: M_N }),
+  // Nachholprobe 2 (Fassung C): für alle, ohne die 1-Minuten-Regel, Note nach dem R-Schlüssel – für M7 und R7 dieselbe
+  // Probe (Wunsch der Lehrkraft: „m und r“, „die selbe note“); R7 bekommt damit auch Stoff der M7 (Reflexivpronomen,
+  // Passiv im Perfekt und Futur I)
+  "d7-p6-m-c": probe(6, "M", "C", { ...ALLE, title: "Probe 6 (M7): Grammatik I – Nachholprobe 2 (R-Schlüssel)", notenzug: "R", nachholprobe: true, eigen: true, wegSekunden: 0, items: M_N2 }),
+  "d7-p6-r-c": probe(6, "R", "C", { ...ALLE, title: "Probe 6 (R7): Grammatik I – Nachholprobe 2 (R-Schlüssel)", notenzug: "R", nachholprobe: true, eigen: true, wegSekunden: 0, items: M_N2 })
 };

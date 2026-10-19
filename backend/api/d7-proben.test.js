@@ -443,6 +443,35 @@ test("Eigenständige Fassung (eigen, z. B. Nachholprobe der M7 für alle): schre
   }, { opts: { tests: proben } });
 });
 
+test("Fassung C ohne 1-Minuten-Regel (wegSekunden 0, z. B. Nachholprobe 2 der M7): Verlassen gibt keine Note 6, Kopieren schon", async () => {
+  const proben = PROBEN();
+  const items = () => [{ type: "choice", prompt: "Welcher Satz steht im Passiv?", options: ["Das Buch wird gelesen.", "Das Buch liegt hier.", "Das Buch wird spannend."], answer: 0 },
+    { type: "match", prompt: "Ordne zu.", pairs: [["früher", "Wasser holen"], ["heute", "spielen"]] }];
+  proben["d7-p9-m-a"].items = items(); proben["d7-p9-m-a"].texte = [];
+  proben["d7-p9-m-c"] = { id: "d7-p9-m-c", nr: 9, zug: "M", variante: "C", title: "Probe 9 (M7): Test – Nachholprobe 2", minutes: 20, texte: [], items: items(), eigen: true, notenzug: "R", wegSekunden: 0 };
+  const a = [0, ["Wasser holen", "spielen"]];
+  const weg = { regel: true, wegSumme: 300, verlassen: 4, abbruch: { grund: "weg", sekunden: 300 } };
+  await mitServer(null, async ({ post, get, abgaben, lehrer }) => {
+    assert.ok(!(await get("list")).tests.some((t) => t.id === "d7-p9-m-c"), "gesperrte Fassung C steht nicht in der Liste der Kinder");
+    assert.equal((await lehrer("unlock", { testId: "d7-p9-m-c", open: true })).status, 200);
+    const c = (await get("list")).tests.find((t) => t.id === "d7-p9-m-c");
+    assert.equal(c.wegSekunden, 0); assert.equal(c.variante, "C");
+    assert.equal((await get("list")).tests.find((t) => t.id === "d7-p9-m-a").wegSekunden, undefined);
+    assert.equal((await post("start", { testId: "d7-p9-m-c", code: "101" })).data.test.wegSekunden, 0);
+    assert.equal((await post("start", { testId: "d7-p9-m-a", code: "101" })).data.test.wegSekunden, undefined);
+    // 5 Minuten weg: in Fassung A Note 6, in Fassung C nur vermerkt (auch wenn eine Seite „weg“ als Grund meldet)
+    assert.equal((await post("submit", { testId: "d7-p9-m-a", code: "101", answers: a, ...weg })).status, 200);
+    assert.equal((await post("submit", { testId: "d7-p9-m-c", code: "101", answers: a, ...weg })).status, 200);
+    const [abgA] = await abgaben("d7-p9-m-a"), [abgC] = await abgaben("d7-p9-m-c");
+    assert.equal(abgA.grade, 6); assert.equal(abgA.abbruch.grund, "weg");
+    assert.equal(abgC.abbruch, undefined); assert.equal(abgC.grade, 1); assert.equal(abgC.wegSekunden, 300, "die Lehrkraft sieht trotzdem, wie lange das Kind weg war");
+    // Kopieren: auch in Fassung C beim 2. Versuch Note 6
+    assert.equal((await post("submit", { testId: "d7-p9-m-c", code: "400", answers: a, regel: true, kopierversuche: 2 })).status, 200);
+    const k = (await abgaben("d7-p9-m-c")).find((r) => r.code === "400");
+    assert.equal(k.grade, 6); assert.equal(k.abbruch.grund, "kopieren");
+  }, { opts: { tests: proben } });
+});
+
 test("Probenmodus: Protokoll (Wechsel, Einfügen, Kopieren, Textsprünge) kommt gesäubert bei der Lehrkraft an, nicht beim Kind; Einstellung „Einfügen“ je Probe", async () => {
   await mitServer(null, async ({ post, get, abgaben, lehrer }) => {
     assert.equal((await post("start", { testId: "d7-p9-m-a", code: "101" })).data.test.einfuegen, "sperren");

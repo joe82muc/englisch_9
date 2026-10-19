@@ -51,6 +51,11 @@ test("Regeln: 1 Minute, 2. Kopierversuch, keine Höchstzahl für Wechsel", () =>
   assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 61 }, {}).sekunden, 61);
   assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 20 }, { wegSumme: 75 }).sekunden, 75, "Server-Summe reicht");
   assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 90, automatisch: "gesperrt" }, {}), null, "Bildschirm gesperrt: nur abgegeben");
+  // Probe ohne 1-Minuten-Regel (wegSekunden 0): weder die Summe noch eine gemeldete „weg“-Beendigung geben Note 6
+  const ohne = { ...REGEL, wegSekunden: 0 };
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 500 }, {}, ohne), null);
+  assert.equal(abbruchAusAbgabe({ regel: true, wegSumme: 500, abbruch: { grund: "weg", sekunden: 500 } }, {}, ohne), null);
+  assert.equal(abbruchAusAbgabe({ regel: true, kopierversuche: 2 }, {}, ohne).grund, "kopieren", "Kopieren zählt weiter");
 });
 
 test("Zählung beim Server: höchster Stand, nur mit gültigem Code und bekanntem Modul", async () => {

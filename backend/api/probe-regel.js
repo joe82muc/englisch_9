@@ -52,6 +52,8 @@ function abbruchAusAbgabe(body, gezaehlt, regel = REGEL, verlassenSeite = 0) {
   // Sekunden insgesamt verlassen (Seite und Server zählen mit, es gilt der höhere Stand)
   const wegSumme = Math.max(anzahl(body.wegSumme), anzahl(gezaehlt && gezaehlt.wegSumme), anzahl(angabe.sekunden));
   let grund = GRUENDE.includes(angabe.grund) ? angabe.grund : "";
+  // Probe ohne Grenze für das Verlassen (wegSekunden 0, z. B. Nachholprobe 2 Deutsch 7): auch eine ältere Seite beendet dann nicht
+  if (grund === "weg" && !regel.wegSekunden) grund = "";
   // Die Seite hat ohne Note 6 abgegeben (Bildschirm gesperrt nach 2 Minuten Ruhe): dann zählt die Summe nicht als Abbruch
   if (!grund && regel.wegSekunden && wegSumme > regel.wegSekunden && body.automatisch !== "gesperrt") grund = "weg";
   if (!grund && regel.verlassen && verlassen >= regel.verlassen) grund = "verlassen";

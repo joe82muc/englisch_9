@@ -137,6 +137,38 @@ for (const nr of NUMMERN) {
   });
 }
 
+// Seit 19.10.2026 Nachholprobe 2 der M7 als Fassung C (Wunsch der Lehrkraft): für alle, ohne 1-Minuten-Regel, R-Schlüssel.
+// Aufbau und Punkte wie die erste Nachholprobe, aber kein Satz aus einer anderen Fassung der Probe 6.
+test("Probe 6 (M7): Nachholprobe 2 (Fassung C) – wie die erste Nachholprobe aufgebaut, ohne 1-Minuten-Regel, neue Sätze", () => {
+  const ids = Object.keys(PROBEN).filter((id) => /-c$/.test(id));
+  assert.deepEqual(ids.sort(), ["d7-p6-m-c", "d7-p6-r-c"], "Fassung C gibt es nur für die Nachholprobe 2");
+  // R7 schreibt dieselbe Probe (Wunsch der Lehrkraft: „m und r“) – nur Zug und Titel sind anders
+  const r = PROBEN["d7-p6-r-c"];
+  assert.equal(r.zug, "R"); assert.equal(r.title, "Probe 6 (R7): Grammatik I – Nachholprobe 2 (R-Schlüssel)");
+  assert.deepEqual([r.notenzug, r.eigen, r.wegSekunden], ["R", true, 0]);
+  assert.deepEqual(VORLAGE["d7-p6-r-c"].items, VORLAGE["d7-p6-m-c"].items, "R7 und M7: dieselben Aufgaben");
+  const c = PROBEN["d7-p6-m-c"], b = fassung(6, "m", "b");
+  assert.equal(c.zug, "M"); assert.equal(c.variante, "C"); assert.equal(c.nr, 6);
+  assert.equal(c.title, "Probe 6 (M7): Grammatik I – Nachholprobe 2 (R-Schlüssel)");
+  assert.equal(c.notenzug, "R"); assert.equal(c.eigen, true); assert.equal(c.wegSekunden, 0);
+  assert.equal(c.minutes, b.minutes); assert.equal(anteile(c).offen, 0, "keine offene Aufgabe");
+  assert.equal(maxPoints(c), maxPoints(b), "so viele Punkte wie die erste Nachholprobe");
+  assert.deepEqual(c.items.map((i) => i.type + ":" + i.points + (i.teilpunkte ? ":teil" : "")), b.items.map((i) => i.type + ":" + i.points + (i.teilpunkte ? ":teil" : "")), "dieselbe Folge von Aufgabenarten und Punkten");
+  c.items.forEach((it, i) => {
+    if (it.type === "choice") assert.ok(it.options.length >= 3 && new Set(it.options).size === it.options.length, `Aufgabe ${i + 1}: Antworten`);
+    if (it.type === "match") {
+      const ziele = it.pairs.map((x) => x[1]);
+      assert.notDeepEqual(ziele, ziele.slice().sort((x, y) => x.localeCompare(y, "de")), `Aufgabe ${i + 1}: Lösung „der Reihe nach“`);
+      assert.deepEqual([...new Set(ziele)].sort(), [...new Set(b.items[i].pairs.map((x) => x[1]))].sort(), `Aufgabe ${i + 1}: dieselben Begriffe wie in der ersten Nachholprobe`);
+    }
+    if (it.type === "felder") it.felder.forEach((f) => assert.ok(f.loesungen.length && f.loesungen.every((l) => String(l).trim()), `Aufgabe ${i + 1}: Lösung`));
+  });
+  const alles = (p) => new Set(p.items.flatMap((i) => [i.prompt].concat(i.options || [], (i.pairs || []).map((x) => x[0]), (i.felder || []).flatMap((f) => [f.label].concat(f.loesungen, f.halb || []))))
+    .map((s) => String(s).trim()).filter((s) => s.length > 18 && !/^(Welche|In welche|Setze|Bilde|Aktiv oder|Forme|Nur einer)/.test(s)));
+  const nc = alles(c);
+  for (const id of ["d7-p6-m-a", "d7-p6-m-b", "d7-p6-r-a", "d7-p6-r-b"]) assert.deepEqual([...alles(PROBEN[id])].filter((s) => nc.has(s)), [], "Nachholprobe 2 verwendet Sätze aus " + id);
+});
+
 test("Ankreuzaufgaben: die richtige Antwort steht in der Vorlage vorn und wird beim Laden gemischt", () => {
   for (const p of Object.values(VORLAGE)) p.items.forEach((it, i) => { if (it.type === "choice") assert.equal(it.answer, 0, `${p.id} Aufgabe ${i + 1}: richtige Antwort an Stelle 0 schreiben`); });
   const stellen = Object.values(PROBEN).flatMap((p) => p.items.filter((i) => i.type === "choice").map((i) => i.answer));

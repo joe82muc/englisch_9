@@ -16,7 +16,10 @@
  * die Entscheidung der Lehrkraft unter „lehrer“; gültig ist die Lehrkraft, sonst die KI.
  *
  * Jede Probe gibt es viermal: zug "R" oder "M", variante "A" oder "B" (B = Nachschreiber, eigene Texte und Aufgaben).
- * Kennungen: d7-p<nr>-<r|m>-<a|b>. Eine gesperrte Variante B steht nicht in der Liste der Kinder.
+ * Kennungen: d7-p<nr>-<r|m>-<a|b|c>. Eine gesperrte Variante B oder C steht nicht in der Liste der Kinder.
+ * Fassung C gibt es nur als weitere Nachholprobe (Probe 6 M7, Nachholprobe 2).
+ * wegSekunden an der Probe: eigene Grenze der Testregeln für das Verlassen (0 = keine Note 6 für Abwesenheit, z. B.
+ * Nachholprobe 2) – Kopierversuche zählen weiter, Verlassen wird weiter festgehalten (probe-regel.js).
  * Die Note richtet sich nach dem Zug des Kindes (M: 50 % = Note 4, R: 50 % = Note 3) – außer die Probe legt den
  * Schlüssel mit notenzug: "R" | "M" selbst fest (Probe 6 M7, Nachholprobe: R-Schlüssel).
  * Wer Variante A oder B einer Nummer abgegeben hat, hat „diese Probe geschrieben“. Eine Fassung mit eigen: true steht
@@ -41,7 +44,7 @@
  * (rsWerten, zsWerten). Die KI stellt keine Diagnose und kennt nur die Regel.
  *
  * Routen (alle unter /api/d7/proben):
- *   GET  list                      -> Proben mit „unlocked“ (gesperrte Variante B nur mit ?alle=1)
+ *   GET  list                      -> Proben mit „unlocked“ (gesperrte Variante B und C nur mit ?alle=1)
  *   POST start    { testId, code } -> Texte und Aufgaben ohne Lösungen
  *   POST submit   { testId, code, answers, verlassen, protokoll } -> { ok, angekommen } (kein Ergebnis)
  *                 protokoll = was js/probe-schutz.js während der Probe festgehalten hat: Wechsel mit Dauer,
@@ -149,11 +152,12 @@ function kommaSatz(satz) {
 const hoerSaetze = (text) => String(text || "").split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
 function vorbereiten(tests, stufe, fachKurz) {
   // Kennungen: d7-p… (Deutsch 7), d8-p… (Deutsch 8, opts.stufe) oder e9-p… (Englisch 9, opts.fach.kurz)
-  const kennung = new RegExp("^" + (/^[a-z]$/.test(fachKurz || "") ? fachKurz : "d") + (stufe || 7) + "-p\\d+-[rm]-[ab]$");
+  const kennung = new RegExp("^" + (/^[a-z]$/.test(fachKurz || "") ? fachKurz : "d") + (stufe || 7) + "-p\\d+-[rm]-[abc]$");
   Object.values(tests).forEach((test) => {
     const wo = (i) => test.id + " Aufgabe " + (i + 1) + ": ";
     if (!kennung.test(test.id)) throw new Error("Kennung " + test.id);
     if (test.notenzug !== undefined && !["R", "M"].includes(test.notenzug)) throw new Error(test.id + ": notenzug " + test.notenzug);
+    if (test.wegSekunden !== undefined && !(Number.isInteger(test.wegSekunden) && (test.wegSekunden === 0 || test.wegSekunden >= 10))) throw new Error(test.id + ": wegSekunden " + test.wegSekunden);
     test.texte = test.texte || [];
     test.texte.forEach((t) => {
       if (!t.typ) t.typ = t.sprecher ? "hoertext" : t.verse ? "gedicht" : t.absaetze ? "text" : t.typ;
@@ -266,6 +270,9 @@ function registerD7ProbenRoutes(app, opts) {
   const eigen = (test) => Boolean(test && test.eigen);
   const probeSchluessel = (test) => (eigen(test) ? test.id : String(test.nr));
   const gleicheProbe = (row, test) => (eigen(test) || eigen(tests[row.testId]) ? row.testId === test.id : row.nr === test.nr);
+  // Testregeln dieser Probe: wegSekunden an der Probe ersetzt die 1-Minuten-Grenze (0 = Verlassen gibt keine Note 6)
+  const hatWeg = (test) => test.wegSekunden !== undefined;
+  const regelVon = (test) => (hatWeg(test) ? { ...probeRegel.REGEL, wegSekunden: test.wegSekunden } : probeRegel.REGEL);
   const sitzKey = (test, student) => probeSchluessel(test) + "|" + student.key;
   const minutenVon = (test, s) => test.minutes + (Number(s && s.verlaengerung) || 0);
   function sitzAntwort(test, s, data) {
@@ -349,7 +356,7 @@ function registerD7ProbenRoutes(app, opts) {
   const hoertexteVon = (test) => test.texte.filter((t) => t.typ === "hoertext");
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
     itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
-    ...(test.notenzug ? { notenzug: test.notenzug } : {}), ...(eigen(test) ? { eigen: true } : {}),
+    ...(test.notenzug ? { notenzug: test.notenzug } : {}), ...(eigen(test) ? { eigen: true } : {}), ...(hatWeg(test) ? { wegSekunden: test.wegSekunden } : {}),
     ...(HOER_ZENTRAL && hoertexteVon(test).length ? { hoertexte: hoertexteVon(test).length } : {}),
     ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
   // Einfügen in der Probe: gesperrt (Vorgabe) oder erlaubt und protokolliert – stellt die Lehrkraft je Probe ein
@@ -741,7 +748,7 @@ function registerD7ProbenRoutes(app, opts) {
   app.get(PREFIX + "/health", (_req, res) => res.json({ ok: true, service: (FACH ? FACH.kurz : "d") + STUFE + "-proben", proben: Object.keys(tests).length }));
   app.get(PREFIX + "/list", (req, res) => {
     const data = readData(), alle = req.query && req.query.alle === "1";
-    res.json({ ok: true, tests: Object.values(tests).map((t) => publicTest(t, data)).filter((t) => alle || t.variante !== "B" || t.unlocked) });
+    res.json({ ok: true, tests: Object.values(tests).map((t) => publicTest(t, data)).filter((t) => alle || t.variante === "A" || t.unlocked) });
   });
   app.post(PREFIX + "/start", async (req, res) => {
     const test = tests[clean(req.body?.testId)];
@@ -757,7 +764,7 @@ function registerD7ProbenRoutes(app, opts) {
     if (test.zug !== student.zug) return res.status(403).json({ ok: false, error: "falscher_zug", message: `Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.` });
     const schon = readData().submissions.find((row) => gleicheProbe(row, test) && row.studentKey === student.key);
     if (schon) return res.status(409).json({ ok: false, error: "already_submitted", message: schon.testId === test.id ? "Diese Probe wurde mit diesem Code bereits abgegeben." : "Du hast Probe " + test.nr + " schon geschrieben (Variante " + schon.variante + ")." });
-    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr), ...(eigen(test) ? { eigen: true } : {}) },
+    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr), ...(eigen(test) ? { eigen: true } : {}), ...(hatWeg(test) ? { wegSekunden: test.wegSekunden } : {}) },
       texte: test.texte.map(startText), items: test.items.map(publicItem) };
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
@@ -845,7 +852,7 @@ function registerD7ProbenRoutes(app, opts) {
       if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
       if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
       const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan,
-        regelStand: probeRegel.ausAbgabe(req.body, REGEL_MODUL, test.id, student.key) });
+        regelStand: probeRegel.ausAbgabe(req.body, REGEL_MODUL, test.id, student.key, regelVon(test)) });
       probeRegel.vergessen(REGEL_MODUL, test.id, student.key);
       return res.json({ ok: true, angekommen: true, abgabe: { testTitle: test.title, submittedAt: record.submittedAt } });
     } catch (err) {
