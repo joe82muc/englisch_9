@@ -83,6 +83,28 @@ test("Aufbau: 50 Punkte, nur Ankreuzen und Zuordnen, alle sieben Module, jedes m
   assert.deepEqual(TESTS[IDS[0]].items.map((it) => it.prompt), TESTS[IDS[1]].items.map((it) => it.prompt));
 });
 
+test("Probe 3: 80 Punkte, nach Themen sortiert, Transfer am Schluss, ohne offene Fragen, 45 Minuten", () => {
+  for (const id of ["nt9m-rohstoffe3", "nt9r-rohstoffe3"]) {
+    const t = TESTS[id];
+    assert.equal(t.items.reduce((s, it) => s + punkteVon(it), 0), 80, id);
+    assert.deepEqual([...new Set(t.items.map((it) => it.type))].sort(), ["choice", "match"], id + ": keine offenen Fragen");
+    assert.deepEqual([t.notenzug, t.wegSekunden, t.kopieren, t.abgabeMinuten, t.minutes, t.thema], ["M", 0, 0, 45, 45, "rohstoffe"], id);
+    // Themen in Blöcken hintereinander (jede Überschrift nur einmal), Transfer zuletzt
+    const folge = t.items.map((it) => it.teil).filter((teil, i, a) => i === 0 || a[i - 1] !== teil);
+    assert.equal(new Set(folge).size, folge.length, id + ": jedes Thema an einem Stück");
+    assert.deepEqual(folge.map((x) => x.split("·")[0].trim()), ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5", "Thema 6", "Transfer"], id);
+    const transfer = t.items.filter((it) => it.transfer);
+    assert.ok(transfer.length >= 6 && transfer.every((it) => it.teil.startsWith("Transfer")), id + ": Transferaufgaben");
+    assert.equal(transfer.reduce((s, it) => s + punkteVon(it), 0), 10, id + ": Transfer 10 Punkte");
+    // jede Aufgabe nennt ihr Modul, jedes Modul kommt vor
+    t.items.forEach((it, i) => assert.ok(/^m[1-7]$/.test(it.modul) && it.modulTitel.length > 5, id + " Aufgabe " + (i + 1)));
+    ["m1", "m2", "m3", "m4", "m5", "m6", "m7"].forEach((m) => assert.ok(t.items.filter((it) => it.modul === m).reduce((s, it) => s + punkteVon(it), 0) >= 5, id + " " + m));
+    assert.ok(t.items.filter((it) => it.image).length >= 7, id + ": Animationen");
+    t.items.forEach((it) => { if (it.type === "choice") assert.equal(new Set(it.options).size, it.options.length, it.prompt); });
+  }
+  assert.ok(TESTS["nt9m-rohstoffe3"].items.length > TESTS["nt9m-rohstoffe2"].items.length, "mehr Aufgaben als Probe 2");
+});
+
 test("Liste und Start nennen M-Schlüssel, Testregeln ohne Note 6 und die Bearbeitungszeit – die anderen Proben nicht", async () => {
   await mitServer(async ({ post, get }) => {
     const liste = (await get("/list")).tests;

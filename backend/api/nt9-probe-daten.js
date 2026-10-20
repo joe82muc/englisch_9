@@ -437,6 +437,152 @@ function einfacheProbe(id, zug) {
 bloecke.push(einfacheProbe("nt9m-rohstoffe2", "M"), einfacheProbe("nt9r-rohstoffe2", "R"));
 bloecke.slice(-2).forEach((p) => p.items.forEach((it) => { it.modulTitel = it.teil; }));
 
+/* ================= Probe 3 Organische Rohstoffe (seit 20.10.2026) =================
+ * Auftrag der Lehrkraft: „mach weitere probe. sortiere in der probe nach themen. mach noch mehr aufgaben 80 punkte.
+ * transfer einbauen. ohne offene fragen“ – Rahmen wie Probe 2 (M-Schlüssel, ohne Note-6-Regel, automatische Abgabe).
+ * 41 Aufgaben, 80 Punkte: sechs Themen quer durch die Module (zusammen 70 Punkte) und ein Transferteil (10 Punkte).
+ * teil = Thema (Überschrift in der Probe, Punkte je Thema im Ergebnis und in der Excel-Liste), modul = Kennung des Moduls,
+ * aus dem die Aufgabe stammt (die Seite zeigt den Titel bei jeder Aufgabe, die Rückgabe zählt die Punkte je Modul).
+ * Fragen nach den Übungen der Module, möglichst andere als in Probe 2; neue Animation assets/probe/kugelfall.svg.
+ * 45 Minuten Bearbeitungszeit (Probe 2: 30 Minuten für 50 Punkte). */
+const THEMA = {
+  t1: "Thema 1 · Kohlenstoff und organische Stoffe",
+  t2: "Thema 2 · Nachwachsende Rohstoffe: Holz, Raps und Stärke",
+  t3: "Thema 3 · Fossile Rohstoffe: So sind sie entstanden",
+  t4: "Thema 4 · Erdöl: von der Raffinerie zum Produkt",
+  t5: "Thema 5 · Klima: Kohlenstoffkreislauf und Treibhauseffekt",
+  t6: "Thema 6 · Nachhaltigkeit und Zukunft ohne Erdöl",
+  tr: "Transfer · Wende dein Wissen an"
+};
+const BILD3 = {
+  kugel: { image: "assets/probe/kugelfall.svg", imageAlt: "Animierter Kugelfall-Versuch: Vier Messzylinder A, B, C und D enthalten vier Fraktionen des Erdöls. In jedem fällt eine Kugel von der Start- zur Ziellinie. In B ist die Kugel nach etwa einer Sekunde unten, in D nach etwa eineinhalb Sekunden, in A nach etwa zweieinhalb Sekunden, in C braucht sie über sieben Sekunden." }
+};
+// t = Thema, m = Modul (Konstante M1 … M7), tr = Transfer (Modul, auf dem die Aufgabe aufbaut)
+const THEMEN_PROBE = [
+  /* Thema 1 · Kohlenstoff und organische Stoffe (7 Punkte) */
+  { t: "t1", m: M1, ...BILD2.erhitzen, type: "choice", prompt: "Die Animation zeigt den Versuch aus Modul 1. Was zeigt die schwarze Farbe in Glas A und Glas C?",
+    options: ["Der Stoff enthält Kohlenstoff – er ist ein organischer Stoff.", "Der Stoff enthält Eisen.", "Der Stoff ist ein Salz.", "Der Stoff war vorher nass."], answer: 0, points: 1 },
+  { t: "t1", m: M1, type: "match", prompt: "Organisch und nachwachsend, organisch, aber fossil, oder nicht organisch? Ordne zu.",
+    options: ["organisch und nachwachsend", "organisch, aber fossil", "nicht organisch"],
+    rows: [{ text: "Baumwolle", answer: 0 }, { text: "Braunkohle", answer: 1 }, { text: "Eisenerz", answer: 2 }, { text: "Kartoffeln", answer: 0 }] },
+  { t: "t1", m: M1, type: "choice", prompt: "Warum zählen Erdöl und Kohle zu den organischen, aber nicht zu den regenerativen Rohstoffen?",
+    options: ["Sie sind aus abgestorbenen Lebewesen entstanden, wachsen aber nicht nach.", "Sie enthalten keinen Kohlenstoff.", "Sie wachsen jedes Jahr nach.", "Sie werden im Wald angebaut."], answer: 0, points: 1 },
+  { t: "t1", m: M1, type: "choice", prompt: "Was bedeutet regenerativ?",
+    options: ["nachwachsend", "verbraucht", "fossil", "künstlich hergestellt"], answer: 0, points: 1 },
+
+  /* Thema 2 · Nachwachsende Rohstoffe: Holz, Raps und Stärke (13 Punkte) */
+  { t: "t2", m: M1, type: "choice", prompt: "Welche Aufgabe hat das Lignin im Holz?",
+    options: ["Es verklebt die Zellstofffasern und macht das Holz fest.", "Es färbt die Blätter grün.", "Es ist das Öl im Holz.", "Es löst sich im Regen sofort auf."], answer: 0, points: 1 },
+  { t: "t2", m: M1, type: "match", prompt: "Aus Holz oder aus Raps? Ordne die Produkte zu.", options: ["aus Holz", "aus Raps"],
+    rows: [{ text: "Zeitungen und Bücher", answer: 0 }, { text: "Biodiesel", answer: 1 }, { text: "Toilettenpapier", answer: 0 }, { text: "Speiseöl", answer: 1 }] },
+  { t: "t2", m: M2, type: "match", prompt: "Wofür nutzt man die Reste aus der Rapsverarbeitung? Ordne zu.",
+    options: ["als Brennstoff oder Dünger", "als Futtermittel für Tiere", "in der Kosmetikindustrie"],
+    rows: [{ text: "Rapsstroh", answer: 0 }, { text: "Rapsschrot", answer: 1 }, { text: "Glycerin", answer: 2 }] },
+  { t: "t2", m: M2, type: "choice", prompt: "Wie viel Öl enthalten Rapssamen etwa?",
+    options: ["etwa 40 %", "etwa 4 %", "etwa 90 %", "gar keins"], answer: 0, points: 1 },
+  { t: "t2", m: M2, type: "choice", prompt: "Welche Pflanzen enthalten besonders viel Stärke?",
+    options: ["Kartoffeln, Mais und Weizen", "Raps, Sonnenblumen und Oliven", "Salat, Gurken und Tomaten", "Äpfel, Birnen und Kirschen"], answer: 0, points: 1 },
+  { t: "t2", m: M2, type: "match", prompt: "Vorteil oder Nachteil von Stärkefolie? Ordne zu.", options: ["Vorteil", "Nachteil"],
+    rows: [{ text: "biologisch abbaubar", answer: 0 }, { text: "nicht wasserfest", answer: 1 }, { text: "aus einem nachwachsenden Rohstoff", answer: 0 }] },
+
+  /* Thema 3 · Fossile Rohstoffe: So sind sie entstanden (11 Punkte) */
+  { t: "t3", m: M3, type: "choice", prompt: "Was ist ein Fossil?",
+    options: ["ein versteinerter Überrest oder Abdruck eines Lebewesens aus der Urzeit", "ein besonders alter Stein, der nie gelebt hat", "ein Tier, das heute noch im Meer lebt", "ein Modell aus Gips für das Museum"], answer: 0, points: 1 },
+  { t: "t3", m: M3, type: "choice", prompt: "Was bedeutet das lateinische Wort „fossilis“?",
+    options: ["ausgegraben", "verbrannt", "nachwachsend", "flüssig"], answer: 0, points: 1 },
+  { t: "t3", m: M3, type: "choice", prompt: "Warum verwesten die abgestorbenen Meereslebewesen am Meeresgrund nicht vollständig?",
+    options: ["Dort gab es kaum Sauerstoff.", "Das Wasser war zu salzig.", "Es war dort zu hell.", "Die Reste waren aus Stein."], answer: 0, points: 1 },
+  { t: "t3", m: M3, ...BILD.kohle, type: "match", prompt: "Die Abbildung zeigt, wie Kohle im Boden entsteht. Wie viel Kohlenstoff enthält der Stoff bei A, B und C?",
+    options: ["etwa 60 % Kohlenstoff", "etwa 70 % Kohlenstoff", "über 80 % Kohlenstoff"],
+    rows: [{ text: "A (oben)", answer: 0 }, { text: "B (Mitte)", answer: 1 }, { text: "C (ganz unten)", answer: 2 }] },
+  { t: "t3", m: M3, type: "match", prompt: "Nur bei Erdöl und Erdgas, nur bei Kohle oder bei beiden? Ordne zu.",
+    options: ["nur bei Erdöl und Erdgas", "nur bei Kohle", "bei beiden"],
+    rows: [{ text: "entstand aus Plankton im Meer", answer: 0 }, { text: "Zwischenstufe Torf", answer: 1 }, { text: "Luftabschluss, hoher Druck und Millionen Jahre", answer: 2 }, { text: "sammelt sich unter einer dichten Gesteinsschicht", answer: 0 }] },
+  { t: "t3", m: M3, type: "choice", prompt: "Warum sind fossile Rohstoffe endlich?",
+    options: ["Sie entstehen in Millionen Jahren, werden aber in wenigen hundert Jahren verbraucht.", "Sie verdunsten mit der Zeit von selbst.", "Man darf sie nur an Sonntagen fördern.", "Sie wachsen jedes Jahr nach."], answer: 0, points: 1 },
+
+  /* Thema 4 · Erdöl: von der Raffinerie zum Produkt (13 Punkte) */
+  { t: "t4", m: M4, type: "choice", prompt: "Was ist Erdöl?",
+    options: ["ein Stoffgemisch aus vielen Kohlenwasserstoffen", "ein Reinstoff", "ein Metall", "eine Art Wasser"], answer: 0, points: 1 },
+  { t: "t4", m: M4, ...BILD.turm, type: "choice", prompt: "Die Abbildung zeigt den Destillationsturm. Warum werden die Dämpfe auf verschiedenen Höhen wieder flüssig?",
+    options: ["Nach oben wird es kühler – jeder Stoff wird flüssig, wenn er unter seine Siedetemperatur abkühlt.", "Nach oben wird es immer heißer.", "Die Dämpfe werden von Magneten festgehalten.", "Die Stoffe gefrieren oben zu Eis."], answer: 0, points: 1 },
+  { t: "t4", m: M4, type: "choice", prompt: "Auf welche Temperatur wird das Rohöl im Röhrenofen erhitzt?",
+    options: ["etwa 350 °C", "etwa 35 °C", "etwa 100 °C", "etwa 1000 °C"], answer: 0, points: 1 },
+  { t: "t4", m: M4, ...BILD3.kugel, type: "match", prompt: "Die Animation zeigt den Kugelfall-Versuch mit vier Fraktionen des Erdöls. Je zähflüssiger der Stoff, desto langsamer sinkt die Kugel. Welcher Stoff ist in welchem Glas?",
+    options: ["Benzin", "Kerosin", "Dieselöl", "Motoröl"],
+    rows: [{ text: "Glas A", answer: 2 }, { text: "Glas B", answer: 0 }, { text: "Glas C", answer: 3 }, { text: "Glas D", answer: 1 }] },
+  { t: "t4", m: M4, type: "match", prompt: "Gasförmig, flüssig oder fest? Ordne zu (bei Zimmertemperatur).", options: ["gasförmig", "flüssig", "fest"],
+    rows: [{ text: "Propan", answer: 0 }, { text: "Kerosin", answer: 1 }, { text: "Bitumen", answer: 2 }] },
+  { t: "t4", m: M4, type: "match", prompt: "Wird der Stoff als Energieträger verbrannt, oder ist er Rohstoff für ein Produkt? Ordne zu.",
+    options: ["als Energieträger verbrannt", "Rohstoff für ein Produkt"],
+    rows: [{ text: "Kerosin im Flugzeug", answer: 0 }, { text: "Kopfschmerztablette", answer: 1 }, { text: "Gas im Campingkocher", answer: 0 }] },
+
+  /* Thema 5 · Klima: Kohlenstoffkreislauf und Treibhauseffekt (13 Punkte) */
+  { t: "t5", m: M5, type: "match", prompt: "Nimmt der Vorgang CO₂ aus der Luft auf, gibt er CO₂ ab, oder speichert er Kohlenstoff lange? Ordne zu.",
+    options: ["nimmt CO₂ aus der Luft auf", "gibt CO₂ an die Luft ab", "speichert Kohlenstoff lange"],
+    rows: [{ text: "Fotosynthese", answer: 0 }, { text: "Waldbrand", answer: 1 }, { text: "Kohle, Erdöl und Erdgas im Boden", answer: 2 }] },
+  { t: "t5", m: M5, ...BILD.kreislauf, type: "choice", prompt: "Die Abbildung zeigt den Kohlenstoffkreislauf. Bei welchem Pfeil kommt Kohlenstoff in die Luft, der Millionen Jahre im Boden gespeichert war?",
+    options: ["Pfeil 4", "Pfeil 1", "Pfeil 2", "Pfeil 3"], answer: 0, points: 1 },
+  { t: "t5", m: M5, ...BILD.treibhaus, type: "choice", prompt: "Die Abbildung zeigt den Treibhauseffekt. Was zeigt Pfeil 1?",
+    options: ["Sonnenlicht gelangt fast ungehindert durch die Atmosphäre zur Erde.", "Die Erde strahlt Wärme ins Weltall ab.", "Treibhausgase strahlen Wärme zur Erde zurück.", "Wolken halten das Sonnenlicht auf."], answer: 0, points: 1 },
+  { t: "t5", m: M5, type: "match", prompt: "Woher kommt das Treibhausgas vor allem? Ordne zu.",
+    options: ["CO₂ (Kohlenstoffdioxid)", "CH₄ (Methan)", "N₂O (Lachgas)", "FCKW"],
+    rows: [{ text: "Kohlekraftwerk", answer: 0 }, { text: "Rinder verdauen Gras", answer: 1 }, { text: "Dünger auf dem Feld", answer: 2 }, { text: "alter Kühlschrank", answer: 3 }] },
+  { t: "t5", m: M5, type: "match", prompt: "Fakt oder Mythos? Ordne zu.", options: ["Fakt", "Mythos"],
+    rows: [{ text: "Ohne Treibhausgase wäre die Erde im Durchschnitt etwa −18 °C kalt.", answer: 0 },
+      { text: "Ein eiskalter Winter beweist, dass es keine Erderwärmung gibt.", answer: 1 },
+      { text: "Seit der Industrialisierung ist der CO₂-Anteil der Luft um die Hälfte gestiegen.", answer: 0 },
+      { text: "CO₂ ist ein so kleiner Teil der Luft, dass es keine Wirkung hat.", answer: 1 }] },
+
+  /* Thema 6 · Nachhaltigkeit und Zukunft ohne Erdöl (13 Punkte) */
+  { t: "t6", m: M2, type: "match", prompt: "Nachhaltig oder nicht nachhaltig? Ordne zu.", options: ["nachhaltig", "nicht nachhaltig"],
+    rows: [{ text: "Holz erst als Regal, dann als Holzfaserplatte nutzen", answer: 0 }, { text: "mehr Bäume fällen, als nachwachsen", answer: 1 }, { text: "Mischwald statt Fichten-Monokultur pflanzen", answer: 0 }] },
+  { t: "t6", m: M6, type: "choice", prompt: "Was bedeutet es, vom Erdöl-Import abhängig zu sein?",
+    options: ["Steigen die Preise oder liefert ein Land nicht, trifft uns das direkt.", "Wir können so viel Erdöl fördern, wie wir wollen.", "Erdöl wird dadurch klimafreundlich.", "Wir brauchen keine Raffinerien."], answer: 0, points: 1 },
+  { t: "t6", m: M7, type: "match", prompt: "Womit kann man das Erdölprodukt ersetzen? Ordne zu.",
+    options: ["Biodiesel aus Raps", "Dämmplatten aus Holzfasern", "Wärmepumpe"],
+    rows: [{ text: "Diesel im Traktor", answer: 0 }, { text: "Styropor-Dämmung", answer: 1 }, { text: "Heizöl in der Heizung", answer: 2 }] },
+  { t: "t6", m: M7, type: "match", prompt: "Wer sagt das in der Diskussion? Ordne zu.",
+    options: ["Mia Wagner, Klimaschützerin", "Ole Hansen, Ingenieur auf einer Ölbohrinsel", "Sabine Koch, Abgeordnete", "Dr. Jonas Brandt, Chemiker in der Forschung"],
+    rows: [{ text: "„Der niedrige Preis lügt – die Schäden zahlen wir später.“", answer: 0 },
+      { text: "„Ohne Erdöl gäbe es keine Kunstfasern und kein Kerosin.“", answer: 1 },
+      { text: "„Wir dürfen nicht von wenigen Lieferländern abhängen.“", answer: 2 },
+      { text: "„Mein Labor macht Folien aus Kartoffelstärke.“", answer: 3 }] },
+  { t: "t6", m: M7, ...BILD.kreis, type: "choice", prompt: "Die Abbildung zeigt die Kreislaufwirtschaft. Welche Aussage passt dazu?",
+    options: ["Produkte werden lange genutzt und am Ende recycelt.", "Produkte werden nach einmaligem Gebrauch verbrannt.", "Erdöl wird schneller gefördert.", "Müll wird ins Meer gebracht."], answer: 0, points: 1 },
+  { t: "t6", m: M6, type: "choice", prompt: "Warum sind Erdölprodukte heute noch so preiswert?",
+    options: ["Die Umweltkosten sind nicht im Preis enthalten.", "Erdöl gibt es unbegrenzt.", "Erdöl wird in Deutschland gefördert.", "Erdöl muss nicht verarbeitet werden."], answer: 0, points: 1 },
+
+  /* Transfer · neue Situationen, Wissen aus den Modulen anwenden (10 Punkte) */
+  { t: "tr", m: M1, type: "choice", prompt: "Lena heizt mit Holzpellets, Tom mit Heizöl. Welche Aussage stimmt?",
+    options: ["Lenas Heizung ist CO₂-neutral, wenn so viel Holz nachwächst, wie verbrannt wird. Toms CO₂ kommt zusätzlich in die Luft.", "Beide Heizungen sind gleich gut für das Klima.", "Toms Heizung ist besser, weil Heizöl flüssig ist.", "Holz setzt beim Verbrennen überhaupt kein CO₂ frei."], answer: 0, points: 1 },
+  { t: "tr", m: M6, ...BILD.verwendung, type: "choice", prompt: "Lies im Diagramm ab: Wie viel Prozent des Erdöls werden in den Bereichen A, B und C zusammen verbrannt?",
+    options: ["etwa 86 %", "etwa 7 %", "etwa 35 %", "etwa 50 %"], answer: 0, points: 1 },
+  { t: "tr", m: M3, ...BILD.lager, type: "choice", prompt: "Ein Bohrer bohrt von oben in die Lagerstätte aus der Abbildung. Was erreicht er zuerst, wenn er die Gesteinsschicht C durchbohrt hat?",
+    options: ["Erdgas", "Erdöl", "Wasser", "Kohle"], answer: 0, points: 1 },
+  { t: "tr", m: M2, type: "choice", prompt: "Eine Pommesbude gibt ihr altes Frittierfett ab, daraus wird Biodiesel. Warum ist das besser für die Umwelt als Biodiesel aus frischem Raps?",
+    options: ["Dafür werden keine zusätzlichen Äcker gebraucht.", "Der Biodiesel riecht besser.", "Der Biodiesel stammt dann aus Erdöl.", "Man braucht dafür mehr Dünger."], answer: 0, points: 1 },
+  { t: "tr", m: M4, type: "choice", prompt: "Beim Zelten kocht Familie Huber mit Gas aus einer Flasche. In der Flasche ist das Gas flüssig. Warum?",
+    options: ["Propan und Butan werden unter Druck flüssig.", "Das Gas ist in der Flasche gefroren.", "In der Flasche ist Wasser beigemischt.", "Gas ist immer flüssig."], answer: 0, points: 1 },
+  { t: "tr", m: M5, type: "choice", prompt: "Eine Stadt pflanzt 1000 neue Bäume. Was bewirkt das im Kohlenstoffkreislauf?",
+    options: ["Die Bäume nehmen bei der Fotosynthese CO₂ aus der Luft auf.", "Die Bäume geben mehr CO₂ ab, als sie aufnehmen.", "Bäume haben mit CO₂ nichts zu tun.", "Die Luft bekommt dadurch mehr Methan."], answer: 0, points: 1 },
+  { t: "tr", m: M6, type: "match", prompt: "Welcher Blickwinkel steckt hinter der Aussage? Ordne zu.", options: ["Nachhaltigkeit", "Ökologie (Umwelt)", "Ökonomie (Wirtschaft)"],
+    rows: [{ text: "Die Erdölvorräte sind irgendwann aufgebraucht.", answer: 0 },
+      { text: "Ein Liter Benzin erzeugt beim Verbrennen etwa 2,3 kg CO₂.", answer: 1 },
+      { text: "Liefert ein Land kein Erdöl mehr, steigen bei uns die Preise.", answer: 2 }] },
+  { t: "tr", m: M5, type: "choice", prompt: "Max sagt: „Das Klima hat sich früher auch geändert, also ist der Mensch nicht schuld.“ Was antwortest du am besten?",
+    options: ["Früher hatte das natürliche Ursachen. Heute bringt der Mensch zusätzlich viel CO₂ in die Luft – deshalb wird es so schnell wärmer.", "Max hat recht, der Mensch hat keinen Einfluss.", "Das Klima hat sich noch nie geändert.", "CO₂ kühlt die Erde ab."], answer: 0, points: 1 }
+];
+function themenProbe(id, zug) {
+  return {
+    id, title: `Probe 3 Organische Rohstoffe – nach Themen mit Transfer (9${zug})`, unit: `NT 9${zug} · Organische Rohstoffe, alle sieben Module`,
+    classLevel: "9" + zug, thema: "rohstoffe", minutes: 45, abgabeMinuten: 45, notenzug: "M", wegSekunden: 0, kopieren: 0,
+    items: THEMEN_PROBE.map(({ t, m, ...it }) => ({ ...it, ...(it.type === "match" ? { points: it.rows.length } : {}),
+      teil: THEMA[t], modul: MODUL_KENNUNG[m], modulTitel: m.split("·")[1].trim(), ...(t === "tr" ? { transfer: true } : {}) }))
+  };
+}
+bloecke.push(themenProbe("nt9m-rohstoffe3", "M"), themenProbe("nt9r-rohstoffe3", "R"));
+
 // Antwortreihenfolge fest mischen (die richtige Antwort steht oben immer zuerst), siehe proben-mischen.js
 const { mischeAlle } = require("./proben-mischen");
 const alle = { [probeM.id]: probeM, [probeR.id]: probeR };
