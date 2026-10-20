@@ -349,6 +349,94 @@ bloecke.forEach((p) => {
 probeM.alt = true;
 probeR.alt = true;
 
+/* ================= Probe 2 Organische Rohstoffe (seit 20.10.2026) =================
+ * Auftrag der Lehrkraft: „einfache probe zu allen modulen organische stoffe modul 1-7 für NT 9. zum ankreuzen, zuordnen,
+ * auch mit animationen ohne offene fragen. m-schlüssel. 50 punkte. ohne minutenregel. wenn jemand nicht abgibt
+ * automatische abgabe nach 30 minuten. ohne note 6 bei verlassen der probe oder kopieren. ganz ähnliche bzw. gleiche
+ * fragen wie in den modulen.“
+ * Die Fragen stammen (fast) wörtlich aus den Übungen der Module 1 bis 7. Je Modul 7 Punkte (Modul 1: 8), 27 Aufgaben,
+ * jedes Modul mit einer Animation (assets/probe/*.svg; erhitzen.svg und biodiesel.svg sind neu).
+ * Gleiche Aufgaben für 9M und 9R (zwei Kennungen, damit jede Klasse getrennt freigeschaltet wird), beide nach dem
+ * M-Schlüssel (notenzug "M": 50 % = Note 4). wegSekunden 0 + kopieren 0: Verlassen und Kopierversuche werden nur gewarnt
+ * und vermerkt, nie Note 6. abgabeMinuten 30: danach gibt die Seite ab, ist sie zu, der Server (infoaustausch.js). */
+const BILD2 = {
+  erhitzen: { image: "assets/probe/erhitzen.svg", imageAlt: "Animierter Versuch: Drei Reagenzgläser werden über Brennerflammen stark erhitzt. In Glas A ist Zucker, in Glas B Kochsalz, in Glas C sind Holzspäne. Der Inhalt von Glas A und Glas C wird nach und nach braun und dann schwarz, das Kochsalz in Glas B bleibt weiß." },
+  biodiesel: { image: "assets/probe/biodiesel.svg", imageAlt: "Animiertes Ablaufbild: Rapssamen vom Feld kommen zu Station A, dort entstehen Rapsöl und Rapsschrot. Das Rapsöl fließt zu Station B, dort kommt Methanol dazu. Aus Station B kommen Biodiesel und Glycerin. Der Biodiesel fließt zur Tankstelle." }
+};
+const EINFACH = [
+  /* Modul 1 · Kohlenstoff, Holz und Raps (8 Punkte) */
+  { teil: M1, ...BILD2.erhitzen, type: "match", prompt: "Die Animation zeigt den Versuch aus Modul 1: Drei Stoffe werden stark erhitzt. Ist der Stoff organisch oder nicht organisch? Ordne zu.",
+    options: ["organisch", "nicht organisch (anorganisch)"], rows: [{ text: "A · Zucker", answer: 0 }, { text: "B · Kochsalz", answer: 1 }, { text: "C · Holzspäne", answer: 0 }] },
+  { teil: M1, type: "match", prompt: "Regenerativ (nachwachsend) oder fossil? Ordne die Rohstoffe zu.", options: ["regenerativ (nachwachsend)", "fossil"],
+    rows: [{ text: "Holz", answer: 0 }, { text: "Erdgas", answer: 1 }, { text: "Raps", answer: 0 }] },
+  { teil: M1, type: "choice", prompt: "Woraus besteht Holz etwa je zur Hälfte?",
+    options: ["aus Zellstoff (Cellulose) und Holzstoff (Lignin)", "aus Wasser und Sand", "aus Öl und Stärke", "aus Rinde und Harz"], answer: 0, points: 1 },
+  { teil: M1, type: "choice", prompt: "Aus welchem Teil der Rapspflanze gewinnt man das Öl?",
+    options: ["aus den Samen", "aus den Blättern", "aus den Wurzeln", "aus den Blüten"], answer: 0, points: 1 },
+
+  /* Modul 2 · Biodiesel, Stärke und Nachhaltigkeit (7 Punkte) */
+  { teil: M2, ...BILD2.biodiesel, type: "match", prompt: "Die Animation zeigt, wie aus Raps Biodiesel wird. Was passiert bei A und was bei B?",
+    options: ["In der Ölmühle werden die Rapssamen gepresst.", "In der Biodieselanlage reagiert das Rapsöl mit Methanol.", "In der Raffinerie wird Erdöl destilliert."],
+    rows: [{ text: "A", answer: 0 }, { text: "B", answer: 1 }] },
+  { teil: M2, type: "choice", prompt: "Wofür steht das „Bio“ in Biodiesel?",
+    options: ["Er wird aus Pflanzen hergestellt.", "Er wird besonders ökologisch hergestellt.", "Er ist gesund.", "Er stammt aus dem Bioladen."], answer: 0, points: 1 },
+  { teil: M2, type: "choice", prompt: "Zu welcher Stoffgruppe gehört Stärke?",
+    options: ["zu den Kohlenhydraten", "zu den Fetten", "zu den Eiweißen", "zu den Mineralstoffen"], answer: 0, points: 1 },
+  { teil: M2, type: "choice", prompt: "Was ist ein Nachteil von Stärkefolie?",
+    options: ["Sie ist nicht wasserfest.", "Sie wird aus Erdöl hergestellt.", "Sie ist nicht biologisch abbaubar.", "Sie ist giftig."], answer: 0, points: 1 },
+  { teil: M2, type: "choice", prompt: "Wann ist die Nutzung eines Waldes nachhaltig?",
+    options: ["wenn nur so viele Bäume gefällt werden, wie gleichzeitig nachwachsen", "wenn alle Bäume auf einmal gefällt werden", "wenn gar keine Bäume mehr nachwachsen", "wenn man nur Fichten pflanzt"], answer: 0, points: 1 },
+  { teil: M2, type: "choice", prompt: "Was bedeutet Kaskadennutzung?",
+    options: ["Ein Rohstoff wird mehrfach genutzt und erst am Ende verbrannt.", "Holz wird sofort verbrannt.", "Man nutzt nur Wasserkraft.", "Rohstoffe werden weggeworfen."], answer: 0, points: 1 },
+
+  /* Modul 3 · Entstehung fossiler Rohstoffe (7 Punkte) */
+  GLEICH.lager("Die Abbildung zeigt eine Lagerstätte im Schnitt. Was befindet sich bei A, B und C?", "undurchlässige Gesteinsschicht"),
+  GLEICH.inkohlung("Die Abbildung zeigt im Schnitt, wie aus Pflanzen der Sumpfwälder Kohle entsteht. Welcher Stoff liegt bei A, B und C?"),
+  { teil: M3, type: "choice", prompt: "Woraus sind Erdöl und Erdgas entstanden?",
+    options: ["aus winzigen Meereslebewesen (Plankton)", "aus Bäumen in Sumpfwäldern", "aus Vulkanasche", "aus Meersalz"], answer: 0, points: 1 },
+
+  /* Modul 4 · Erdölaufbereitung und Fraktionen (7 Punkte) */
+  GLEICH.turm("Im Destillationsturm wird Erdöl getrennt. Welche Fraktion wird bei A, B, C und D entnommen?", "Diesel und leichtes Heizöl"),
+  { teil: M4, type: "choice", prompt: "Auf welcher Stoffeigenschaft beruht die fraktionierte Destillation?",
+    options: ["auf unterschiedlichen Siedetemperaturen", "auf unterschiedlichen Farben", "auf unterschiedlicher Magnetisierbarkeit", "auf unterschiedlicher Löslichkeit in Wasser"], answer: 0, points: 1 },
+  { teil: M4, type: "choice", prompt: "Wie verändert sich die Temperatur im Destillationsturm?",
+    options: ["Sie nimmt von unten nach oben ab.", "Sie nimmt von unten nach oben zu.", "Sie ist überall gleich.", "Sie ist in der Mitte am höchsten."], answer: 0, points: 1 },
+  { teil: M4, type: "choice", prompt: "Wie hängen Molekülgröße und Siedetemperatur zusammen?",
+    options: ["Je größer die Moleküle, desto höher die Siedetemperatur.", "Je größer die Moleküle, desto niedriger die Siedetemperatur.", "Es gibt keinen Zusammenhang.", "Nur kleine Moleküle haben eine Siedetemperatur."], answer: 0, points: 1 },
+
+  /* Modul 5 · Kohlenstoffkreislauf und Treibhauseffekt (7 Punkte) */
+  GLEICH.kreislauf("Die Abbildung zeigt den Kohlenstoffkreislauf. Welcher Vorgang gehört zu Pfeil 1, 2, 3 und 4?"),
+  GLEICH.pfeil3("Treibhausgase halten Wärmestrahlung zurück und strahlen sie zur Erde zurück."),
+  { teil: M5, type: "choice", prompt: "Wie warm wäre die Erde im Durchschnitt ohne Treibhausgase?",
+    options: ["etwa −18 °C", "etwa +15 °C", "etwa 0 °C", "etwa +30 °C"], answer: 0, points: 1 },
+  { teil: M5, type: "choice", prompt: "Im Versuch werden zwei gleiche Flaschen mit einer Rotlichtlampe bestrahlt: eine mit normaler Luft, eine mit Luft und zusätzlichem CO₂. Welche Flasche ist am Ende wärmer?",
+    options: ["die Flasche mit Luft und zusätzlichem CO₂", "die Flasche mit normaler Luft", "Beide sind gleich warm.", "Keine – beide kühlen ab."], answer: 0, points: 1 },
+
+  /* Modul 6 · Erdöl – Rohstoff mit Zukunft? (7 Punkte) */
+  GLEICH.verwendung,
+  { teil: M6, type: "choice", prompt: "Woher kommt fast das ganze Erdöl, das in Deutschland verbraucht wird?",
+    options: ["aus anderen Ländern (Import)", "aus deutschen Ölfeldern", "aus Recycling", "aus Raps"], answer: 0, points: 1 },
+  { teil: M6, type: "match", prompt: "Welcher Blickwinkel passt? Ordne zu.", options: ["Nachhaltigkeit", "Ökologie (Umwelt)", "Ökonomie (Wirtschaft)"],
+    rows: [{ text: "Erdöl wächst nicht nach.", answer: 0 }, { text: "Plastikmüll gefährdet Meerestiere.", answer: 1 }, { text: "Die Umweltkosten fehlen im Preis.", answer: 2 }] },
+
+  /* Modul 7 · Ohne Erdöl – geht das? (7 Punkte) */
+  GLEICH.kreis,
+  { teil: M7, type: "match", prompt: "Womit kann man das Erdölprodukt ersetzen? Ordne zu.",
+    options: ["Wärmepumpe", "Elektroauto mit Strom aus Wind und Sonne", "Tüte aus Maisstärke oder Stoffbeutel", "Pulli aus Wolle oder Baumwolle"],
+    rows: [{ text: "Heizöl in der Heizung", answer: 0 }, { text: "Benzin im Auto", answer: 1 }, { text: "Plastiktüte", answer: 2 }, { text: "Polyester-Pulli", answer: 3 }] },
+  { teil: M7, type: "choice", prompt: "Welcher Nachteil gilt für viele Ersatzstoffe aus Pflanzen?",
+    options: ["Sie brauchen Ackerfläche, auf der sonst Nahrung wachsen könnte.", "Sie wachsen nicht nach.", "Sie verstärken den Treibhauseffekt mehr als Erdöl.", "Sie sind immer giftig."], answer: 0, points: 1 }
+];
+function einfacheProbe(id, zug) {
+  return {
+    id, title: `Probe 2 Organische Rohstoffe – Ankreuzen und Zuordnen (9${zug})`, unit: `NT 9${zug} · Organische Rohstoffe, alle sieben Module`,
+    classLevel: "9" + zug, thema: "rohstoffe", minutes: 30, abgabeMinuten: 30, notenzug: "M", wegSekunden: 0, kopieren: 0,
+    items: EINFACH.map((it) => ({ ...it, ...(it.type === "match" ? { points: it.rows.length } : {}), teil: it.teil.split("·")[1].trim(), modul: MODUL_KENNUNG[it.teil] }))
+  };
+}
+bloecke.push(einfacheProbe("nt9m-rohstoffe2", "M"), einfacheProbe("nt9r-rohstoffe2", "R"));
+bloecke.slice(-2).forEach((p) => p.items.forEach((it) => { it.modulTitel = it.teil; }));
+
 // Antwortreihenfolge fest mischen (die richtige Antwort steht oben immer zuerst), siehe proben-mischen.js
 const { mischeAlle } = require("./proben-mischen");
 const alle = { [probeM.id]: probeM, [probeR.id]: probeR };

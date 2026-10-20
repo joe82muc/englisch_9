@@ -23,6 +23,16 @@
  * eigenem Notenschluessel (opts.gradeScale) und eigenem KI-Text
  * (opts.kiRegeln). Ohne diese Angaben gilt alles fuer Informatik 7.
  *
+ * Angaben an einer einzelnen Probe (seit 20.10.2026, NT 9 Probe 2 Organische Rohstoffe – für alle anderen Proben
+ * ändert sich nichts):
+ *   notenzug "M" | "R"   fester Notenschlüssel für alle Kinder dieser Probe (sonst nach dem Zug aus dem Code)
+ *   wegSekunden, kopieren  eigene Testregeln statt der Vorgabe aus probe-regel.js; 0 = dafür keine Note 6, Verlassen und
+ *                          Kopierversuche werden nur gewarnt und vermerkt (wie in nt7.js). /list und /start nennen beides.
+ *   abgabeMinuten        Bearbeitungszeit. Die Uhr beginnt beim ersten Start und läuft beim Neuladen weiter (Datei
+ *                          <storeName>_sitzungen.json). Ist sie abgelaufen, gibt die Seite automatisch ab (automatisch
+ *                          "zeit"); ist die Seite zu, gibt der Server mit dem letzten Zwischenstand ab (automatisch "server").
+ *                          POST zwischenstand { testId, code, answers, verlassen, kopierversuche, wegSumme } sichert den Stand.
+ *
  * Bewertung des freien Textes (Absprache mit der Lehrkraft):
  *   WOHLWOLLEND. Bewertet wird, ob die Aussage fachlich richtig ist.
  *   Rechtschreibung, Grammatik und Ausdruck fliessen NICHT in die Punkte ein.
@@ -295,6 +305,8 @@ function deviceHash(req, secret) {
  * @param opts.gradeScale      eigener Notenschluessel (Standard GRADE_SCALE)
  * @param opts.kiRegeln        eigener Bewertungstext fuer die KI (Standard KI_REGELN)
  * @param opts.kindZumCode     Anmeldung mit dem Code aus dem Lernfortschritt (statt Namen)
+ * @param opts.zeitTaktMs, opts.nachfristMs  nur für Tests: wie oft der Server abgelaufene Bearbeitungszeiten prüft (30 s)
+ *                             und wie lange er danach noch auf die Seite wartet (90 s)
  * @returns { abgaben }        alle Abgaben (fuer die Notenuebersicht je Klasse)
  */
 function registerInfoaustauschRoutes(app, opts) {
@@ -305,6 +317,13 @@ function registerInfoaustauschRoutes(app, opts) {
   const SCALE_M = opts.gradeScaleM || GRADE_SCALE_M;
   const REGELN = opts.kiRegeln || KI_REGELN;
   const grade = (percent, zug) => gradeFromPercent(percent, zug === "M" ? SCALE_M : SCALE);
+  // notenzug an der Probe: fester Schlüssel für alle Kinder (gespeichert in der Abgabe, damit Neurechnen ihn behält)
+  const notenzugVon = (test) => (test && (test.notenzug === "M" || test.notenzug === "R") ? test.notenzug : "");
+  const zugFuerNote = (rec) => rec.notenzug || rec.zug;
+  // Testregeln dieser Probe: wegSekunden / kopieren an der Probe ersetzen die Vorgabe (0 = dafür keine Note 6)
+  const regelAngaben = (test) => ({ ...(Number.isInteger(test.wegSekunden) ? { wegSekunden: test.wegSekunden } : {}),
+    ...(Number.isInteger(test.kopieren) ? { kopieren: test.kopieren } : {}) });
+  const regelVon = (test) => ({ ...probeRegel.REGEL, ...regelAngaben(test) });
   const store = createStore(opts.dataDir, NAME);
   const TESTS = opts.tests || {};
   const TEACHER_PASSWORD = opts.teacherPassword;
@@ -319,6 +338,187 @@ function registerInfoaustauschRoutes(app, opts) {
   const itemPoints = (it) => it.type === "match" ? it.rows.length : (Number(it.points) || 1);
   const maxPoints = (test) =>
     test.items.reduce((sum, it) => sum + itemPoints(it), 0);
+
+  /* ---------- Bearbeitungszeit (abgabeMinuten an der Probe): Beginn und Zwischenstand je Kind ---------- */
+  const SITZ_FILE = path.join(opts.dataDir, `${NAME}_sitzungen.json`);
+  const NACHFRIST_MS = opts.nachfristMs ?? 90 * 1000;   // so lange wartet der Server nach Ablauf auf die Abgabe der Seite (Tests: kürzer)
+  const sitzKey = (testId, studentKey) => testId + "|" + studentKey;
+  function sitzLesen() {
+    try { const d = JSON.parse(fs.readFileSync(SITZ_FILE, "utf8")); return { sitzungen: d && d.sitzungen && typeof d.sitzungen === "object" ? d.sitzungen : {} }; }
+    catch (_e) { return { sitzungen: {} }; }
+  }
+  function sitzSchreiben(d) {
+    const temp = SITZ_FILE + ".tmp";
+    fs.writeFileSync(temp, JSON.stringify(d, null, 1), "utf8");
+    fs.renameSync(temp, SITZ_FILE);
+  }
+  function sitzLoeschen(testId, studentKey) {
+    const d = sitzLesen(), k = sitzKey(testId, studentKey);
+    if (!d.sitzungen[k]) return;
+    delete d.sitzungen[k];
+    sitzSchreiben(d);
+  }
+  const endeVon = (test, s) => Date.parse(s.begonnenAm) + test.abgabeMinuten * 60000;
+  const sitzAntwort = (test, s) => ({ begonnenAm: s.begonnenAm, serverZeit: new Date().toISOString(), minuten: test.abgabeMinuten,
+    endetAm: new Date(endeVon(test, s)).toISOString() });
+  const zahl = (v) => Math.max(0, Math.min(99999, Math.round(Number(v)) || 0));
+  // Antworten aus einem Zwischenstand in die Form der Abgabe bringen (keine fremden Felder, begrenzte Länge)
+  function antwortenSauber(test, raw) {
+    const liste = Array.isArray(raw) ? raw : [];
+    return test.items.map((it, i) => {
+      const a = liste[i];
+      if (it.type === "choice") return Number.isInteger(a) && a >= 0 && a < it.options.length ? a : null;
+      if (it.type === "match") return it.rows.map((_r, r) => (Array.isArray(a) && Number.isInteger(a[r]) && a[r] >= 0 && a[r] < it.options.length ? a[r] : null));
+      return clean(a).slice(0, 2000);
+    });
+  }
+
+  /* ---------- Auswertung einer Abgabe (Seite oder Server nach Ablauf der Zeit) ---------- */
+  async function auswerten(test, answers) {
+    const details = [];
+    let aiUsed = false;
+    let needsReview = false;
+
+    for (let idx = 0; idx < test.items.length; idx++) {
+      const item = test.items[idx];
+      const max = itemPoints(item);
+      const raw = answers[idx];
+
+      if (item.type === "match") {
+        const picked = Array.isArray(raw) ? raw : [];
+        const optionText = (k) => {
+          const n = Number.isInteger(k) ? k : parseInt(k, 10);
+          return Number.isInteger(n) && item.options[n] !== undefined ? item.options[n] : "";
+        };
+        let hits = 0;
+        const given = [];
+        const expected = [];
+        item.rows.forEach((row, r) => {
+          const chosen = optionText(picked[r]);
+          if (chosen && chosen === item.options[row.answer]) hits++;
+          given.push(`${row.text} → ${chosen || "–"}`);
+          expected.push(`${row.text} → ${item.options[row.answer]}`);
+        });
+        details.push({
+          nr: idx + 1,
+          type: "match",
+          teil: item.teil || "", ...herkunft(item),
+          prompt: item.prompt,
+          given: given.join(" | "),
+          correct: hits === max,
+          points: hits,
+          maxPoints: max,
+          expected: expected.join(" | ")
+        });
+      } else if (item.type === "choice") {
+        const picked = Number.isInteger(raw) ? raw : parseInt(raw, 10);
+        const correct = picked === item.answer;
+        details.push({
+          nr: idx + 1,
+          type: "choice",
+          teil: item.teil || "", ...herkunft(item),
+          prompt: item.prompt,
+          given: Number.isInteger(picked) && item.options[picked] !== undefined
+            ? item.options[picked] : "",
+          correct,
+          points: correct ? max : 0,
+          maxPoints: max,
+          expected: item.options[item.answer]
+        });
+      } else {
+        const given = clean(raw);
+        const scored = await aiScore(given, item, askAnthropic, REGELN);
+        if (scored.source === "ki") aiUsed = true;
+        if (scored.needsReview) needsReview = true;
+        details.push({
+          nr: idx + 1,
+          type: "text",
+          teil: item.teil || "", ...herkunft(item),
+          prompt: item.prompt,
+          given,
+          correct: scored.points >= max,
+          points: scored.points,
+          maxPoints: max,
+          comment: scored.comment || "",
+          scoredBy: scored.source,
+          expected: item.expected || ""
+        });
+      }
+    }
+    return { details, aiUsed, needsReview };
+  }
+
+  /* Abgabe bewerten und speichern. body = Angaben der Seite zu den Testregeln (bzw. die des Servers);
+     extra = { testDate, deviceHash }. Ergebnis: die gespeicherte Abgabe oder null (mit diesem Code schon abgegeben). */
+  const inArbeit = new Set();
+  async function abgabeSpeichern(test, kind, answers, body, extra) {
+    const key = kind.key, sperre = sitzKey(test.id, key);
+    if (inArbeit.has(sperre)) return null;
+    inArbeit.add(sperre);
+    try {
+      const { details, aiUsed, needsReview } = await auswerten(test, answers);
+      const total = maxPoints(test);
+      const score = details.reduce((sum, d) => sum + d.points, 0);
+      const percent = total ? Math.round((score / total) * 100) : 0;
+      const notenzug = notenzugVon(test);
+      const record = {
+        id: `ia_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
+        testId: test.id,
+        testTitle: test.title,
+        unit: test.unit,
+        code: kind.code, zug: kind.zug, ...(notenzug ? { notenzug } : {}), lrs: kind.lrs, verlassen: verlassenZahl(body && body.verlassen), protokoll: protokollSauber(body && body.protokoll),
+        firstName: kind.firstName, lastName: kind.lastName, className: kind.className,
+        studentKey: key,
+        testDate: extra.testDate || new Date().toISOString().slice(0, 10),
+        score, total, percent, grade: grade(percent, notenzug || kind.zug),
+        aiUsed, needsReview,
+        details,
+        deviceHash: extra.deviceHash || "",
+        submittedAt: new Date().toISOString()
+      };
+
+      // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
+      // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+      const fresh = store.loadSubmissions();
+      if (fresh.submissions.some((s) => s.testId === test.id && s.studentKey === key)) return null;
+      probeRegel.eintragen(record, probeRegel.ausAbgabe(body, REGEL_MODUL, test.id, key, regelVon(test)));   // Testregeln: beendet = Note 6
+      fresh.submissions.push(record);
+      store.saveSubmissions(fresh);
+      probeRegel.vergessen(REGEL_MODUL, test.id, key);
+      if (test.abgabeMinuten) sitzLoeschen(test.id, key);
+      return record;
+    } finally {
+      inArbeit.delete(sperre);
+    }
+  }
+
+  // Zeit abgelaufen, Seite gibt nicht mehr ab (zu, Gerät aus): der Server gibt mit dem letzten Zwischenstand ab – ohne Note 6
+  async function zeitAbgabe(test, s) {
+    const body = { regel: true, automatisch: "server", verlassen: s.verlassen || 0, kopierversuche: s.kopierversuche || 0, wegSumme: s.wegSumme || 0 };
+    const rec = await abgabeSpeichern(test, s.kind, antwortenSauber(test, s.answers), body,
+      { testDate: String(s.begonnenAm || "").slice(0, 10), deviceHash: "" });
+    if (!rec && !inArbeit.has(sitzKey(test.id, s.kind.key))) sitzLoeschen(test.id, s.kind.key);   // schon abgegeben
+    return rec;
+  }
+  async function zeitAbgaben() {
+    const jetzt = Date.now();
+    const faellig = Object.values(sitzLesen().sitzungen).filter((s) => {
+      const test = TESTS[s.testId];
+      return test && test.abgabeMinuten && s.kind && jetzt > endeVon(test, s) + NACHFRIST_MS;
+    });
+    for (const s of faellig) await zeitAbgabe(TESTS[s.testId], s);
+    // Sitzungen von Proben ohne Bearbeitungszeit (oder entfernten Proben) nach einem Tag aufräumen
+    const d = sitzLesen(); let weg = false;
+    Object.keys(d.sitzungen).forEach((k) => {
+      const s = d.sitzungen[k], test = TESTS[s.testId];
+      if ((!test || !test.abgabeMinuten) && !(Date.parse(s.begonnenAm) > jetzt - 24 * 3600000)) { delete d.sitzungen[k]; weg = true; }
+    });
+    if (weg) sitzSchreiben(d);
+  }
+  if (Object.values(TESTS).some((t) => t.abgabeMinuten)) {
+    const takt = setInterval(() => { zeitAbgaben().catch((e) => console.error(`${NAME}: Abgabe nach Ablauf der Zeit:`, e.message)); }, opts.zeitTaktMs || 30 * 1000);
+    if (takt.unref) takt.unref();
+  }
 
   /* ================================================================
      UEBUNGSMODULE: sofortige KI-Rueckmeldung zu freien Texten
@@ -409,6 +609,7 @@ function registerInfoaustauschRoutes(app, opts) {
       itemCount: t.items.length,
       maxPoints: maxPoints(t),
       ...(t.alt ? { alt: true } : {}), thema: t.thema || "", minutes: t.minutes || undefined,
+      ...(notenzugVon(t) ? { notenzug: notenzugVon(t) } : {}), ...regelAngaben(t), ...(t.abgabeMinuten ? { abgabeMinuten: t.abgabeMinuten } : {}),
       unlocked: probeOffen(unlocks.unlocked[t.id])
     }));
     res.json({ ok: true, tests: list });
@@ -442,6 +643,28 @@ function registerInfoaustauschRoutes(app, opts) {
       });
     }
 
+    // Bearbeitungszeit: Die Uhr beginnt beim ersten Start und läuft beim Neuladen weiter
+    let sitzung = null, zwischenstand = null;
+    if (test.abgabeMinuten) {
+      const d = sitzLesen(), k = sitzKey(testId, key);
+      let s = d.sitzungen[k];
+      if (!s) {
+        s = { testId, kind, begonnenAm: new Date().toISOString(), answers: [], gespeichertAm: "" };
+        d.sitzungen[k] = s;
+        sitzSchreiben(d);
+      }
+      if (Date.now() > endeVon(test, s)) {
+        const rec = await zeitAbgabe(test, s);
+        return res.status(409).json({
+          ok: false, error: "already_submitted", zeitUm: true,
+          message: "Die Bearbeitungszeit ist abgelaufen. Deine Probe wurde mit deinem letzten Stand automatisch abgegeben.",
+          submittedAt: rec ? rec.submittedAt : ""
+        });
+      }
+      sitzung = sitzAntwort(test, s);
+      if (Array.isArray(s.answers) && s.answers.length) zwischenstand = { answers: antwortenSauber(test, s.answers), gespeichertAm: s.gespeichertAm || "" };
+    }
+
     // Aufgaben OHNE Loesungen ausliefern
     const items = test.items.map((it, idx) => ({
       nr: idx + 1,
@@ -462,10 +685,32 @@ function registerInfoaustauschRoutes(app, opts) {
         id: test.id,
         title: test.title,
         unit: test.unit,
-        maxPoints: maxPoints(test)
+        maxPoints: maxPoints(test),
+        ...(notenzugVon(test) ? { notenzug: notenzugVon(test) } : {}), ...regelAngaben(test)
       },
-      items
+      items,
+      ...(sitzung ? { sitzung } : {}), ...(zwischenstand ? { zwischenstand } : {})
     });
+  });
+
+  /* ---------- Schueler: Zwischenstand sichern (nur Proben mit Bearbeitungszeit) ----------
+     Damit kann der Server nach Ablauf der Zeit abgeben, auch wenn die Seite nicht mehr offen ist. Geprüft wird nur,
+     ob es zu Probe und Code eine laufende Bearbeitung gibt (die hat der Start mit gültigem Code angelegt). */
+  app.post(P + "/zwischenstand", (req, res) => {
+    const testId = clean(req.body?.testId), code = clean(req.body?.code);
+    const test = TESTS[testId];
+    if (!test || !test.abgabeMinuten) return res.status(404).json({ ok: false, error: "test_not_found" });
+    if (!/^\d{3}$/.test(code)) return res.status(400).json({ ok: false, error: "code_falsch" });
+    const d = sitzLesen(), s = d.sitzungen[sitzKey(testId, "code|" + code)];
+    if (!s) return res.status(404).json({ ok: false, error: "keine_sitzung" });
+    if (Date.now() > endeVon(test, s) + NACHFRIST_MS) return res.status(409).json({ ok: false, error: "zeit_um" });
+    s.answers = antwortenSauber(test, req.body?.answers);
+    s.verlassen = Math.max(zahl(s.verlassen), zahl(req.body?.verlassen));
+    s.kopierversuche = Math.max(zahl(s.kopierversuche), zahl(req.body?.kopierversuche));
+    s.wegSumme = Math.max(zahl(s.wegSumme), zahl(req.body?.wegSumme));
+    s.gespeichertAm = new Date().toISOString();
+    sitzSchreiben(d);
+    res.json({ ok: true, gespeichertAm: s.gespeichertAm, ...sitzAntwort(test, s) });
   });
 
   /* ---------- Schueler: Abgabe ---------- */
@@ -483,7 +728,6 @@ function registerInfoaustauschRoutes(app, opts) {
     }
     const kind = await probeKind(req, res);
     if (!kind) return;
-    const { code, firstName, lastName, className } = kind;
 
     const key = kind.key;
     const db = store.loadSubmissions();
@@ -497,115 +741,18 @@ function registerInfoaustauschRoutes(app, opts) {
       });
     }
 
-    /* ---- Auswertung ---- */
-    const details = [];
-    let aiUsed = false;
-    let needsReview = false;
-
-    for (let idx = 0; idx < test.items.length; idx++) {
-      const item = test.items[idx];
-      const max = itemPoints(item);
-      const raw = answers[idx];
-
-      if (item.type === "match") {
-        const picked = Array.isArray(raw) ? raw : [];
-        const optionText = (k) => {
-          const n = Number.isInteger(k) ? k : parseInt(k, 10);
-          return Number.isInteger(n) && item.options[n] !== undefined ? item.options[n] : "";
-        };
-        let hits = 0;
-        const given = [];
-        const expected = [];
-        item.rows.forEach((row, r) => {
-          const chosen = optionText(picked[r]);
-          if (chosen && chosen === item.options[row.answer]) hits++;
-          given.push(`${row.text} → ${chosen || "–"}`);
-          expected.push(`${row.text} → ${item.options[row.answer]}`);
-        });
-        details.push({
-          nr: idx + 1,
-          type: "match",
-          teil: item.teil || "", ...herkunft(item),
-          prompt: item.prompt,
-          given: given.join(" | "),
-          correct: hits === max,
-          points: hits,
-          maxPoints: max,
-          expected: expected.join(" | ")
-        });
-      } else if (item.type === "choice") {
-        const picked = Number.isInteger(raw) ? raw : parseInt(raw, 10);
-        const correct = picked === item.answer;
-        details.push({
-          nr: idx + 1,
-          type: "choice",
-          teil: item.teil || "", ...herkunft(item),
-          prompt: item.prompt,
-          given: Number.isInteger(picked) && item.options[picked] !== undefined
-            ? item.options[picked] : "",
-          correct,
-          points: correct ? max : 0,
-          maxPoints: max,
-          expected: item.options[item.answer]
-        });
-      } else {
-        const given = clean(raw);
-        const scored = await aiScore(given, item, askAnthropic, REGELN);
-        if (scored.source === "ki") aiUsed = true;
-        if (scored.needsReview) needsReview = true;
-        details.push({
-          nr: idx + 1,
-          type: "text",
-          teil: item.teil || "", ...herkunft(item),
-          prompt: item.prompt,
-          given,
-          correct: scored.points >= max,
-          points: scored.points,
-          maxPoints: max,
-          comment: scored.comment || "",
-          scoredBy: scored.source,
-          expected: item.expected || ""
-        });
-      }
-    }
-
-    const total = maxPoints(test);
-    const score = details.reduce((sum, d) => sum + d.points, 0);
-    const percent = total ? Math.round((score / total) * 100) : 0;
-    const note = grade(percent, kind.zug);
-
-    const record = {
-      id: `ia_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
-      testId,
-      testTitle: test.title,
-      unit: test.unit,
-      code, zug: kind.zug, lrs: kind.lrs, verlassen: verlassenZahl(req.body?.verlassen), protokoll: protokollSauber(req.body?.protokoll),
-      firstName, lastName, className,
-      studentKey: key,
-      testDate: testDate || new Date().toISOString().slice(0, 10),
-      score, total, percent, grade: note,
-      aiUsed, needsReview,
-      details,
-      deviceHash: deviceHash(req, HASH_SECRET),
-      submittedAt: new Date().toISOString()
-    };
-
-    // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
-    // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
-    const fresh = store.loadSubmissions();
-    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
+    /* ---- Auswertung und Speichern (auch nach Ablauf der Bearbeitungszeit: Die Seite gibt dann selbst ab) ---- */
+    const record = await abgabeSpeichern(test, kind, answers, req.body, { testDate, deviceHash: deviceHash(req, HASH_SECRET) });
+    if (!record) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
-    probeRegel.eintragen(record, probeRegel.ausAbgabe(req.body, REGEL_MODUL, testId, key));   // Testregeln: beendet = Note 6
-    fresh.submissions.push(record);
-    store.saveSubmissions(fresh);
-    probeRegel.vergessen(REGEL_MODUL, testId, key);
+    const { details } = record;
 
     res.json({
       ok: true,
       result: {
-        score, total, percent, grade: note,
-        needsReview,
+        score: record.score, total: record.total, percent: record.percent, grade: record.grade,
+        needsReview: record.needsReview,
         teile: teilSummen(details),
         details: details.map((d) => ({
           nr: d.nr, type: d.type, teil: d.teil, ...herkunft(d), prompt: d.prompt, given: d.given,
@@ -684,7 +831,7 @@ function registerInfoaustauschRoutes(app, opts) {
 
     rec.score = rec.details.reduce((sum, d) => sum + d.points, 0);
     rec.percent = rec.total ? Math.round((rec.score / rec.total) * 100) : 0;
-    rec.grade = grade(rec.percent, rec.zug);
+    rec.grade = grade(rec.percent, zugFuerNote(rec));
     probeRegel.note6(rec);
     rec.needsReview = rec.details.some((d) => d.scoredBy === "keywords");
 
@@ -700,7 +847,7 @@ function registerInfoaustauschRoutes(app, opts) {
     const db = store.loadSubmissions();
     const before = db.submissions.length;
     const weg = db.submissions.find((s) => s.id === id);
-    if (weg) probeRegel.vergessen(REGEL_MODUL, weg.testId, weg.studentKey);
+    if (weg) { probeRegel.vergessen(REGEL_MODUL, weg.testId, weg.studentKey); sitzLoeschen(weg.testId, weg.studentKey); }   // Nachschreiben: Uhr von vorn
     db.submissions = db.submissions.filter((s) => s.id !== id);
     if (db.submissions.length === before) {
       return res.status(404).json({ ok: false, error: "not_found" });
@@ -850,7 +997,7 @@ function registerInfoaustauschRoutes(app, opts) {
   probeRegel.modulAnmelden(REGEL_MODUL, { aufheben: probeRegel.aufhebenMit({
     lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
     schreiben: (d) => store.saveSubmissions(d),
-    neu: (rec) => { rec.grade = grade(rec.percent, rec.zug); }
+    neu: (rec) => { rec.grade = grade(rec.percent, zugFuerNote(rec)); }
   }) });
 
   return { abgaben: () => store.loadSubmissions().submissions };

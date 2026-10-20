@@ -36,8 +36,8 @@ const ABBRUCH_TEXT = {
   kopieren: () => "Probe beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6.",
   weg: (a) => `Probe beendet: Die Seite war insgesamt ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} verlassen (erlaubt ist höchstens 1 Minute; Wechsel unter 5 Sekunden zählen nicht). Deshalb Note 6.`
 };
-// automatisch abgegeben, aber ohne Note 6
-const AUTOMATISCH = ["ruhe", "gesperrt", "server"];
+// automatisch abgegeben, aber ohne Note 6 (zeit: Bearbeitungszeit der Probe abgelaufen, die Seite hat abgegeben – NT 9 Probe 2)
+const AUTOMATISCH = ["ruhe", "gesperrt", "server", "zeit"];
 const anzahl = (v) => Math.max(0, Math.min(999, Math.round(Number(v)) || 0));
 const clean = (v, max = 120) => String(v ?? "").trim().slice(0, max);
 
