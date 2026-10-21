@@ -72,6 +72,7 @@ const crypto = require("crypto");
 const nt7Tests = require("./nt7-fragen");
 const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 const probeRegel = require("./probe-regel");
+const Weiter = require("./probe-weiter");
 
 /**
  * @param app            Express-App
@@ -365,6 +366,8 @@ function registerNt7Routes(app, opts) {
   // Hat das Kind diese Probe schon abgegeben – oder (Nachschreibproben) die andere Variante derselben Probe?
   const schonAbgegeben = (data, test, student) => data.submissions.some(row => row.studentKey === student.key &&
     (row.testId === test.id || (test.gruppe && tests[row.testId] && tests[row.testId].gruppe === test.gruppe)));
+  // Abgabe genau dieser Probe, die das Kind weiterbearbeiten darf (die Lehrkraft erlaubt es in der Verwaltung) – sonst null
+  const weiterAbgabe = (data, test, student) => data.submissions.find(row => row.studentKey === student.key && row.testId === test.id && Weiter.darf(row)) || null;
   app.post(PREFIX + "/start", async (req,res) => {
     const test = tests[clean(req.body?.testId)];
     if (!test) return res.status(404).json({ok:false,error:"test_not_found"});
@@ -373,13 +376,13 @@ function registerNt7Routes(app, opts) {
     if (gesperrt && !SITZUNG) return res.status(403).json({ok:false,error:"locked"});
     const student = await probeKind(req, res);
     if (!student) return;
-    if (gesperrt && !sitzLesen().sitzungen[sitzKey(test, student)]) return schonAbgegeben(readData(), test, student) ? res.status(409).json({ok:false,error:"already_submitted"}) : res.status(403).json({ok:false,error:"locked"});
+    if (gesperrt && !sitzLesen().sitzungen[sitzKey(test, student)]) { const d = readData(); return schonAbgegeben(d, test, student) && !weiterAbgabe(d, test, student) ? res.status(409).json({ok:false,error:"already_submitted"}) : res.status(403).json({ok:false,error:"locked"}); }
     // Probe einer anderen Jahrgangsstufe (nur wenn opts.stufe gesetzt ist)
     if (STUFE && String(student.klasse || "").indexOf(STUFE) !== 0) return res.status(403).json({ok:false,error:"falsche_stufe",message:`Diese Probe ist für die ${STUFE}. Klassen.`});
     // Fassung für den anderen Zug: R-Kinder schreiben die R-Probe, M-Kinder die M-Probe
     if (test.zug && test.zug !== student.zug) return res.status(403).json({ok:false,error:"falscher_zug",message:`Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.`});
-    const data = readData();
-    if (schonAbgegeben(data, test, student)) return res.status(409).json({ok:false,error:"already_submitted"});
+    const data = readData(), weiter = weiterAbgabe(data, test, student);
+    if (schonAbgegeben(data, test, student) && !weiter) return res.status(409).json({ok:false,error:"already_submitted"});
     const antwort = {ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test),...(test.variante ? {variante:test.variante} : {}),...regelAngaben(test)},items:test.items.map(publicItem)};
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
@@ -391,6 +394,8 @@ function registerNt7Routes(app, opts) {
       antwort.sitzung = sitzAntwort(test, sitz);
       if (sitz.answers) antwort.zwischenstand = {answers:sitz.answers,gespeichertAm:sitz.gespeichertAm};
     }
+    // Weiterbearbeiten: die Antworten der Abgabe – außer es gibt schon einen neueren Zwischenstand auf dem Server
+    if (weiter) antwort.weiter = Weiter.startAngabe(weiter, !antwort.zwischenstand);
     return res.json(antwort);
   });
   // Zwischenstand sichern (alle paar Sekunden, solange das Kind arbeitet). Gibt nichts ab und bewertet nichts.
@@ -533,16 +538,20 @@ function registerNt7Routes(app, opts) {
       // Mit Sitzung: Wer begonnen hat, kann auch nach dem Sperren noch abgeben (die Lehrkraft sieht den Vermerk)
       const laufend = SITZUNG && Boolean(sitzLesen().sitzungen[sitzKey(test, student)]);
       if (!probeOffen(data.unlocked[test.id], true) && !laufend) return res.status(403).json({ok:false,error:"locked"});
-      if (schonAbgegeben(data, test, student)) return res.status(409).json({ok:false,error:"already_submitted"});
+      // Darf das Kind weiterbearbeiten (Lehrkraft, Verwaltung), ersetzt die neue Abgabe die alte
+      const alt = weiterAbgabe(data, test, student);
+      if (schonAbgegeben(data, test, student) && !alt) return res.status(409).json({ok:false,error:"already_submitted"});
       const {details, frei} = auswerten(test, req.body.answers);
       const regelStand = probeRegel.ausAbgabe(req.body, MODUL, test.id, student.key, regelVon(test));
       const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),protokoll:protokollSauber(req.body.protokoll),details,submittedAt:new Date().toISOString()};
       // nach dem Sperren von Hand abgegeben (Nachfrist): für die Lehrkraft vermerkt
       if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
+      const seite = Weiter.seiteSauber(req.body.seite);
+      if (seite) record.seite = seite;
       sitzungAngaben(test, student, record);
       rechne(record, test);
       probeRegel.eintragen(record, regelStand);                // Testregeln: Probe beendet = Note 6
-      data.submissions.push(record); writeData(data);          // ab hier ist die Abgabe sicher
+      Weiter.einfuegen(data.submissions, alt, record); writeData(data);   // ab hier ist die Abgabe sicher
       sitzungLoeschen(test, student);
       probeRegel.vergessen(MODUL, test.id, student.key);
       if (frei.length) await Promise.race([kiNachtragen(record.id, test, frei), warte(KI_GEDULD_MS)]);
@@ -646,14 +655,14 @@ function registerNt7Routes(app, opts) {
         if (!test || !sitz) return res.status(404).json({ok:false,error:"not_found",message:"Zu diesem Kind gibt es keinen Zwischenstand."});
         const { zugVonKlasse } = require("./probe-kind");
         const student = {code,klasse:sitz.klasse,zug:zugVonKlasse(sitz.klasse),lrs:false,firstName:"Code " + code,lastName:"",className:sitz.klasse,key:"code|" + code};
-        const data = readData();
-        if (schonAbgegeben(data, test, student)) return res.status(409).json({ok:false,error:"already_submitted"});
+        const data = readData(), alt = weiterAbgabe(data, test, student);
+        if (schonAbgegeben(data, test, student) && !alt) return res.status(409).json({ok:false,error:"already_submitted"});
         const {details, frei} = auswerten(test, sitz.answers || test.items.map(() => null));
         const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(sitz.verlassen),protokoll:sitz.protokoll,details,
           submittedAt:new Date().toISOString(),vonLehrkraft:true,standVom:sitz.gespeichertAm || sitz.begonnenAm};
         sitzungAngaben(test, student, record);
         rechne(record, test);
-        data.submissions.push(record); writeData(data);
+        Weiter.einfuegen(data.submissions, alt, record); writeData(data);
         sitzungLoeschen(test, student);
         if (frei.length) kiNachtragen(record.id, test, frei).catch(() => {});
         return res.json({ok:true,submissionId:record.id});
@@ -691,6 +700,11 @@ function registerNt7Routes(app, opts) {
     schreiben: writeData,
     neu: rec => { if (tests[rec.testId]) rechne(rec, tests[rec.testId]); }
   }) });
+  // Weiterbearbeiten nach der Abgabe (/api/probe-weiter/erlauben)
+  Weiter.modulAnmelden(MODUL, {
+    lesen: () => { const d = readData(); return {daten: d, liste: d.submissions}; },
+    schreiben: writeData
+  });
 
   // Fuer die Notenuebersicht je Klasse
   return { abgaben: () => readData().submissions };

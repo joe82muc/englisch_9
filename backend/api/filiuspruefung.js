@@ -26,6 +26,7 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { probeKindPruefer, GRADE_SCALE_R, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
 const probeRegel = require("./probe-regel");
+const Weiter = require("./probe-weiter");
 
 /* ------------------------------------------------------------------
    Notenschluessel (wie bei den anderen Proben)
@@ -475,7 +476,8 @@ function registerFiliusPruefungRoutes(app, opts) {
     if (!kind) return;
     const key = kind.key;
     const da = store.loadSubmissions().submissions.find((s) => s.testId === testId && s.studentKey === key);
-    if (da) {
+    // Schon abgegeben: kein zweiter Versuch – außer die Lehrkraft hat das Weiterbearbeiten erlaubt (Verwaltung)
+    if (da && !Weiter.darf(da)) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde die Pruefung bereits abgegeben.", submittedAt: da.submittedAt });
     }
 
@@ -483,7 +485,8 @@ function registerFiliusPruefungRoutes(app, opts) {
       ok: true,
       test: { id: test.id, title: test.title, unit: test.unit, maxPoints: maxA(test) + maxB(test), maxA: maxA(test), maxB: maxB(test) },
       items: test.items.map((it, i) => ({ nr: i + 1, type: it.type, prompt: it.prompt, options: it.options, points: Number(it.points) || 1 })),
-      upload: { aufgabe: test.upload.aufgabe, punkte: maxB(test) }
+      upload: { aufgabe: test.upload.aufgabe, punkte: maxB(test) },
+      ...(da ? { weiter: Weiter.startAngabe(da) } : {})
     });
   });
 
@@ -505,7 +508,7 @@ function registerFiliusPruefungRoutes(app, opts) {
     const key = kind.key;
     const db = store.loadSubmissions();
     const da = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
-    if (da) {
+    if (da && !Weiter.darf(da)) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Diese Pruefung wurde bereits abgegeben.", submittedAt: da.submittedAt });
     }
 
@@ -560,12 +563,16 @@ function registerFiliusPruefungRoutes(app, opts) {
     };
     // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+    // Darf das Kind weiterbearbeiten, ersetzt die neue Abgabe die alte
     const fresh = store.loadSubmissions();
-    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
+    const alt = fresh.submissions.find((s) => s.testId === testId && s.studentKey === key);
+    if (alt && !Weiter.darf(alt)) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
+    const seite = Weiter.seiteSauber(req.body?.seite);
+    if (seite) record.seite = seite;
     probeRegel.eintragen(record, probeRegel.ausAbgabe(req.body, REGEL_MODUL, testId, key));   // Testregeln: beendet = Note 6
-    fresh.submissions.push(record);
+    Weiter.einfuegen(fresh.submissions, alt, record);
     store.saveSubmissions(fresh);
     probeRegel.vergessen(REGEL_MODUL, testId, key);
 
@@ -686,6 +693,11 @@ function registerFiliusPruefungRoutes(app, opts) {
     schreiben: (d) => store.saveSubmissions(d),
     neu: (rec) => { rec.grade = gradeFromPercent(rec.percent, rec.zug); }
   }) });
+  // Weiterbearbeiten nach der Abgabe (/api/probe-weiter/erlauben) – die Filius-Datei lädt das Kind dann neu hoch
+  Weiter.modulAnmelden(REGEL_MODUL, {
+    lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
+    schreiben: (d) => store.saveSubmissions(d)
+  });
 
   return { abgaben: () => store.loadSubmissions().submissions };
 }

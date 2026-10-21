@@ -23,6 +23,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, GRADE_SCALE_R, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
 const probeRegel = require("./probe-regel");
+const Weiter = require("./probe-weiter");
 
 /* ------------------------------------------------------------------
    Notenschluessel Mittelschule (identisch zum Vokabeltest)
@@ -270,7 +271,8 @@ function registerNetzwerktestRoutes(app, opts) {
     const key = kind.key;
     const existing = store.loadSubmissions().submissions
       .find((s) => s.testId === testId && s.studentKey === key);
-    if (existing) {
+    // Schon abgegeben: kein zweiter Versuch – außer die Lehrkraft hat das Weiterbearbeiten erlaubt (Verwaltung)
+    if (existing && !Weiter.darf(existing)) {
       return res.status(409).json({
         ok: false, error: "already_submitted",
         message: "Mit diesem Code wurde die Probe bereits abgegeben.",
@@ -298,7 +300,8 @@ function registerNetzwerktestRoutes(app, opts) {
         unit: test.unit,
         maxPoints: maxPoints(test)
       },
-      items
+      items,
+      ...(existing ? { weiter: Weiter.startAngabe(existing) } : {})
     });
   });
 
@@ -322,7 +325,7 @@ function registerNetzwerktestRoutes(app, opts) {
     const key = kind.key;
     const db = store.loadSubmissions();
     const existing = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
-    if (existing) {
+    if (existing && !Weiter.darf(existing)) {
       // Serverseitige Sperre: Neuladen bringt nichts.
       return res.status(409).json({
         ok: false, error: "already_submitted",
@@ -398,12 +401,16 @@ function registerNetzwerktestRoutes(app, opts) {
 
     // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+    // Darf das Kind weiterbearbeiten, ersetzt die neue Abgabe die alte
     const fresh = store.loadSubmissions();
-    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) {
+    const alt = fresh.submissions.find((s) => s.testId === testId && s.studentKey === key);
+    if (alt && !Weiter.darf(alt)) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
+    const seite = Weiter.seiteSauber(req.body?.seite);
+    if (seite) record.seite = seite;
     probeRegel.eintragen(record, probeRegel.ausAbgabe(req.body, REGEL_MODUL, testId, key));   // Testregeln: beendet = Note 6
-    fresh.submissions.push(record);
+    Weiter.einfuegen(fresh.submissions, alt, record);
     store.saveSubmissions(fresh);
     probeRegel.vergessen(REGEL_MODUL, testId, key);
 
@@ -543,6 +550,11 @@ function registerNetzwerktestRoutes(app, opts) {
     schreiben: (d) => store.saveSubmissions(d),
     neu: (rec) => { rec.grade = gradeFromPercent(rec.percent, rec.zug); }
   }) });
+  // Weiterbearbeiten nach der Abgabe (/api/probe-weiter/erlauben)
+  Weiter.modulAnmelden(REGEL_MODUL, {
+    lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
+    schreiben: (d) => store.saveSubmissions(d)
+  });
 
   return { abgaben: () => store.loadSubmissions().submissions };
 }

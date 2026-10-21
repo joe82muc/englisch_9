@@ -71,6 +71,10 @@ app.use(ABGABE_ROUTEN, abgabeOhneErgebnis);
 // Die Proben-Module melden sich selbst an (probe-regel.js); hier nur Zählung und „Note 6 aufheben“.
 const { registerProbeRegel } = require("./probe-regel");
 registerProbeRegel(app, { dataDir: DATA_DIR, kindZumCode: probeKindZumCode, teacherPassword: TEACHER_PASSWORD });
+// Weiterbearbeiten nach der Abgabe (21.10.2026): Die Lehrkraft erlaubt es in der Verwaltung, das Kind öffnet die Probe wieder
+// (solange sie freigeschaltet ist), seine Antworten kommen zurück, die neue Abgabe ersetzt die alte (probe-weiter.js).
+const { registerProbeWeiter } = require("./probe-weiter");
+registerProbeWeiter(app, { teacherPassword: TEACHER_PASSWORD });
 
 // --- Vokabeltest-Modul (Freischaltung, Abgabe, Auswertung) ---
 const { registerVokabeltestRoutes } = require("./vokabeltest");
@@ -682,7 +686,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-20-nt9-probe3",
+    version: "2026-10-21-weiterbearbeiten",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

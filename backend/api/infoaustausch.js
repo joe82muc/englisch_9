@@ -50,6 +50,7 @@ const crypto = require("crypto");
 const { buildXlsx } = require("./xlsx-mini");
 const { probeKindPruefer, GRADE_SCALE_M, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
 const probeRegel = require("./probe-regel");
+const Weiter = require("./probe-weiter");
 
 /* ------------------------------------------------------------------
    Notenschluessel Informatik 7
@@ -479,10 +480,14 @@ function registerInfoaustauschRoutes(app, opts) {
 
       // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
       // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+      // Darf das Kind weiterbearbeiten (Lehrkraft, Verwaltung), ersetzt die neue Abgabe die alte.
       const fresh = store.loadSubmissions();
-      if (fresh.submissions.some((s) => s.testId === test.id && s.studentKey === key)) return null;
+      const alt = fresh.submissions.find((s) => s.testId === test.id && s.studentKey === key);
+      if (alt && !Weiter.darf(alt)) return null;
+      const seite = Weiter.seiteSauber(body && body.seite);
+      if (seite) record.seite = seite;
       probeRegel.eintragen(record, probeRegel.ausAbgabe(body, REGEL_MODUL, test.id, key, regelVon(test)));   // Testregeln: beendet = Note 6
-      fresh.submissions.push(record);
+      Weiter.einfuegen(fresh.submissions, alt, record);
       store.saveSubmissions(fresh);
       probeRegel.vergessen(REGEL_MODUL, test.id, key);
       if (test.abgabeMinuten) sitzLoeschen(test.id, key);
@@ -635,7 +640,9 @@ function registerInfoaustauschRoutes(app, opts) {
     const key = kind.key;
     const existing = store.loadSubmissions().submissions
       .find((s) => s.testId === testId && s.studentKey === key);
-    if (existing) {
+    // Schon abgegeben: kein zweiter Versuch – außer die Lehrkraft hat das Weiterbearbeiten erlaubt (Verwaltung). Mit
+    // Bearbeitungszeit beginnt die Uhr dann neu (die Sitzung der ersten Abgabe ist gelöscht).
+    if (existing && !Weiter.darf(existing)) {
       return res.status(409).json({
         ok: false, error: "already_submitted",
         message: "Mit diesem Code wurde die Probe bereits abgegeben.",
@@ -689,7 +696,9 @@ function registerInfoaustauschRoutes(app, opts) {
         ...(notenzugVon(test) ? { notenzug: notenzugVon(test) } : {}), ...regelAngaben(test)
       },
       items,
-      ...(sitzung ? { sitzung } : {}), ...(zwischenstand ? { zwischenstand } : {})
+      ...(sitzung ? { sitzung } : {}), ...(zwischenstand ? { zwischenstand } : {}),
+      // Weiterbearbeiten: die Antworten der Abgabe – außer es gibt schon einen neueren Zwischenstand auf dem Server
+      ...(existing ? { weiter: Weiter.startAngabe(existing, !zwischenstand) } : {})
     });
   });
 
@@ -732,7 +741,7 @@ function registerInfoaustauschRoutes(app, opts) {
     const key = kind.key;
     const db = store.loadSubmissions();
     const existing = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
-    if (existing) {
+    if (existing && !Weiter.darf(existing)) {
       // Serverseitige Sperre: Neuladen bringt nichts.
       return res.status(409).json({
         ok: false, error: "already_submitted",
@@ -999,6 +1008,11 @@ function registerInfoaustauschRoutes(app, opts) {
     schreiben: (d) => store.saveSubmissions(d),
     neu: (rec) => { rec.grade = grade(rec.percent, zugFuerNote(rec)); }
   }) });
+  // Weiterbearbeiten nach der Abgabe (/api/probe-weiter/erlauben)
+  Weiter.modulAnmelden(REGEL_MODUL, {
+    lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
+    schreiben: (d) => store.saveSubmissions(d)
+  });
 
   return { abgaben: () => store.loadSubmissions().submissions };
 }

@@ -11,8 +11,11 @@
  *   (zurueck / geoeffnet: wann die korrigierte Probe an das Kind zurückgegeben und von ihm geöffnet wurde – proben-rueckgabe.js;
  *    sichtbarBis / vorbei: 7 Tage nach der Rückgabe verschwindet sie beim Kind von selbst)
  *   (lrs: mit Notenschutz LRS gewertet; verlassen: so oft hat das Kind die Probe verlassen)
+ *   (weiter: { erlaubtAm, seite } – das Kind darf weiterbearbeiten; fassungen, vorher: so oft wurde weiterbearbeitet, die
+ *    Fassung davor – probe-weiter.js)
  */
 const crypto = require("crypto");
+const Weiter = require("./probe-weiter");
 
 function registerProbenNotenRoutes(app, options) {
   const teacherPassword = String(options.teacherPassword || "");
@@ -58,6 +61,8 @@ function registerProbenNotenRoutes(app, options) {
               kopierversuche: r.abbruch.kopierversuche || 0, verlassen: r.abbruch.verlassen || 0, aufgehoben: Boolean(r.abbruch.aufgehoben) } } : {}),
             ...(r.automatisch ? { automatisch: r.automatisch } : {}),
             ...(Number(r.wegSekunden) > 0 ? { wegSekunden: Number(r.wegSekunden) } : {}),
+            // Weiterbearbeiten (probe-weiter.js): weiter = { erlaubtAm, seite } solange erlaubt; fassungen/vorher nach dem neuen Abgeben
+            ...Weiter.anzeige(r),
             zurueck: zurueck ? zurueck.freigegebenAm || "" : "", geoeffnet: zurueck ? zurueck.geoeffnetAm || "" : "",
             // sichtbarBis: letzter Tag, an dem das Kind die Probe sieht; vorbei: Frist um, beim Kind verschwunden
             ...(zurueck && zurueck.sichtbarBis ? { sichtbarBis: zurueck.sichtbarBis } : {}), ...(zurueck && zurueck.vorbei ? { vorbei: true } : {})

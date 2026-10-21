@@ -12,6 +12,9 @@
      gesperrt), wird die Probe nur abgegeben – ohne Note 6.
    - Kopieren oder Einfügen: eine Warnung, beim 2. Versuch ist die Probe beendet – Note 6.
    - Nur die Vokabeltests zusätzlich: beim 5. Verlassen beendet (4 Warnungen) – das regelt vokabeltest.js selbst.
+   - Englisch seit 21.10.2026 (REGEL_ENGLISCH; Wunsch der Lehrkraft: „tu bei englisch die note 6 funktion raus bei verlassen
+     des tabs. die warnung bleibt trotzdem … copy past bleibt note 6 ohne vorwarnung“): Verlassen gibt keine Note 6 (die
+     Seite warnt weiter und hält es fest), schon der erste Versuch zu kopieren oder einzufügen beendet die Probe – Note 6.
    Zählen und Warnen macht die Seite (js/probe-schutz.js, Angabe regel). Beendet = die Seite gibt sofort ab, das
    Proben-Modul gibt Note 6 (abbruch in der Abgabe). Die Lehrkraft kann die Note 6 aufheben (Route aufheben).
 
@@ -30,10 +33,13 @@ const { probeKindPruefer } = require("./probe-kind");
 
 // verlassen: 0 = kein Höchstwert für die Zahl der Wechsel (nur Vokabeltests haben 5)
 const REGEL = { verlassen: 0, kopieren: 2, wegSekunden: 60 };
+// Englisch (Grammatikproben, große Proben Englisch 9): Verlassen ohne Note 6, erster Kopierversuch = Note 6
+const REGEL_ENGLISCH = { verlassen: 0, kopieren: 1, wegSekunden: 0 };
 const GRUENDE = ["verlassen", "kopieren", "weg"];
 const ABBRUCH_TEXT = {
   verlassen: (a) => `Test beendet: Die Testseite wurde ${a.verlassen}-mal verlassen (nach 4 Warnungen). Deshalb Note 6.`,
-  kopieren: () => "Probe beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6.",
+  kopieren: (a) => (a.max === 1 ? "Probe beendet: Versuch zu kopieren oder einzufügen (in dieser Probe ohne Vorwarnung). Deshalb Note 6."
+    : "Probe beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6."),
   weg: (a) => `Probe beendet: Die Seite war insgesamt ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} verlassen (erlaubt ist höchstens 1 Minute; Wechsel unter 5 Sekunden zählen nicht). Deshalb Note 6.`
 };
 // automatisch abgegeben, aber ohne Note 6 (zeit: Bearbeitungszeit der Probe abgelaufen, die Seite hat abgegeben – NT 9 Probe 2)
@@ -60,10 +66,12 @@ function abbruchAusAbgabe(body, gezaehlt, regel = REGEL, verlassenSeite = 0) {
   if (!grund && regel.wegSekunden && wegSumme > regel.wegSekunden && body.automatisch !== "gesperrt") grund = "weg";
   if (!grund && regel.verlassen && verlassen >= regel.verlassen) grund = "verlassen";
   if (!grund && regel.kopieren && kopierversuche >= regel.kopieren) grund = "kopieren";
+  // Eine ältere Seite meldet vielleicht noch „verlassen“, obwohl die Probe dafür keine Grenze hat
+  if (grund === "verlassen" && !regel.verlassen) grund = "";
   if (!grund) return null;
   const a = { grund, verlassen, kopierversuche, zeit: new Date().toISOString() };
   if (grund === "weg") a.sekunden = wegSumme || undefined;
-  a.text = ABBRUCH_TEXT[grund](a);
+  a.text = ABBRUCH_TEXT[grund]({ ...a, max: regel.kopieren });
   return a;
 }
 // Ohne Note 6 automatisch abgegeben (5 Minuten nichts eingegeben, Bildschirm gesperrt): nur ein Vermerk
@@ -75,9 +83,15 @@ function note6(rec) {
   if (rec && rec.abbruch && !rec.abbruch.aufgehoben) rec.grade = 6;
   return rec;
 }
+// Übergang (21.10.2026): Eine Seite von vor der Englisch-Regel schickt kein regelKopieren – sie hat beim ersten Kopierversuch
+// nur gewarnt. Dann gilt für sie weiter „beim 2. Versuch Note 6“, nicht „schon beim ersten“.
+function regelDerSeite(body, regel) {
+  return regel.kopieren === 1 && !(body && Number.isInteger(body.regelKopieren)) ? { ...regel, kopieren: 2 } : regel;
+}
 // Was die Abgabe zu den Testregeln sagt (null: Seite ohne Testregeln) – für eintragen()
 function ausAbgabe(body, modul, testId, studentKey, regel = REGEL) {
   if (!body || body.regel !== true) return null;
+  regel = regelDerSeite(body, regel);
   const gz = gezaehlt(modul, testId, studentKey);
   const abbruch = abbruchAusAbgabe(body, gz, regel);
   return { abbruch, automatisch: abbruch ? "" : automatischAusAbgabe(body),
@@ -201,5 +215,5 @@ function aufhebenMit({ lesen, schreiben, neu }) {
   };
 }
 
-module.exports = { REGEL, ABBRUCH_TEXT, AUTOMATISCH, abbruchAusAbgabe, automatischAusAbgabe, ausAbgabe, note6, eintragen, aufhebenSetzen,
+module.exports = { REGEL, REGEL_ENGLISCH, ABBRUCH_TEXT, AUTOMATISCH, regelDerSeite, abbruchAusAbgabe, automatischAusAbgabe, ausAbgabe, note6, eintragen, aufhebenSetzen,
   modulAnmelden, gezaehlt, vergessen, registerProbeRegel, aufhebenMit };

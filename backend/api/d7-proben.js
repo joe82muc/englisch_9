@@ -88,6 +88,13 @@
  *   teil       an jeder Aufgabe: Prüfungsteil ("A Listening" …) – die Seite setzt davor eine Überschrift
  *   Die KI bekommt zusätzlich die Regeln für die Fremdsprache (Inhalt vor Form beim Hör- und Leseverstehen,
  *   Sprachmittlung ist keine Übersetzung, Rückmeldung auf Deutsch).
+ *   Englisch seit 21.10.2026 (Wunsch der Lehrkraft): Testregeln probeRegel.REGEL_ENGLISCH – Verlassen gibt keine Note 6
+ *   (nur Warnung und Vermerk), schon der erste Kopierversuch beendet die Probe mit Note 6. Und keine Zeitbegrenzung („mach
+ *   auch bei englisch probe keine zeitbegrenzung also z.B. 60 minuten“): keine Restzeit auf der Seite (ohneZeit), keine
+ *   „überzogenen“ Minuten in der Abgabe – minutes der Probe ist nur noch ein Richtwert.
+ *
+ * Weiterbearbeiten nach der Abgabe (alle Fächer, probe-weiter.js): Erlaubt die Lehrkraft es in der Verwaltung, öffnet das
+ * Kind dieselbe Fassung wieder (solange sie freigeschaltet ist), seine Antworten kommen zurück, die neue Abgabe ersetzt die alte.
  */
 
 const fs = require("fs");
@@ -95,6 +102,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, probeOffen, verlassenZahl, LRS_REGEL, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 const probeRegel = require("./probe-regel");
+const Weiter = require("./probe-weiter");
 const Zeilen = require("./d7-zeilen");
 // Freigegebene Korrekturen sieht das Kind 7 Tage lang, dann verschwinden sie bei ihm von selbst (eine Regel für alle Proben)
 const { sichtbarBis, rueckgabeVorbei, VORBEI_TEXT } = require("./proben-rueckgabe");
@@ -270,9 +278,16 @@ function registerD7ProbenRoutes(app, opts) {
   const eigen = (test) => Boolean(test && test.eigen);
   const probeSchluessel = (test) => (eigen(test) ? test.id : String(test.nr));
   const gleicheProbe = (row, test) => (eigen(test) || eigen(tests[row.testId]) ? row.testId === test.id : row.nr === test.nr);
-  // Testregeln dieser Probe: wegSekunden an der Probe ersetzt die 1-Minuten-Grenze (0 = Verlassen gibt keine Note 6)
+  // Testregeln dieser Probe: wegSekunden an der Probe ersetzt die 1-Minuten-Grenze (0 = Verlassen gibt keine Note 6).
+  // Englisch: Verlassen ohne Note 6, erster Kopierversuch = Note 6 (REGEL_ENGLISCH)
   const hatWeg = (test) => test.wegSekunden !== undefined;
-  const regelVon = (test) => (hatWeg(test) ? { ...probeRegel.REGEL, wegSekunden: test.wegSekunden } : probeRegel.REGEL);
+  const regelVon = (test) => (FREMD ? probeRegel.REGEL_ENGLISCH : hatWeg(test) ? { ...probeRegel.REGEL, wegSekunden: test.wegSekunden } : probeRegel.REGEL);
+  // Was die Seite von den Testregeln wissen muss (Abweichungen von der Vorgabe) – und ob die Probe ohne Zeitbegrenzung läuft
+  const regelSeite = (test) => (FREMD ? { wegSekunden: 0, kopieren: probeRegel.REGEL_ENGLISCH.kopieren, ohneZeit: true } : hatWeg(test) ? { wegSekunden: test.wegSekunden } : {});
+  // Schon geschrieben (auch die andere Variante derselben Probe)? Und: die Abgabe genau dieser Fassung, die das Kind
+  // weiterbearbeiten darf (die Lehrkraft erlaubt es in der Verwaltung) – sonst null
+  const schonAbgabe = (data, test, studentKey) => data.submissions.find((row) => gleicheProbe(row, test) && row.studentKey === studentKey);
+  const weiterAbgabe = (data, test, studentKey) => data.submissions.find((row) => row.testId === test.id && row.studentKey === studentKey && Weiter.darf(row)) || null;
   const sitzKey = (test, student) => probeSchluessel(test) + "|" + student.key;
   const minutenVon = (test, s) => test.minutes + (Number(s && s.verlaengerung) || 0);
   function sitzAntwort(test, s, data) {
@@ -356,7 +371,7 @@ function registerD7ProbenRoutes(app, opts) {
   const hoertexteVon = (test) => test.texte.filter((t) => t.typ === "hoertext");
   const publicTest = (test, data) => ({ id: test.id, nr: test.nr, title: test.title, kurz: test.kurz || "", scope: test.scope || "", minutes: test.minutes, zug: test.zug, variante: test.variante,
     itemCount: test.items.length, maxPoints: maxPoints(test), unlocked: probeOffen(data.unlocked[test.id]), einfuegen: einfuegenVon(data, test.nr),
-    ...(test.notenzug ? { notenzug: test.notenzug } : {}), ...(eigen(test) ? { eigen: true } : {}), ...(hatWeg(test) ? { wegSekunden: test.wegSekunden } : {}),
+    ...(test.notenzug ? { notenzug: test.notenzug } : {}), ...(eigen(test) ? { eigen: true } : {}), ...regelSeite(test),
     ...(HOER_ZENTRAL && hoertexteVon(test).length ? { hoertexte: hoertexteVon(test).length } : {}),
     ...(SITZUNG ? { schutz: schutzVon(data, test.nr) } : {}) });
   // Einfügen in der Probe: gesperrt (Vorgabe) oder erlaubt und protokolliert – stellt die Lehrkraft je Probe ein
@@ -370,6 +385,8 @@ function registerD7ProbenRoutes(app, opts) {
     const s = (data.schutz || {})[nr] || {}, aus = { ...SCHUTZ_VORGABE };
     ["wechsel", "warnen", "spruenge", "timer"].forEach((k) => { if (typeof s[k] === "boolean") aus[k] = s[k]; });
     ["kopieren", "ausschneiden", "kontextmenue"].forEach((k) => { if (s[k] === "erlauben" || s[k] === "sperren") aus[k] = s[k]; });
+    // Englisch: keine Zeitbegrenzung – die Seite zeigt keine Restzeit (die Dauer hält der Server weiter fest)
+    if (FREMD) aus.timer = false;
     return aus;
   }
   // Protokoll des Probenmodus säubern: nur Zeiten und Mengen, höchstens 100 Einträge je Art
@@ -762,9 +779,10 @@ function registerD7ProbenRoutes(app, opts) {
     if (SITZUNG && !probeOffen(freigabe)) { const laufend = sitzLesen().sitzungen[sitzKey(test, student)]; if (!laufend || laufend.testId !== test.id) return res.status(403).json({ ok: false, error: "locked" }); }
     if (String(student.klasse || "").indexOf(String(STUFE)) !== 0) return res.status(403).json({ ok: false, error: "falsche_stufe", message: "Diese Probe ist für die " + STUFE + ". Klassen." });
     if (test.zug !== student.zug) return res.status(403).json({ ok: false, error: "falscher_zug", message: `Diese Probe ist für die ${test.zug === "M" ? "M-Klassen" : "R-Klassen"}. Wähle die Probe für deine Klasse.` });
-    const schon = readData().submissions.find((row) => gleicheProbe(row, test) && row.studentKey === student.key);
-    if (schon) return res.status(409).json({ ok: false, error: "already_submitted", message: schon.testId === test.id ? "Diese Probe wurde mit diesem Code bereits abgegeben." : "Du hast Probe " + test.nr + " schon geschrieben (Variante " + schon.variante + ")." });
-    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr), ...(eigen(test) ? { eigen: true } : {}), ...(hatWeg(test) ? { wegSekunden: test.wegSekunden } : {}) },
+    // Schon geschrieben: kein zweiter Versuch – außer die Lehrkraft hat das Weiterbearbeiten dieser Fassung erlaubt (Verwaltung)
+    const schon = schonAbgabe(readData(), test, student.key), weiter = weiterAbgabe(readData(), test, student.key);
+    if (schon && !weiter) return res.status(409).json({ ok: false, error: "already_submitted", message: schon.testId === test.id ? "Diese Probe wurde mit diesem Code bereits abgegeben." : "Du hast Probe " + test.nr + " schon geschrieben (Variante " + schon.variante + ")." });
+    const data = readData(), antwort = { ok: true, test: { id: test.id, nr: test.nr, title: test.title, scope: test.scope || "", minutes: test.minutes, maxPoints: maxPoints(test), zug: test.zug, variante: test.variante, hinweis: test.hinweis || "", einfuegen: einfuegenVon(data, test.nr), ...(eigen(test) ? { eigen: true } : {}), ...regelSeite(test) },
       texte: test.texte.map(startText), items: test.items.map(publicItem) };
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
@@ -774,6 +792,8 @@ function registerD7ProbenRoutes(app, opts) {
       antwort.sitzung = sitzAntwort(test, sitz, data);
       if (sitz.answers) antwort.zwischenstand = { answers: sitz.answers, plan: sitz.plan || {}, gespeichertAm: sitz.gespeichertAm };
     }
+    // Weiterbearbeiten: die Antworten der Abgabe – außer es gibt schon einen neueren Zwischenstand auf dem Server
+    if (weiter) antwort.weiter = Weiter.startAngabe(weiter, !antwort.zwischenstand);
     return res.json(antwort);
   });
   // Zwischenstand sichern (alle paar Sekunden, solange das Kind schreibt). Gibt nichts ab und bewertet nichts.
@@ -786,7 +806,7 @@ function registerD7ProbenRoutes(app, opts) {
     const answers = antwortenSauber(test, req.body.answers);
     if (!answers) return res.status(400).json({ ok: false, error: "bad_answers" });
     const data = readData();
-    if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+    if (schonAbgabe(data, test, student.key) && !weiterAbgabe(data, test, student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
     if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
     if (test.zug !== student.zug || String(student.klasse || "").indexOf(String(STUFE)) !== 0) return res.status(403).json({ ok: false, error: "falscher_zug" });
     try {
@@ -817,13 +837,18 @@ function registerD7ProbenRoutes(app, opts) {
     delete record.key;
     if (mehr.vonLehrkraft) record.vonLehrkraftAbgegeben = true;
     if (!probeOffen(data.unlocked[test.id])) record.nachSperre = true;
-    // Zeiten der Sitzung: Beginn, Dauer, erlaubte Zeit – nur zur Information der Lehrkraft, ohne Folgen für Punkte oder Note
+    // Stand der Probenseite: Erlaubt die Lehrkraft das Weiterbearbeiten, stehen damit die Antworten wieder da
+    const seite = Weiter.seiteSauber(mehr.seite);
+    if (seite) record.seite = seite;
+    // Zeiten der Sitzung: Beginn, Dauer, erlaubte Zeit – nur zur Information der Lehrkraft, ohne Folgen für Punkte oder Note.
+    // Englisch ohne Zeitbegrenzung: nur Beginn und Dauer (ohneZeit), nichts „überzogen“
     if (SITZUNG) {
       const sd = sitzLesen(), sitz = sd.sitzungen[sitzKey(test, student)];
       if (sitz && sitz.testId === test.id) {
         const ende = mehr.vonLehrkraft && sitz.gespeichertAm ? Date.parse(sitz.gespeichertAm) : Date.parse(record.submittedAt);
         const dauer = Math.max(0, Math.round((ende - Date.parse(sitz.begonnenAm)) / 60000)), erlaubt = minutenVon(test, sitz);
-        record.zeit = { begonnenAm: sitz.begonnenAm, minuten: dauer, erlaubt, ueber: Math.max(0, dauer - erlaubt), verlaengerung: Number(sitz.verlaengerung) || 0 };
+        record.zeit = FREMD ? { begonnenAm: sitz.begonnenAm, minuten: dauer, ohneZeit: true }
+          : { begonnenAm: sitz.begonnenAm, minuten: dauer, erlaubt, ueber: Math.max(0, dauer - erlaubt), verlaengerung: Number(sitz.verlaengerung) || 0 };
       }
     }
     if (mehr.regelStand) {
@@ -833,7 +858,8 @@ function registerD7ProbenRoutes(app, opts) {
       delete record.kommentar;
     }
     rechne(record);
-    data.submissions.push(record); writeData(data);            // ab hier ist die Abgabe sicher
+    // Weiterbearbeitet (mehr.alt): Die neue Abgabe ersetzt die alte
+    Weiter.einfuegen(data.submissions, mehr.alt || null, record); writeData(data);   // ab hier ist die Abgabe sicher
     if (SITZUNG) { try { const sd = sitzLesen(); delete sd.sitzungen[sitzKey(test, student)]; sitzSchreiben(sd); } catch (_e) {} }
     if (kiNoetig) kiKorrigieren(record.id);                    // läuft im Hintergrund weiter
     return record;
@@ -850,9 +876,10 @@ function registerD7ProbenRoutes(app, opts) {
     try {
       const data = readData();
       if (!probeOffen(data.unlocked[test.id], true)) return res.status(403).json({ ok: false, error: "locked" });
-      if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === student.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+      const alt = weiterAbgabe(data, test, student.key);
+      if (schonAbgabe(data, test, student.key) && !alt) return res.status(409).json({ ok: false, error: "already_submitted" });
       const record = abgabeAnlegen(data, test, student, req.body.answers, { verlassen: req.body.verlassen, protokoll: req.body.protokoll, plan: req.body.plan,
-        regelStand: probeRegel.ausAbgabe(req.body, REGEL_MODUL, test.id, student.key, regelVon(test)) });
+        seite: req.body.seite, alt, regelStand: probeRegel.ausAbgabe(req.body, REGEL_MODUL, test.id, student.key, regelVon(test)) });
       probeRegel.vergessen(REGEL_MODUL, test.id, student.key);
       return res.json({ ok: true, angekommen: true, abgabe: { testTitle: test.title, submittedAt: record.submittedAt } });
     } catch (err) {
@@ -941,11 +968,11 @@ function registerD7ProbenRoutes(app, opts) {
     const sd = SITZUNG ? sitzLesen() : { sitzungen: {} }, sitz = sitzFinden(sd, nr, clean(req.body.code, 3)), test = sitz && tests[sitz.testId];
     if (!sitz || !test) return res.status(404).json({ ok: false, error: "not_found", message: "Zu diesem Kind gibt es keinen Zwischenstand." });
     if (!sitz.answers) return res.status(409).json({ ok: false, error: "leer", message: "Für dieses Kind ist noch nichts gesichert." });
-    const data = readData();
-    if (data.submissions.some((row) => gleicheProbe(row, test) && row.studentKey === sitz.key)) return res.status(409).json({ ok: false, error: "already_submitted" });
+    const data = readData(), alt = weiterAbgabe(data, test, sitz.key);
+    if (schonAbgabe(data, test, sitz.key) && !alt) return res.status(409).json({ ok: false, error: "already_submitted" });
     const student = { code: sitz.code, klasse: sitz.klasse, zug: sitz.zug, lrs: Boolean(sitz.lrs), firstName: "Code " + sitz.code, lastName: "", className: sitz.klasse, key: sitz.key };
     try {
-      const record = abgabeAnlegen(data, test, student, sitz.answers, { plan: sitz.plan, vonLehrkraft: true });
+      const record = abgabeAnlegen(data, test, student, sitz.answers, { plan: sitz.plan, vonLehrkraft: true, alt });
       res.json({ ok: true, submission: fuerLehrkraft(record) });
     } catch (err) {
       console.error(FNAME + " Zwischenstand übernehmen:", err && err.message);
@@ -1118,6 +1145,11 @@ function registerD7ProbenRoutes(app, opts) {
       rechne(rec);
     }
   }) });
+  // Weiterbearbeiten nach der Abgabe (/api/probe-weiter/erlauben)
+  Weiter.modulAnmelden(REGEL_MODUL, {
+    lesen: () => { const d = readData(); return { daten: d, liste: d.submissions }; },
+    schreiben: writeData
+  });
 
   return { abgaben: () => readData().submissions, kiKorrigieren, nachholen, tests, markenAusKi, markenSauber };
 }

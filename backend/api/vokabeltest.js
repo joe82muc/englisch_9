@@ -18,6 +18,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber } = require("./probe-kind");
+const Weiter = require("./probe-weiter");
 const { verwandt } = require("./wortformen");
 
 /* ------------------------------------------------------------------
@@ -527,11 +528,17 @@ function createStore(dataDir) {
    nichts mehr eingegeben – Bildschirm gesperrt: dann nur abgegeben). Und nur die
    Vokabeltests: Wer 5 Minuten nichts eingibt, dessen Test wird automatisch abgegeben (ruheMinuten) – auch wenn die
    Seite geschlossen wurde (der Server gibt mit dem zuletzt gemeldeten Stand ab, siehe automatischAbgeben).
+   Seit 21.10.2026 für Englisch (alle Vokabeltests sind Englisch; Wunsch der Lehrkraft: „tu bei englisch die note 6
+   funktion raus bei verlassen des tabs. die warnung bleibt trotzdem … copy past bleibt note 6 ohne vorwarnung“):
+   Verlassen gibt keine Note 6 mehr (weder 5× noch insgesamt länger als 1 Minute) – jede Rückkehr bringt weiter eine
+   Warnung, Verlassen und Sekunden stehen bei der Abgabe. Schon der erste Versuch zu kopieren oder einzufügen beendet den
+   Test: Note 6, ohne Vorwarnung. verlassen 0 bzw. wegSekunden 0 heißt: dafür keine Note 6.
    ------------------------------------------------------------------ */
-const TEST_REGEL = { verlassen: 5, kopieren: 2, wegSekunden: 60, ruheMinuten: 5 };
+const TEST_REGEL = { verlassen: 0, kopieren: 1, wegSekunden: 0, ruheMinuten: 5 };
 const ABBRUCH_TEXT = {
   verlassen: (a) => `Test beendet: Die Testseite wurde ${a.verlassen}-mal verlassen (nach 4 Warnungen). Deshalb Note 6.`,
-  kopieren: () => "Test beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6.",
+  kopieren: (a) => (a.kopierversuche > 1 ? "Test beendet: zweiter Versuch zu kopieren oder einzufügen (nach einer Warnung). Deshalb Note 6."
+    : "Test beendet: Versuch zu kopieren oder einzufügen (in Englisch ohne Vorwarnung). Deshalb Note 6."),
   weg: (a) => `Test beendet: Die Testseite war insgesamt ${a.sekunden ? a.sekunden + " Sekunden" : "länger als 1 Minute"} verlassen (erlaubt ist höchstens 1 Minute; Wechsel unter 5 Sekunden zählen nicht). Deshalb Note 6.`
 };
 // Ohne Note 6 automatisch abgegeben: 5 Minuten nichts eingegeben (ruhe), Seite verlassen, nachdem 2 Minuten nichts mehr
@@ -541,12 +548,14 @@ const istZeit = (v) => typeof v === "string" && v.length <= 30 && !Number.isNaN(
 const anzahl = (v) => Math.max(0, Math.min(999, Math.round(Number(v)) || 0));
 // Grund für das Ende des Tests: was die Seite meldet, sonst aus den Zahlen
 // wegSumme: Sekunden insgesamt verlassen; automatisch "gesperrt": ohne Note 6 abgegeben (Bildschirm gesperrt nach 2 Minuten Ruhe)
-function abbruchGrund(angabe, verlassen, kopierversuche, wegSumme = 0, automatisch = "") {
+// kopierGrenze: ab welchem Kopierversuch beendet ist (eine ältere Seite ohne regelKopieren hat beim ersten nur gewarnt: 2)
+function abbruchGrund(angabe, verlassen, kopierversuche, wegSumme = 0, automatisch = "", kopierGrenze = TEST_REGEL.kopieren) {
   const g = String((angabe && typeof angabe === "object" ? angabe.grund : angabe) || "");
-  if (g === "verlassen" || g === "kopieren" || g === "weg") return g;
-  if (wegSumme > TEST_REGEL.wegSekunden && automatisch !== "gesperrt") return "weg";
-  if (verlassen >= TEST_REGEL.verlassen) return "verlassen";
-  if (kopierversuche >= TEST_REGEL.kopieren) return "kopieren";
+  // Eine ältere, noch offene Seite meldet vielleicht noch „verlassen“ oder „weg“ – ohne diese Regel gilt das nicht
+  if ((g === "verlassen" && TEST_REGEL.verlassen) || (g === "weg" && TEST_REGEL.wegSekunden) || (g === "kopieren" && kopierGrenze)) return g;
+  if (TEST_REGEL.wegSekunden && wegSumme > TEST_REGEL.wegSekunden && automatisch !== "gesperrt") return "weg";
+  if (TEST_REGEL.verlassen && verlassen >= TEST_REGEL.verlassen) return "verlassen";
+  if (kopierGrenze && kopierversuche >= kopierGrenze) return "kopieren";
   return "";
 }
 
@@ -724,11 +733,11 @@ function registerVokabeltestRoutes(app, opts) {
     const kind = await probeKind(req, res);
     if (!kind) return;
 
-    // Bereits abgegeben? -> kein zweiter Versuch
+    // Bereits abgegeben? -> kein zweiter Versuch, außer die Lehrkraft erlaubt das Weiterbearbeiten
     const key = kind.key;
     const existing = store.loadSubmissions().submissions
       .find((s) => s.testId === testId && s.studentKey === key);
-    if (existing) {
+    if (existing && !Weiter.darf(existing)) {
       return res.status(409).json({
         ok: false, error: "already_submitted",
         message: "Mit diesem Code wurde der Test bereits abgegeben.",
@@ -754,7 +763,8 @@ function registerVokabeltestRoutes(app, opts) {
       items,
       regel: TEST_REGEL,
       vorfaelle: { verlassen: anzahl(bisher.verlassen), kopieren: anzahl(bisher.kopieren), wegSumme: anzahl(bisher.wegSumme),
-        weg: bisher.sichtbar === false && istZeit(bisher.weg) ? bisher.weg : null, aktiv: istZeit(bisher.aktiv) ? bisher.aktiv : null }
+        weg: bisher.sichtbar === false && istZeit(bisher.weg) ? bisher.weg : null, aktiv: istZeit(bisher.aktiv) ? bisher.aktiv : null },
+      ...(existing ? { weiter: Weiter.startAngabe(existing) } : {})
     });
   });
 
@@ -772,7 +782,7 @@ function registerVokabeltestRoutes(app, opts) {
     }
     const kind = await probeKind(req, res);
     if (!kind) return;
-    if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === kind.key)) {
+    if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === kind.key && !Weiter.darf(s))) {
       return res.status(409).json({ ok: false, error: "already_submitted" });
     }
     const db = store.loadVorfaelle();
@@ -821,10 +831,12 @@ function registerVokabeltestRoutes(app, opts) {
     const verlassen = Math.max(verlassenZahl(angaben.verlassen), anzahl(gezaehlt.verlassen));
     const kopierversuche = Math.max(anzahl(angaben.kopierversuche), anzahl(gezaehlt.kopieren));
     const wegSumme = Math.max(anzahl(angaben.wegSumme), anzahl(gezaehlt.wegSumme), anzahl(angaben.abbruch && angaben.abbruch.sekunden));
-    const grund = angaben.regel === true ? abbruchGrund(angaben.abbruch, verlassen, kopierversuche, wegSumme, angaben.automatisch) : "";
+    // Übergang (21.10.2026): Seiten ohne regelKopieren (ältere, noch offene Seite; Abgabe durch den Server) – erst beim 2. Versuch
+    const kopierGrenze = Number.isInteger(angaben.regelKopieren) ? TEST_REGEL.kopieren : Math.max(2, TEST_REGEL.kopieren);
+    const grund = angaben.regel === true ? abbruchGrund(angaben.abbruch, verlassen, kopierversuche, wegSumme, angaben.automatisch, kopierGrenze) : "";
     const submittedAt = new Date().toISOString();
     const sekunden = grund === "weg" ? wegSumme : 0;
-    const abbruch = grund ? { grund, verlassen, kopierversuche, ...(sekunden ? { sekunden } : {}), zeit: submittedAt, text: ABBRUCH_TEXT[grund]({ verlassen, sekunden }) } : null;
+    const abbruch = grund ? { grund, verlassen, kopierversuche, ...(sekunden ? { sekunden } : {}), zeit: submittedAt, text: ABBRUCH_TEXT[grund]({ verlassen, sekunden, kopierversuche }) } : null;
     const automatisch = !abbruch && angaben.regel === true && AUTOMATISCH.includes(angaben.automatisch) ? angaben.automatisch : "";
     const grade = abbruch ? 6 : punkte.grade;
 
@@ -846,12 +858,17 @@ function registerVokabeltestRoutes(app, opts) {
       deviceHash: angaben.deviceHash || "",
       submittedAt
     };
+    // Stand der Testseite: Erlaubt die Lehrkraft das Weiterbearbeiten, stehen damit die Antworten wieder da
+    const seite = Weiter.seiteSauber(angaben.seite);
+    if (seite) record.seite = seite;
 
     // Erst jetzt frisch laden: Waehrend der KI-Pruefung koennen andere Kinder
     // abgegeben haben. Mit dem alten Stand wuerden deren Abgaben ueberschrieben.
+    // Darf das Kind weiterbearbeiten (Lehrkraft, Verwaltung), ersetzt die neue Abgabe die alte.
     const fresh = store.loadSubmissions();
-    if (fresh.submissions.some((s) => s.testId === testId && s.studentKey === key)) return { error: "already_submitted" };
-    fresh.submissions.push(record);
+    const alt = fresh.submissions.find((s) => s.testId === testId && s.studentKey === key);
+    if (alt && !Weiter.darf(alt)) return { error: "already_submitted" };
+    Weiter.einfuegen(fresh.submissions, alt, record);
     store.saveSubmissions(fresh);
     vorfallWeg(testId, key);   // die Zahlen stehen jetzt in der Abgabe
     return { record };
@@ -876,13 +893,15 @@ function registerVokabeltestRoutes(app, opts) {
         if (!(jetzt - kontakt >= (v.sichtbar === false ? WEG_MS : STILL_MS))) continue;
         const testId = k.slice(0, k.indexOf("|")), test = TESTS[testId];
         if (!test) continue;
-        if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === v.kind.key)) { vorfallWeg(testId, v.kind.key); continue; }
+        // Schon abgegeben (und nicht zum Weiterbearbeiten freigegeben): nichts mehr zu tun
+        if (store.loadSubmissions().submissions.some((s) => s.testId === testId && s.studentKey === v.kind.key && !Weiter.darf(s))) { vorfallWeg(testId, v.kind.key); continue; }
         // Seit dem Verlassen bis jetzt weg: zählt zur Summe. Insgesamt mehr als 1 Minute = Note 6 – außer das Kind hatte vor dem
         // Verlassen schon 2 Minuten nichts mehr eingegeben (fertig, Bildschirm gesperrt): dann nur abgegeben
+        // (Englisch seit 21.10.2026: wegSekunden 0 – Verlassen gibt keine Note 6, abgegeben wird trotzdem)
         const wegSeit = v.sichtbar === false && istZeit(v.weg) ? Math.round((jetzt - Date.parse(v.weg)) / 1000) : 0;
         const summe = anzahl(v.wegSumme) + (wegSeit >= 5 ? wegSeit : 0);
         const ruhigVorher = istZeit(v.weg) && istZeit(v.aktiv) && Date.parse(v.weg) - Date.parse(v.aktiv) >= 110 * 1000;
-        const beendet = summe > TEST_REGEL.wegSekunden && !ruhigVorher;
+        const beendet = Boolean(TEST_REGEL.wegSekunden) && summe > TEST_REGEL.wegSekunden && !ruhigVorher;
         const r = await abgabeSpeichern(test, v.kind, v.answers, { testDate: v.testDate, verlassen: anzahl(v.verlassen) + (wegSeit >= 5 ? 1 : 0), protokoll: null, regel: true,
           kopierversuche: v.kopieren, wegSumme: Math.min(999, summe), abbruch: beendet ? { grund: "weg", sekunden: Math.min(999, summe) } : null,
           automatisch: beendet ? "" : ruhigVorher && wegSeit ? "gesperrt" : "server" });
@@ -916,7 +935,7 @@ function registerVokabeltestRoutes(app, opts) {
     const key = kind.key;
     const db = store.loadSubmissions();
     const existing = db.submissions.find((s) => s.testId === testId && s.studentKey === key);
-    if (existing) {
+    if (existing && !Weiter.darf(existing)) {
       // Serverseitige Sperre: Neuladen bringt nichts.
       return res.status(409).json({
         ok: false, error: "already_submitted",
@@ -927,7 +946,7 @@ function registerVokabeltestRoutes(app, opts) {
 
     const r = await abgabeSpeichern(test, kind, answers, { testDate, verlassen: req.body?.verlassen, protokoll: req.body?.protokoll,
       regel: req.body?.regel, kopierversuche: req.body?.kopierversuche, wegSumme: req.body?.wegSumme, abbruch: req.body?.abbruch, automatisch: req.body?.automatisch,
-      deviceHash: deviceHash(req, HASH_SECRET) });
+      seite: req.body?.seite, regelKopieren: req.body?.regelKopieren, deviceHash: deviceHash(req, HASH_SECRET) });
     if (r.error) {
       return res.status(409).json({ ok: false, error: "already_submitted", message: "Mit diesem Code wurde bereits abgegeben." });
     }
@@ -1251,6 +1270,12 @@ function registerVokabeltestRoutes(app, opts) {
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="vokabeltest_${testId || "alle"}.csv"`);
     res.send("﻿" + lines.join("\r\n"));
+  });
+
+  // Weiterbearbeiten nach der Abgabe: Die Lehrkraft erlaubt es in der Verwaltung (/api/probe-weiter/erlauben)
+  Weiter.modulAnmelden("vokabeltest", {
+    lesen: () => { const d = store.loadSubmissions(); return { daten: d, liste: d.submissions }; },
+    schreiben: (d) => store.saveSubmissions(d)
   });
 
   return { abgaben: () => store.loadSubmissions().submissions, automatischAbgeben };
