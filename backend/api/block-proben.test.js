@@ -27,8 +27,11 @@ const NT7_THEMA = { luft2: "luft" };
 const NT9_BLOECKE = {
   rohstoffe: ["m1", "m2", "m3", "m4", "m5", "m6", "m7"],
   radioaktivitaet: ["ra-nachweis", "ra-strahlungsarten", "ra-halbwertszeit", "ra-c14", "ra-folgen", "ra-anwendung"],
-  kernenergie: ["ke-kernspaltung", "ke-kettenreaktion", "ke-kraftwerk", "ke-risiken"]
+  kernenergie: ["ke-kernspaltung", "ke-kettenreaktion", "ke-kraftwerk", "ke-risiken"],
+  // seit 22.10.2026 (9M), seit 22.10.2026 auch 9R – dort ohne ku3 (Zusatzmodul, 9M-Stoff)
+  kunststoffe: ["ku1", "ku2", "ku3", "ku4", "ku5"]
 };
+const NT9_R_MODULE = { kunststoffe: ["ku1", "ku2", "ku4", "ku5"] };
 const ALT7 = ["nt7-luft-1", "nt7-luft-2", "nt7-p1-r", "nt7-p1-m", "nt7-p2-r", "nt7-p2-m", "nt7-p3-r", "nt7-p3-m", "nt7-p4-r", "nt7-p4-m"];
 // Schätzung wie im Prüfprogramm der Aufgaben (.codex-build/proben-werkzeug/pruefe-block.js)
 const minuten = (it, pt) => (it.type === "choice" ? 0.75 : it.type === "text" ? 1 + 0.9 * pt : 0.5 + 0.4 * pt);
@@ -75,11 +78,12 @@ test("NT 7: je Themenbereich eine Probe für R und M – alle Module, 30 bis 45 
   ALT7.forEach((id) => assert.equal(nt7[id].alt, true, id + " ist eine frühere Fassung"));
 });
 
-test("NT 9: drei Themenblöcke je Zug – alle Module, 30 bis 45 Minuten; die lange Probe bleibt als frühere Fassung", () => {
+test("NT 9: vier Themenblöcke je Zug – alle Module, 30 bis 45 Minuten; die lange Probe bleibt als frühere Fassung", () => {
   // dazu seit 20.10.2026 Probe 2 und 3 Organische Rohstoffe (nur Ankreuzen und Zuordnen) – geprüft in nt9-probe2.test.js
   assert.deepEqual(Object.keys(NT9).sort(), ["nt9m-probe1", "nt9r-probe1", "nt9m-rohstoffe2", "nt9r-rohstoffe2", "nt9m-rohstoffe3", "nt9r-rohstoffe3", ...Object.keys(NT9_BLOECKE).flatMap((b) => ["nt9m-" + b, "nt9r-" + b])].sort());
-  for (const [block, module] of Object.entries(NT9_BLOECKE)) {
+  for (const [block, alleModule] of Object.entries(NT9_BLOECKE)) {
     for (const zug of ["M", "R"]) {
+      const module = zug === "R" && NT9_R_MODULE[block] ? NT9_R_MODULE[block] : alleModule;
       const id = "nt9" + zug.toLowerCase() + "-" + block, t = NT9[id];
       assert.deepEqual([t.id, t.classLevel, t.thema, t.alt], [id, "9" + zug, block, undefined], id);
       const jeModul = {}, arten = {};

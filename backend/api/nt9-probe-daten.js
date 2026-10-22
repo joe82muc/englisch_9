@@ -311,6 +311,7 @@ const probeR = {
  *   rohstoffe        – Auswahl aus der langen Probe oben (dieselben Aufgaben, neue Kennungen nt9m-/nt9r-rohstoffe)
  *   radioaktivitaet  – nt9-block-radioaktivitaet.js
  *   kernenergie      – nt9-block-kernenergie.js
+ *   kunststoffe      – nt9-block-kunststoffe.js (seit 22.10.2026 9M mit ku1 bis ku5, seit 22.10.2026 9R ohne den 9M-Stoff)
  * Jede Aufgabe nennt ihr Modul: teil = Titel des Moduls (das sehen die Kinder), modul = Kennung aus
  * 9M/NT_9/themen.js (für die Verwaltung), Transferaufgaben: teil „Transfer“, transfer: true.
  * Die lange Probe (nt9m-probe1, nt9r-probe1, etwa 60 Minuten) bleibt als frühere Fassung (alt) erhalten:
@@ -330,9 +331,9 @@ const bloecke = [
   rohstoffBlock(probeM, "nt9m-rohstoffe", 45, [0, 1, 3, 4, 6, 7, 9, 10, 13, 14, 15, 17, 19, 22, 23, 25, 27, 29, 31, 34, 35, 36], { 35: "m5", 36: "m7" }),
   rohstoffBlock(probeR, "nt9r-rohstoffe", 40, [0, 1, 3, 5, 6, 9, 10, 11, 14, 15, 16, 17, 20, 22, 23, 25, 26, 31, 32, 34, 35, 36], { 35: "m5", 36: "m7" })
 ];
-["radioaktivitaet", "kernenergie"].forEach((block) => {
+["radioaktivitaet", "kernenergie", "kunststoffe"].forEach((block) => {
   const b = JSON.parse(JSON.stringify(require("./nt9-block-" + block)));
-  [b.probeM, b.probeR].forEach((p) => {
+  [b.probeM, b.probeR].filter(Boolean).forEach((p) => {
     p.items.forEach((it) => {
       if (it.type === "text") it.keywordsVoll = 2;
       if (it.type === "match") it.points = it.rows.length;
