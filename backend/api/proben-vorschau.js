@@ -19,7 +19,7 @@
  *   text     { expected, criteria, lines }       schreiben { raster: [{ name, text, punkte }], minWoerter, plan }
  *   zeile    { bereiche: [[von, bis]] }          felder { felder: [{ label, loesungen }], menge }
  *   komma    { saetze }  (mit allen Kommas)      vokabeln { zeilen: [{ prompt, hint, solutions }] }
- *   datei    { checks: [{ text, punkte }], kiPunkte }
+ *   datei    { checks: [{ text, punkte }], kiPunkte, kiKriterien?, expected? }  (Filius-Prüfung; Informatik 9 Probe 1b)
  * Für alle: prompt, points; wahlweise abschnitt, anweisung, material, hilfe, textRef, zeilenBezug, image, imageAlt,
  * tabelle, diagramm, modulTitel, kompetenz, transfer.
  *
@@ -48,6 +48,13 @@ function ausNt(test) {
           expected: a.expected || "",
           criteria: ["An: " + s.an + " (Schlüssel)", "Cc: " + s.cc + " (Schlüssel)", "Bcc: " + s.bcc + " (Schlüssel)", "Anhang: " + s.anhang + " (Schlüssel)"]
             .concat((a.criteria || []).map((k) => k + " (KI)")) };
+      }
+      // Filius-Datei (Informatik 9, Probe 1b): wie die Datei-Abgabe der Filius-Prüfung – Auftrag, Prüfpunkte des
+      // Prüfprogramms und was die KI zusätzlich bewertet
+      if (a.type === "filius") {
+        return { type: "datei", prompt: [a.prompt].concat(a.aufgabe || []).join("\n"), points: punkte(a.points), ...nimm(a, BEIWERK),
+          checks: (a.checks || []).map((c) => ({ text: c.text, punkte: c.punkte })), kiPunkte: Number(a.kiPunkte) || 0,
+          ...(a.kiKriterien ? { kiKriterien: [].concat(a.kiKriterien) } : {}), ...(a.expected ? { expected: a.expected } : {}) };
       }
       const z = { type: a.type, prompt: a.prompt, points: punkte(a.points),
         ...nimm(a, BEIWERK.concat(["options", "answer", "answers", "statements", "wahl", "pairs", "steps", "text", "gaps", "unit", "units", "tolerance", "labor", "expected", "criteria"])) };

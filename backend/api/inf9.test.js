@@ -105,15 +105,16 @@ test("Freischalten: Informatik 9 hat einen eigenen Stand, nur für 9. Klassen", 
 });
 
 test("Proben: je Probe zwei Kennungen mit demselben Inhalt und derselben Antwortreihenfolge", () => {
-  assert.equal(IDS.length, 10, "fünf Proben, je eine Kennung für 9R und 9M");
+  assert.equal(IDS.length, 12, "fünf Proben und Probe 1b (nur Einheit N1), je eine Kennung für 9R und 9M");
   IDS.forEach((id) => {
     const p = proben[id];
-    assert.match(id, /^inf9-p[1-5]-[rm]$/, id);
+    assert.match(id, /^inf9-p([1-5]|1b)-[rm]$/, id);
     assert.equal(p.id, id);
     assert.equal(p.zug, id.endsWith("-r") ? "R" : "M", id);
     assert.equal(p.thema, MODULE[Number(id[6]) - 1], id + ": Modul passt nicht zur Nummer");
     assert.match(p.title, p.zug === "R" ? /\(9R\)/ : /\(9M\)/, id);
-    assert.ok(p.minutes >= 15 && p.minutes <= 20, id + ": 15 bis 20 Minuten");
+    // Probe 1b hat einen Praxisteil in Filius: 30 Minuten
+    assert.ok(p.minutes >= 15 && p.minutes <= (/^inf9-p1b-/.test(id) ? 30 : 20), id + ": 15 bis 20 Minuten (Probe 1b: 30)");
     const andere = proben[id.replace(/-[rm]$/, id.endsWith("-r") ? "-m" : "-r")];
     assert.ok(andere, id + ": Kennung für den anderen Zug fehlt");
     assert.deepEqual(p.items, andere.items, id + ": R9 und M9 müssen dieselben Aufgaben in derselben Reihenfolge bekommen");

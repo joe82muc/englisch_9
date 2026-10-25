@@ -25,6 +25,11 @@ const c = (prompt, options, answer, extra) => ({ type: "choice", prompt, options
 const m = (prompt, pairs, extra) => ({ type: "match", prompt, pairs, points: pairs.length, ...(extra || {}) });
 const o = (prompt, steps, extra) => ({ type: "order", prompt, steps, points: steps.length, ...(extra || {}) });
 const t = (prompt, expected, criteria, keywords, extra) => ({ type: "text", prompt, expected, criteria, keywords, points: criteria.length, ...(extra || {}) });
+// Richtig/falsch: 1 Punkt je Aussage – wird NICHT gemischt, also richtig und falsch von Hand abwechseln
+const rf = (prompt, statements, extra) => ({ type: "tf", prompt, statements, points: statements.length, ...(extra || {}) });
+// Filius-Datei (nt7.js, Aufgabenart "filius"): checks = Prüfprogramm, kiPunkte + kiKriterien = KI (wohlwollend)
+const fl = (prompt, aufgabe, checks, kiPunkte, kiKriterien, expected, extra) => ({ type: "filius", prompt, aufgabe, checks, kiPunkte, kiKriterien, expected,
+  points: checks.reduce((s, x) => s + x.punkte, 0) + kiPunkte, ...(extra || {}) });
 
 // Je Probe: nr (1–5), thema, minutes, titel (ohne Klasse), scope, items
 const PRAXIS = { image: "assets/proben/p1-praxis.svg", imageAlt: "Netzplan einer Arztpraxis. Links ein Switch, daran drei Rechner: Empfang (192.168.4.20), Zimmer 1 (192.168.4.21) und Zimmer 2 (192.168.4.22). Vom Switch führt ein Kabel zu einem Router in der Mitte. Rechts vom Router ein zweiter Switch mit dem Rechner Labor (192.168.6.20)." };
@@ -42,6 +47,9 @@ const LAUFEN = { image: "assets/proben/p5-laufen.png", imageAlt: "Programm aus B
 const ZAEHLEN = { image: "assets/proben/p5-zaehlen.png", imageAlt: "Programm aus Blöcken: Wenn Start angeklickt wird – setze punkte auf 0 – wiederhole 3 mal: ändere punkte um 2 – danach, unter der Wiederholung: sage punkte." };
 const TEST = { image: "assets/proben/p5-test.png", imageAlt: "Programm aus Blöcken: Wenn Start angeklickt wird – frage „Wie viele Punkte hast du?“ und warte – falls Antwort größer als 49 dann: sage „Bestanden!“ – sonst: sage „Übe noch.“" };
 const RUNDEN = { image: "assets/proben/p5-runden.png", imageAlt: "Programm aus Blöcken: Wenn Start angeklickt wird – wiederhole 6 mal: setze runden auf 0, ändere runden um 1 – danach, unter der Wiederholung: sage runden." };
+
+// Probe 1b: Bild zum Praxisteil (zwei Rechner, ein Kabel)
+const LADEN = { image: "assets/proben/p1b-laden.svg", imageAlt: "Skizze „So soll dein Netz aussehen“: links ein Rechner mit dem Namen Kasse und der IP-Adresse 192.168.0.20, rechts ein Rechner mit dem Namen Büro und der IP-Adresse 192.168.0.21. Ein Kabel verbindet die beiden." };
 
 const GEMEINSAM = [
   /* ================= Probe 1: Netzwerke mit Filius (Modul 1) ================= */
@@ -74,6 +82,57 @@ const GEMEINSAM = [
         "Ich verbinde den Rechner mit einem Kabel mit dem Switch im Labor. Dann gebe ich ihm eine eigene, freie IP-Adresse aus dem Netz 192.168.6.x (und trage das Gateway ein).",
         ["mit einem Kabel an den Switch anschließen (verbinden)", "eine eigene, passende IP-Adresse vergeben (auch: das Gateway eintragen)"],
         ["kabel|verbind|anschlie|ansteck|switch", "adresse|ip-nummer|ip-|ip |gateway"])
+    ] },
+
+  /* ================= Probe 1b: nur Einheit N1 „Netzwerke kennenlernen“ (25.10.2026) =================
+     Auftrag der Lehrkraft: gleiche Probe für 9M und 9R, 50 % = Note 3, nur über N1, mit einem kleinen Praxisteil:
+     in Filius zwei Rechner verbinden, Datei abgeben, Prüfung mit KI – „ganz einfach“. Teil A 14 Punkte, Teil B 6.
+     Am PC: Die Kinder wechseln zu Filius und kopieren vielleicht die Adressen aus der Probe – darum weder fürs
+     Verlassen noch fürs Kopieren eine Note 6 (wegSekunden 0, kopieren 0: nur Warnung und Vermerk). */
+  { nr: "1b", thema: "netzwerke", minutes: 30, titel: "Netzwerke kennenlernen", wegSekunden: 0, kopieren: 0,
+    scope: "Einheit N1: Netzwerk, IP-Adresse, Switch, Router, Accesspoint, Datenpakete, Filius (Entwurfs- und Aktionsmodus), ping, drei typische Fehler · Praxis: zwei Rechner in Filius verbinden",
+    items: [
+      // Gegengelesen 25.10.2026 (unabhängiger Leser): Ablenker ohne Scherzantworten, Aufgabe 5 mit echten Filius-Schritten,
+      // Aufgabe 6 nennt die Zieladresse (ping an die eigene Adresse antwortet auch), Praxis-Schritte vollständig, KI nur Namen
+      c("Wann spricht man von einem Netzwerk?",
+        ["wenn Geräte verbunden sind und Daten austauschen", "wenn mehrere Geräte im selben Raum stehen", "wenn ein Computer am Strom angeschlossen ist", "wenn auf einem Computer viele Programme laufen"], 0),
+      c("Warum braucht jedes Gerät im Netzwerk eine eigene IP-Adresse?",
+        ["damit die Daten beim richtigen Gerät ankommen", "damit das Gerät einen Namen bekommt", "damit das Gerät schneller hochfährt", "damit man im Netz keinen Switch mehr braucht"], 0),
+      m("Welches Gerät brauchst du? Ordne zu.",
+        [["Im Computerraum sollen fünf PCs über Kabel Daten austauschen.", "Switch"],
+         ["Das Netz der Bücherei soll mit dem Internet verbunden werden.", "Router"],
+         ["Die Besucher sollen mit ihren Handys ins WLAN der Bücherei kommen.", "Accesspoint"]]),
+      rf("Richtig oder falsch? Entscheide bei jeder Aussage.",
+        [["Am Accesspoint braucht jedes Handy ein eigenes Kabel.", false],
+         ["Daten reisen im Netzwerk in kleinen Paketen.", true],
+         ["Ein Datenpaket kommt auch ohne die Adresse des Empfängers an.", false],
+         ["Bei ping schickt ein Rechner Pakete los und wartet auf eine Antwort.", true]]),
+      c("Du bist in Filius im Aktionsmodus (grüner Pfeil). Du willst die IP-Adresse eines Rechners ändern. Was machst du zuerst?",
+        ["auf den Hammer klicken (Entwurfsmodus)", "in der Befehlszeile ping eintippen", "die Software-Installation öffnen", "das Kabel zum Rechner löschen"], 0),
+      c("Auf einem Rechner tippst du ping 192.168.0.31 – das ist die Adresse des anderen Rechners. In der letzten Zeile steht: „4 Paket(e) gesendet, 4 Paket(e) empfangen, 0% Paketverlust“. Was heißt das?",
+        ["Der andere Rechner hat geantwortet.", "Kein Paket ist zurückgekommen.", "Zwischen den Rechnern fehlt ein Kabel.", "Im Befehl steht eine falsche Adresse."], 0),
+      m("Drei Kinder erreichen in Filius den zweiten Rechner nicht. Woran liegt es? Ordne zu.",
+        [["Lena: Beide Rechner haben die Adresse 192.168.0.40. Ein Kabel verbindet sie.", "Adresse doppelt"],
+         ["Tom: Die Rechner haben 192.168.0.40 und 192.168.0.41. Das Werkzeug „Verbindung“ hat Tom nicht benutzt.", "Kabel fehlt"],
+         ["Ece: Die Rechner haben 192.168.0.40 und 192.168.0.41, ein Kabel verbindet sie. Zum Testen tippt Ece: ping 192.168.0.14", "falsche Adresse im Befehl"]]),
+      fl("Praxis am PC: Baue in Filius das Netz eines kleinen Ladens. Die Skizze zeigt, wie es aussehen soll. Speichere es und wähle die Datei hier aus.",
+        ["1. Öffne Filius. Fragt es nach der Sprache, lass „Deutsch“ stehen und klicke auf Bestätigen. Siehst du schon ein Netz, klicke oben links auf das weiße Blatt (Neu) und dann auf Ja.",
+         "2. Ziehe links aus der Leiste mit gedrückter Maustaste einen Rechner auf die weiße Fläche. Hole dir genauso einen zweiten.",
+         "3. Doppelklick auf den ersten Rechner. Unten stehen seine Einstellungen. Schreibe bei Name: Kasse. Ändere die IP-Adresse in 192.168.0.20. Drücke nach jeder Eingabe die Eingabetaste (Enter).",
+         "4. Doppelklick auf den zweiten Rechner. Schreibe bei Name: Büro. Ändere die IP-Adresse in 192.168.0.21. Wieder nach jeder Eingabe Enter.",
+         "5. Klicke in der Leiste links ganz oben auf Verbindung (das rote Kabel). Klicke auf Kasse, dann auf Büro. Drücke dann Esc.",
+         "6. Klicke oben auf die Diskette – das geht nur mit dem Hammer (Entwurfsmodus). Speichere in deinem Ordner unter dem Namen laden. Wähle die Datei laden.fls hier unten aus."],
+        [{ id: "zwei", typ: "endgeraete", anzahl: 2, punkte: 1, text: "Genau zwei Rechner stehen auf der Fläche" },
+         { id: "kabel", typ: "kabel", punkte: 1, text: "Die beiden Rechner sind mit einem Kabel verbunden" },
+         { id: "ip20", typ: "ip", ip: "192.168.0.20", punkte: 1, text: "Ein Rechner hat die IP-Adresse 192.168.0.20" },
+         { id: "ip21", typ: "ip", ip: "192.168.0.21", punkte: 1, text: "Ein Rechner hat die IP-Adresse 192.168.0.21" }],
+        1, ["Nur die Namen zählen: Ein Rechner heißt Kasse, der andere Büro. Groß- und Kleinschreibung, „Buero“ statt „Büro“ und kleine Tippfehler zählen als richtig. Kabel und IP-Adressen hat das Prüfprogramm schon bewertet – fehlt dort etwas, gibt es den Punkt für die Namen trotzdem."],
+        "Zwei Rechner auf der Fläche, mit einem Kabel verbunden: Kasse 192.168.0.20 und Büro 192.168.0.21, gespeichert als .fls-Datei.",
+        LADEN),
+      t("Mit welchem Befehl prüfst du auf dem Rechner Kasse, ob Büro antwortet? Schreibe den ganzen Befehl auf. Du kannst ihn in Filius ausprobieren: grüner Pfeil → Kasse anklicken → Software-Installation → Befehlszeile → oberer Pfeil → Änderungen annehmen → Befehlszeile öffnen.",
+        "ping 192.168.0.21",
+        ["ping und die Adresse von Büro: ping 192.168.0.21 (Groß-/Kleinschreibung und Leerzeichen egal; „ping Büro“ oder die eigene Adresse 192.168.0.20 zählen nicht)"],
+        ["ping 192.168.0.21|ping192.168.0.21"])
     ] },
 
   /* ================= Probe 2: Internet verstehen (Modul 2) ================= */
@@ -220,7 +279,9 @@ for (const p of GEMEINSAM) {
   // erst einmal mischen (feste Reihenfolge aus Kennung und Aufgabentext), dann für beide Züge übernehmen
   const basis = mischen({ id: "inf9-p" + p.nr, thema: p.thema, minutes: p.minutes, scope: p.scope, items: JSON.parse(JSON.stringify(p.items)) });
   for (const [zug, kurz] of [["R", "r"], ["M", "m"]]) {
-    const id = "inf9-p" + p.nr + "-" + kurz, kopf = { id, zug, thema: p.thema, minutes: p.minutes, title: "Probe " + p.nr + " (9" + zug + "): " + p.titel, scope: p.scope };
+    const id = "inf9-p" + p.nr + "-" + kurz, kopf = { id, zug, thema: p.thema, minutes: p.minutes, title: "Probe " + p.nr + " (9" + zug + "): " + p.titel, scope: p.scope,
+      // eigene Testregeln (Probe 1b): 0 = für Verlassen bzw. Kopieren keine Note 6
+      ...(Number.isInteger(p.wegSekunden) ? { wegSekunden: p.wegSekunden } : {}), ...(Number.isInteger(p.kopieren) ? { kopieren: p.kopieren } : {}) };
     PROBEN[id] = { ...kopf, items: JSON.parse(JSON.stringify(basis.items)) };
     VORLAGE[id] = { ...kopf, items: p.items };
   }
@@ -230,4 +291,4 @@ module.exports = PROBEN;
 // nur für Tests: die Vorlage ohne Mischen
 Object.defineProperty(module.exports, "__vorlage", { value: VORLAGE, enumerable: false });
 // (c, m, o, t werden mit den Proben gebraucht)
-void [c, m, o, t];
+void [c, m, o, t, rf, fl];

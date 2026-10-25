@@ -124,6 +124,8 @@ function filiusAuslesen(xml) {
     const ab = t.search(/class="filius\.hardware\.knoten\./);
     if (ab < 0) continue;
     const kopf = t.slice(0, ab), k = t.slice(ab);
+    // Kennung der Beschriftung (GUIKnotenItem0 …): auf sie zeigen die Kabel (ziel1/ziel2); Geräte ohne Kabel haben keine
+    const id = (t.match(/^<object class="filius\.gui\.netzwerksicht\.GUIKnotenItem" id="([^"]+)"/) || [])[1] || "";
     const art = (k.match(/knoten\.(\w+)/) || [])[1] || "?";
     const tipp = eigenschaftRoh(kopf, "toolTipText");
     const paare = [...tipp.matchAll(new RegExp("(" + IP + ")" + LEER + "/" + LEER + "(" + IP + ")", "g"))];
@@ -141,7 +143,17 @@ function filiusAuslesen(xml) {
     const dns = eigenschaft(k, "dns") || (tipp.match(new RegExp("DNS-Server:[ ]*(" + IP + ")")) || [])[1] || "";
     const maske = (k.match(/<void property="(?:subnetzMaske|netzmaske)">\s*<string>([^<]*)<\/string>/) || [])[1]
       || (paare[0] || [])[2] || (ips.length ? "255.255.255.0" : "");
-    geraete.push({ art, name, ips, gateway, dns, maske });
+    geraete.push({ id, art, name, ips, gateway, dns, maske });
+  }
+
+  /* Kabel (seit 25.10.2026, Informatik 9 Probe 1b): GUIKabelItem -> kabelpanel -> ziel1/ziel2 mit idref auf das
+     GUIKnotenItem der beiden Geräte. kabel = [[Index Gerät A, Index Gerät B], …] (Index in geraete). */
+  const nachId = new Map(geraete.filter((g) => g.id).map((g, i) => [g.id, geraete.indexOf(g)]));
+  const kabel = [];
+  for (const block of xml.split(/(?=<object class="filius\.gui\.netzwerksicht\.GUIKabelItem")/).slice(1)) {
+    const ziel = (n) => (block.match(new RegExp('<void property="ziel' + n + '">' + LEER + '<object idref="([^"]+)"')) || [])[1];
+    const a = nachId.get(ziel(1)), b = nachId.get(ziel(2));
+    if (a !== undefined && b !== undefined && a !== b) kabel.push([a, b]);
   }
 
   const software = Array.from(new Set(
@@ -192,7 +204,7 @@ function filiusAuslesen(xml) {
   const ips = Array.from(new Set(geraete.flatMap((g) => g.ips)));
 
   return {
-    geraete, software, dhcp, ips, seiten,
+    geraete, kabel, software, dhcp, ips, seiten,
     webserverLaeuft: dienstLaeuft("WebServer"),
     echoserverLaeuft: dienstLaeuft("ServerBaustein")
   };
@@ -207,6 +219,31 @@ function checkAusfuehren(check, netz) {
     case "geraet": {
       const n = g.filter((x) => x.art === check.art).length;
       return { ok: n >= (check.mindestens || 1), ist: n + " gefunden" };
+    }
+    case "endgeraete": {
+      /* Rechner und Notebooks zählen gleich. anzahl = genau so viele (Informatik 9 Probe 1b: zwei Rechner) */
+      const n = g.filter((x) => x.art === "Rechner" || x.art === "Notebook").length;
+      return { ok: n === check.anzahl, ist: n === 1 ? "1 Rechner gefunden" : n + " Rechner gefunden" };
+    }
+    case "kabel": {
+      /* Zwei verschiedene Rechner sind verbunden: direkt mit einem Kabel oder über einen Switch dazwischen. */
+      const kabel = netz.kabel || [];
+      const end = (i) => g[i] && (g[i].art === "Rechner" || g[i].art === "Notebook");
+      const nachbarn = (i) => kabel.filter((k) => k.includes(i)).map((k) => (k[0] === i ? k[1] : k[0]));
+      const erreicht = (start) => {
+        const gesehen = new Set([start]), offen = [start], ziele = [];
+        while (offen.length) {
+          for (const y of nachbarn(offen.shift())) {
+            if (gesehen.has(y)) continue;
+            gesehen.add(y);
+            if (end(y)) ziele.push(y);
+            else if (g[y].art === "Switch") offen.push(y);
+          }
+        }
+        return ziele;
+      };
+      const ok = g.some((_x, i) => end(i) && erreicht(i).length > 0);
+      return { ok, ist: ok ? "verbunden" : (kabel.length ? "Kabel vorhanden, aber nicht zwischen zwei Rechnern" : "kein Kabel gefunden") };
     }
     case "router2": {
       const r = g.filter((x) => x.art === "Vermittlungsrechner" && x.ips.length >= 2);
@@ -302,6 +339,7 @@ function dateiPruefen(buf, upload) {
     details,
     netz: {
       geraete: netz.geraete.map((g) => ({ art: g.art, name: g.name, ips: g.ips, gateway: g.gateway })),
+      kabel: (netz.kabel || []).map(([a, b]) => [netz.geraete[a].name || netz.geraete[a].art, netz.geraete[b].name || netz.geraete[b].art]),
       software: netz.software,
       dhcp: netz.dhcp
     }

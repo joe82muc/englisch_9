@@ -30,6 +30,11 @@
  *   (je Feld 1 Punkt: genau diese eine Adresse bzw. diese Datei), criteria + keywords + textBeispiel = Betreff und
  *   Text, die die KI bewertet (je Kriterium 1 Punkt). points = 4 + criteria.length. Antwort der Seite:
  *   { an: [...], cc: [...], bcc: [...], betreff, text, anhang }.
+ * Aufgabenart "filius" (Informatik 9, Probe 1b, seit 25.10.2026): Das Kind baut in Filius ein Netz und lädt die .fls hoch.
+ *   aufgabe [Schritte], checks [wie filiuspruefung-daten.js: { id, typ, …, punkte, text }] = Prüfprogramm (genau, immer
+ *   gleich), kiPunkte + kiKriterien = was die KI zusätzlich wohlwollend bewertet (z. B. die Namen der Geräte); ohne KI
+ *   gibt es diese Punkte anteilig zu den erfüllten Prüfpunkten. points = Summe der checks + kiPunkte.
+ *   Antwort der Seite: { name, data } (Datei als Base64). Die Datei bleibt in der Abgabe (dateiDaten) für die Lehrkraft.
  * tf mit wahl: ["ausfüllen", "leer lassen"] (Informatik 8, Probe 1b/2b) – eigene Beschriftung der beiden Knöpfe statt
  *   „richtig“/„falsch“ (true = erste, false = zweite); so steht es auch in Ergebnis, Korrektur und Vorschau.
  * tabelle { kopf, zeilen } steht seit 18.10.2026 bei jeder Probe mit in der Abgabe (Rückgabe zeigt sie), nicht nur in NT 8.
@@ -73,6 +78,7 @@ const nt7Tests = require("./nt7-fragen");
 const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber, GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
 const probeRegel = require("./probe-regel");
 const Weiter = require("./probe-weiter");
+const FiliusLeser = require("./filiuspruefung");
 
 /**
  * @param app            Express-App
@@ -150,6 +156,7 @@ function registerNt7Routes(app, opts) {
     if (item.type === "number") return { wert: clean(raw && raw.wert !== undefined ? raw.wert : raw, 20), einheit: clean(raw && raw.einheit, 12) };
     if (item.type === "labor") return { zustand: zustandSauber(raw && raw.zustand), text: clean(raw && raw.text, 400) };
     if (item.type === "email") return emailAntwort(item, raw);
+    if (item.type === "filius") return filiusAntwort(raw);
     if (Array.isArray(raw)) return raw.slice(0, 30).map((v) => clean(v, 200));
     return clean(raw, 1500);
   }
@@ -214,7 +221,9 @@ function registerNt7Routes(app, opts) {
       ...(item.type === "tf" ? {statements:item.statements.map(s => s[0]),...(item.wahl ? {wahl:item.wahl.slice(0, 2)} : {})} : {}),
       ...(item.type === "number" ? {units:item.units ? item.units.slice() : undefined,unit:item.units ? undefined : item.unit || undefined} : {}),
       // E-Mail: Kontakte (ohne An/Cc/Bcc) und Dateien zum Anhängen – der Schlüssel (soll) bleibt auf dem Server
-      ...(item.type === "email" ? {kontakte:item.kontakte.map(k => ({name:k.name,adresse:k.adresse})),dateien:item.dateien.slice()} : {})};
+      ...(item.type === "email" ? {kontakte:item.kontakte.map(k => ({name:k.name,adresse:k.adresse})),dateien:item.dateien.slice()} : {}),
+      // Filius: nur die Schritte des Auftrags – die Prüfpunkte bleiben auf dem Server
+      ...(item.type === "filius" ? {aufgabe:(item.aufgabe || []).slice()} : {})};
   }
   // Was die Seite zusätzlich zur Aufgabe zeigt (NT 8): Animation oder Versuch aus dem NT-Labor, Messwerttabelle,
   // Diagramm. Steht auch bei der Abgabe, damit Korrektur, Rückgabe und Ausdruck dieselbe Darstellung zeigen.
@@ -295,7 +304,69 @@ function registerNt7Routes(app, opts) {
     const felder = (teile || []).map(t => (t.ok ? "✓ " + t.text : "✗ " + t.text + " (richtig: " + t.soll + ")")).join(" · ");
     return clean(felder + (kiKommentar ? " – Betreff und Text: " + kiKommentar : ""), 600);
   }
+  /* ---------- Aufgabenart "filius" (Informatik 9, Probe 1b) ---------- */
+  // Antwort der Seite: { name: Dateiname, data: Inhalt der .fls als Base64 } – eine Filius-Datei hat wenige kB
+  function filiusAntwort(raw) {
+    const r = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const data = String(r.data == null ? "" : r.data).replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
+    return {name:clean(r.name,120),data:data.length <= 400000 && /^[A-Za-z0-9+/]*={0,2}$/.test(data) ? data : ""};
+  }
+  function filiusPruefen(item, f) {
+    if (!f.data) return {lesbar:false,punkte:0,maxPunkte:(item.checks || []).reduce((s, c) => s + c.punkte, 0),details:[],hinweis:"Keine Datei abgegeben."};
+    return FiliusLeser.dateiPruefen(Buffer.from(f.data, "base64"), {checks:item.checks});
+  }
+  // Für Korrektur und Rückgabe: was in der Datei steht (Geräte mit Art und Adresse, Kabel)
+  function filiusAnzeige(f, p) {
+    if (!f.data) return "Keine Datei abgegeben.";
+    if (!p.lesbar) return "Datei „" + f.name + "“: " + p.hinweis;
+    const geraete = p.netz.geraete.map(g => (g.name || g.art) + " (" + g.art + (g.ips.length ? ", " + g.ips.join(" / ") : "") + ")").join(", ");
+    const kabel = (p.netz.kabel || []).map(k => k.join(" – ")).join(", ");
+    return "Datei „" + f.name + "“ · Geräte: " + (geraete || "keine") + " · Kabel: " + (kabel || "keins");
+  }
+  function filiusKommentar(p, kiText) {
+    const schritte = ((p && p.details) || []).map(d => (d.erfuellt ? "✓ " : "✗ ") + d.text + (d.erfuellt ? "" : " (" + d.ist + ")")).join(" · ");
+    return clean((schritte || (p && p.hinweis) || "") + (kiText ? " – KI: " + kiText : ""), 700);
+  }
+  // Ohne KI (oder wenn sie ausfällt): die KI-Punkte anteilig zu den erfüllten Prüfpunkten – niemand hat einen Nachteil
+  const filiusErsatz = (item, p) => (p.lesbar && p.maxPunkte ? Math.round((item.kiPunkte || 0) * p.punkte / p.maxPunkte) : 0);
+  async function kiFragen(system, user, maxTokens) {
+    if (askAnthropic) return askAnthropic(system, user, maxTokens);
+    const response = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",signal:AbortSignal.timeout(18000),
+      headers:{"content-type":"application/json","x-api-key":process.env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
+      body:JSON.stringify({model:MODEL,max_tokens:maxTokens,system,messages:[{role:"user",content:user}]})});
+    if (!response.ok) throw new Error("Anthropic HTTP " + response.status);
+    const data = await response.json();
+    return data.content?.find(block => block.type === "text")?.text || "";
+  }
+  // Die KI sieht Auftrag, Ergebnis des Prüfprogramms und das gebaute Netz; sie vergibt nur die kiPunkte (Namen,
+  // Gesamteindruck) und schreibt die Rückmeldung. Die Punkte des Prüfprogramms ändert sie nicht.
+  async function filiusKi(d, item) {
+    const max = item.kiPunkte || 0, p = d.pruefung || {};
+    if (!max || !p.lesbar) return null;
+    const system = [
+      "Du prüfst eine Filius-Datei aus einer Informatik-Probe der " + (STUFE || "9") + ". Klasse einer bayerischen Mittelschule.",
+      "Ein Prüfprogramm hat die festen Schritte schon genau geprüft (gepruefteSchritte) – diese Punkte änderst du nicht.",
+      "Du vergibst nur die zusätzlichen Punkte nach den Kriterien (0 bis " + max + " ganze Punkte). Bewerte wohlwollend:",
+      "Groß- und Kleinschreibung, Umlaute (ue statt ü) und kleine Tippfehler bei Namen zählen nicht. Im Zweifel für das Kind.",
+      "text: Rückmeldung an das Kind auf Deutsch, du-Form, höchstens 2 kurze Sätze, zuerst was gelungen ist.",
+      "Antworte ausschließlich mit JSON: {\"punkte\":0,\"text\":\"…\"}."
+    ].join("\n");
+    const user = JSON.stringify({auftrag:[item.prompt].concat(item.aufgabe || []).join("\n"),kriterien:item.kiKriterien || [],hoechstpunkte:max,
+      gepruefteSchritte:(p.details || []).map(x => ({schritt:x.text,erfuellt:x.erfuellt,gefunden:x.ist})),gebautesNetz:p.netz});
+    try {
+      const raw = await kiFragen(system, user, 260);
+      const match = String(raw || "").match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Invalid AI response");
+      const parsed = JSON.parse(match[0]);
+      if (!Number.isFinite(Number(parsed.punkte))) throw new Error("Invalid AI points");
+      return {points:Math.max(0,Math.min(max,Math.round(Number(parsed.punkte)))),comment:clean(parsed.text,300),source:"ki"};
+    } catch (err) {
+      console.error(LOG + " KI-Prüfung Filius:",err.message);
+      return null;
+    }
+  }
   function kiBewerten(d, item, zug) {
+    if (item.type === "filius") return filiusKi(d, item);
     return item.type === "email" ? textScore(d.kiText || "", emailKiItem(item), zug) : textScore(d.given, item, zug);
   }
   async function textScore(answer, item, zug) {
@@ -442,6 +513,7 @@ function registerNt7Routes(app, opts) {
         const d = row.details[i], r = ergebnisse[k];
         if (d.source === "lehrkraft") return;                  // die Lehrkraft hat inzwischen selbst bewertet
         if (r && r.source === "ki" && d.type === "email") Object.assign(d, {points:(d.feldPunkte || 0) + r.points,kiPunkte:r.points,comment:emailKommentar(d.teile, r.comment),source:"ki",needsReview:false});
+        else if (r && r.source === "ki" && d.type === "filius") Object.assign(d, {points:(d.exaktPunkte || 0) + r.points,kiPunkte:r.points,comment:filiusKommentar(d.pruefung, r.comment),source:"ki",needsReview:false});
         else if (r && r.source === "ki") Object.assign(d, {points:r.points,comment:r.comment,...(r.tipp !== undefined ? {tipp:r.tipp} : {}),source:"ki",needsReview:false});
         else weiter.push(i);
       });
@@ -496,6 +568,16 @@ function registerNt7Routes(app, opts) {
           details.push({...base,given:emailAnzeige(e),antwort:e,kiText,teile,feldPunkte,kiPunkte:ki.points,points:feldPunkte + ki.points,expected:item.expected,
             comment:emailKommentar(teile, ki.comment),source:ki.source,needsReview:ki.needsReview});
           if ((e.betreff || e.text) && process.env.ANTHROPIC_API_KEY) frei.push(i);
+        } else if (item.type === "filius") {
+          // Filius-Datei: das Prüfprogramm vergibt die Punkte der Schritte genau; die KI-Punkte gibt es vorläufig
+          // anteilig, die KI bewertet nach dem Speichern (Namen, Gesamteindruck) und schreibt die Rückmeldung
+          const f = filiusAntwort(raw), p = filiusPruefen(item, f), ersatz = filiusErsatz(item, p);
+          const kiDa = Boolean(p.lesbar && item.kiPunkte && process.env.ANTHROPIC_API_KEY);
+          details.push({...base,given:filiusAnzeige(f, p),datei:f.name,...(f.data ? {dateiDaten:f.data} : {}),
+            pruefung:{lesbar:p.lesbar,details:p.details,netz:p.netz || null,hinweis:p.hinweis || ""},exaktPunkte:p.punkte,kiPunkte:ersatz,
+            points:p.punkte + ersatz,expected:item.expected,comment:filiusKommentar(p, kiDa || !p.lesbar || !item.kiPunkte ? "" : "Punkte für Namen und Gesamteindruck vorläufig anteilig vergeben."),
+            source:kiDa ? "stichworte" : "schluessel",needsReview:kiDa});
+          if (kiDa) frei.push(i);
         } else if (item.type === "order") {
           const given = Array.isArray(raw) ? raw.map(v => clean(v,200)).slice(0,item.steps.length) : [];
           const points = item.steps.filter((v,j) => given[j] === v).length;
@@ -581,8 +663,8 @@ function registerNt7Routes(app, opts) {
     const item = row?.details.find(d => d.nr === Number(req.body.nr));
     const points = Number(req.body.points);
     if (!row || !item) return res.status(404).json({ok:false,error:"not_found"});
-    // NT 8 (erweitert): Die Lehrkraft kann jede Aufgabe ändern, nicht nur die freien Antworten
-    if ((item.type !== "text" && item.type !== "email" && !ERWEITERT) || !Number.isInteger(points) || points < 0 || points > item.maxPoints) return res.status(400).json({ok:false,error:"invalid_override"});
+    // NT 8 (erweitert): Die Lehrkraft kann jede Aufgabe ändern, nicht nur die freien Antworten (und E-Mail, Filius-Datei)
+    if ((item.type !== "text" && item.type !== "email" && item.type !== "filius" && !ERWEITERT) || !Number.isInteger(points) || points < 0 || points > item.maxPoints) return res.status(400).json({ok:false,error:"invalid_override"});
     if (ERWEITERT && item.source !== "lehrkraft" && item.vorschlag === undefined) item.vorschlag = {points:item.points,source:item.source};   // was Schlüssel oder KI vorgeschlagen hatten
     item.points = points; item.source = "lehrkraft"; item.needsReview = false; item.comment = clean(req.body.comment,ERWEITERT ? 600 : 220) || item.comment;
     if (ERWEITERT && typeof req.body.tipp === "string") item.tipp = clean(req.body.tipp,300);
