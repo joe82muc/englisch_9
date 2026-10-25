@@ -1,8 +1,9 @@
 "use strict";
 
 /**
- * Filius-Aufträge in den Einheiten: Datei hochladen, sofort bewerten, für die Probe aufbewahren
- * (Informatik 9, seit 25.10.2026: Laden-Aufgabe am Ende von N1, Punkte zählen für Probe 1b).
+ * Filius-Aufträge in den Einheiten: Datei hochladen, sofort bewerten, für die Lehrkraft aufbewahren
+ * (Informatik 9, seit 25.10.2026: Laden-Aufgabe am Ende von N1 als Übung für Probe 1b – in der Probe bauen die Kinder
+ * das Netz neu und laden es dort hoch; die Punkte hier zählen nicht).
  *
  *   POST <prefix>/filius/pruefen { aufgabe, datei (base64), code? }
  *   -> { ok, lesbar, erfuellt, punkte: [{ ok, text }], rueckmeldung, quelle, wertung: { punkte, max, beste }, gespeichert, hinweis? }
@@ -12,7 +13,7 @@
  * (aufgabe.namen, ohne Groß/Klein und Umlaute) – so bekommt das Kind immer sofort seine Punkte.
  * Speichern: Mit dem Code eines Kindes der Stufe (opts.kindZumCode) legt der Server Datei und Wertung in den
  * Abgaben-Speicher (abgaben.js, Art "fls"). Es zählt die beste Abgabe: eine schlechtere ersetzt eine bessere nicht.
- * Die Probe holt sie über nt7.js (Aufgabe { type: "filius", ausModul: "<Kennung>" }).
+ * Eine Probe kann sie über nt7.js holen: ausModul übernimmt die Punkte, uebung vergleicht nur die Datei (Probe 1b).
  */
 
 const FiliusLeser = require("./filiuspruefung");
@@ -114,7 +115,7 @@ function registerFiliusModulPruefung(app, opts = {}) {
     try {
       const r = await bewerten(aufgabe, buf, kiErlaubt(req.ip || "") ? askAnthropic : null, STUFE);
       if (!r.lesbar) return nichtLesbar(r.hinweis);
-      // Für die Lehrkraft und die Probe aufbewahren – nur mit dem Code eines Kindes dieser Stufe
+      // Für die Lehrkraft aufbewahren – nur mit dem Code eines Kindes dieser Stufe
       const code = clean(req.body.code, 12);
       let gespeichert = false, beste = { punkte: r.gesamt, zeit: new Date().toISOString() }, hinweis = "";
       if (code && speicher && kindZumCode) {
@@ -135,7 +136,7 @@ function registerFiliusModulPruefung(app, opts = {}) {
           console.error("Filius-Abgabe speichern:", err && err.message);
           hinweis = "Deine Datei ist geprüft, konnte aber gerade nicht gespeichert werden. Lade sie in einer Minute noch einmal hoch.";
         }
-      } else hinweis = "Du bist nicht mit deinem Code angemeldet. Deine Punkte werden deshalb nicht für die Probe gespeichert. Melde dich oben mit deinem Code an und lade die Datei noch einmal hoch.";
+      } else hinweis = "Du bist nicht mit deinem Code angemeldet. Deine Abgabe wird deshalb nicht gespeichert – deine Lehrkraft sieht sie nicht. Melde dich oben mit deinem Code an und lade die Datei noch einmal hoch.";
       const erfuellt = r.gesamt === r.max;
       const ersatzText = erfuellt ? "Alles Geforderte ist da – gut gemacht." : "Ein Teil stimmt schon. Sieh dir die Punkte mit ✗ an, verbessere sie in Filius, speichere und lade die Datei noch einmal hoch.";
       return res.json({ ok: true, lesbar: true, erfuellt, punkte: r.liste, rueckmeldung: r.ki.text || ersatzText, quelle: r.ki.quelle === "ki" ? "ki" : "pruefprogramm",

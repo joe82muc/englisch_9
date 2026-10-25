@@ -34,10 +34,15 @@
  *   aufgabe [Schritte], checks [wie filiuspruefung-daten.js: { id, typ, …, punkte, text }] = Prüfprogramm (genau, immer
  *   gleich), kiPunkte + kiKriterien = was die KI zusätzlich wohlwollend bewertet (z. B. die Namen der Geräte); ohne KI
  *   gibt es diese Punkte anteilig zu den erfüllten Prüfpunkten. points = Summe der checks + kiPunkte.
+ *   namen ["Kasse", "Büro"]: Stimmen sie genau (ohne Groß/Klein, Umlaute), gibt es die kiPunkte immer – die KI entscheidet
+ *   nur bei Abweichungen; ohne KI zählen dann nur diese Namen (statt anteilig).
  *   Antwort der Seite: { name, data } (Datei als Base64). Die Datei bleibt in der Abgabe (dateiDaten) für die Lehrkraft.
+ *   uebung: "<Kennung>" = dieselbe Aufgabe als Übung in einer Einheit (filius-modul.js). Lädt das Kind in der Probe genau
+ *   die Datei hoch, die es dort abgegeben hat, steht das in der Bewertung („noch prüfen“) – Punkte zieht der Server nicht ab.
  *   ausModul: "<Kennung>" (seit 25.10.2026, Wunsch der Lehrkraft): Das Kind gibt die Datei in der Einheit ab
  *   (filius-modul.js, sofort bewertet); die Probe übernimmt beim Abgeben die beste Abgabe von dort über
  *   opts.modulAbgabe(student, kennung) -> { meta, buf } | null. In der Probe wird dann nichts hochgeladen.
+ *   (Probe 1b nutzte das kurz; die Lehrkraft wollte dann doch, dass die Kinder die Aufgabe in der Probe neu bauen.)
  * tf mit wahl: ["ausfüllen", "leer lassen"] (Informatik 8, Probe 1b/2b) – eigene Beschriftung der beiden Knöpfe statt
  *   „richtig“/„falsch“ (true = erste, false = zweite); so steht es auch in Ergebnis, Korrektur und Vorschau.
  * tabelle { kopf, zeilen } steht seit 18.10.2026 bei jeder Probe mit in der Abgabe (Rückgabe zeigt sie), nicht nur in NT 8.
@@ -231,13 +236,13 @@ function registerNt7Routes(app, opts) {
       // Filius: nur die Schritte des Auftrags – die Prüfpunkte bleiben auf dem Server; ausModul: abgegeben wird in der Einheit
       ...(item.type === "filius" ? {aufgabe:(item.aufgabe || []).slice(),...(item.ausModul ? {ausModul:true,einheit:item.einheit || ""} : {})} : {})};
   }
-  // Abgaben aus den Einheiten zu den Aufgaben mit ausModul (je Aufgabe { meta, buf } oder null)
+  // Abgaben aus den Einheiten zu den Aufgaben mit ausModul oder uebung (je Aufgabe { meta, buf } oder null)
   async function modulDaten(test, student) {
     const aus = [];
     for (const it of test.items) {
       let a = null;
-      if (it.type === "filius" && it.ausModul && MODUL_ABGABE) {
-        try { a = await MODUL_ABGABE(student, it.ausModul); } catch (err) { console.error(LOG + " Abgabe aus der Einheit:", err && err.message); }
+      if (it.type === "filius" && (it.ausModul || it.uebung) && MODUL_ABGABE) {
+        try { a = await MODUL_ABGABE(student, it.ausModul || it.uebung); } catch (err) { console.error(LOG + " Abgabe aus der Einheit:", err && err.message); }
       }
       aus.push(a && a.meta ? a : null);
     }
@@ -342,12 +347,16 @@ function registerNt7Routes(app, opts) {
     const kabel = (p.netz.kabel || []).map(k => k.join(" – ")).join(", ");
     return "Datei „" + f.name + "“ · Geräte: " + (geraete || "keine") + " · Kabel: " + (kabel || "keins");
   }
-  function filiusKommentar(p, kiText) {
+  // vorab: Hinweis für die Lehrkraft vor den Prüfpunkten (gleiche Datei wie die Übung)
+  function filiusKommentar(p, kiText, vorab) {
     const schritte = ((p && p.details) || []).map(d => (d.erfuellt ? "✓ " : "✗ ") + d.text + (d.erfuellt ? "" : " (" + d.ist + ")")).join(" · ");
-    return clean((schritte || (p && p.hinweis) || "") + (kiText ? " – KI: " + kiText : ""), 700);
+    return clean((vorab ? vorab + " · " : "") + (schritte || (p && p.hinweis) || "") + (kiText ? " – KI: " + kiText : ""), 700);
   }
-  // Ohne KI (oder wenn sie ausfällt): die KI-Punkte anteilig zu den erfüllten Prüfpunkten – niemand hat einen Nachteil
-  const filiusErsatz = (item, p) => (p.lesbar && p.maxPunkte ? Math.round((item.kiPunkte || 0) * p.punkte / p.maxPunkte) : 0);
+  const namenGenau = (item, p) => Boolean(Array.isArray(item.namen) && p && p.lesbar && FiliusModul.namenOk(item, p.netz || {}));
+  // Ohne KI (oder wenn sie ausfällt): mit namen zählen genau diese Namen, sonst die KI-Punkte anteilig zu den erfüllten
+  // Prüfpunkten – niemand hat einen Nachteil
+  const filiusErsatz = (item, p) => (Array.isArray(item.namen) ? (namenGenau(item, p) ? item.kiPunkte || 0 : 0)
+    : p.lesbar && p.maxPunkte ? Math.round((item.kiPunkte || 0) * p.punkte / p.maxPunkte) : 0);
   async function kiFragen(system, user, maxTokens) {
     if (askAnthropic) return askAnthropic(system, user, maxTokens);
     const response = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",signal:AbortSignal.timeout(18000),
@@ -363,7 +372,8 @@ function registerNt7Routes(app, opts) {
     // derselbe Baustein wie in den Einheiten (filius-modul.js)
     const r = await FiliusModul.filiusKi({auftrag:[item.prompt].concat(item.aufgabe || []).join("\n"),kriterien:item.kiKriterien,max:item.kiPunkte || 0,
       pruefung:d.pruefung,askAnthropic:(s, u, n) => kiFragen(s, u, n),stufe:STUFE || "9"});
-    return r ? {points:r.punkte,comment:r.text,source:"ki"} : null;
+    // richtige Namen: Punkt sicher (live gesehen: die KI zog ihn wegen einer falschen Adresse ab)
+    return r ? {points:namenGenau(item, d.pruefung) ? Math.max(r.punkte, item.kiPunkte || 0) : r.punkte,comment:r.text,source:"ki"} : null;
   }
   function kiBewerten(d, item, zug) {
     if (item.type === "filius") return filiusKi(d, item);
@@ -518,7 +528,7 @@ function registerNt7Routes(app, opts) {
         const d = row.details[i], r = ergebnisse[k];
         if (d.source === "lehrkraft") return;                  // die Lehrkraft hat inzwischen selbst bewertet
         if (r && r.source === "ki" && d.type === "email") Object.assign(d, {points:(d.feldPunkte || 0) + r.points,kiPunkte:r.points,comment:emailKommentar(d.teile, r.comment),source:"ki",needsReview:false});
-        else if (r && r.source === "ki" && d.type === "filius") Object.assign(d, {points:(d.exaktPunkte || 0) + r.points,kiPunkte:r.points,comment:filiusKommentar(d.pruefung, r.comment),source:"ki",needsReview:false});
+        else if (r && r.source === "ki" && d.type === "filius") Object.assign(d, {points:(d.exaktPunkte || 0) + r.points,kiPunkte:r.points,comment:filiusKommentar(d.pruefung, r.comment, d.vorab),source:"ki",needsReview:Boolean(d.gleicheDatei)});
         else if (r && r.source === "ki") Object.assign(d, {points:r.points,comment:r.comment,...(r.tipp !== undefined ? {tipp:r.tipp} : {}),source:"ki",needsReview:false});
         else weiter.push(i);
       });
@@ -593,10 +603,16 @@ function registerNt7Routes(app, opts) {
           // anteilig, die KI bewertet nach dem Speichern (Namen, Gesamteindruck) und schreibt die Rückmeldung
           const f = filiusAntwort(raw), p = filiusPruefen(item, f), ersatz = filiusErsatz(item, p);
           const kiDa = Boolean(p.lesbar && item.kiPunkte && process.env.ANTHROPIC_API_KEY);
+          // uebung: genau die Datei aus der Übung in der Einheit? (nicht neu gebaut – die Lehrkraft entscheidet)
+          const u = item.uebung && modul && modul[i];
+          const gleich = Boolean(u && f.data && Buffer.isBuffer(u.buf) && u.buf.equals(Buffer.from(f.data, "base64")));
+          const vorab = gleich ? "⚠️ Dieselbe Datei wie die Übung in der Einheit " + (item.einheit || "") + " (abgegeben am " + zeitDe(u.meta.zeit) + ") – nicht neu gebaut?" : "";
+          // ohne KI: Punkt für die Namen hat der Server vergeben – das soll in der Bewertung stehen
+          const namenZeile = Array.isArray(item.namen) && p.lesbar && !kiDa ? " · " + (namenGenau(item, p) ? "✓ " : "✗ ") + "Die Rechner heißen " + item.namen.join(" und ") : "";
           details.push({...base,given:filiusAnzeige(f, p),datei:f.name,...(f.data ? {dateiDaten:f.data} : {}),
             pruefung:{lesbar:p.lesbar,details:p.details,netz:p.netz || null,hinweis:p.hinweis || ""},exaktPunkte:p.punkte,kiPunkte:ersatz,
-            points:p.punkte + ersatz,expected:item.expected,comment:filiusKommentar(p, kiDa || !p.lesbar || !item.kiPunkte ? "" : "Punkte für Namen und Gesamteindruck vorläufig anteilig vergeben."),
-            source:kiDa ? "stichworte" : "schluessel",needsReview:kiDa});
+            points:p.punkte + ersatz,expected:item.expected,comment:filiusKommentar(p, kiDa || !p.lesbar || !item.kiPunkte ? "" : Array.isArray(item.namen) ? "" : "Punkte für Namen und Gesamteindruck vorläufig anteilig vergeben.", vorab) + namenZeile,
+            ...(gleich ? {gleicheDatei:true,vorab} : {}),source:kiDa ? "stichworte" : "schluessel",needsReview:kiDa || gleich});
           if (kiDa) frei.push(i);
         } else if (item.type === "order") {
           const given = Array.isArray(raw) ? raw.map(v => clean(v,200)).slice(0,item.steps.length) : [];

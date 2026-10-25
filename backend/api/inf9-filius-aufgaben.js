@@ -2,11 +2,11 @@
 
 /**
  * Informatik 9: Filius-Aufträge, die das Kind in einer Einheit abgibt und die der Server bewertet (filius-modul.js,
- * Route /api/inf9/filius/pruefen). Die Punkte zählen für eine Probe: Dort steht eine Aufgabe
- * { type: "filius", ausModul: "<Kennung>" } (nt7.js) – sie übernimmt die beste Abgabe aus der Einheit.
+ * Route /api/inf9/filius/pruefen). Eine Probe kann dieselbe Aufgabe stellen (nt7.js: gleiche checks und kiKriterien).
  *
  * Auftrag der Lehrkraft (25.10.2026): „mach so dass die kinder die datei im modul selber abgeben, die ki prüft und
- * vergibt gleich punkte“ – die Laden-Aufgabe der Probe 1b steht am Ende der Einheit N1 (netz-start.html).
+ * vergibt gleich punkte“, dann „nein die kinder sollen die aufgabe nochmal in der probe mit filius machen“ – die
+ * Laden-Aufgabe steht als Übung am Ende der Einheit N1 (netz-start.html) und noch einmal in Probe 1b (dort hochgeladen).
  *
  *   checks      Prüfprogramm (filiuspruefung.js: endgeraete, kabel, ip …) – genau, immer gleich
  *   kiPunkte    zusätzlich von der KI (kiKriterien, wohlwollend); fällt sie aus, prüft der Server die Namen (namen)
@@ -14,7 +14,7 @@
  */
 const AUFGABEN = {
   "netz-start-laden": {
-    titel: "Das Netz eines Ladens (Praxis für Probe 1b)",
+    titel: "Das Netz eines Ladens (Übung für Probe 1b)",
     einheit: "N1 Netzwerke kennenlernen",
     auftrag: "In Filius zwei Rechner aufbauen: Kasse mit der IP-Adresse 192.168.0.20 und Büro mit 192.168.0.21. " +
       "Die beiden sind mit einem Kabel verbunden. Das Netz ist als .fls-Datei gespeichert.",
