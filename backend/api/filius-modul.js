@@ -47,19 +47,26 @@ async function filiusKi({ auftrag, kriterien, max, pruefung, askAnthropic, stufe
     "Ein Prüfprogramm hat die festen Schritte schon genau geprüft (gepruefteSchritte) – diese Punkte änderst du nicht und widersprichst ihnen nicht.",
     "Du vergibst nur die zusätzlichen Punkte nach den Kriterien (0 bis " + max + " ganze Punkte). Bewerte wohlwollend:",
     "Groß- und Kleinschreibung, Umlaute (ue statt ü) und kleine Tippfehler bei Namen zählen nicht. Im Zweifel für das Kind.",
+    "Fehler, die das Prüfprogramm schon gefunden hat (zum Beispiel eine falsche Adresse), kosten bei deinen Punkten NICHTS.",
     "text: Rückmeldung an das Kind auf Deutsch, du-Form, höchstens 2 kurze Sätze, zuerst was gelungen ist. Fehlt etwas,",
     "nenne einen Punkt, den das Kind in Filius verbessern kann. Keine Punktzahlen, keine Emojis.",
+    "Benutze im Text keine geraden Anführungszeichen; Namen schreibst du so: „Kasse“.",
     "Antworte ausschließlich mit JSON: {\"punkte\":0,\"text\":\"…\"}."
   ].join("\n");
   const user = JSON.stringify({ auftrag, kriterien: kriterien || [], hoechstpunkte: max,
     gepruefteSchritte: (pruefung.details || []).map((x) => ({ schritt: x.text, erfuellt: x.erfuellt, gefunden: x.ist })), gebautesNetz: pruefung.netz });
   try {
-    const roh = await askAnthropic(system, user, 260);
-    const treffer = String(roh || "").match(/\{[\s\S]*\}/);
-    if (!treffer) throw new Error("keine JSON-Antwort");
-    const d = JSON.parse(treffer[0]);
-    if (!Number.isFinite(Number(d.punkte))) throw new Error("keine Punkte");
-    return { punkte: Math.max(0, Math.min(max, Math.round(Number(d.punkte)))), text: clean(d.text, 320), quelle: "ki" };
+    const roh = String((await askAnthropic(system, user, 260)) || "");
+    // JSON lesen; ist es kaputt (gerade Anführungszeichen im Text), Punkte und Text einzeln herausholen
+    let punkte = NaN, text = "";
+    const treffer = roh.match(/\{[\s\S]*\}/);
+    try { const d = JSON.parse(treffer ? treffer[0] : ""); punkte = Number(d.punkte); text = d.text; }
+    catch (_e) {
+      punkte = Number((roh.match(/"punkte"\s*:\s*"?(\d+)/) || [])[1]);
+      text = ((roh.match(/"text"\s*:\s*"([\s\S]*?)"\s*\}\s*(?:```)?\s*$/) || roh.match(/"text"\s*:\s*"([\s\S]*)$/) || [])[1] || "").replace(/\\"/g, '"').replace(/\\n/g, " ");
+    }
+    if (!Number.isFinite(punkte)) throw new Error("keine Punkte in der Antwort");
+    return { punkte: Math.max(0, Math.min(max, Math.round(punkte))), text: clean(text, 320), quelle: "ki" };
   } catch (err) {
     console.error("Filius-Prüfung KI:", err && err.message);
     return null;
@@ -72,7 +79,11 @@ async function bewerten(aufgabe, buf, askAnthropic, stufe) {
   if (!pruefung.lesbar) return { lesbar: false, hinweis: pruefung.hinweis };
   const kiMax = aufgabe.kiPunkte || 0;
   let ki = await filiusKi({ auftrag: aufgabe.auftrag, kriterien: aufgabe.kiKriterien, max: kiMax, pruefung, askAnthropic, stufe });
-  if (!ki) ki = { punkte: kiMax && namenOk(aufgabe, pruefung.netz) ? kiMax : 0, text: "", quelle: "ersatz" };
+  const namenGenau = namenOk(aufgabe, pruefung.netz);
+  if (!ki) ki = { punkte: kiMax && namenGenau ? kiMax : 0, text: "", quelle: "ersatz" };
+  // Stimmen die Namen genau (ohne Groß/Klein, Umlaute), gibt es den Punkt immer – die KI entscheidet nur bei Abweichungen
+  // (Tippfehler). Live gesehen (25.10.2026): Die KI lobte richtige Namen, zog den Punkt aber wegen einer falschen Adresse ab.
+  else if (namenGenau && ki.punkte < kiMax) ki = { ...ki, punkte: kiMax };
   const exakt = pruefung.punkte, max = maxPunkte(aufgabe);
   const liste = pruefung.details.map((d) => ({ ok: d.erfuellt, text: d.erfuellt ? d.text : d.text + " (gefunden: " + d.ist + ")" }));
   if (kiMax) liste.push({ ok: ki.punkte >= kiMax, text: aufgabe.kiText || "Namen der Geräte" });

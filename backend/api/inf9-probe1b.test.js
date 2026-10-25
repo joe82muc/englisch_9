@@ -134,6 +134,20 @@ test("Einheit N1 mit KI: Die KI vergibt den Punkt für die Namen und schreibt di
   });
 });
 
+test("Einheit N1: Richtige Namen geben den Punkt auch dann, wenn die KI ihn wegen anderer Fehler abzieht; kaputtes JSON wird trotzdem gelesen", async () => {
+  // live gesehen (25.10.2026): Bei falscher Adresse lobte die KI die Namen, gab aber 0 Punkte
+  const geizig = async () => '{"punkte":0,"text":"Die Namen "Kasse" und "Büro" sind richtig. Prüfe die Adresse von Büro."}';
+  await mitServer(geizig, async ({ post }) => {
+    let r = (await hochladen(post, "adresse-falsch.fls")).data;
+    assert.deepEqual([r.wertung.punkte, r.punkte[4].ok, r.quelle], [4, true, "ki"]);
+    assert.match(r.rueckmeldung, /Prüfe die Adresse von Büro/, "Text der KI kommt an, obwohl ihr JSON kaputt ist");
+    r = (await hochladen(post, "richtig.fls")).data;
+    assert.equal(r.wertung.punkte, 5);
+    r = (await hochladen(post, "andere-namen.fls")).data;
+    assert.deepEqual([r.wertung.punkte, r.punkte[4].ok], [4, false], "andere Namen: die KI entscheidet weiter");
+  });
+});
+
 test("Probe 1b übernimmt die beste Abgabe aus der Einheit; ohne Abgabe 0 Punkte; 9M und 9R nach dem R-Schlüssel", async () => {
   const altKey = process.env.ANTHROPIC_API_KEY;
   delete process.env.ANTHROPIC_API_KEY;
