@@ -48,6 +48,8 @@ const ZAEHLEN = { image: "assets/proben/p5-zaehlen.png", imageAlt: "Programm aus
 const TEST = { image: "assets/proben/p5-test.png", imageAlt: "Programm aus Blöcken: Wenn Start angeklickt wird – frage „Wie viele Punkte hast du?“ und warte – falls Antwort größer als 49 dann: sage „Bestanden!“ – sonst: sage „Übe noch.“" };
 const RUNDEN = { image: "assets/proben/p5-runden.png", imageAlt: "Programm aus Blöcken: Wenn Start angeklickt wird – wiederhole 6 mal: setze runden auf 0, ändere runden um 1 – danach, unter der Wiederholung: sage runden." };
 
+// Probe 1b: Praxis in der Einheit N1 (Prüfpunkte und KI-Kriterium an einer Stelle für Einheit und Probe)
+const LADEN_AUFGABE = require("./inf9-filius-aufgaben").AUFGABEN["netz-start-laden"];
 // Probe 1b: Bild zum Praxisteil (zwei Rechner, ein Kabel)
 const LADEN = { image: "assets/proben/p1b-laden.svg", imageAlt: "Skizze „So soll dein Netz aussehen“: links ein Rechner mit dem Namen Kasse und der IP-Adresse 192.168.0.20, rechts ein Rechner mit dem Namen Büro und der IP-Adresse 192.168.0.21. Ein Kabel verbindet die beiden." };
 
@@ -87,10 +89,12 @@ const GEMEINSAM = [
   /* ================= Probe 1b: nur Einheit N1 „Netzwerke kennenlernen“ (25.10.2026) =================
      Auftrag der Lehrkraft: gleiche Probe für 9M und 9R, 50 % = Note 3, nur über N1, mit einem kleinen Praxisteil:
      in Filius zwei Rechner verbinden, Datei abgeben, Prüfung mit KI – „ganz einfach“. Teil A 14 Punkte, Teil B 6.
-     Am PC: Die Kinder wechseln zu Filius und kopieren vielleicht die Adressen aus der Probe – darum weder fürs
-     Verlassen noch fürs Kopieren eine Note 6 (wegSekunden 0, kopieren 0: nur Warnung und Vermerk). */
-  { nr: "1b", thema: "netzwerke", minutes: 30, titel: "Netzwerke kennenlernen", wegSekunden: 0, kopieren: 0,
-    scope: "Einheit N1: Netzwerk, IP-Adresse, Switch, Router, Accesspoint, Datenpakete, Filius (Entwurfs- und Aktionsmodus), ping, drei typische Fehler · Praxis: zwei Rechner in Filius verbinden",
+     Nachtrag (Lehrkraft, 25.10.2026): „mach so dass die kinder die datei im modul selber abgeben, die ki prüft und vergibt
+     gleich punkte“ – die Filius-Datei gibt das Kind am Ende der Einheit N1 ab (inf9-filius-aufgaben.js, filius-modul.js),
+     Aufgabe 8 übernimmt beim Abgeben der Probe die beste Abgabe von dort. In der Probe selbst wird nichts mehr in Filius
+     gemacht – deshalb gelten die üblichen Testregeln. */
+  { nr: "1b", thema: "netzwerke", minutes: 20, titel: "Netzwerke kennenlernen",
+    scope: "Einheit N1: Netzwerk, IP-Adresse, Switch, Router, Accesspoint, Datenpakete, Filius (Entwurfs- und Aktionsmodus), ping, drei typische Fehler · Praxis: zwei Rechner in Filius verbinden (abgegeben in der Einheit)",
     items: [
       // Gegengelesen 25.10.2026 (unabhängiger Leser): Ablenker ohne Scherzantworten, Aufgabe 5 mit echten Filius-Schritten,
       // Aufgabe 6 nennt die Zieladresse (ping an die eigene Adresse antwortet auch), Praxis-Schritte vollständig, KI nur Namen
@@ -115,21 +119,11 @@ const GEMEINSAM = [
         [["Lena: Beide Rechner haben die Adresse 192.168.0.40. Ein Kabel verbindet sie.", "Adresse doppelt"],
          ["Tom: Die Rechner haben 192.168.0.40 und 192.168.0.41. Das Werkzeug „Verbindung“ hat Tom nicht benutzt.", "Kabel fehlt"],
          ["Ece: Die Rechner haben 192.168.0.40 und 192.168.0.41, ein Kabel verbindet sie. Zum Testen tippt Ece: ping 192.168.0.14", "falsche Adresse im Befehl"]]),
-      fl("Praxis am PC: Baue in Filius das Netz eines kleinen Ladens. Die Skizze zeigt, wie es aussehen soll. Speichere es und wähle die Datei hier aus.",
-        ["1. Öffne Filius. Fragt es nach der Sprache, lass „Deutsch“ stehen und klicke auf Bestätigen. Siehst du schon ein Netz, klicke oben links auf das weiße Blatt (Neu) und dann auf Ja.",
-         "2. Ziehe links aus der Leiste mit gedrückter Maustaste einen Rechner auf die weiße Fläche. Hole dir genauso einen zweiten.",
-         "3. Doppelklick auf den ersten Rechner. Unten stehen seine Einstellungen. Schreibe bei Name: Kasse. Ändere die IP-Adresse in 192.168.0.20. Drücke nach jeder Eingabe die Eingabetaste (Enter).",
-         "4. Doppelklick auf den zweiten Rechner. Schreibe bei Name: Büro. Ändere die IP-Adresse in 192.168.0.21. Wieder nach jeder Eingabe Enter.",
-         "5. Klicke in der Leiste links ganz oben auf Verbindung (das rote Kabel). Klicke auf Kasse, dann auf Büro. Drücke dann Esc.",
-         "6. Klicke oben auf die Diskette – das geht nur mit dem Hammer (Entwurfsmodus). Speichere in deinem Ordner unter dem Namen laden. Wähle die Datei laden.fls hier unten aus."],
-        [{ id: "zwei", typ: "endgeraete", anzahl: 2, punkte: 1, text: "Genau zwei Rechner stehen auf der Fläche" },
-         { id: "kabel", typ: "kabel", punkte: 1, text: "Die beiden Rechner sind mit einem Kabel verbunden" },
-         { id: "ip20", typ: "ip", ip: "192.168.0.20", punkte: 1, text: "Ein Rechner hat die IP-Adresse 192.168.0.20" },
-         { id: "ip21", typ: "ip", ip: "192.168.0.21", punkte: 1, text: "Ein Rechner hat die IP-Adresse 192.168.0.21" }],
-        1, ["Nur die Namen zählen: Ein Rechner heißt Kasse, der andere Büro. Groß- und Kleinschreibung, „Buero“ statt „Büro“ und kleine Tippfehler zählen als richtig. Kabel und IP-Adressen hat das Prüfprogramm schon bewertet – fehlt dort etwas, gibt es den Punkt für die Namen trotzdem."],
-        "Zwei Rechner auf der Fläche, mit einem Kabel verbunden: Kasse 192.168.0.20 und Büro 192.168.0.21, gespeichert als .fls-Datei.",
-        LADEN),
-      t("Mit welchem Befehl prüfst du auf dem Rechner Kasse, ob Büro antwortet? Schreibe den ganzen Befehl auf. Du kannst ihn in Filius ausprobieren: grüner Pfeil → Kasse anklicken → Software-Installation → Befehlszeile → oberer Pfeil → Änderungen annehmen → Befehlszeile öffnen.",
+      // Praxis: abgegeben und bewertet in der Einheit N1 (letzte Aufgabe) – hier kommen die Punkte von dort
+      fl("Praxis mit Filius: das Netz eines kleinen Ladens (Kasse und Büro, siehe Skizze). Diese Aufgabe hast du am Ende der Einheit „Netzwerke kennenlernen“ abgegeben – deine Punkte von dort zählen hier.",
+        [], LADEN_AUFGABE.checks, LADEN_AUFGABE.kiPunkte, LADEN_AUFGABE.kiKriterien, LADEN_AUFGABE.expected,
+        { ...LADEN, ausModul: "netz-start-laden", einheit: "N1 Netzwerke kennenlernen" }),
+      t("Mit welchem Befehl prüfst du auf dem Rechner Kasse, ob Büro antwortet? Schreibe den ganzen Befehl auf.",
         "ping 192.168.0.21",
         ["ping und die Adresse von Büro: ping 192.168.0.21 (Groß-/Kleinschreibung und Leerzeichen egal; „ping Büro“ oder die eigene Adresse 192.168.0.20 zählen nicht)"],
         ["ping 192.168.0.21|ping192.168.0.21"])

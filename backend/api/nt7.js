@@ -35,6 +35,9 @@
  *   gleich), kiPunkte + kiKriterien = was die KI zusätzlich wohlwollend bewertet (z. B. die Namen der Geräte); ohne KI
  *   gibt es diese Punkte anteilig zu den erfüllten Prüfpunkten. points = Summe der checks + kiPunkte.
  *   Antwort der Seite: { name, data } (Datei als Base64). Die Datei bleibt in der Abgabe (dateiDaten) für die Lehrkraft.
+ *   ausModul: "<Kennung>" (seit 25.10.2026, Wunsch der Lehrkraft): Das Kind gibt die Datei in der Einheit ab
+ *   (filius-modul.js, sofort bewertet); die Probe übernimmt beim Abgeben die beste Abgabe von dort über
+ *   opts.modulAbgabe(student, kennung) -> { meta, buf } | null. In der Probe wird dann nichts hochgeladen.
  * tf mit wahl: ["ausfüllen", "leer lassen"] (Informatik 8, Probe 1b/2b) – eigene Beschriftung der beiden Knöpfe statt
  *   „richtig“/„falsch“ (true = erste, false = zweite); so steht es auch in Ergebnis, Korrektur und Vorschau.
  * tabelle { kopf, zeilen } steht seit 18.10.2026 bei jeder Probe mit in der Abgabe (Rückgabe zeigt sie), nicht nur in NT 8.
@@ -79,6 +82,7 @@ const { probeKindPruefer, probeOffen, verlassenZahl, protokollSauber, GRADE_SCAL
 const probeRegel = require("./probe-regel");
 const Weiter = require("./probe-weiter");
 const FiliusLeser = require("./filiuspruefung");
+const FiliusModul = require("./filius-modul");
 
 /**
  * @param app            Express-App
@@ -103,6 +107,8 @@ function registerNt7Routes(app, opts) {
      mehrere Modelle durch - wichtig, weil das in ANTHROPIC_MODEL gesetzte
      Modell abgekuendigt sein kann. Fehlt sie, fragen wir direkt an. */
   const askAnthropic = typeof opts.askAnthropic === "function" ? opts.askAnthropic : null;
+  // Filius-Abgabe aus einer Einheit (Aufgabe mit ausModul): (student, kennung) -> { meta, buf } | null
+  const MODUL_ABGABE = typeof opts.modulAbgabe === "function" ? opts.modulAbgabe : null;
   const pending = new Set();
   /* Abgabe: Die Antworten werden sofort gespeichert (freie Antworten vorläufig nach Stichwörtern). Danach bewertet
      die KI die freien Antworten. Das Kind wartet höchstens KI_GEDULD_MS auf sie; was länger dauert, läuft im
@@ -222,9 +228,22 @@ function registerNt7Routes(app, opts) {
       ...(item.type === "number" ? {units:item.units ? item.units.slice() : undefined,unit:item.units ? undefined : item.unit || undefined} : {}),
       // E-Mail: Kontakte (ohne An/Cc/Bcc) und Dateien zum Anhängen – der Schlüssel (soll) bleibt auf dem Server
       ...(item.type === "email" ? {kontakte:item.kontakte.map(k => ({name:k.name,adresse:k.adresse})),dateien:item.dateien.slice()} : {}),
-      // Filius: nur die Schritte des Auftrags – die Prüfpunkte bleiben auf dem Server
-      ...(item.type === "filius" ? {aufgabe:(item.aufgabe || []).slice()} : {})};
+      // Filius: nur die Schritte des Auftrags – die Prüfpunkte bleiben auf dem Server; ausModul: abgegeben wird in der Einheit
+      ...(item.type === "filius" ? {aufgabe:(item.aufgabe || []).slice(),...(item.ausModul ? {ausModul:true,einheit:item.einheit || ""} : {})} : {})};
   }
+  // Abgaben aus den Einheiten zu den Aufgaben mit ausModul (je Aufgabe { meta, buf } oder null)
+  async function modulDaten(test, student) {
+    const aus = [];
+    for (const it of test.items) {
+      let a = null;
+      if (it.type === "filius" && it.ausModul && MODUL_ABGABE) {
+        try { a = await MODUL_ABGABE(student, it.ausModul); } catch (err) { console.error(LOG + " Abgabe aus der Einheit:", err && err.message); }
+      }
+      aus.push(a && a.meta ? a : null);
+    }
+    return aus;
+  }
+  const zeitDe = (iso) => { try { return new Date(iso).toLocaleString("de-DE", {timeZone:"Europe/Berlin",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}); } catch (_e) { return ""; } };
   // Was die Seite zusätzlich zur Aufgabe zeigt (NT 8): Animation oder Versuch aus dem NT-Labor, Messwerttabelle,
   // Diagramm. Steht auch bei der Abgabe, damit Korrektur, Rückgabe und Ausdruck dieselbe Darstellung zeigen.
   function zusatz(item) {
@@ -341,29 +360,10 @@ function registerNt7Routes(app, opts) {
   // Die KI sieht Auftrag, Ergebnis des Prüfprogramms und das gebaute Netz; sie vergibt nur die kiPunkte (Namen,
   // Gesamteindruck) und schreibt die Rückmeldung. Die Punkte des Prüfprogramms ändert sie nicht.
   async function filiusKi(d, item) {
-    const max = item.kiPunkte || 0, p = d.pruefung || {};
-    if (!max || !p.lesbar) return null;
-    const system = [
-      "Du prüfst eine Filius-Datei aus einer Informatik-Probe der " + (STUFE || "9") + ". Klasse einer bayerischen Mittelschule.",
-      "Ein Prüfprogramm hat die festen Schritte schon genau geprüft (gepruefteSchritte) – diese Punkte änderst du nicht.",
-      "Du vergibst nur die zusätzlichen Punkte nach den Kriterien (0 bis " + max + " ganze Punkte). Bewerte wohlwollend:",
-      "Groß- und Kleinschreibung, Umlaute (ue statt ü) und kleine Tippfehler bei Namen zählen nicht. Im Zweifel für das Kind.",
-      "text: Rückmeldung an das Kind auf Deutsch, du-Form, höchstens 2 kurze Sätze, zuerst was gelungen ist.",
-      "Antworte ausschließlich mit JSON: {\"punkte\":0,\"text\":\"…\"}."
-    ].join("\n");
-    const user = JSON.stringify({auftrag:[item.prompt].concat(item.aufgabe || []).join("\n"),kriterien:item.kiKriterien || [],hoechstpunkte:max,
-      gepruefteSchritte:(p.details || []).map(x => ({schritt:x.text,erfuellt:x.erfuellt,gefunden:x.ist})),gebautesNetz:p.netz});
-    try {
-      const raw = await kiFragen(system, user, 260);
-      const match = String(raw || "").match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Invalid AI response");
-      const parsed = JSON.parse(match[0]);
-      if (!Number.isFinite(Number(parsed.punkte))) throw new Error("Invalid AI points");
-      return {points:Math.max(0,Math.min(max,Math.round(Number(parsed.punkte)))),comment:clean(parsed.text,300),source:"ki"};
-    } catch (err) {
-      console.error(LOG + " KI-Prüfung Filius:",err.message);
-      return null;
-    }
+    // derselbe Baustein wie in den Einheiten (filius-modul.js)
+    const r = await FiliusModul.filiusKi({auftrag:[item.prompt].concat(item.aufgabe || []).join("\n"),kriterien:item.kiKriterien,max:item.kiPunkte || 0,
+      pruefung:d.pruefung,askAnthropic:(s, u, n) => kiFragen(s, u, n),stufe:STUFE || "9"});
+    return r ? {points:r.punkte,comment:r.text,source:"ki"} : null;
   }
   function kiBewerten(d, item, zug) {
     if (item.type === "filius") return filiusKi(d, item);
@@ -455,6 +455,11 @@ function registerNt7Routes(app, opts) {
     const data = readData(), weiter = weiterAbgabe(data, test, student);
     if (schonAbgegeben(data, test, student) && !weiter) return res.status(409).json({ok:false,error:"already_submitted"});
     const antwort = {ok:true,test:{id:test.id,title:test.title,scope:test.scope,minutes:test.minutes,maxPoints:maxPoints(test),...(test.variante ? {variante:test.variante} : {}),...regelAngaben(test)},items:test.items.map(publicItem)};
+    // Filius aus der Einheit: Hat das Kind dort schon abgegeben? (Punkte sieht es in der Einheit ohnehin)
+    if (test.items.some(it => it.type === "filius" && it.ausModul)) {
+      const md = await modulDaten(test, student);
+      md.forEach((a, i) => { if (test.items[i].ausModul) antwort.items[i].modulStand = a ? {abgegeben:true,zeit:a.meta.zeit,punkte:Math.min(test.items[i].points, Number(a.meta.punkte) || 0),max:test.items[i].points} : {abgegeben:false}; });
+    }
     if (SITZUNG) {
       // Beginn festhalten (oder die laufende Sitzung fortsetzen) und den letzten Zwischenstand mitgeben
       const sd = sitzLesen(), k = sitzKey(test, student);
@@ -523,7 +528,8 @@ function registerNt7Routes(app, opts) {
   }
   // Antworten einer Abgabe auswerten: geschlossene Aufgaben nach dem Schlüssel, freie vorläufig nach Stichwörtern
   // (frei = Nummern der freien Antworten, die danach die KI bewertet)
-  function auswerten(test, answers) {
+  // modul: Abgaben aus den Einheiten je Aufgabe (modulDaten) – nur für Aufgaben mit ausModul
+  function auswerten(test, answers, modul) {
       const details = [], frei = [];
       for (let i=0; i<test.items.length; i++) {
         const item = test.items[i], raw = answers[i];
@@ -568,6 +574,20 @@ function registerNt7Routes(app, opts) {
           details.push({...base,given:emailAnzeige(e),antwort:e,kiText,teile,feldPunkte,kiPunkte:ki.points,points:feldPunkte + ki.points,expected:item.expected,
             comment:emailKommentar(teile, ki.comment),source:ki.source,needsReview:ki.needsReview});
           if ((e.betreff || e.text) && process.env.ANTHROPIC_API_KEY) frei.push(i);
+        } else if (item.type === "filius" && item.ausModul) {
+          // Filius-Datei aus der Einheit: Punkte, Datei und Rückmeldung (Prüfprogramm + KI) kommen von der besten Abgabe dort
+          const a = modul && modul[i];
+          if (a) {
+            const m = a.meta, liste = Array.isArray(m.liste) ? m.liste : [];
+            details.push({...base,given:"Abgegeben in der Einheit am " + zeitDe(m.zeit) + " · " + (m.netzText || ""),datei:item.ausModul + ".fls",
+              ...(Buffer.isBuffer(a.buf) ? {dateiDaten:a.buf.toString("base64")} : {}),exaktPunkte:Number(m.exakt) || 0,kiPunkte:m.ki ? Number(m.ki.punkte) || 0 : 0,
+              points:Math.max(0, Math.min(item.points, Math.round(Number(m.punkte) || 0))),expected:item.expected,
+              comment:clean(liste.map(x => (x.ok ? "✓ " : "✗ ") + x.text).join(" · ") + (m.ki && m.ki.text ? " – " + (m.ki.quelle === "ki" ? "KI: " : "") + m.ki.text : ""), 700),
+              source:"modul",needsReview:false,modulZeit:m.zeit});
+          } else {
+            details.push({...base,given:"Keine Abgabe in der Einheit.",points:0,expected:item.expected,
+              comment:"Die Filius-Datei wurde in der Einheit " + (item.einheit || "") + " nicht abgegeben (oder ohne Anmeldung mit dem Code).",source:"modul",needsReview:false});
+          }
         } else if (item.type === "filius") {
           // Filius-Datei: das Prüfprogramm vergibt die Punkte der Schritte genau; die KI-Punkte gibt es vorläufig
           // anteilig, die KI bewertet nach dem Speichern (Namen, Gesamteindruck) und schreibt die Rückmeldung
@@ -623,7 +643,7 @@ function registerNt7Routes(app, opts) {
       // Darf das Kind weiterbearbeiten (Lehrkraft, Verwaltung), ersetzt die neue Abgabe die alte
       const alt = weiterAbgabe(data, test, student);
       if (schonAbgegeben(data, test, student) && !alt) return res.status(409).json({ok:false,error:"already_submitted"});
-      const {details, frei} = auswerten(test, req.body.answers);
+      const {details, frei} = auswerten(test, req.body.answers, await modulDaten(test, student));
       const regelStand = probeRegel.ausAbgabe(req.body, MODUL, test.id, student.key, regelVon(test));
       const record = {id:crypto.randomUUID(),testId:test.id,testTitle:test.title,...student,studentKey:student.key,verlassen:verlassenZahl(req.body.verlassen),protokoll:protokollSauber(req.body.protokoll),details,submittedAt:new Date().toISOString()};
       // nach dem Sperren von Hand abgegeben (Nachfrist): für die Lehrkraft vermerkt

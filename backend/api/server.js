@@ -283,7 +283,12 @@ const inf9Proben = registerNt7Routes(app, {
   dataDir: DATA_DIR,
   kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
-  askAnthropic: askAnthropic
+  askAnthropic: askAnthropic,
+  // Probe 1b: die Filius-Aufgabe übernimmt die beste Abgabe aus der Einheit N1 (filius-modul.js, Abgaben-Speicher inf9)
+  modulAbgabe: (student, kennung) => {
+    const klasse = require("./nt9-fortschritt").klasseNorm(student && student.klasse);
+    return klasse ? inf9Abgaben.hole(klasse, String(student.code), kennung) : null;
+  }
 });
 // Informatik 9: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf9/uebung/feedback", klasse: "Klasse 9", fach: "Informatik", thema: "Informatik (Netzwerke mit Filius, Internet: URL, DNS, HTTP und HTTPS, Tabellenkalkulation mit Excel: Funktionen und Diagramme, Programmieren mit Scratch)" });
@@ -292,8 +297,13 @@ const inf9Abgaben = abgabenSpeicher({ kurs: "inf9", dataDir: DATA_DIR });
 const inf9Merke = abgabeMerker({ speicher: inf9Abgaben, stufe: 9, kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req) });
 registerExcelPruefung(app, { askAnthropic, prefix: "/api/inf9", klasse: "9. Klasse", aufgaben: require("./inf9-excel-aufgaben"), merke: inf9Merke });
 registerScratchPruefung(app, { askAnthropic, prefix: "/api/inf9", klasse: "9. Klasse", modul: require("./inf9-scratch-aufgaben"), merke: inf9Merke });
+// Informatik 9: Filius-Aufträge in den Einheiten (N1: Netz eines Ladens) – sofort bewertet (Prüfprogramm + KI), mit Code
+// aufbewahrt (beste Abgabe zählt); die Punkte übernimmt Probe 1b (nt7.js, ausModul)
+const { registerFiliusModulPruefung } = require("./filius-modul");
+registerFiliusModulPruefung(app, { askAnthropic, prefix: "/api/inf9", aufgaben: require("./inf9-filius-aufgaben").AUFGABEN, speicher: inf9Abgaben, stufe: 9,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req), klasseNorm: require("./nt9-fortschritt").klasseNorm });
 registerAbgabenRoutes(app, { prefix: "/api/inf9", stufe: 9, teacherPassword: TEACHER_PASSWORD, speicher: inf9Abgaben,
-  excelAufgaben: require("./inf9-excel-aufgaben"), scratchModul: require("./inf9-scratch-aufgaben") });
+  excelAufgaben: require("./inf9-excel-aufgaben"), scratchModul: require("./inf9-scratch-aufgaben"), filiusAufgaben: require("./inf9-filius-aufgaben").AUFGABEN });
 
 // --- NT 8 (8M und 8R): je Themenbereich eine Probe, R8/M8 × Variante A und Nachschreibprobe B (nt8-block-*.js).
 // Dieselbe Technik wie die NT-7-Proben, dazu: Beginn und Zwischenstand auf dem Server (sitzung), weitere Aufgabenarten
@@ -686,7 +696,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-10-25-inf9-probe1b",
+    version: "2026-10-25-inf9-filius-modul",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

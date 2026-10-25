@@ -24,6 +24,7 @@
  *   POST <prefix>/lehrer/abgaben           { password, klasse }                 -> { ok, speicher, klasse, abgaben: [{ code, aufgabe, titel, art, zeit, groesse, erfuellt, offen, anzahl }] }
  *   POST <prefix>/lehrer/abgabe            { password, klasse, code, aufgabe }  -> { ok, name, art, datei (base64), punkte, vorschau }
  *        vorschau: { art: "tabelle", spalten, zeilen, zellen: { A1: { t, f } } } oder { art: "programm", text, figuren, variablen }
+ *                  oder { art: "netz", text, punkte, max, ki } (Filius, Informatik 9 – filius-modul.js)
  *   POST <prefix>/lehrer/abgaben/loeschen  { password, klasse, code? }          -> { ok, anzahl }
  */
 
@@ -36,7 +37,8 @@ const { zip } = require("./xlsx-mini");
 
 const TAGE = 400, MAX_BYTES = 640 * 1024;
 const AUFGABE = /^[a-z0-9-]{2,60}$/, CODE = /^[A-Za-z0-9]{2,12}$/;
-const ENDUNG = { xlsx: ".xlsx", sb3: ".sb3" };
+// fls: Filius-Netze aus den Einheiten von Informatik 9 (filius-modul.js, seit 25.10.2026) – mit Punkten in meta
+const ENDUNG = { xlsx: ".xlsx", sb3: ".sb3", fls: ".fls" };
 
 /* ---------- Excel-Mappe ohne persönliche Angaben ---------- */
 function saeubereXlsx(buf) {
@@ -76,8 +78,8 @@ function abgabenSpeicher(options = {}) {
   const feld = (code, aufgabe) => `${code}|${aufgabe}`;
   const lies = (s) => { try { return JSON.parse(s); } catch (_e) { return null; } };
   const eintraege = (paare, klasse) => paare.map(([f, v]) => { const [code, aufgabe] = String(f).split("|"); const m = lies(v); return m && code && aufgabe ? { klasse, code, aufgabe, ...m } : null; }).filter(Boolean);
-  // Eine bestandene Fassung wird von einer nicht bestandenen nicht ersetzt
-  const behalten = (alt, neu) => !!alt && alt.erfuellt && !neu.erfuellt;
+  // Eine bestandene Fassung wird von einer nicht bestandenen nicht ersetzt; mit Punkten (Filius): mehr Punkte bleiben
+  const behalten = (alt, neu) => !!alt && (typeof alt.punkte === "number" && typeof neu.punkte === "number" ? alt.punkte > neu.punkte : alt.erfuellt && !neu.erfuellt);
 
   if (url && token) {
     const cmd = upstashBefehl(url, token, options.fetch), sek = TAGE * 86400;
@@ -193,7 +195,9 @@ function registerAbgabenRoutes(app, options = {}) {
   const teacherPassword = String(options.teacherPassword || "");
   const speicher = options.speicher;
   const excel = options.excelAufgaben || {}, scratch = options.scratchModul || { AUFGABEN: {}, scratchProjekt: null };
-  const titel = (aufgabe) => (excel[aufgabe] && excel[aufgabe].titel) || (scratch.AUFGABEN[aufgabe] && scratch.AUFGABEN[aufgabe].titel) || aufgabe;
+  const filius = options.filiusAufgaben || {};
+  const titel = (aufgabe) => (excel[aufgabe] && excel[aufgabe].titel) || (scratch.AUFGABEN[aufgabe] && scratch.AUFGABEN[aufgabe].titel) ||
+    (filius[aufgabe] && filius[aufgabe].titel) || aufgabe;
 
   function lehrerOk(req, res) {
     const given = Buffer.from(String((req.body && req.body.password) || "").slice(0, 200)), expected = Buffer.from(teacherPassword);
@@ -211,7 +215,8 @@ function registerAbgabenRoutes(app, options = {}) {
     const klasse = klasseVon(req.body.klasse);
     if (!klasse) return res.status(400).json({ ok: false, error: "Abgaben gibt es für die " + STUFE + ". Klassen." });
     try {
-      const abgaben = (await speicher.liste(klasse)).map((e) => ({ code: e.code, aufgabe: e.aufgabe, titel: titel(e.aufgabe), art: e.art, zeit: e.zeit, groesse: e.groesse, erfuellt: !!e.erfuellt, offen: e.offen || 0, anzahl: e.anzahl || 0 }))
+      const abgaben = (await speicher.liste(klasse)).map((e) => ({ code: e.code, aufgabe: e.aufgabe, titel: titel(e.aufgabe), art: e.art, zeit: e.zeit, groesse: e.groesse, erfuellt: !!e.erfuellt, offen: e.offen || 0, anzahl: e.anzahl || 0,
+        ...(typeof e.punkte === "number" ? { punkte: e.punkte, max: e.max } : {}) }))
         .sort((a, b) => a.code.localeCompare(b.code, "de") || a.aufgabe.localeCompare(b.aufgabe, "de"));
       return res.json({ ok: true, speicher: speicher.art, klasse, abgaben });
     } catch (error) { return fehler(res, error); }
@@ -226,7 +231,11 @@ function registerAbgabenRoutes(app, options = {}) {
       if (!a) return res.status(404).json({ ok: false, error: "Diese Abgabe gibt es nicht (mehr)." });
       let punkte = [], vorschau = null;
       try {
-        if (a.meta.art === "xlsx") {
+        if (a.meta.art === "fls") {
+          // Filius: Netz als Text, Prüfpunkte und Urteil der KI stehen schon in der Abgabe
+          vorschau = { art: "netz", text: a.meta.netzText || "", punkte: a.meta.punkte, max: a.meta.max, ki: a.meta.ki || null };
+          punkte = a.meta.liste || [];
+        } else if (a.meta.art === "xlsx") {
           const x = liesXlsx(a.buf);
           vorschau = tabellenVorschau(x);
           if (excel[aufgabe]) punkte = excel[aufgabe].pruefe(x);
