@@ -509,6 +509,31 @@ test("Fehlversuche je Aufgabe und Zurücksetzen eines Moduls (NT 7)", async () =
   } finally { await new Promise((r) => api.server.close(r)); }
 });
 
+test("Lehrkraft nimmt einzelne gelöste Aufgaben wieder heraus (auch NT 9)", async () => {
+  let zeit = 1000;
+  const api = await starte({ store: dateiStore(null), now: () => zeit });
+  try {
+    const [a, b] = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "9aM", anzahl: 2 })).body.neu.map((k) => k.code);
+    await api.post(P + "/melden", { code: a, modul: "m01", geloest: ["a1", "a2", "a3", "a4"], gesamt: 10 });
+    zeit = 2000;
+    await api.post(P + "/melden", { code: b, modul: "m01", geloest: ["a1"], gesamt: 10 });
+    const eintraege = [{ code: a, modul: "m01", aufgaben: ["a3", "a4", "gibts-nicht"], z: 900 }, { code: b, modul: "m02", aufgaben: ["a1"] }, { code: "999", modul: "m01", aufgaben: ["a1"] }];
+    assert.equal((await api.post(P + "/lehrer/aufgaben-entfernen", { password: "falsch", eintraege })).status, 401);
+    assert.equal((await api.post(P + "/lehrer/aufgaben-entfernen", { password: "2", eintraege: [] })).status, 400);
+    const r = await api.post(P + "/lehrer/aufgaben-entfernen", { password: "2", eintraege });
+    assert.deepEqual(r.body, { ok: true, entfernt: 2, kinder: 1 }, "nur vorhandene Aufgaben, unbekannte Codes und Module ohne Stand zählen nicht");
+    const l = await api.post(P + "/lehrer/liste", { password: "2", kurs: "nt9", klasse: "9aM" });
+    const ka = l.body.schueler.find((s) => s.code === a).module.m01, kb = l.body.schueler.find((s) => s.code === b).module.m01;
+    assert.deepEqual(Object.keys(ka.g), ["a1", "a2"]);
+    assert.equal(ka.z, 900, "zuletzt aktiv wie vorher");
+    assert.equal(ka.r, undefined, "keine Zurücksetzen-Marke");
+    assert.deepEqual(Object.keys(kb.g), ["a1"], "das andere Kind bleibt");
+    // Danach meldet das Kind ganz normal weiter
+    const m = await api.post(P + "/melden", { code: a, modul: "m01", geloest: ["a5"], gesamt: 10 });
+    assert.equal(m.body.anzahl, 3);
+  } finally { await new Promise((r) => api.server.close(r)); }
+});
+
 test("Zurücksetzen merkt sich, dass das Modul schon abgeschlossen war (Deutsch 7, R-Klasse ohne Plus)", async () => {
   let zeit = 1000;
   const api = await starte({ store: dateiStore(null), now: () => zeit });

@@ -51,6 +51,8 @@
  *         Für die Lehrkraft bleibt stehen, wie weit das Kind vorher war: rv, und ab/abn, wenn das Modul fertig war.)
  * Routen (Lehrkraft, Passwort im Body):
  *   POST …/lehrer/zuruecksetzen { password, modul, code } oder { password, modul, klasse } -> { ok, anzahl, r }
+ *   POST …/lehrer/aufgaben-entfernen { password, eintraege: [{ code, modul, aufgaben: [ids], z? }] } -> { ok, entfernt, kinder }
+ *        (nimmt genau diese gelösten Aufgaben wieder heraus, z. B. nach einer Vorführung; alles andere bleibt)
  *   POST …/lehrer/liste       { password, kurs?, klasse? } -> { ok, speicher, kurse, module, klassen, klassenInfo, schueler, katalog }
  *   POST …/lehrer/anlegen     { password, klasse, anzahl } -> { ok, neu: [{ code, klasse }] }
  *   POST …/lehrer/loeschen    { password, code } oder { password, klasse }  -> { ok, anzahl }
@@ -706,6 +708,32 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       const katalog = (await katalogeHolen([modul]))[modul];
       for (const kind of betroffen) { modulLeeren(kind, modul, "l", zeit, katalog); await geaendert(kind.code); }
       return res.json({ ok: true, anzahl: betroffen.length, r: zeit });
+    } catch (error) { return fehler(res, error); }
+  });
+
+  // Einzelne gelöste Aufgaben wieder herausnehmen (Lehrkraft, alle Kurse), z. B. eine Anpassung des Lernstands für eine
+  // Vorführung zurücknehmen: nur die genannten Kennungen, alles andere bleibt. z (optional): „zuletzt aktiv“ des Moduls.
+  // Ohne Zurücksetzen-Marke r – Geräte, die die Aufgaben schon übernommen haben, können sie wieder melden.
+  app.post("/api/nt9/fortschritt/lehrer/aufgaben-entfernen", async (req, res) => {
+    if (!lehrerOk(req, res)) return;
+    try {
+      const liste = Array.isArray(req.body && req.body.eintraege) ? req.body.eintraege.slice(0, 1000) : [];
+      if (!liste.length) return res.status(400).json({ ok: false, error: "Keine Einträge." });
+      const kinder = await kinderLaden(), codes = new Set();
+      let entfernt = 0;
+      for (const e of liste) {
+        const kind = kinder.get(String((e && e.code) || "")), modul = String((e && e.modul) || "");
+        const p = kind && kursVon(modul) ? kind.p[modul] : null;
+        if (!p || !p.g) continue;
+        const weg = aufgabenListe(e.aufgaben).filter((id) => p.g[id] !== undefined);
+        weg.forEach((id) => { delete p.g[id]; });
+        const z = Number(e.z);
+        if (Number.isFinite(z) && z > 0 && z !== p.z) p.z = z;
+        else if (!weg.length) continue;
+        entfernt += weg.length; codes.add(kind.code);
+      }
+      for (const c of codes) await geaendert(c);
+      return res.json({ ok: true, entfernt, kinder: codes.size });
     } catch (error) { return fehler(res, error); }
   });
 
