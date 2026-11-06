@@ -38,6 +38,10 @@
  *   zeile     Zeilenangabe (bereiche: [[von, bis]])       points
  *   offen     offene Antwort                              kriterien: [{ text, erwartet, punkte }] = Erwartungshorizont
  *   schreiben längerer Text                               raster: [{ name, text, punkte }] = Bewertungsraster
+ * teile an offen oder schreiben (seit 06.11.2026, Probe 9 M7 „Einen Aufruf schreiben“): Die Seite zeigt je Teil ein eigenes
+ *   Feld statt eines großen Textfeldes – teile: ["1.", "2."] oder [{ gruppe: "Argument 1", label: "Behauptung", hilfe,
+ *   frei: true (freiwillig, leer = weggelassen), zusatz (Satz neben der Gruppe) }]. Abgegeben wird weiter ein Text: je Teil
+ *   eine Zeile „Name des Feldes: …“ (bei nur einem Teil der Text allein). KI und Lehrkraft lesen die Teile daran ab.
  * Kennzeichen rs: true (Rechtschreibung) und zs: true (Zeichensetzung) an Aufgabe, Feld, Kriterium oder Rasterzeile:
  * Hat das Kind Notenschutz (LRS, von der Lehrkraft beim Code gesetzt), zählt Rechtschreibung nicht – diese Teile
  * werden nicht gewertet und auch nicht zur Höchstpunktzahl gerechnet. Die Lehrkraft kann das je Abgabe umstellen
@@ -140,6 +144,9 @@ function abstand(a, b) {
 }
 
 /* ---------- Proben vorbereiten und prüfen (beim Laden) ---------- */
+// Name eines Teils einer Antwort (teile): „1.“ oder „Argument 1 – Behauptung“ – so steht er vorn in der Abgabe
+const teilName = (t) => (typeof t === "string" ? t : t && t.label ? (t.gruppe ? t.gruppe + " – " : "") + t.label : "");
+const teilOeffentlich = (t) => (typeof t === "string" ? t : { label: t.label, ...(t.gruppe ? { gruppe: t.gruppe } : {}), ...(t.hilfe ? { hilfe: t.hilfe } : {}), ...(t.frei ? { frei: true } : {}), ...(t.zusatz ? { zusatz: t.zusatz } : {}) });
 function punkteVon(item) {
   if (item.type === "choice" || item.type === "zeile") return item.points || 1;
   if (item.type === "match") return item.points || item.pairs.length;
@@ -201,6 +208,12 @@ function vorbereiten(tests, stufe, fachKurz) {
       if (item.type === "schreiben" && !(Array.isArray(item.raster) && item.raster.length && item.raster.every((k) => k.name && k.punkte > 0))) throw new Error(wo(i) + "Raster fehlt");
       if (item.form && !(item.type === "schreiben" && SCHREIBFORMEN.includes(item.form))) throw new Error(wo(i) + "Schreibform " + item.form);
       if (item.plan && !(item.type === "schreiben" && Array.isArray(item.plan) && item.plan.length <= 10 && item.plan.every((f) => /^[a-z0-9-]{1,30}$/.test(f.id || "") && f.label))) throw new Error(wo(i) + "Planung");
+      // Antwort in Teilen: je Teil ein eigenes Feld auf der Seite (Namen eindeutig, höchstens 16)
+      if (item.teile !== undefined) {
+        const namen = Array.isArray(item.teile) ? item.teile.map(teilName) : [];
+        if (!(OFFENE.has(item.type) && namen.length >= 1 && namen.length <= 16 && namen.every((n) => n && n.length <= 60) && new Set(namen).size === namen.length)) throw new Error(wo(i) + "teile");
+        if (item.plan) throw new Error(wo(i) + "teile und Planung zugleich");
+      }
       item.points = punkteVon(item);
     });
   });
@@ -352,6 +365,7 @@ function registerD7ProbenRoutes(app, opts) {
     if (item.type === "felder") p.felder = item.felder.map((f, j) => ({ label: item.menge ? (j + 1) + "." : f.label || "", breit: Boolean(f.breit) && !item.menge }));
     if (item.type === "komma") p.saetze = item.saetze.map((s) => kommaSatz(s).woerter);
     if (item.type === "schreiben") { p.minWoerter = item.minWoerter || 0; p.material = item.material || undefined; p.raster = item.raster.map((r) => ({ name: r.name, punkte: r.punkte })); p.form = item.form || undefined; p.plan = item.plan || undefined; }
+    if (item.teile) p.teile = item.teile.map(teilOeffentlich);
     return p;
   }
   // Hörtext: Die Seite braucht die Sätze zum Abspielen (Sprachausgabe des Servers oder des Geräts); sie zeigt sie nicht an.
@@ -611,7 +625,10 @@ function registerD7ProbenRoutes(app, opts) {
       "korrektur: ein oder zwei Sätze – was an der Antwort stimmt und was fehlt (höchstens 40 Wörter).",
       "hinweis: genau ein konkreter nächster Schritt für das nächste Mal (höchstens 25 Wörter). Leer, wenn es die volle Punktzahl gibt.",
       "kategorie: höchstens eine aus dieser Liste, nur wenn sie eindeutig passt, sonst leer: " + KATEGORIEN.join(", ") + "."
-    ], lrsZusatz(record)).join("\n");
+    ], item.teile && item.teile.length > 1 ? [
+      "Das Kind hat die Teile seiner Antwort in getrennte Felder geschrieben. In der Schülerantwort steht vor jedem Teil der Name seines Feldes (" + item.teile.slice(0, 3).map((t) => "„" + teilName(t) + ":“").join(", ") + " …). Ein Feld ohne Text fehlt.",
+      "Steht ein Baustein im falschen Feld, zählt er trotzdem. Stichworte und kurze Sätze gelten, wenn die Aufgabe nicht ausdrücklich ganze Sätze verlangt."
+    ] : [], lrsZusatz(record)).join("\n");
     const user = JSON.stringify({
       klasse: ZUG_TEXT[test.zug] || STUFE + ". Klasse",
       probe: test.title,

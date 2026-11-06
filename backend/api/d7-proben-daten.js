@@ -6,6 +6,7 @@
  *
  *   1 Erzählen · 2 Sachtext I · 3 Sachtext II / Zusammenfassung · 4 Argumentieren · 5 Literatur ·
  *   6 Grammatik I · 7 Grammatik II · 8 Rechtschreibung und Sprachtraining
+ *   9 Einen Aufruf schreiben (seit 06.11.2026, nur M7, nur Fassung A, zählt doppelt – Wunsch der Lehrkraft)
  *
  * Jede Probe steht in einer eigenen Datei im Ordner d7-proben (p1.js … p8.js), jede Datei liefert vier Fassungen
  * mit den Kennungen d7-p<nr>-r-a, -r-b, -m-a, -m-b. Geschrieben werden sie mit den Bausteinen aus d7-proben/bau.js.
@@ -21,7 +22,7 @@ const path = require("path");
 const PROBEN = {};
 // Nur beim Schreiben einer Probe: D7_PROBEN_NUR=3 lädt allein p3.js (die Tests prüfen dann nur diese Probe)
 const NUR = Number(process.env.D7_PROBEN_NUR) || 0;
-for (let nr = 1; nr <= 8; nr++) {
+for (let nr = 1; nr <= 9; nr++) {
   const datei = path.join(__dirname, "d7-proben", "p" + nr + ".js");
   if (!fs.existsSync(datei) || (NUR && NUR !== nr)) continue;   // noch nicht geschrieben
   for (const probe of Object.values(require(datei))) {

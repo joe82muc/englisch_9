@@ -11,14 +11,16 @@ const PROBEN = vorbereiten(JSON.parse(JSON.stringify(ROH)));
 const VORLAGE = ROH.__vorlage;
 
 const NUMMERN = [...new Set(Object.values(PROBEN).map((p) => p.nr))].sort((a, b) => a - b);
-const TEXTPROBEN = new Set([1, 2, 3, 4, 5]);            // hier kommen mindestens 50 % der Punkte aus offenen Aufgaben
+const TEXTPROBEN = new Set([1, 2, 3, 4, 5, 9]);         // hier kommen mindestens 50 % der Punkte aus offenen Aufgaben
 const LANGTEXT = new Set([2, 3, 5]);                    // hier steht ein längerer Lesetext
 const fassung = (nr, zug, v) => PROBEN["d7-p" + nr + "-" + zug + "-" + v];
 // Probe 6 für M7: Variante B wurde am 12.10.2026 gelöscht; seit 14.10.2026 steht dort die Nachholprobe (Wunsch der
 // Lehrkraft) – leichter, eigene Punktzahl, nur Aufgaben mit Schlüssel, R-Schlüssel. Sie ist nicht „gleichwertig“ zu A.
 const NACHHOL = new Set(["6-m"]);
 const istNachhol = (nr, zug, v) => v === "b" && NACHHOL.has(nr + "-" + zug);
-const gibtEs = () => true;
+// Proben, die es nur in einzelnen Fassungen gibt: Probe 9 „Einen Aufruf schreiben“ (seit 06.11.2026) nur für M7, nur A
+const EINZEL = { 9: ["m-a"] };
+const gibtEs = (nr, zug, v) => !EINZEL[nr] || EINZEL[nr].includes(zug + "-" + v);
 const saetze = (p) => p.texte.flatMap((t) => (t.absaetze || t.verse || []).join(" ").split(/(?<=[.!?])\s+/)).map((s) => s.trim()).filter((s) => s.length > 25);
 const woerter = (p) => p.texte.reduce((n, t) => n + (t.absaetze || t.verse ? Zeilen.woerter(t) : 0), 0);
 
@@ -73,7 +75,8 @@ for (const nr of NUMMERN) {
         }
         if (it.type === "schreiben") {
           assert.ok(it.raster.length >= 3 && it.raster.every((k) => k.text), wo(i) + "Raster: mindestens drei Zeilen, jede mit Beschreibung");
-          assert.ok(it.minWoerter >= 30, wo(i) + "minWoerter fehlt");
+          // Antwort in Teilen (teile, je Baustein ein Feld): ohne Mindestzahl an Wörtern
+          assert.ok(it.minWoerter >= 30 || Array.isArray(it.teile), wo(i) + "minWoerter fehlt");
           assert.ok(it.raster.filter((k) => k.rs).length <= 1, wo(i) + "höchstens eine Rasterzeile für die Rechtschreibung");
         }
         if (it.text) assert.ok(p.texte.some((t) => t.id === it.text), wo(i) + "Text fehlt");
@@ -102,11 +105,12 @@ for (const nr of NUMMERN) {
         assert.ok(offene.filter((i) => i.hilfe).length >= Math.floor(offene.length / 2), p.id + ": R7 braucht Hilfen (hilfe:) bei mindestens der Hälfte der offenen Aufgaben");
       }
     }
-    assert.ok(maxPoints(fassung(nr, "m", "a")) >= maxPoints(fassung(nr, "r", "a")), "M7 hat mindestens so viele Punkte wie R7");
+    if (gibtEs(nr, "m", "a") && gibtEs(nr, "r", "a")) assert.ok(maxPoints(fassung(nr, "m", "a")) >= maxPoints(fassung(nr, "r", "a")), "M7 hat mindestens so viele Punkte wie R7");
   });
 
   test(`Probe ${nr}: Variante B ist gleichwertig, aber eine andere Probe`, () => {
     for (const zug of ["r", "m"]) {
+      if (!gibtEs(nr, zug, "a") || !gibtEs(nr, zug, "b")) continue;      // nur eine Fassung (Probe 9)
       const a = fassung(nr, zug, "a"), b = fassung(nr, zug, "b");
       if (istNachhol(nr, zug, "b")) {
         // Nachholprobe: dieselben Aufgaben der Reihe nach, aber leichter – weniger Punkte, kein Satz aus Fassung A
@@ -167,6 +171,34 @@ test("Probe 6 (M7): Nachholprobe 2 (Fassung C) – wie die erste Nachholprobe au
     .map((s) => String(s).trim()).filter((s) => s.length > 18 && !/^(Welche|In welche|Setze|Bilde|Aktiv oder|Forme|Nur einer)/.test(s)));
   const nc = alles(c);
   for (const id of ["d7-p6-m-a", "d7-p6-m-b", "d7-p6-r-a", "d7-p6-r-b"]) assert.deepEqual([...alles(PROBEN[id])].filter((s) => nc.has(s)), [], "Nachholprobe 2 verwendet Sätze aus " + id);
+});
+
+// Seit 06.11.2026 (Wunsch der Lehrkraft): Probe 9 „Einen Aufruf schreiben“ – wie die Papierprobe, 40 Punkte, zählt doppelt,
+// kein Fließtext: jeder Teil des Aufrufs hat ein eigenes Feld, drei Argumente mit Behauptung, Begründung und Beispiel.
+test("Probe 9 (M7): Einen Aufruf schreiben – Schritt für Schritt, 40 Punkte, zählt doppelt", () => {
+  assert.deepEqual(Object.keys(PROBEN).filter((id) => /^d7-p9-/.test(id)), ["d7-p9-m-a"], "nur M7, nur Fassung A");
+  const p = PROBEN["d7-p9-m-a"];
+  assert.equal(maxPoints(p), 40);
+  assert.equal(p.notenzug, undefined, "M-Schlüssel nach dem Zug des Kindes");
+  assert.match(p.title, /zählt doppelt/); assert.match(p.hinweis, /zählt doppelt/);
+  assert.deepEqual(p.texte.map((t) => t.typ), ["text", "tabelle", "tabelle"], "Artikel, Infokasten, Worterklärungen");
+  // Teile A, B, C wie auf Papier
+  assert.deepEqual(p.items.filter((i) => i.teil).map((i) => i.teil), ["Teil A: Planen", "Teil B: Den Aufruf Schritt für Schritt schreiben", "Teil C: Überarbeiten"]);
+  // kein großes Textfeld: jede offene Aufgabe hat Felder
+  p.items.filter((i) => i.type === "offen" || i.type === "schreiben").forEach((i) => assert.ok(Array.isArray(i.teile) && i.teile.length, i.prompt.slice(0, 30) + ": ohne Felder"));
+  const hauptteil = p.items.find((i) => i.type === "schreiben");
+  assert.equal(hauptteil.points, 12);
+  const gruppen = [...new Set(hauptteil.teile.map((t) => t.gruppe))];
+  assert.deepEqual(gruppen, ["Argument 1", "Argument 2", "Argument 3", "Argument 4"]);
+  for (const g of gruppen) assert.deepEqual(hauptteil.teile.filter((t) => t.gruppe === g).map((t) => t.label), ["Behauptung", "Begründung", "Beispiel"], g);
+  assert.ok(hauptteil.teile.filter((t) => t.gruppe === "Argument 4").every((t) => t.frei), "Argument 4 ist freiwillig");
+  assert.ok(hauptteil.teile.filter((t) => t.gruppe !== "Argument 4").every((t) => !t.frei), "Argument 1 bis 3 sind Pflicht");
+  assert.deepEqual(hauptteil.raster.map((r) => r.punkte), [3, 3, 3, 1, 2]);
+  // Rechtschreibung: genau 2 Punkte (mit Notenschutz 38)
+  const rs = p.items.reduce((n, i) => n + (i.raster || i.kriterien || []).filter((k) => k.rs).reduce((m, k) => m + k.punkte, 0), 0);
+  assert.equal(rs, 2);
+  // Punkte je Schritt wie auf Papier: Planen 12 · Überschrift 2 · Einleitung 3 · Hauptteil 10 + 2 · Schluss 5 · Überarbeiten 6
+  assert.deepEqual(p.items.map((i) => i.points), [1, 1, 2, 4, 4, 2, 3, 12, 5, 1, 1, 1, 3]);
 });
 
 test("Ankreuzaufgaben: die richtige Antwort steht in der Vorlage vorn und wird beim Laden gemischt", () => {
