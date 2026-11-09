@@ -23,7 +23,7 @@
  */
 const { c, m, o, f, feld, z, a, kr, s, text, hoertext, teil, probe7 } = require("./bau");
 
-const HINWEIS = "Work on your own. Part A: your teacher plays the recording twice – read the tasks first. Read every task carefully. Arbeite allein. Den Hörtext spielt deine Lehrkraft zweimal für alle ab – lies vorher die Aufgaben. Du hast etwa 90 Minuten Zeit. Nach der Abgabe kannst du nichts mehr ändern.";
+const HINWEIS = "Work on your own. Part A: your teacher plays the recording twice – read the tasks first. Read every task carefully. Arbeite allein. Den Hörtext spielt deine Lehrkraft zweimal für alle ab – lies vorher die Aufgaben. Du hast etwa 90 Minuten Zeit. Reinkopieren ist verboten und wird protokolliert. Nach der Abgabe kannst du nichts mehr ändern.";
 
 /* ------------------------------ A Listening ------------------------------ */
 const HOEREN = hoertext("h1", "Summer in Kelmouth", "Listening: two friends talk", [

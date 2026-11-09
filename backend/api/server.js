@@ -521,6 +521,8 @@ const e7Proben = registerD7ProbenRoutes(app, {
   // daneben; bei Notenschutz (LRS) prüft sie falsche Eintragungen in Feldern – nur die Schreibweise falsch = volle Punkte.
   ausbessern: true,
   lrsFelder: true,
+  // „reinkopieren ist verboten und wird protokolliert“: Einfügen bleibt gesperrt, jeder Versuch wird festgehalten, keine Note 6
+  kopierenNurVermerk: true,
   kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   askAnthropic: askAnthropic
@@ -723,7 +725,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-09-e7-probe1-langsam",
+    version: "2026-11-09-e7-probe1-kopieren",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

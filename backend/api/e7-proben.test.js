@@ -36,7 +36,7 @@ async function mitServer(lauf, merk) {
   const app = express();
   app.use(express.json());
   const modul = registerD7ProbenRoutes(app, { dataDir, prefix: "/api/e7/proben", datei: "e7-proben.json", stufe: 7, fach: { kurz: "e", name: "Englisch" }, sitzung: true, marken: true,
-    hoerZentral: true, hoerOrdner: path.join(__dirname, "e7-proben", "audio"), ausbessern: true, lrsFelder: true,
+    hoerZentral: true, hoerOrdner: path.join(__dirname, "e7-proben", "audio"), ausbessern: true, lrsFelder: true, kopierenNurVermerk: true,
     teacherPassword: PW, kindZumCode, tests: JSON.parse(JSON.stringify(ROH)), askAnthropic: ki(merk), kiPauseMs: 40, nachholenMs: 0 });
   const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -177,4 +177,23 @@ test("LRS (lrsFelder): nur falsch geschrieben zählt, falsche Form nicht; Rechts
     assert.equal(neu.status, 200);
     assert.equal(neu.data.submission.details[mediation].marken[0].besser, "three tickets");
   }, merk);
+});
+
+test("Reinkopieren ist verboten und wird protokolliert – aber keine Note 6 (kopierenNurVermerk)", async () => {
+  await mitServer(async ({ post, fertig }) => {
+    const id = "e7-p1-m-a";
+    const start = await post("start", { testId: id, code: "701" });
+    assert.equal(start.data.test.kopieren, 0, "die Seite beendet bei Kopierversuchen nicht");
+    assert.equal(start.data.test.wegSekunden, 0);
+    assert.match(start.data.test.hinweis, /Reinkopieren ist verboten und wird protokolliert/);
+    // eine Seite meldet sogar „beendet wegen Kopieren“ (ältere Seite) und drei Versuche – trotzdem keine Note 6
+    const ab = await post("submit", { testId: id, code: "701", answers: antworten(id), regel: true, regelKopieren: 0, kopierversuche: 3, abbruch: { grund: "kopieren" },
+      protokoll: { einfuegen: [{ zeit: new Date().toISOString(), zeichen: 40, woerter: 8, erlaubt: false }] } });
+    assert.equal(ab.status, 200);
+    const [row] = await fertig(id);
+    assert.ok(!row.abbruch, "kein Abbruch");
+    assert.notEqual(row.grade, 6);
+    assert.equal(row.grade, 4, "43 von 70 Punkten = 61 % = Note 4 im M-Schlüssel");
+    assert.equal(row.kopierversuche || (row.regelStand && row.regelStand.kopierversuche) || (row.testregeln && row.testregeln.kopierversuche), 3, "die Versuche sind vermerkt");
+  });
 });

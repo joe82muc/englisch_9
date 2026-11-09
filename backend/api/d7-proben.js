@@ -260,6 +260,9 @@ function registerD7ProbenRoutes(app, opts) {
   //                jede falsche Eintragung in Feldern. Ist nur die Schreibweise falsch (die Form stimmt erkennbar), zählt das
   //                Feld voll; eine andere Form (get statt gets, buyed statt bought) bleibt falsch. Die Lehrkraft entscheidet.
   const AUSBESSERN = MARKEN && opts.ausbessern === true, LRS_FELDER = opts.lrsFelder === true && Boolean(askAnthropic);
+  //   kopierenNurVermerk – „reinkopieren ist verboten und wird protokolliert“ (Englisch 7, 09.11.2026): Einfügen und Kopieren
+  //                bleiben gesperrt, jeder Versuch wird mit Uhrzeit festgehalten – aber keine automatische Note 6 (kopieren: 0).
+  const KOPIEREN_VERMERK = FREMD && opts.kopierenNurVermerk === true;
   const KI_PAUSE_MS = opts.kiPauseMs === undefined ? 30000 : opts.kiPauseMs;
   const KI_VERSUCHE = opts.kiVersuche || 3;
   const KI_PARALLEL = opts.kiParallel || 3;
@@ -305,11 +308,12 @@ function registerD7ProbenRoutes(app, opts) {
   const probeSchluessel = (test) => (eigen(test) ? test.id : String(test.nr));
   const gleicheProbe = (row, test) => (eigen(test) || eigen(tests[row.testId]) ? row.testId === test.id : row.nr === test.nr);
   // Testregeln dieser Probe: wegSekunden an der Probe ersetzt die 1-Minuten-Grenze (0 = Verlassen gibt keine Note 6).
-  // Englisch: Verlassen ohne Note 6, erster Kopierversuch = Note 6 (REGEL_ENGLISCH)
+  // Englisch: Verlassen ohne Note 6, erster Kopierversuch = Note 6 (REGEL_ENGLISCH); mit kopierenNurVermerk (Englisch 7) gar keine Note 6
   const hatWeg = (test) => test.wegSekunden !== undefined;
-  const regelVon = (test) => (FREMD ? probeRegel.REGEL_ENGLISCH : hatWeg(test) ? { ...probeRegel.REGEL, wegSekunden: test.wegSekunden } : probeRegel.REGEL);
+  const REGEL_FREMD = KOPIEREN_VERMERK ? { ...probeRegel.REGEL_ENGLISCH, kopieren: 0 } : probeRegel.REGEL_ENGLISCH;
+  const regelVon = (test) => (FREMD ? REGEL_FREMD : hatWeg(test) ? { ...probeRegel.REGEL, wegSekunden: test.wegSekunden } : probeRegel.REGEL);
   // Was die Seite von den Testregeln wissen muss (Abweichungen von der Vorgabe) – und ob die Probe ohne Zeitbegrenzung läuft
-  const regelSeite = (test) => (FREMD ? { wegSekunden: 0, kopieren: probeRegel.REGEL_ENGLISCH.kopieren, ohneZeit: true } : hatWeg(test) ? { wegSekunden: test.wegSekunden } : {});
+  const regelSeite = (test) => (FREMD ? { wegSekunden: 0, kopieren: REGEL_FREMD.kopieren, ohneZeit: true } : hatWeg(test) ? { wegSekunden: test.wegSekunden } : {});
   // Schon geschrieben (auch die andere Variante derselben Probe)? Und: die Abgabe genau dieser Fassung, die das Kind
   // weiterbearbeiten darf (die Lehrkraft erlaubt es in der Verwaltung) – sonst null
   const schonAbgabe = (data, test, studentKey) => data.submissions.find((row) => gleicheProbe(row, test) && row.studentKey === studentKey);
