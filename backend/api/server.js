@@ -482,6 +482,9 @@ registerD7TexteRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e9/uebung/feedback", klasse: "Klasse 9", fach: "Englisch", sprache: "en", thema: "Englisch 9 (Australia, India, South Africa, New Zealand; Gesundheit und Dienstleistungen; Arbeitswelt und Bewerbung; Hören, Lesen, Schreiben, Sprachmittlung)" });
+// --- Englisch 7 (7M/7R): Rückmeldung zu offenen Übungsaufgaben der Module mit den Deutsch-7-Bausteinen (seit 09.11.2026:
+// Mediation in Unit 1 mit der Sprechblasen-Kette aus 9R/Englisch/e9-kit.js). Freischalten und Lernstand wie bisher über /api/e7. ---
+registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e7/uebung/feedback", klasse: "Klasse 7", fach: "Englisch", sprache: "en", thema: "Englisch 7 (England, Wales und Schottland, Irland, USA; Alltagssituationen wie Einkaufen, Fahrkarten, Essen bestellen, nach dem Weg fragen; Sprachmittlung)" });
 // Englisch 9R: die großen Proben (eine je Unit, Variante A und Nachschreiber B) – dieselben Routen wie Deutsch 8
 // (KI-Vorkorrektur, Lehrkraft prüft, Rückgabe; Sitzung mit Zeit und Zwischenstand, Fehlermarkierungen), dazu Hörtexte.
 // Den Hörtext hören die Kinder nicht am eigenen Gerät: Die Lehrkraft spielt die Aufnahme in der Verwaltung für alle ab.
@@ -696,7 +699,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-06-d7-probe9-aufruf",
+    version: "2026-11-09-e7-mediation",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
