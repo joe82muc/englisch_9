@@ -503,6 +503,28 @@ const e9Proben = registerD7ProbenRoutes(app, {
   teacherPassword: TEACHER_PASSWORD,
   askAnthropic: askAnthropic
 });
+// Englisch 7 (7M/7R, seit 09.11.2026): die großen Proben – eine je Unit, dieselben Routen wie Englisch 9 (KI-Vorkorrektur,
+// Lehrkraft prüft, Rückgabe, Sitzung, Fehlermarkierungen, Hörtext zentral). Je Probe zwei Fassungen e7-p<nr>-r-a und
+// e7-p<nr>-m-a mit denselben Aufgaben: freigeschaltet wird je Klasse, die Note folgt dem Zug (M 50 % = 4, R 50 % = 3).
+const e7Proben = registerD7ProbenRoutes(app, {
+  dataDir: DATA_DIR,
+  prefix: "/api/e7/proben",
+  datei: "e7-proben.json",
+  tests: require("./e7-proben-daten"),
+  stufe: 7,
+  fach: { kurz: "e", name: "Englisch" },
+  hoerZentral: true,
+  hoerOrdner: path.join(__dirname, "e7-proben", "audio"),
+  sitzung: true,
+  marken: true,
+  // Wünsche der Lehrkraft vom 09.11.2026 (nur Englisch 7): Die KI streicht Falsches durch und schreibt die Verbesserung
+  // daneben; bei Notenschutz (LRS) prüft sie falsche Eintragungen in Feldern – nur die Schreibweise falsch = volle Punkte.
+  ausbessern: true,
+  lrsFelder: true,
+  kindZumCode: probeKindZumCode,
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic
+});
 // Deutsch 7: KI-Rückmeldung zu offenen Übungsaufgaben der Lernmodule (ein kurzer Hinweis, nicht die Lösung)
 // nachsicht: Die KI lässt mehr durch (Wunsch vom 12.10.2026, erst nur Deutsch 7) – der Kern genügt.
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/d7/uebung/feedback", klasse: "Klasse 7", fach: "Deutsch", nachsicht: true, thema: "Deutsch (Erzählen, Sachtexte, Argumentieren, Literatur und Medien, Grammatik, Rechtschreibung)" });
@@ -590,6 +612,7 @@ const PROBEN_QUELLEN = [
     { modul: "d7proben", fach: "Deutsch", abgaben: d7Proben.abgaben },
     { modul: "d8proben", fach: "Deutsch", abgaben: d8Proben.abgaben },
     { modul: "e9proben", fach: "Englisch", abgaben: e9Proben.abgaben },
+    { modul: "e7proben", fach: "Englisch", abgaben: e7Proben.abgaben },
     { modul: "infoaustausch", fach: "Informatik", abgaben: infoaustausch.abgaben },
     { modul: "inf7", fach: "Informatik", abgaben: inf7Proben.abgaben },
     { modul: "informatik8", fach: "Informatik", abgaben: informatik8.abgaben },
@@ -630,6 +653,7 @@ const probenVorschau = registerProbenVorschau(app, {
     d7proben: { form: "deutsch", tests: require("./d7-proben-daten") },
     d8proben: { form: "deutsch", tests: require("./d8-proben-daten") },
     e9proben: { form: "deutsch", tests: require("./e9-proben-daten") },
+    e7proben: { form: "deutsch", tests: require("./e7-proben-daten") },
     infoaustausch: { form: "info", tests: INFOTESTS },
     nt9probe: { form: "info", tests: NT9PROBEN },
     netzwerktest: { form: "info", tests: NETZWERKTESTS },
@@ -699,7 +723,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-09-e7-mediation",
+    version: "2026-11-09-e7-probe1",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

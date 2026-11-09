@@ -29,7 +29,7 @@ const fs = require("fs");
 const path = require("path");
 const { probeKindPruefer } = require("./probe-kind");
 
-const EIGENER_ABLAUF = new Set(["d7proben", "d8proben", "e9proben"]);   // Module, die Rückgabe und Korrekturseite selbst mitbringen
+const EIGENER_ABLAUF = new Set(["d7proben", "d8proben", "e9proben", "e7proben"]);   // Module, die Rückgabe und Korrekturseite selbst mitbringen
 const ANZEIGE_TAGE = 3;                         // so lange bleibt eine Rückgabe mindestens als Kachel auf der Startseite
 // So viele Tage nach der Rückgabe sieht das Kind die korrigierte Probe (Startseite, Liste, Korrekturseite); danach
 // verschwindet sie bei ihm von selbst. Abgabe, Punkte und Note bleiben bei der Lehrkraft; gibt sie die Probe noch
