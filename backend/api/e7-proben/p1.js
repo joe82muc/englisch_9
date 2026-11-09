@@ -127,8 +127,8 @@ function fassung(zug) {
       ]),
       ...teil("D Mediation", [
         a(LAGE + " Herr Brunner says something to you. Tell the assistant in English.", [
-          kr("möchte Karten für die Burg – für sich und seine zwei Kinder (drei Personen)", 1, "He would like tickets for the castle for himself and his two children. – drei Karten genügt auch" + ICH),
-          kr("fragt nach dem Preis", 1, "How much are the tickets? / He wants to know the price." + ICH)
+          kr("möchte Karten für die Burg – für sich und seine zwei Kinder (drei Personen) (zählt auch mit I/my statt he/his)", 1, "He would like tickets for the castle for himself and his two children. – drei Karten genügt auch" + ICH),
+          kr("fragt nach dem Preis (zählt auch mit I/my statt he/his)", 1, "How much are the tickets? / He wants to know the price." + ICH)
         ], "He would like tickets for the castle for himself and his two children. How much are the tickets?", ["ticket", "two|2|three|3|children|kids", "how much|price|cost"],
         { vorgabe: "🧳 Herr Brunner: „Guten Tag! Ich möchte Karten für die Burg – für mich und meine zwei Kinder. Was kosten die Karten?“", hilfe: UEBER }),
         a("The assistant answers. Tell Herr Brunner in German what she says.", [
@@ -137,8 +137,8 @@ function fassung(zug) {
         ], "Erwachsene zahlen 12 Pfund. Kinder von 5 bis 15 zahlen den halben Preis. Sie fragt, wie alt Ihre Kinder sind.", ["12|zwölf|zwoelf", "halb|haelfte|hälfte|6|sechs", "alt|alter"],
         { vorgabe: "🏰 Assistant: “Adults pay £12. How old are the children? Children from 5 to 15 pay half price.”" }),
         a("Herr Brunner answers and asks something. Tell the assistant in English.", [
-          kr("Alter der Kinder: Tochter 10, Sohn 16", 1, "His daughter is ten and his son is sixteen. – beide Zahlen richtig" + ICH),
-          kr("fragt nach einer Führung auf Deutsch", 1, "Is there a (guided) tour in German? / He asks for a tour in German." + ICH)
+          kr("Alter der Kinder: Tochter 10, Sohn 16 (zählt auch mit I/my statt he/his)", 1, "His daughter is ten and his son is sixteen. – beide Zahlen richtig" + ICH),
+          kr("fragt nach einer Führung auf Deutsch (zählt auch mit I/my statt he/his)", 1, "Is there a (guided) tour in German? / He asks for a tour in German." + ICH)
         ], "His daughter is ten, and his son is sixteen. He asks: Is there a guided tour in German?", ["ten|10", "sixteen|16", "tour|guide", "german"],
         { vorgabe: "🧳 Herr Brunner: „Meine Tochter ist zehn, mein Sohn ist sechzehn. Gibt es auch eine Führung auf Deutsch?“", hilfe: UEBER }),
         a("The assistant answers. Tell Herr Brunner in German what she says.", [
@@ -147,8 +147,8 @@ function fassung(zug) {
         ], "Leider gibt es keine Führung auf Deutsch, aber einen Audioguide auf Deutsch für 2 Pfund. Zwei Erwachsene und ein Kind kosten zusammen 30 Pfund.", ["keine|nicht|leider", "audio|guide|gerät|geraet", "2|zwei", "30|dreißig|dreissig"],
         { vorgabe: "🏰 Assistant: “I'm afraid there's no tour in German. But we have audio guides in German for £2. Two adults and one child – that's £30, please.”" }),
         a("Herr Brunner decides. Tell the assistant in English.", [
-          kr("nimmt die drei Karten und einen Audioguide", 1, "He would like the three tickets and one audio guide." + ICH),
-          kr("fragt, ob er mit Karte zahlen kann", 1, "Can he pay by card?" + ICH)
+          kr("nimmt die drei Karten und einen Audioguide (zählt auch mit I/my statt he/his)", 1, "He would like the three tickets and one audio guide." + ICH),
+          kr("fragt, ob er mit Karte zahlen kann (zählt auch mit I/my statt he/his)", 1, "Can he pay by card?" + ICH)
         ], "He would like the three tickets and one audio guide. Can he pay by card?", ["three|3|ticket", "audio|guide", "card"],
         { vorgabe: "🧳 Herr Brunner: „Gut, dann nehmen wir die drei Karten und einen Audioguide. Kann ich mit Karte bezahlen?“", hilfe: UEBER })
       ]),
