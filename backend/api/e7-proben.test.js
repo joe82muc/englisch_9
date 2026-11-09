@@ -26,6 +26,8 @@ const ki = (merk = {}) => async (system, user) => {
   merk.system = (merk.system || []).concat(system); merk.user = (merk.user || []).concat(user);
   const a = JSON.parse(user);
   if (a.felder) { merk.lrs = (merk.lrs || []).concat([a.felder]); return JSON.stringify({ urteil: a.felder.map((f) => (/^bou/i.test(f.eingabe) ? "ja" : "nein")), grund: a.felder.map(() => "Form geprüft.") }); }
+  // so antwortete Haiku live: englische Wörter in geraden Anführungszeichen – ungültiges JSON, das GRUMI trotzdem lesen muss
+  if (/Kaputtdorf/.test(a.schuelerantwort)) return '{"punkte":[4,1,2,1,1],"begruendung":["Du nennst "Kaputtdorf" und den See.","Gut aufgebaut.","there was / there were","ok","ok"],"gelungen":["Du nennst deinen "favourite place"."],"arbeiten":[],"hinweis":"Schreibe "people" ohne s.","kategorien":[],"markierungen":[{"stelle":"peoples","art":"grammatik","hinweis":"Mehrzahl ist "people", ohne s","besser":"people"}]}';
   const punkte = a.erwartungshorizont.map(() => 0);
   const markierungen = /three ticket\b/.test(a.schuelerantwort) ? [{ stelle: "three ticket", art: "grammatik", hinweis: "Mehrzahl mit -s.", besser: "three tickets" }] : [];
   return JSON.stringify({ punkte, korrektur: "Teilweise richtig.", begruendung: punkte.map(() => "Teilweise erfüllt."), gelungen: [], arbeiten: [], hinweis: "", kategorie: "", kategorien: [], markierungen });
@@ -195,5 +197,20 @@ test("Reinkopieren ist verboten und wird protokolliert – aber keine Note 6 (ko
     assert.notEqual(row.grade, 6);
     assert.equal(row.grade, 4, "43 von 70 Punkten = 61 % = Note 4 im M-Schlüssel");
     assert.equal(row.kopierversuche || (row.regelStand && row.regelStand.kopierversuche) || (row.testregeln && row.testregeln.kopierversuche), 3, "die Versuche sind vermerkt");
+  });
+});
+
+test("KI-Antwort mit geraden Anführungszeichen um englische Wörter (live so gesehen) wird trotzdem gelesen", async () => {
+  await mitServer(async ({ post, fertig }) => {
+    const id = "e7-p1-r-a", roh = antworten(id), e = ROH[id].items.findIndex((i) => i.type === "schreiben");
+    roh[e] = "Hi, I'm Mia and I live in Kaputtdorf. It's a small village. About 900 peoples live there. In the past there was a mill. My favourite place is the lake. You can swim there. Come and visit!";
+    assert.equal((await post("start", { testId: id, code: "702" })).status, 200);
+    assert.equal((await post("submit", { testId: id, code: "702", answers: roh })).status, 200);
+    const [row] = await fertig(id), d = row.details[e];
+    assert.equal(d.source, "ki", "die KI-Bewertung kam an");
+    assert.deepEqual(d.kriterien.map((k) => k.punkte), [4, 1, 2, 1, 1]);
+    assert.match(d.begruendung[0], /Kaputtdorf/);
+    assert.equal(d.hinweis, 'Schreibe "people" ohne s.');
+    assert.deepEqual(d.marken.map((m) => [d.given.slice(m.start, m.end), m.besser]), [["peoples", "people"]]);
   });
 });
