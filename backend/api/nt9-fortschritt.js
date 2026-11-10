@@ -149,6 +149,24 @@ function lehrerCode(env = process.env) {
   if (/^aus$/i.test(v)) return "";
   return /^0\d\d$/.test(v) ? v : "000";
 }
+// Fortbildungs-Codes (Wunsch vom 10.11.2026): Lehrkräfte probieren GRUMI in einer Fortbildung selbst aus – wie ein
+// Kind, aber mit allen Modulen offen. Sechs Klassen (7zM, 7z, 8zM, 8z, 9zM, 9z) mit je zehn festen Codes „0KT“:
+// K = Klasse (1 = 7zM, 2 = 7z, 3 = 8zM, 4 = 8z, 5 = 9zM, 6 = 9z), T = Teilnehmer (1 bis 9, 0 = Nummer 10).
+// Ein Code mit 0 vorn gehört nie einem Kind (siehe Lehrercode). Anders als der Lehrercode sind es echte Codes einer
+// Klasse: Der Lernstand wird gespeichert (die Verwaltung zeigt ihn unter 7zM …), Hausaufgabenheft und Klassenrat
+// gehen. Die Freischalt-Routen (nt7-freigabe.js) melden für diese Klassen „alles: true“. Der Server legt alle 60 Codes
+// selbst an, sobald sich jemand mit einem davon anmeldet; „Klasse löschen“ in der Verwaltung setzt sie zurück (beim
+// nächsten Anmelden beginnen sie leer). Umgebungsvariable FORTBILDUNG_CODES=aus schaltet sie ab.
+const FORTBILDUNG_KLASSEN = ["7zM", "7z", "8zM", "8z", "9zM", "9z"];
+const FORTBILDUNG_CODES = FORTBILDUNG_KLASSEN.flatMap((_k, i) => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((t) => "0" + (i + 1) + t));
+function fortbildungKlasse(code) {
+  const m = /^0([1-6])\d$/.exec(String(code || "").trim());
+  return m ? FORTBILDUNG_KLASSEN[m[1] - 1] : "";
+}
+const istFortbildungsKlasse = (klasse) => FORTBILDUNG_KLASSEN.includes(klasseNorm(klasse));
+function fortbildungAn(env = process.env) {
+  return !/^aus$/i.test(String((env && env.FORTBILDUNG_CODES) || "").trim());
+}
 function kursVon(modul) {
   if (MODUL_IDS.includes(modul)) return MODULE.find((m) => m.id === modul).kurs;
   const m = DYN_MUSTER.exec(modul);
@@ -259,6 +277,10 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   const now = options.now || (() => Date.now());
   const FLUSH_MS = options.flushMs === undefined ? 6000 : options.flushMs;
   const fehlversuche = new Map(); // IP -> { n, bis }
+  // Lehrercode (siehe oben): options.lehrerCode überschreibt die Umgebungsvariable (Tests), "" = abgeschaltet
+  const LEHRER = options.lehrerCode !== undefined ? String(options.lehrerCode || "") : lehrerCode();
+  // Fortbildungs-Codes (siehe oben): nur, wenn ausdrücklich eingeschaltet (server.js: FORTBILDUNG_CODES)
+  const FORTBILDUNG = Boolean(options.fortbildung);
 
   const sKey = (code) => `nt9:s:${code}`;
   const cKey = (code) => `nt9:c:${code}`;
@@ -357,6 +379,26 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     }
     return ladeVersprechen;
   }
+  async function fortbildungAnlegen(karte, codes) {
+    const neu = codes.filter((c) => !karte.has(c) && c !== LEHRER && fortbildungKlasse(c))
+      .map((c) => ({ code: c, klasse: fortbildungKlasse(c), angelegt: now(), p: {} }));
+    if (!neu.length) return;
+    await msetStuecke(store, neu.map((s) => [cKey(s.code), s]));
+    await store.sadd("nt9:codes", neu.map((s) => s.code));
+    neu.forEach((s) => karte.set(s.code, s));
+  }
+  // Kind zum Code. Meldet sich jemand mit einem Fortbildungs-Code an, den es noch nicht gibt, entstehen alle
+  // fehlenden Fortbildungs-Codes auf einmal (so stehen die sechs Klassen vollständig in der Verwaltung) – auch wieder,
+  // nachdem die Lehrkraft eine Fortbildungsklasse gelöscht hat (dann leer). Ist die Fortbildung abgeschaltet, gibt es
+  // die Codes nicht.
+  async function kindHolen(code) {
+    const kinder = await kinderLaden();
+    if (fortbildungKlasse(code)) {
+      if (!FORTBILDUNG) return null;
+      if (!kinder.has(code)) await fortbildungAnlegen(kinder, FORTBILDUNG_CODES);
+    }
+    return kinder.get(code) || null;
+  }
   function satzSaeubern(code, s) {
     return { code, klasse: klasseNorm(s.klasse) || "9M", angelegt: s.angelegt || 0, ...(s.lrs ? { lrs: true } : {}), p: s.p && typeof s.p === "object" ? s.p : {} };
   }
@@ -437,8 +479,6 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     else e.n += 1;
   }
   // Kind zum Code; schreibt bei Fehlern selbst die Antwort. klasse (optional): Zug der Seite
-  // Lehrercode (siehe oben): options.lehrerCode überschreibt die Umgebungsvariable (Tests), "" = abgeschaltet
-  const LEHRER = options.lehrerCode !== undefined ? String(options.lehrerCode || "") : lehrerCode();
   const istLehrer = (code) => Boolean(LEHRER) && String(code || "").trim() === LEHRER;
   async function kindPruefen(req, res, code, klasse) {
     if (!/^\d{3}$/.test(code)) { res.status(400).json({ ok: false, error: "Der Code hat genau 3 Ziffern." }); return null; }
@@ -446,7 +486,7 @@ function registerNt9FortschrittRoutes(app, options = {}) {
     if (istLehrer(code)) return { code, klasse: LEHRER_KLASSE, p: {}, lehrer: true };
     const kz = klasse ? klasseNorm(klasse) : "";
     if (klasse && !kz) { res.status(400).json({ ok: false, error: "Unbekannte Klasse." }); return null; }
-    const kind = (await kinderLaden()).get(code);
+    const kind = await kindHolen(code);
     if (!kind) {
       fehlversuch(req);
       res.status(404).json({ ok: false, error: "Diesen Code gibt es nicht. Frag deine Lehrkraft." });
@@ -642,7 +682,8 @@ function registerNt9FortschrittRoutes(app, options = {}) {
       if (!(anzahl >= 1 && anzahl <= 60)) return res.status(400).json({ ok: false, error: "Bitte 1 bis 60 Codes auf einmal anlegen." });
       const kinder = await kinderLaden();
       const vorhanden = new Set([...kinder.keys(), ...(await store.smembers("nt9:codes"))]);
-      if (vorhanden.size + anzahl > MAX_CODES) return res.status(400).json({ ok: false, error: "Es gibt schon zu viele Codes. Lösche zuerst alte Klassen." });
+      // Es zählen nur die Codes der Kinder (100 bis 999) – nicht die Fortbildungs-Codes mit 0 vorn
+      if ([...vorhanden].filter((c) => c >= "100").length + anzahl > MAX_CODES) return res.status(400).json({ ok: false, error: "Es gibt schon zu viele Codes. Lösche zuerst alte Klassen." });
       const frei = [];
       for (let c = 100; c <= 999; c++) if (!vorhanden.has(String(c))) frei.push(String(c));
       const neu = [];
@@ -813,14 +854,16 @@ function registerNt9FortschrittRoutes(app, options = {}) {
   // -> { code, klasse, zug } | { gesperrt: true } | null
   // Lehrercode: { code, klasse: "Lehrkraft", zug: "", lehrer: true } – wer damit etwas speichern würde (Proben,
   // Hausaufgabenheft), muss „lehrer“ selbst abweisen.
+  // Fortbildungsklasse (7zM …): zusätzlich fortbildung: true – die Freischalt-Routen öffnen dann alles.
   async function kindZumCode(code, req) {
     if (req && gesperrt(req)) return { gesperrt: true };
     const c = String(code || "").trim();
     if (!/^\d{3}$/.test(c)) return null;
     if (istLehrer(c)) return { code: c, klasse: LEHRER_KLASSE, zug: "", lrs: false, lehrer: true };
-    const kind = (await kinderLaden()).get(c);
+    const kind = await kindHolen(c);
     if (!kind) { if (req) fehlversuch(req); return null; }
-    return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), lrs: Boolean(kind.lrs) };
+    return { code: kind.code, klasse: kind.klasse, zug: zugVon(kind.klasse), lrs: Boolean(kind.lrs),
+      ...(istFortbildungsKlasse(kind.klasse) ? { fortbildung: true } : {}) };
   }
 
   // Für andere Module (Deutsch 7, Argumentations-Führerschein): Wann wurde dieses Modul für das Kind zuletzt
@@ -933,4 +976,5 @@ function katalogPruefen(v) {
   return n ? out : null;
 }
 
-module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, fehlerGrund, klasseNorm, zugVon, lehrerCode, LEHRER_KLASSE, MODULE, KURSE };
+module.exports = { registerNt9FortschrittRoutes, upstashStore, dateiStore, upstashZugang, fehlerGrund, klasseNorm, zugVon, lehrerCode, LEHRER_KLASSE, MODULE, KURSE,
+  FORTBILDUNG_KLASSEN, FORTBILDUNG_CODES, fortbildungKlasse, istFortbildungsKlasse, fortbildungAn };

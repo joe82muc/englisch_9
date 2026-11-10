@@ -243,8 +243,10 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/nt9/uebung/feedback", 
 
 // NT 9M/9R Organische Rohstoffe: Anmeldung mit Code und Lernfortschritt fuer die Lehrkraft
 // (dauerhaft in Upstash Redis, wenn UPSTASH_REDIS_REST_URL und UPSTASH_REDIS_REST_TOKEN gesetzt sind)
-const { registerNt9FortschrittRoutes } = require("./nt9-fortschritt");
-const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD });
+// Fortbildungs-Codes 010 bis 069 (Klassen 7zM … 9z, alles offen) – FORTBILDUNG_CODES=aus schaltet sie ab
+const { registerNt9FortschrittRoutes, fortbildungAn } = require("./nt9-fortschritt");
+const FORTBILDUNG = fortbildungAn(process.env);
+const nt9Fortschritt = registerNt9FortschrittRoutes(app, { dataDir: DATA_DIR, teacherPassword: TEACHER_PASSWORD, fortbildung: FORTBILDUNG });
 
 // Informatik 7: KI-Rückmeldung zu offenen Übungsaufgaben (ein kurzer Hinweis, nicht die Lösung)
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/inf7/uebung/feedback", klasse: "Klasse 7", fach: "Informatik", thema: "Informatik (Internet und Sicherheit, Netzwerke, digitale Bilder, Vektorgrafik, Programmieren mit Scratch)" });
@@ -733,12 +735,14 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-10-papierproben",
+    version: "2026-11-10-fortbildung",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
     probenVorschau: probenVorschau.module,
     nt9Fortschritt: nt9Fortschritt.store.art,
+    // Fortbildungs-Codes für Lehrkräfte (nt9-fortschritt.js) an oder aus
+    fortbildungCodes: FORTBILDUNG,
     probenSpeicher: probenSpeicher.art,
     kalenderHeft: true,
     kalenderDedupliziert: true,

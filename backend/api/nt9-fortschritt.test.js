@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const test = require("node:test");
 const express = require("express");
-const { registerNt9FortschrittRoutes, dateiStore, upstashZugang, klasseNorm, zugVon, lehrerCode } = require("./nt9-fortschritt");
+const { registerNt9FortschrittRoutes, dateiStore, upstashZugang, klasseNorm, zugVon, lehrerCode, FORTBILDUNG_CODES, fortbildungKlasse, fortbildungAn } = require("./nt9-fortschritt");
 
 // Nachbau der Upstash-REST-Schnittstelle (nur die Befehle, die das Modul benutzt)
 function upstashAttrappe() {
@@ -411,6 +411,59 @@ test("Lehrercode: meldet sich an, gehört zu keiner Klasse, speichert nichts", a
     assert.equal((await anders.post(P + "/anmelden", { code: "000" })).status, 404);
     assert.equal((await anders.post(P + "/anmelden", { code: "042" })).body.lehrer, true);
   } finally { await new Promise((r) => anders.server.close(r)); }
+});
+
+test("Fortbildungs-Codes: feste Codes je Klasse, Lernstand wird gespeichert, löschen = zurücksetzen, abschaltbar", async () => {
+  assert.equal(FORTBILDUNG_CODES.length, 60);
+  assert.deepEqual(["011", "010", "020", "031", "049", "055", "069"].map(fortbildungKlasse), ["7zM", "7zM", "7z", "8zM", "8z", "9zM", "9z"]);
+  assert.deepEqual(["000", "001", "009", "070", "099", "123", "11", "0110"].map(fortbildungKlasse), ["", "", "", "", "", "", "", ""]);
+  assert.equal(fortbildungAn({}), true);
+  assert.equal(fortbildungAn({ FORTBILDUNG_CODES: "aus" }), false);
+
+  const store = dateiStore(null);
+  const api = await starte({ store, fortbildung: true });
+  try {
+    // Vor der ersten Anmeldung gibt es sie noch nicht (andere Prüfungen sehen keine zusätzlichen Klassen) …
+    assert.deepEqual((await api.post(P + "/lehrer/liste", { password: "2", nurKlassen: true })).body.klassen, []);
+    // … danach stehen alle sechs Klassen mit je zehn Codes da. Anmelden wie ein Kind: Klasse und Zug kommen vom Code,
+    // eine Seite des anderen Zugs weist ab
+    const an = await api.post(P + "/anmelden", { code: "013", klasse: "7M" });
+    const liste = (await api.post(P + "/lehrer/liste", { password: "2", nurKlassen: true })).body;
+    assert.deepEqual(liste.klassenInfo.map((k) => [k.klasse, k.anzahl]), [["7z", 10], ["7zM", 10], ["8z", 10], ["8zM", 10], ["9z", 10], ["9zM", 10]]);
+    assert.equal(an.status, 200);
+    assert.deepEqual([an.body.klasse, an.body.zug, an.body.lehrer], ["7zM", "7M", undefined]);
+    assert.equal((await api.post(P + "/anmelden", { code: "013", klasse: "7R" })).status, 409);
+    assert.equal((await api.post(P + "/anmelden", { code: "023", klasse: "7R" })).body.klasse, "7z");
+    assert.deepEqual(await api.kindZumCode("013"), { code: "013", klasse: "7zM", zug: "7M", lrs: false, fortbildung: true });
+    assert.deepEqual(await api.kindZumCode("060"), { code: "060", klasse: "9z", zug: "9R", lrs: false, fortbildung: true });
+    // Der Lernstand wird gespeichert – anders als beim Lehrercode
+    const meta = { bereich: "Luft", bnr: 1, titel: "Luft", kurz: "L", nr: 1 };
+    assert.equal((await api.post(P + "/melden", { code: "013", modul: "nt7-luft", geloest: ["a", "b"], gesamt: 4, meta })).body.anzahl, 2);
+    const klasse = (await api.post(P + "/lehrer/liste", { password: "2", klasse: "7zM" })).body;
+    assert.deepEqual(Object.keys(klasse.schueler.find((s) => s.code === "013").module["nt7-luft"].g), ["a", "b"]);
+    // Kinder-Codes bleiben bei 100 bis 999, die Fortbildungs-Codes zählen nicht gegen die Höchstzahl
+    const neu = (await api.post(P + "/lehrer/anlegen", { password: "2", klasse: "7aM", anzahl: 5 })).body.neu.map((x) => x.code);
+    assert.ok(neu.every((c) => +c >= 100));
+    assert.equal(fortbildungKlasse(neu[0]), "");
+    assert.equal((await api.kindZumCode(neu[0])).fortbildung, undefined, "ein Kind ist keine Fortbildung");
+    // „Klasse löschen“ in der Verwaltung setzt zurück: Beim nächsten Anmelden beginnt der Code leer, die Klasse ist
+    // wieder vollständig
+    assert.equal((await api.post(P + "/lehrer/loeschen", { password: "2", klasse: "7zM" })).body.anzahl, 10);
+    const wieder = await api.post(P + "/anmelden", { code: "013" });
+    assert.equal(wieder.status, 200);
+    assert.deepEqual([wieder.body.klasse, wieder.body.fortschritt], ["7zM", {}]);
+    assert.equal((await api.post(P + "/lehrer/liste", { password: "2", nurKlassen: true })).body.klassenInfo.find((k) => k.klasse === "7zM").anzahl, 10);
+    // Der Lehrercode bleibt der Lehrercode
+    assert.equal((await api.post(P + "/anmelden", { code: "000" })).body.lehrer, true);
+  } finally { await new Promise((r) => api.server.close(r)); }
+
+  // Ohne Einschalten (Standard) oder mit FORTBILDUNG_CODES=aus: Die Codes gibt es nicht – auch nicht die, die schon
+  // gespeichert sind
+  const aus = await starte({ store });
+  try {
+    assert.equal((await aus.post(P + "/anmelden", { code: "013" })).status, 404);
+    assert.equal(await aus.kindZumCode("013"), null);
+  } finally { await new Promise((r) => aus.server.close(r)); }
 });
 
 test("Fehlerwörter der Vokabeltrainer", async () => {

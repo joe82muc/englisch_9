@@ -17,7 +17,10 @@
  * Kind:       POST /api/nt7/freigabe                 { code }                       -> { ok, klasse, zug, themen, module }
  *             Mit dem Lehrercode (nt9-fortschritt.js): { ok, klasse: "Lehrkraft", zug: "", themen: {}, module: {}, alles: true }
  *             – die Website zeigt dann jedes Modul offen (themen.js: offen()).
- * Lehrkraft:  POST /api/nt7/lehrer/freigabe          { password, klasse }           -> { ok, klasse, themen, module }
+ *             Fortbildungsklasse (7zM, 7z, 8zM, 8z, 9zM, 9z – feste Codes für Lehrkräfte, nt9-fortschritt.js):
+ *             { ok, klasse, zug, themen: {}, module: {}, alles: true, fortbildung: true } – die Lehrkraftrouten melden
+ *             für diese Klassen ebenfalls alles: true und fortbildung: true (die Verwaltung zeigt dann alles offen).
+ * Lehrkraft: POST /api/nt7/lehrer/freigabe          { password, klasse }           -> { ok, klasse, themen, module }
  *             POST /api/nt7/lehrer/freigabe/setzen   { password, klasse, art: "thema"|"modul", id, offen: true|false|null }
  *                                                    (null = Eintrag entfernen, es gilt wieder der Standard)
  * Datei: backend/data/nt7-freigabe.json (wird mit den Proben nach Upstash gespiegelt, Präfix /api/nt7).
@@ -33,7 +36,7 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
-const { klasseNorm } = require("./nt9-fortschritt");
+const { klasseNorm, istFortbildungsKlasse } = require("./nt9-fortschritt");
 
 const KENNUNG = /^[a-z0-9-]{2,40}$/;
 
@@ -74,6 +77,8 @@ function registerNt7FreigabeRoutes(app, options = {}) {
     const k = daten.klassen[klasse] || {};
     return { themen: { ...(k.themen || {}) }, module: { ...(k.module || {}) } };
   };
+  // Für die Verwaltung: Eine Fortbildungsklasse hat immer alles offen – das soll sie auch so anzeigen
+  const lehrerStand = (daten, klasse) => ({ ...stand(daten, klasse), ...(istFortbildungsKlasse(klasse) ? { alles: true, fortbildung: true } : {}) });
   function lehrerOk(req, res) {
     const given = Buffer.from(String((req.body && req.body.password) || "").slice(0, 200));
     const expected = Buffer.from(teacherPassword);
@@ -95,6 +100,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
       if (!kind) return res.status(401).json({ ok: false, error: "Bitte melde dich mit deinem Code an." });
       if (kind.gesperrt) return res.status(429).json({ ok: false, error: "Zu viele falsche Codes. Warte ein paar Minuten." });
       if (kind.lehrer) return res.json({ ok: true, klasse: kind.klasse, zug: "", themen: {}, module: {}, alles: true });
+      if (kind.fortbildung) return res.json({ ok: true, klasse: kind.klasse, zug: kind.zug, themen: {}, module: {}, alles: true, fortbildung: true });
       return res.json({ ok: true, klasse: kind.klasse, zug: kind.zug, ...stand(lesen(), kind.klasse) });
     } catch (error) {
       console.error(NAME + ":", error && error.message);
@@ -106,7 +112,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
     if (!lehrerOk(req, res)) return;
     const klasse = klasse7(req.body.klasse);
     if (!klasse) return res.status(400).json({ ok: false, error: "Freischalten gibt es für die " + STUFE + ". Klassen." });
-    return res.json({ ok: true, klasse, ...stand(lesen(), klasse) });
+    return res.json({ ok: true, klasse, ...lehrerStand(lesen(), klasse) });
   });
 
   app.post(PREFIX + "/lehrer/freigabe/setzen", (req, res) => {
@@ -133,7 +139,7 @@ function registerNt7FreigabeRoutes(app, options = {}) {
       }
       k.am = new Date().toISOString();
       schreiben(daten);
-      return res.json({ ok: true, klasse, ...stand(daten, klasse) });
+      return res.json({ ok: true, klasse, ...lehrerStand(daten, klasse) });
     } catch (error) {
       console.error(NAME + ":", error && error.message);
       return res.status(500).json({ ok: false, error: "Das hat gerade nicht geklappt. Versuche es noch einmal." });

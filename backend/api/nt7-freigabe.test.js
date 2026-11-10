@@ -19,7 +19,8 @@ test.before(async () => {
     dataDir, teacherPassword: PW,
     kindZumCode: async (code) => (code === "123" ? { code: "123", klasse: "7aM", zug: "7M" }
       : code === "456" ? { code: "456", klasse: "7d", zug: "7R" } : code === "999" ? { gesperrt: true }
-      : code === "012" ? { code: "012", klasse: "Lehrkraft", zug: "", lehrer: true } : null)
+      : code === "012" ? { code: "012", klasse: "Lehrkraft", zug: "", lehrer: true }
+      : code === "013" ? { code: "013", klasse: "7zM", zug: "7M", fortbildung: true } : null)
   });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
@@ -48,6 +49,18 @@ test("Lehrercode: alles offen, unabhängig von dem, was für die Klassen gesetzt
   assert.deepEqual(r.data, { ok: true, klasse: "Lehrkraft", zug: "", themen: {}, module: {}, alles: true });
   // Ein Kind bekommt „alles“ nie
   assert.ok(!("alles" in (await post("/api/nt7/freigabe", { code: "123" })).data));
+});
+
+test("Fortbildungsklasse: alles offen – für die Lehrkraft-Codes und in der Verwaltung", async () => {
+  const r = await post("/api/nt7/freigabe", { code: "013" });
+  assert.deepEqual(r.data, { ok: true, klasse: "7zM", zug: "7M", themen: {}, module: {}, alles: true, fortbildung: true });
+  // Die Verwaltung bekommt für 7zM ebenfalls „alles“ – auch nach einem Schalter, der dort nichts ändert
+  assert.equal((await post("/api/nt7/lehrer/freigabe", { password: PW, klasse: "7zM" })).data.alles, true);
+  const s = await post("/api/nt7/lehrer/freigabe/setzen", { password: PW, klasse: "7z", art: "thema", id: "atome", offen: false });
+  assert.deepEqual([s.data.alles, s.data.fortbildung, s.data.themen], [true, true, { atome: false }]);
+  // Eine echte Klasse bleibt, wie sie ist
+  assert.ok(!("alles" in (await post("/api/nt7/lehrer/freigabe", { password: PW, klasse: "7aM" })).data));
+  await post("/api/nt7/lehrer/freigabe/setzen", { password: PW, klasse: "7z", art: "thema", id: "atome", offen: null });
 });
 
 test("Nur die Lehrkraft schaltet frei – und nur für 7. Klassen", async () => {
