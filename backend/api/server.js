@@ -625,12 +625,20 @@ const PROBEN_QUELLEN = [
     { modul: "filiuspruefung", fach: "Informatik", abgaben: filiuspruefung.abgaben }
 ];
 // --- Korrigierte Proben an die Kinder zurückgeben (alle Fächer): Startseite „Zurückbekommen“, Korrekturseite, Druck ---
+// Papierproben: Korrekturblatt als PDF je Kind (ohne Namen), steht mit unter „Zurückbekommen“ (papierproben.js)
+const { registerPapierprobenRoutes } = require("./papierproben");
+const papierproben = registerPapierprobenRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  kindZumCode: probeKindZumCode
+});
 const { registerProbenRueckgabeRoutes } = require("./proben-rueckgabe");
 const probenRueckgabe = registerProbenRueckgabeRoutes(app, {
   dataDir: DATA_DIR,
   teacherPassword: TEACHER_PASSWORD,
   kindZumCode: probeKindZumCode,
-  quellen: PROBEN_QUELLEN
+  quellen: PROBEN_QUELLEN,
+  zusatz: (kind) => papierproben.meine(kind)
 });
 registerProbenNotenRoutes(app, {
   teacherPassword: TEACHER_PASSWORD,
@@ -725,7 +733,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-09-e7-probe1-ki-fix2",
+    version: "2026-11-10-papierproben",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)

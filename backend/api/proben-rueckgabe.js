@@ -52,6 +52,8 @@ function registerProbenRueckgabeRoutes(app, options) {
   const teacherPassword = String(options.teacherPassword || "");
   const jetztDatum = typeof options.jetzt === "function" ? options.jetzt : () => new Date();   // für Tests
   const quellen = options.quellen || [];          // [{ modul, fach, abgaben: () => [...] }]
+  // weitere Rückgaben ohne Abgabe im Proben-Modul, z. B. Papierproben als PDF (papierproben.js): (kind) -> [Einträge wie unten]
+  const zusatz = typeof options.zusatz === "function" ? options.zusatz : () => [];
   const probeKind = probeKindPruefer(options.kindZumCode);
   const DATEI = path.join(options.dataDir, "proben-rueckgabe.json");
 
@@ -156,6 +158,7 @@ function registerProbenRueckgabeRoutes(app, options) {
           aktuell: !s.geoeffnetAm || jetzt - zuletzt < ANZEIGE_TAGE * 86400000, sichtbarBis: s.sichtbarBis });
       });
     });
+    try { rueckgaben.push(...zusatz(kind)); } catch (error) { console.error("Rückgabe, weitere Einträge:", error.message); }
     rueckgaben.sort((a, b) => String(b.freigegebenAm).localeCompare(String(a.freigegebenAm)));
     res.json({ ok: true, klasse: kind.klasse, rueckgaben, tage: RUECKGABE_TAGE });
   });
