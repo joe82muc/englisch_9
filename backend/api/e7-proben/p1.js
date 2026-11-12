@@ -9,6 +9,14 @@
  * 90 Minuten. 7M und 7R schreiben dieselben Aufgaben (nur der Umfang beim Schreiben ist verschieden: R 50–80, M 60–100
  * Wörter, wie im Modul „Where I live“); die Note folgt dem Zug der Fassung: M 50 % = Note 4, R 50 % = Note 3.
  *
+ * Überarbeitet am 12.11.2026, bevor eine Klasse sie geschrieben hat (Wunsch der Lehrkraft: „prüfe auf schwierige wörter.
+ * baue auch wörter aus der unit 1 7.klasse verstärkt ein“, dazu „lass das listening“ – Teil A mit Hörtext und Aufnahme ist
+ * unverändert): Schwierige Wörter in Teil B bis E, die weder in Unit 1 noch im Grundwortschatz stehen, sind ersetzt
+ * (to move, to miss, meal, quite expensive, newspaper article, guide, umbrella, audio guide, decides, meanings). Mehr
+ * Wörter aus der Wortliste von Unit 1: large, northwest, half a million, catch, oh (Uhrzeit), drama, play, magician, act,
+ * stage, design, scenery, healthy, brochure, city centre, exhibition, dinosaur, tour, brilliant, a.m., own, rent, rugby,
+ * goat, theatre, capital, far from, a long way away, Bye for now.
+ *
  * Abgleich mit Blue Line 3 (Klett, Bayern M-Zug, Unit 1, S. 10–31 – nur Themen und Can-do-Liste gelesen): Ferien in England
  * (Intro), den Heimatort beschreiben (Topic 1, simple past als Wiederholung), Schulalltag und Schul-AGs (Topic 2, simple
  * present mit Fragen und Kurzantworten, Possessivpronomen mine, yours …), Karten an einer Kasse kaufen (Mediation).
@@ -44,11 +52,11 @@ const HOEREN = hoertext("h1", "Summer in Kelmouth", "Listening: two friends talk
 
 /* ------------------------------ B Reading ------------------------------ */
 const LESEN = text("t1", "New in the city", "Blog post", [
-  "Hi, I'm Priya, and I'm twelve years old. Last summer my family moved from Little Hatton, a small village in the east of England, to Kingsmoor. Kingsmoor is a big city in the north. Now I go to Hollins Park School.",
-  "Every morning I get up at a quarter to seven. I catch the bus at twenty past seven, and it takes about forty minutes to get to school. My brother Dev doesn't take the bus. His school is only five minutes away, so he walks.",
-  "Lessons start at half past eight. My favourite subject is Science because our teacher, Mr Okafor, does a lot of experiments with us. I don't like PE very much. On Thursdays after school I go to the robot club. Last week we built a small robot that can carry a cup of water!",
-  "At lunchtime most students eat in the canteen. The food is OK, but it's quite expensive: a hot meal costs £3.20. So I usually bring sandwiches from home.",
-  "Do I miss my village? Sometimes. In Little Hatton everybody knew me, and it was always quiet. Kingsmoor is noisy, and there's a lot of traffic. But there are two cinemas, a big library and lots of shops. And at school I found a new friend, Chloe. Her bike is red and mine is blue, and every Saturday we ride to the library together."
+  "Hi, I'm Priya, and I'm twelve years old. Last year my family lived in Little Hatton, a small village in the east of England. Now we live in Kingsmoor, a large city in the northwest. About half a million people live here. I go to Hollins Park School.",
+  "Every morning I get up at a quarter to seven. I catch the bus at seven oh five, and it takes about forty minutes to get to school. My brother Dev doesn't take the bus. His school is only five minutes away, so he walks.",
+  "Lessons start at half past eight. My favourite subject is Science because our teacher, Mr Okafor, does a lot of experiments with us. On Thursdays after school I go to the drama club. This year we are doing a play about a magician. I don't want to act on the stage, so I design the scenery. Last week we painted a big castle for the play!",
+  "At lunchtime most students eat in the canteen. The food is healthy, but it costs a lot: a hot lunch is £3.20. So I usually bring sandwiches from home.",
+  "Do I want to go back to Little Hatton? Sometimes. In Little Hatton everybody knew me, and it was always quiet. Kingsmoor is noisy, and there's a lot of traffic. But there are two cinemas, a big library and lots of shops. And at school I found a new friend, Chloe. Her bike is red and mine is blue, and every Saturday we ride to the library together."
 ]);
 
 /* ------------------------------ D Mediation (wie im Modul A8 „Helping tourists“: Gespräch, Beitrag für Beitrag) ------------------------------ */
@@ -79,51 +87,51 @@ function fassung(zug) {
         o("What did Josh do first? Put the events in the right order.", ["Josh went on a boat trip to the lighthouse.", "Josh visited the castle.", "Josh saw an exhibition in the museum."], { text: "h1" })
       ]),
       ...teil("B Reading", [
-        c("What kind of text is this?", ["a blog post", "a newspaper article", "a letter to a teacher"], 0, { text: "t1" }),
-        c("Why doesn't Dev take the bus?", ["His school is very near.", "He doesn't like buses.", "The bus is too expensive."], 0, { text: "t1" }),
-        c("What did the robot club do last week?", ["They built a small robot.", "They visited a robot exhibition.", "They watched a film about robots."], 0, { text: "t1" }),
-        z("In which line(s) does Priya say why she likes Science?", "t1", [[9, 11]], { hinweis: "Suche das Schlüsselwort aus der Frage (Science) im Text und lies dort genau." }),
-        z("In which line(s) does Priya say what is good about Kingsmoor?", "t1", [[19, 20]], { hinweis: "Suche im letzten Absatz das Wort „But“: Danach kommt das Gute an Kingsmoor." }),
+        c("What kind of text is this?", ["a blog post", "a brochure for tourists", "a letter to a teacher"], 0, { text: "t1" }),
+        c("Why doesn't Dev take the bus?", ["His school is very near.", "He doesn't like buses.", "The bus is always late."], 0, { text: "t1" }),
+        c("What did the drama club do last week?", ["They painted a castle for the play.", "They visited a castle.", "They watched a play at the theatre."], 0, { text: "t1" }),
+        z("In which line(s) does Priya say why she likes Science?", "t1", [[10, 12]], { hinweis: "Suche das Schlüsselwort aus der Frage (Science) im Text und lies dort genau." }),
+        z("In which line(s) does Priya say what is good about Kingsmoor?", "t1", [[21, 23]], { hinweis: "Suche im letzten Absatz das Wort „But“: Danach kommt das Gute an Kingsmoor." }),
         f("Complete the notes about Priya. Write one word or a number.", [
+          feld("About … people live in Kingsmoor.", ["half a million", "500,000", "500000", "500.000", "500 000", "five hundred thousand", "a half million"]),
           feld("Priya gets up at a quarter to …", ["seven", "7"]),
           feld("The bus ride to school takes about … minutes.", ["forty", "40"]),
-          feld("A hot meal in the canteen costs £ …", ["3.20", "3,20", "3.2", "three twenty", "three pounds twenty"]),
-          feld("Priya's new friend:", ["Chloe"])
+          feld("A hot lunch in the canteen costs £ …", ["3.20", "3,20", "3.2", "three twenty", "three pounds twenty"])
         ], { text: "t1", tolerant: true }),
         a("Is life in Kingsmoor better or worse for Priya? Give one thing that is better and one thing that is worse than in Little Hatton. Answer in English.", [
-          kr("eine Sache, die in Kingsmoor besser ist", 1, "zum Beispiel: There are two cinemas / a big library / lots of shops. / She has a new friend (Chloe). / the robot club"),
-          kr("eine Sache, die in Kingsmoor schlechter ist", 1, "zum Beispiel: It is noisy. / There is a lot of traffic. / Not everybody knows her (in Little Hatton everybody knew her). / The bus ride is long."),
+          kr("eine Sache, die in Kingsmoor besser ist", 1, "zum Beispiel: There are two cinemas / a big library / lots of shops. / She has a new friend (Chloe). / the drama club"),
+          kr("eine Sache, die in Kingsmoor schlechter ist", 1, "zum Beispiel: It is noisy. / There is a lot of traffic. / It isn't quiet. / Not everybody knows her (in Little Hatton everybody knew her). / The bus ride is long."),
           kr("verständlich auf Englisch (eigene Worte oder passende Wörter aus dem Text; Fehler, die das Verstehen nicht stören, zählen nicht)", 1)
-        ], "Better: In Kingsmoor there are two cinemas and a big library. Worse: Kingsmoor is noisy, and there is a lot of traffic.", ["cinema|library|shop|friend|chloe|club", "noisy|traffic|loud|quiet|knew|know"], { text: "t1", zeilen: [17, 22] })
+        ], "Better: In Kingsmoor there are two cinemas and a big library. Worse: Kingsmoor is noisy, and there is a lot of traffic.", ["cinema|library|shop|friend|chloe|club|drama", "noisy|traffic|loud|quiet|knew|know"], { text: "t1", zeilen: [19, 24] })
       ]),
       ...teil("C Grammar and vocabulary", [
         f("A class trip: Complete the sentences with the simple past of the verbs in brackets.", [
-          feld("Last Saturday our class (take) … a train to the city.", ["took"]),
-          feld("First we (visit) … an old castle.", ["visited"]),
-          feld("Our teacher (buy) … tickets for a boat tour.", ["bought"]),
-          feld("The weather (be) … great.", ["was"]),
-          feld("Two boys (not / listen) … to the guide.", ["did not listen", "didn't listen", "didn’t listen"]),
+          feld("Last Saturday our class (take) … a train to the city centre.", ["took"]),
+          feld("First we (visit) … an exhibition about dinosaurs.", ["visited"]),
+          feld("Then our teacher (buy) … tickets for a boat tour.", ["bought"]),
+          feld("The weather (be) … brilliant.", ["was"]),
+          feld("Tom (not / come) … with us – he was ill.", ["did not come", "didn't come", "didn’t come"]),
           feld("(you / like) … the trip? – Yes, I did.", ["did you like"])
         ], { hinweis: "Wiederhole die unregelmäßigen Verben (take – took, buy – bought) und die Verneinung und Frage mit did + Grundform." }),
         f("Complete the sentences with the simple present of the verbs in brackets.", [
           feld("My cousin (live) … on a farm near the coast.", ["lives"]),
-          feld("She (get up) … at six o'clock every day.", ["gets up"]),
-          feld("Her parents (not / have) … a car.", ["do not have", "don't have", "don’t have"]),
+          feld("She (get up) … at 6 a.m. every day.", ["gets up"]),
+          feld("Her parents (not / own) … the farm. They pay rent for it.", ["do not own", "don't own", "don’t own"]),
           feld("The bus (not / stop) … in her village.", ["does not stop", "doesn't stop", "doesn’t stop"])
         ], { hinweis: "he, she, it – das s muss mit! Verneinung: don't / doesn't + Grundform." }),
         f("Complete the questions and the short answers.", [
           feld("(your school / have) … a drama club? – Yes, it does.", ["does your school have"]),
-          feld("(you / walk) … to school? – No, I don't. I take the bus.", ["do you walk"]),
-          feld("Does your sister like football? – Yes, …", ["she does", "yes, she does", "yes she does"]),
+          feld("(you / walk) … to school? – No, I don't. I catch the bus.", ["do you walk"]),
+          feld("Does your sister play rugby? – Yes, …", ["she does", "yes, she does", "yes she does"]),
           feld("Do your friends live in the city centre? – No, …", ["they don't", "they do not", "no, they don't", "no they don't", "no, they do not"])
         ], { hinweis: "Fragen mit do / does + Grundform. Kurzantwort: Yes, she does. / No, they don't." }),
         f("Complete the sentences with mine, yours, his, hers, ours or theirs.", [
           feld("Is this your pencil case, Ben? – Yes, it's … . Thank you!", ["mine"]),
           feld("Amy has got a green bike. The green bike is … .", ["hers"]),
-          feld("This isn't my umbrella. Is it … , Mrs Lee?", ["yours"]),
-          feld("My brother and I have got a dog. The black dog is … .", ["ours"])
+          feld("This isn't my ticket. Is it … , Mrs Lee?", ["yours"]),
+          feld("My brother and I have got a goat. The white goat is … .", ["ours"])
         ], { hinweis: "mine (meins), yours (deins, Ihres), his (seins), hers (ihres), ours (unseres), theirs (ihres – von ihnen)." }),
-        m("Match the words with their meanings.", [["a factory", "a building where people make things"], ["noisy", "with a lot of loud sounds"], ["the coast", "the land next to the sea"], ["healthy", "good for your body"]])
+        m("What do the words mean? Match them.", [["a factory", "a building where people make things"], ["noisy", "very loud – not quiet"], ["the coast", "the land next to the sea"], ["healthy", "good for your body"]])
       ]),
       ...teil("D Mediation", [
         a(LAGE + " Herr Brunner says something to you. Tell the assistant in English.", [
@@ -138,35 +146,35 @@ function fassung(zug) {
         { vorgabe: "🏰 Assistant: “Adults pay £12. How old are the children? Children from 5 to 15 pay half price.”" }),
         a("Herr Brunner answers and asks something. Tell the assistant in English.", [
           kr("Alter der Kinder: Tochter 10, Sohn 16 (zählt auch mit I/my statt he/his)", 1, "His daughter is ten and his son is sixteen. – beide Zahlen richtig" + ICH),
-          kr("fragt nach einer Führung auf Deutsch (zählt auch mit I/my statt he/his)", 1, "Is there a (guided) tour in German? / He asks for a tour in German." + ICH)
-        ], "His daughter is ten, and his son is sixteen. He asks: Is there a guided tour in German?", ["ten|10", "sixteen|16", "tour|guide", "german"],
+          kr("fragt nach einer Führung auf Deutsch (zählt auch mit I/my statt he/his)", 1, "Is there a tour in German? / He asks for a tour in German." + ICH)
+        ], "His daughter is ten, and his son is sixteen. He asks: Is there a tour in German?", ["ten|10", "sixteen|16", "tour|guide", "german"],
         { vorgabe: "🧳 Herr Brunner: „Meine Tochter ist zehn, mein Sohn ist sechzehn. Gibt es auch eine Führung auf Deutsch?“", hilfe: UEBER }),
         a("The assistant answers. Tell Herr Brunner in German what she says.", [
-          kr("keine Führung auf Deutsch, aber ein Audioguide auf Deutsch für 2 Pfund", 1, "beide Angaben sinngemäß"),
+          kr("keine Führung auf Deutsch, aber eine Broschüre auf Deutsch für 2 Pfund", 1, "beide Angaben sinngemäß (Broschüre, Heft oder Prospekt)"),
           kr("zusammen 30 Pfund (zwei Erwachsene und ein Kind – der Sohn zahlt wie ein Erwachsener)", 1, "der Betrag 30 Pfund genügt")
-        ], "Leider gibt es keine Führung auf Deutsch, aber einen Audioguide auf Deutsch für 2 Pfund. Zwei Erwachsene und ein Kind kosten zusammen 30 Pfund.", ["keine|nicht|leider", "audio|guide|gerät|geraet", "2|zwei", "30|dreißig|dreissig"],
-        { vorgabe: "🏰 Assistant: “I'm afraid there's no tour in German. But we have audio guides in German for £2. Two adults and one child – that's £30, please.”" }),
-        a("Herr Brunner decides. Tell the assistant in English.", [
-          kr("nimmt die drei Karten und einen Audioguide (zählt auch mit I/my statt he/his)", 1, "He would like the three tickets and one audio guide." + ICH),
+        ], "Leider gibt es keine Führung auf Deutsch, aber eine Broschüre auf Deutsch für 2 Pfund. Zwei Erwachsene und ein Kind kosten zusammen 30 Pfund.", ["keine|nicht|leider", "brosch|heft|prospekt", "2|zwei", "30|dreißig|dreissig"],
+        { vorgabe: "🏰 Assistant: “I'm afraid there's no tour in German. But we have a brochure in German for £2. Two adults and one child – that's £30, please.”" }),
+        a("Herr Brunner says what he wants. Tell the assistant in English.", [
+          kr("nimmt die drei Karten und eine Broschüre (zählt auch mit I/my statt he/his)", 1, "He would like the three tickets and a brochure. – brochure falsch geschrieben zählt" + ICH),
           kr("fragt, ob er mit Karte zahlen kann (zählt auch mit I/my statt he/his)", 1, "Can he pay by card?" + ICH)
-        ], "He would like the three tickets and one audio guide. Can he pay by card?", ["three|3|ticket", "audio|guide", "card"],
-        { vorgabe: "🧳 Herr Brunner: „Gut, dann nehmen wir die drei Karten und einen Audioguide. Kann ich mit Karte bezahlen?“", hilfe: UEBER })
+        ], "He would like the three tickets and a brochure. Can he pay by card?", ["three|3|ticket", "broch|brosch|brosh|brour|booklet", "card"],
+        { vorgabe: "🧳 Herr Brunner: „Gut, dann nehmen wir die drei Karten und eine Broschüre. Kann ich mit Karte bezahlen?“", hilfe: UEBER })
       ]),
       ...teil("E Writing", [
         s("Where I live: Your class is making a website about the places where you live. Write a short text about your village, town or city (" + umfang + "). Write about: the name of the place, what kind of place it is and where it is · how many people live there · what it was like in the past · your favourite place there and what you can do there · what you like or don't like about the place and why.", [
           kr("Inhalt", 5, "alle fünf Punkte des Auftrags – je Punkt 1: Name, Art des Ortes (village, town, city) und Lage · Einwohnerzahl oder Größe · wie es früher war (there was / there were …) · Lieblingsort und was man dort tun kann · was gefällt oder nicht gefällt, mit Grund (because …)"),
           kr("Textsorte und Aufbau", 2, "kurzer Text für die Website der Klasse: Einstieg (Hi, I'm … / I live in …), sinnvolle Reihenfolge, ein Schlusssatz; Sätze verbunden (and, but, because)"),
           kr("Grammatik", 3, "simple present für heute (I live, it has, people work – he/she/it mit s), simple past für früher (there was, there were, people worked); Fehler stören das Verstehen kaum"),
-          kr("Wortschatz", 2, "passende Wörter der Unit für Orte (village, town, city, in the north / south of …, near, coast, quiet, noisy, traffic, factory …), nicht nur nice und good"),
+          kr("Wortschatz", 2, "passende Wörter der Unit für Orte (village, town, large city, capital, city centre, in the north / south / east / west of …, near, far from, a long way away, coast, quiet, noisy, traffic, the air is clean, factory, mine, farm …), nicht nur nice und good"),
           kr("Rechtschreibung", 2, "häufige Wörter und die Wörter der Unit sind meist richtig geschrieben", { rs: true })
         ], { minWoerter: zug === "M" ? 50 : 40, plan: [
           { id: "start", label: "Start", hilfe: "Hi, I'm … I live in …" },
-          { id: "place", label: "What kind of place? Where is it?", hilfe: "It's a small town in the south of Bavaria, near …" },
-          { id: "people", label: "How many people live there?", hilfe: "About … people live there." },
-          { id: "past", label: "In the past …", hilfe: "In the past there was … / there were …" },
-          { id: "favourite", label: "My favourite place – what can you do there?", hilfe: "My favourite place is … You can …" },
-          { id: "opinion", label: "What do you like or not like? Why?", hilfe: "I like … because … / I don't like …" },
-          { id: "end", label: "End", hilfe: "Come and visit …! / Thanks for reading." }
+          { id: "place", label: "What kind of place? Where is it?", hilfe: "It's a small village / a large town in the south of Bavaria, near … / not far from …" },
+          { id: "people", label: "How many people live there?", hilfe: "About … people live there. (2,500 / 50,000 / half a million)" },
+          { id: "past", label: "In the past …", hilfe: "In the past there was a factory / a mine … / there were a lot of farms …" },
+          { id: "favourite", label: "My favourite place – what can you do there?", hilfe: "My favourite place is the city centre / the … You can …" },
+          { id: "opinion", label: "What do you like or not like? Why?", hilfe: "I like it because it's quiet and the air is clean. / I don't like the traffic – it's noisy." },
+          { id: "end", label: "End", hilfe: "Come and visit …! / Bye for now." }
         ] })
       ])
     ]
