@@ -8,7 +8,8 @@ const { registerE9SchreibenRoutes, naechsteNote, MAX, AUFGABEN } = require("./e9
 
 let server, baseUrl;
 let kiModus = "ok";
-let letzte = { system: "", user: "", max: 0 };
+let letzte = { system: "", user: "", max: 0, optionen: null };
+let kiAufrufe = 0;
 let kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 2, sprache: 2 };
 
 const TEXT = "Hi everyone! Last week I go to Berlin with my class. We travelled by train and we stay there for three days. I was very exited when I saw the Brandenburg Gate. It was great! Bye, Sam";
@@ -20,8 +21,9 @@ test.before(async () => {
     pruefenProStunde: 4, natuerlichProStunde: 2,
     kindZumCode: async (code) => ({ "123": { code: "123", klasse: "9aM" }, "456": { code: "456", klasse: "9b" }, "000": { code: "000", klasse: "Lehrkraft", lehrer: true },
       "777": { code: "777", klasse: "9aM" }, "701": { code: "701", klasse: "7aM" }, "702": { code: "702", klasse: "7b" }, "999": { gesperrt: true } })[code] || (/^3\d\d$/.test(code || "") ? { code, klasse: "9b" } : null),
-    askKi: async (system, user, maxTokens) => {
-      letzte = { system, user, max: maxTokens };
+    askKi: async (system, user, maxTokens, optionen) => {
+      letzte = { system, user, max: maxTokens, optionen };
+      kiAufrufe += 1;
       if (kiModus === "weg") throw new Error("offline");
       if (kiModus === "leer") return "";
       if (kiModus === "murks") return "Das kann ich nicht bewerten.";
@@ -197,10 +199,83 @@ test("7. Klasse „Where I live“: eigener Maßstab, Umfang und Mindestlänge �
 
   // Beide Adressen kennen beide Aufgaben; der Blogpost hat seinen Maßstab behalten
   assert.equal((await frage("pruefen", { code: "702", aufgabe: "where-i-live", text: ORT })).status, 200);
-  assert.equal((await neu("pruefen", { code: "456", aufgabe: "blog-reise", text: TEXT })).status, 200);
+  // (ein neuer Code: denselben Text von 456 kennt der Server schon und fragt die KI nicht noch einmal)
+  assert.equal((await neu("pruefen", { code: "345", aufgabe: "blog-reise", text: TEXT })).status, 200);
   assert.match(letzte.system, /der 9\. Klasse\n\(Regelklasse, Niveau A2 – die Klasse bereitet sich auf den Qualifizierenden Abschluss vor\)\./);
   assert.match(letzte.system, /Zeitform: simple past\.\n/);
   assert.match(letzte.system, /aufbau     Form eines Blogposts: Begrüßung/);
   assert.match(letzte.system, /\(z\. B\. I felt … because …\)/);
   assert.deepEqual(AUFGABEN["where-i-live"].umfang, { R: [40, 80], M: [55, 100] });
+});
+
+test("Gleicher Text = gleiche Note: ohne KI, auch wenn die KI inzwischen anders werten würde", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 3, sprache: 3 };
+  const erst = await frage("pruefen", { code: "351", aufgabe: "blog-reise", text: TEXT });
+  assert.equal(erst.status, 200); assert.equal(erst.data.summe, 12); assert.ok(!erst.data.unveraendert);
+  assert.deepEqual(letzte.optionen, { temperatur: 0 }, "die KI bewertet mit Temperatur 0");
+  assert.match(erst.data.beleg, /^[\w-]+\.[\w-]{32}$/);
+
+  // Die KI würde jetzt anders werten – derselbe Text bekommt trotzdem dieselbe Bewertung, ohne neuen KI-Aufruf.
+  // Leerzeichen, Zeilenumbrüche und die Form des Apostrophs zählen nicht als Änderung.
+  kiPunkte = { inhalt: 4, aufbau: 4, wortschatz: 4, sprache: 4 };
+  const vorher = kiAufrufe;
+  for (const t of [TEXT, "  " + TEXT.replace(/ We /, "\n\nWe ").replace(/ /g, "  ") + "\n"]) {
+    const nochmal = await frage("pruefen", { code: "351", aufgabe: "blog-reise", text: t });
+    assert.equal(nochmal.status, 200);
+    assert.deepEqual(nochmal.data.punkte, erst.data.punkte); assert.equal(nochmal.data.note, erst.data.note);
+    assert.equal(nochmal.data.korrigiert, erst.data.korrigiert); assert.equal(nochmal.data.unveraendert, true);
+  }
+  assert.equal(kiAufrufe, vorher, "kein neuer KI-Aufruf");
+
+  // Ein echtes Zeichen mehr (ein verbessertes Wort) ist eine Änderung: Die KI prüft neu
+  const besser = await frage("pruefen", { code: "351", aufgabe: "blog-reise", text: TEXT.replace("I go to", "I went to") });
+  assert.equal(kiAufrufe, vorher + 1); assert.equal(besser.data.summe, 16); assert.ok(!besser.data.unveraendert);
+});
+
+test("Zweiter Durchgang: Die KI bekommt die vorige Fassung mit ihren Punkten – nur mit gültigem Beleg", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 2, wortschatz: 3, sprache: 2 };
+  const erst = (await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: TEXT })).data;
+  assert.doesNotMatch(letzte.system, /ZWEITER DURCHGANG/, "beim ersten Mal nicht");
+  const NEU = TEXT.replace("It was great!", "It was great! On the second day we visited the Reichstag.");
+
+  kiPunkte = { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 2 };
+  const zwei = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU, vorher: { text: TEXT, beleg: erst.beleg } });
+  assert.equal(zwei.status, 200); assert.equal(zwei.data.punkte.inhalt, 4);
+  assert.match(letzte.system, /ZWEITER DURCHGANG/);
+  assert.match(letzte.system, /behält GENAU seine Punkte/);
+  assert.match(letzte.system, /Weniger Punkte nur, wenn eine Änderung den Bereich verschlechtert/);
+  assert.match(letzte.user, /^Vorige Fassung \(schon bewertet: inhalt 3, aufbau 2, wortschatz 3, sprache 2\):\n<<<\nHi everyone![\s\S]*Bye, Sam\n>>>/);
+  assert.match(letzte.user, /Neue Fassung des Kindes – korrigiere und bewerte diese:\n<<<\n[\s\S]*Reichstag[\s\S]*\n>>>$/);
+  // Das Format der Antwort bleibt dasselbe
+  assert.match(letzte.system, /<korrigiert>[\s\S]*<punkte inhalt="3"[\s\S]*<tipp>/);
+
+  // Verfälschter Beleg (bessere Punkte selbst eingetragen), Beleg zu einem anderen Text oder anderer Aufgabe: zählt nicht
+  const [daten] = erst.beleg.split(".");
+  const geschoent = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(daten, "base64url").toString()), p: [5, 5, 5, 5] })).toString("base64url") + "." + erst.beleg.split(".")[1];
+  const ANDERS = NEU + " We also saw a museum.";
+  for (const [i, v] of [{ text: TEXT, beleg: geschoent }, { text: TEXT + " Extra.", beleg: erst.beleg }, { text: TEXT, beleg: "murks" }, { text: TEXT }, "Text"].entries()) {
+    const r = await frage("pruefen", { code: "36" + i, aufgabe: "blog-reise", text: ANDERS, vorher: v });
+    assert.equal(r.status, 200);
+    assert.doesNotMatch(letzte.system, /ZWEITER DURCHGANG/, JSON.stringify(v).slice(0, 60));
+    assert.match(letzte.user, /^Text des Kindes:/);
+  }
+  // Lehrkraft: ein Beleg für 9R gilt nicht für die Bewertung nach 9M
+  const lr = (await frage("pruefen", { code: "000", aufgabe: "blog-reise", text: ORT_9, zug: "R" })).data;
+  await frage("pruefen", { code: "000", aufgabe: "blog-reise", text: ORT_9 + " Bye!", zug: "M", vorher: { text: ORT_9, beleg: lr.beleg } });
+  assert.doesNotMatch(letzte.system, /ZWEITER DURCHGANG/);
+});
+
+const ORT_9 = "Hello everyone! Last year I went to London with my family. We flew there and stayed for one week. We saw Big Ben and the London Eye. It was amazing!";
+
+test("Gleicher Text nach einem Neustart: Der Beleg hält die Punkte fest, auch wenn die KI anders werten würde", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 2, aufbau: 3, wortschatz: 2, sprache: 3 };
+  const erst = (await frage("pruefen", { code: "354", aufgabe: "blog-reise", text: ORT_9 })).data;
+  // ein anderer Code kennt den Text noch nicht (wie nach einem Neustart des Servers) – mit dem Beleg bleibt es bei den Punkten
+  kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 3, sprache: 3 };
+  const r = await frage("pruefen", { code: "355", aufgabe: "blog-reise", text: ORT_9 + "\n", vorher: { text: ORT_9, beleg: erst.beleg } });
+  assert.equal(r.status, 200); assert.equal(r.data.unveraendert, true);
+  assert.deepEqual(r.data.punkte, erst.punkte); assert.equal(r.data.note, erst.note);
+  assert.doesNotMatch(letzte.system, /ZWEITER DURCHGANG/, "unveränderter Text wird nicht verglichen");
+  // ohne Beleg gibt es eine neue Bewertung
+  assert.equal((await frage("pruefen", { code: "356", aufgabe: "blog-reise", text: ORT_9 })).data.summe, 12);
 });

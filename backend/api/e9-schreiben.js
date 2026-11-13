@@ -15,22 +15,40 @@
  *   4. gibt zwei Tipps für den nächsten Versuch. Das Kind verbessert und prüft erneut – so steigt die Note.
  * Auf Wunsch schreibt sie denselben Inhalt so, wie ihn jemand aus England in einfachem Englisch schreiben würde.
  *
- * Gespeichert wird nichts. Zugang nur mit gültigem 3-stelligem Code (gleiche Sperre bei falschen Codes), begrenzt
- * je Code und Stunde. Die Bewertung ist eine Übungshilfe, keine Note der Lehrkraft.
+ * Gleicher Text = gleiche Note (Wunsch der Lehrkraft vom 13.11.2026: „wenn die ki einmal drüber gelaufen ist, die note
+ * unverändert bleibt auch bei einem zweiten durchlauf. es sei denn der schüler ändert wirklich etwas ab bzw. verbessert“).
+ * Vorher schwankte derselbe Text live zwischen 13 und 14 Punkten – im M-Schlüssel Note 4 oder 3.
+ *   - Der Server merkt sich je Code die Bewertung jedes Textes (MERKEN Stück, bis zum Neustart). Kommt derselbe Text
+ *     noch einmal, kommt dieselbe Bewertung zurück – ohne KI. „Derselbe“ heißt: gleich bis auf Leerzeichen,
+ *     Zeilenumbrüche und die Form der Apostrophe und Anführungszeichen (gleicherText).
+ *   - Jede Antwort trägt einen Beleg (Prüfsumme des Textes + Punkte, vom Server unterschrieben). Die Seite schickt ihn
+ *     beim nächsten Prüfen mit der vorigen Fassung zurück (vorher). Ist der Text gleich, gelten die Punkte des Belegs;
+ *     hat das Kind etwas geändert, bekommt die KI die vorige Fassung mit ihren Punkten: Bereiche, die die Änderung
+ *     nicht betrifft, behalten ihre Punkte; mehr gibt es für echte Verbesserungen, weniger nur für Verschlechterungen.
+ *     Die Unterschrift verhindert, dass jemand in seinem Browser bessere Punkte einträgt.
+ *   - Die KI bewertet mit Temperatur 0 (nur bei Modellen, die das kennen – siehe server.js).
+ * Die Seite selbst fragt bei unverändertem Text gar nicht erst nach.
  *
- *   POST /api/englisch-schreiben/pruefen    { code, aufgabe, text, zug? }      (auch unter /api/e9-schreiben/…)
+ * Schülertexte werden nicht dauerhaft gespeichert (nur im Arbeitsspeicher, s. o.). Zugang nur mit gültigem 3-stelligem
+ * Code (gleiche Sperre bei falschen Codes), begrenzt je Code und Stunde. Die Bewertung ist eine Übungshilfe, keine
+ * Note der Lehrkraft.
+ *
+ *   POST /api/englisch-schreiben/pruefen    { code, aufgabe, text, zug?, vorher?: { text, beleg } }  (auch unter /api/e9-schreiben/…)
  *        -> { ok, korrigiert, aenderungen: [{ falsch, richtig, grund }], punkte: { inhalt, aufbau, wortschatz, sprache },
- *             summe, max, prozent, note, zug, naechste: { note, punkte } | null, lob, tipps: [..], woerter }
+ *             summe, max, prozent, note, zug, naechste: { note, punkte } | null, lob, tipps: [..], woerter,
+ *             beleg, unveraendert: true (nur wenn der Text gleich geblieben ist) }
  *   POST /api/englisch-schreiben/natuerlich { code, aufgabe, text } -> { ok, text }
  *        400 Text fehlt oder zu kurz · 401 kein gültiger Code · 429 zu viele Anfragen · 503 die KI antwortet nicht
  */
 
+const crypto = require("crypto");
 const { gradeFromPercent } = require("./vokabeltest");
 
 const BEREICHE = ["inhalt", "aufbau", "wortschatz", "sprache"];
 const JE_BEREICH = 5;
 const MAX = BEREICHE.length * JE_BEREICH;
 const MIN_WOERTER = 15;
+const MERKEN = 4000;          // so viele Bewertungen behält der Server im Arbeitsspeicher (älteste fallen zuerst heraus)
 
 /* Schreibaufgaben. umfang: erwartete Wörter je Zug – der KI als Maßstab genannt; die Seite zeigt dieselben Zahlen als Ziel.
    Was eine Aufgabe nicht selbst festlegt, kommt aus STANDARD (Blogpost der 9. Klasse, Maßstab Quali). */
@@ -132,6 +150,35 @@ const woerterZahl = (s) => (String(s).match(/[A-Za-zÀ-ÿ0-9'’]+/g) || []).len
 const zugVon = (klasse) => (/M$/.test(String(klasse || "")) ? "M" : "R");
 const skala = (zug) => (zug === "M" ? "default" : "9R");
 
+// Ist es noch derselbe Text? Leerzeichen, Zeilenumbrüche und die Form von Apostroph und Anführungszeichen zählen nicht
+// als Änderung (die Seite vergleicht genauso). Jedes andere Zeichen schon – auch ein verbesserter Punkt oder Großbuchstabe.
+function gleicherText(s) {
+  return String(s == null ? "" : s).normalize("NFC").replace(/[’‘`´]/g, "'").replace(/[“”„«»]/g, "\"").replace(/\s+/g, " ").trim();
+}
+const pruefsumme = (aufgabeId, zug, s) => crypto.createHash("sha256").update(aufgabeId + "|" + zug + "|" + gleicherText(s)).digest("base64url").slice(0, 24);
+
+// Beleg: Prüfsumme des Textes + Punkte, unterschrieben mit dem Geheimnis des Servers -> "<daten>.<unterschrift>"
+function belegSchreiben(geheim, aufgabeId, zug, s, punkte) {
+  const daten = Buffer.from(JSON.stringify({ a: aufgabeId, z: zug, h: pruefsumme(aufgabeId, zug, s), p: BEREICHE.map((k) => punkte[k]) })).toString("base64url");
+  return daten + "." + crypto.createHmac("sha256", geheim).update(daten).digest("base64url").slice(0, 32);
+}
+// -> Punkte der vorigen Fassung { inhalt, … } oder null, wenn der Beleg fehlt, nicht passt oder verändert wurde
+function belegLesen(geheim, beleg, aufgabeId, zug, s) {
+  const [daten, unterschrift] = String(beleg || "").split(".");
+  if (!daten || !unterschrift || daten.length > 400) return null;
+  const soll = Buffer.from(crypto.createHmac("sha256", geheim).update(daten).digest("base64url").slice(0, 32)), ist = Buffer.from(unterschrift);
+  if (soll.length !== ist.length || !crypto.timingSafeEqual(soll, ist)) return null;
+  let d;
+  try { d = JSON.parse(Buffer.from(daten, "base64url").toString("utf8")); } catch (_e) { return null; }
+  if (!d || d.a !== aufgabeId || d.z !== zug || d.h !== pruefsumme(aufgabeId, zug, s) || !Array.isArray(d.p) || d.p.length !== BEREICHE.length) return null;
+  const punkte = {};
+  for (const [i, k] of BEREICHE.entries()) {
+    if (!Number.isInteger(d.p[i]) || d.p[i] < 0 || d.p[i] > JE_BEREICH) return null;
+    punkte[k] = d.p[i];
+  }
+  return punkte;
+}
+
 // Ab wie vielen Punkten gibt es die nächstbessere Note? -> { note, punkte: wie viele noch fehlen } oder null bei Note 1
 function naechsteNote(summe, zug) {
   const jetzt = gradeFromPercent(Math.round((summe / MAX) * 100), skala(zug));
@@ -143,7 +190,19 @@ function naechsteNote(summe, zug) {
   return null;
 }
 
-function systemPruefen(aufgabe, zug) {
+// Zweiter Durchgang: Die KI vergleicht mit der schon bewerteten vorigen Fassung, statt alles neu zu bewerten
+const ZWEITER_DURCHGANG = [
+  "",
+  "ZWEITER DURCHGANG: Das Kind hat einen Text überarbeitet, der schon bewertet wurde. Du bekommst die vorige Fassung mit ihren Punkten und die neue Fassung.",
+  "Korrigiere die NEUE Fassung (Teile 1, 2, 4 und 5 beziehen sich nur auf sie). Für die Punkte (Teil 3) sind die Punkte der vorigen Fassung der feste Ausgangspunkt:",
+  "   - Vergleiche die beiden Fassungen und finde heraus, was das Kind geändert hat.",
+  "   - Ein Bereich, den die Änderungen nicht betreffen, behält GENAU seine Punkte – auch wenn du ihn selbst anders bewerten würdest. Was gleich geblieben ist, bewertest du nicht neu.",
+  "   - Mehr Punkte gibt es, wenn eine Änderung den Bereich wirklich verbessert (zum Beispiel Fehler verbessert, Inhaltspunkt ergänzt, Begrüßung oder Schluss ergänzt, treffendere Wörter, Sätze verbunden).",
+  "   - Weniger Punkte nur, wenn eine Änderung den Bereich verschlechtert (zum Beispiel Inhalt gestrichen oder neue Fehler).",
+  "   - Eine kleine Änderung (ein Wort, ein Satzzeichen) bewegt höchstens den Bereich, zu dem sie gehört."
+];
+
+function systemPruefen(aufgabe, zug, mitVorher) {
   const [von, bis] = aufgabe.umfang[zug];
   return [
     "Du bist Englischlehrkraft an einer bayerischen Mittelschule und korrigierst den englischen Text einer Schülerin oder eines Schülers der " + aufgabe.stufe + ". Klasse",
@@ -170,6 +229,7 @@ function systemPruefen(aufgabe, zug) {
     "   wortschatz " + aufgabe.wortschatz,
     "   sprache    " + aufgabe.sprache,
     ...aufgabe.massstab.map((zeile) => "   " + zeile),
+    ...(mitVorher ? ZWEITER_DURCHGANG : []),
     "",
     "4. Lob: ein Satz auf Deutsch in du-Form, der etwas Konkretes aus dem Text lobt.",
     "",
@@ -209,6 +269,14 @@ function registerE9SchreibenRoutes(app, options = {}) {
   if (typeof kindZumCode !== "function") throw new Error("Englisch Schreiben: kindZumCode fehlt.");
   const grenze = { pruefen: options.pruefenProStunde || 15, natuerlich: options.natuerlichProStunde || 6 };
   const zaehler = new Map(); // "<art>|<code>" -> { start, n }
+  // Geheimnis für die Belege (server.js gibt ein festes; ohne gilt eins je Serverstart – alte Belege zählen dann nicht mehr)
+  const geheim = String(options.geheim || crypto.randomBytes(32).toString("hex"));
+  const gemerkt = new Map(); // "<code>|<prüfsumme>" -> Bewertung (ohne Note – die rechnet der Server jedes Mal aus den Punkten)
+  function merken(schluessel, bewertung) {
+    gemerkt.delete(schluessel);
+    gemerkt.set(schluessel, bewertung);
+    while (gemerkt.size > MERKEN) gemerkt.delete(gemerkt.keys().next().value);
+  }
 
   function zuViele(art, code) {
     const jetzt = Date.now(), k = art + "|" + code;
@@ -222,7 +290,8 @@ function registerE9SchreibenRoutes(app, options = {}) {
   // Gemeinsamer Anfang beider Routen: Aufgabe, Text, Code, Grenze -> { aufgabe, zug, original } oder null (Antwort ist dann geschrieben)
   async function anfang(req, res, art) {
     const b = req.body || {};
-    const aufgabe = AUFGABEN[text(b.aufgabe, 40)];
+    const aufgabeId = text(b.aufgabe, 40);
+    const aufgabe = Object.prototype.hasOwnProperty.call(AUFGABEN, aufgabeId) ? AUFGABEN[aufgabeId] : null;
     if (!aufgabe) { res.status(400).json({ ok: false, error: "Unbekannte Aufgabe." }); return null; }
     const original = text(b.text, 1800);
     if (woerterZahl(original) < aufgabe.minWoerter) {
@@ -240,14 +309,42 @@ function registerE9SchreibenRoutes(app, options = {}) {
     }
     // Lehrercode: Die Lehrkraft wählt auf der Seite, für welchen Zug sie die Bewertung sehen will
     const zug = kind.lehrer && (b.zug === "M" || b.zug === "R") ? b.zug : zugVon(kind.klasse);
-    return { aufgabe, zug, original };
+    return { aufgabe, aufgabeId, zug, original, code: String(kind.code || "") };
+  }
+
+  // Antwort an die Seite: Note, nächste Note und Beleg kommen immer frisch aus den Punkten
+  function antwort(a, bewertung, unveraendert) {
+    const { punkte } = bewertung;
+    const summe = BEREICHE.reduce((s, k) => s + punkte[k], 0);
+    const prozent = Math.round((summe / MAX) * 100);
+    return {
+      ok: true, korrigiert: bewertung.korrigiert, aenderungen: bewertung.aenderungen, punkte, summe, max: MAX, jeBereich: JE_BEREICH, prozent,
+      note: gradeFromPercent(prozent, skala(a.zug)), zug: a.zug, naechste: naechsteNote(summe, a.zug),
+      lob: bewertung.lob, tipps: bewertung.tipps, woerter: woerterZahl(a.original),
+      beleg: belegSchreiben(geheim, a.aufgabeId, a.zug, a.original, punkte),
+      ...(unveraendert ? { unveraendert: true } : {}), quelle: "ki"
+    };
   }
 
   app.post(["/api/englisch-schreiben/pruefen", "/api/e9-schreiben/pruefen"], async (req, res) => {
     const a = await anfang(req, res, "pruefen");
     if (!a) return;
+    // 1. Derselbe Text schon einmal bewertet (von diesem Code)? Dann bleibt es bei dieser Bewertung – ohne KI.
+    const schluessel = a.code + "|" + pruefsumme(a.aufgabeId, a.zug, a.original);
+    if (gemerkt.has(schluessel)) return res.json(antwort(a, gemerkt.get(schluessel), true));
+    // 2. Die Seite schickt die vorige Fassung mit ihrem Beleg. Gilt der Beleg nicht (fremd, verändert, anderer Zug), wird
+    //    ganz normal bewertet. Ist der Text gleich geblieben, gelten die Punkte des Belegs.
+    const vb = req.body && req.body.vorher && typeof req.body.vorher === "object" ? req.body.vorher : null;
+    const vorherText = vb ? text(vb.text, 1800) : "";
+    const vorherPunkte = vb ? belegLesen(geheim, vb.beleg, a.aufgabeId, a.zug, vorherText) : null;
+    const gleichWieVorher = Boolean(vorherPunkte) && gleicherText(vorherText) === gleicherText(a.original);
+    const vergleichen = Boolean(vorherPunkte) && !gleichWieVorher;
     try {
-      const daten = antwortLesen(await askKi(systemPruefen(a.aufgabe, a.zug), "Text des Kindes:\n<<<\n" + a.original + "\n>>>", 1700));
+      const nachricht = vergleichen
+        ? "Vorige Fassung (schon bewertet: " + BEREICHE.map((k) => k + " " + vorherPunkte[k]).join(", ") + "):\n<<<\n" + vorherText + "\n>>>\n\n" +
+          "Neue Fassung des Kindes – korrigiere und bewerte diese:\n<<<\n" + a.original + "\n>>>"
+        : "Text des Kindes:\n<<<\n" + a.original + "\n>>>";
+      const daten = antwortLesen(await askKi(systemPruefen(a.aufgabe, a.zug, vergleichen), nachricht, 1700, { temperatur: 0 }));
       const korrigiert = !daten.fehler && text(daten.korrigiert, 2600);
       const punkte = {};
       // grund sagt, woran es lag (ohne Inhalt): leer = keine Antwort, format = Marken fehlen, text / punkte = dieser Teil fehlt
@@ -264,18 +361,17 @@ function registerE9SchreibenRoutes(app, options = {}) {
         return res.status(503).json({ ok: false, error: "ki", grund, message: "Die KI hat gerade nicht richtig geantwortet. Versuche es gleich noch einmal." });
       }
 
-      const summe = BEREICHE.reduce((s, k) => s + punkte[k], 0);
-      const prozent = Math.round((summe / MAX) * 100);
+      // Text unverändert (aber nicht mehr im Gedächtnis, z. B. nach einem Neustart): Die Punkte des Belegs gelten
+      if (gleichWieVorher) Object.assign(punkte, vorherPunkte);
       const aenderungen = (Array.isArray(daten.aenderungen) ? daten.aenderungen : []).slice(0, 8)
         .map((x) => ({ falsch: text(x && x.falsch, 140), richtig: text(x && x.richtig, 180), grund: text(x && x.grund, 180) }))
         .filter((x) => x.falsch && x.richtig && x.falsch !== x.richtig);
-      return res.json({
-        ok: true, korrigiert, aenderungen, punkte, summe, max: MAX, jeBereich: JE_BEREICH, prozent,
-        note: gradeFromPercent(prozent, skala(a.zug)), zug: a.zug, naechste: naechsteNote(summe, a.zug),
-        lob: text(daten.lob, 260),
-        tipps: (Array.isArray(daten.tipps) ? daten.tipps : []).map((t) => text(t, 240)).filter(Boolean).slice(0, 2),
-        woerter: woerterZahl(a.original), quelle: "ki"
-      });
+      const bewertung = {
+        korrigiert, aenderungen, punkte, lob: text(daten.lob, 260),
+        tipps: (Array.isArray(daten.tipps) ? daten.tipps : []).map((t) => text(t, 240)).filter(Boolean).slice(0, 2)
+      };
+      merken(schluessel, bewertung);
+      return res.json(antwort(a, bewertung, gleichWieVorher));
     } catch (error) {
       console.error("Englisch Schreiben: KI-Fehler", error.message);
       return res.status(503).json({ ok: false, error: "ki", message: "Die KI ist gerade nicht erreichbar. Versuche es in einer Minute noch einmal." });
@@ -298,4 +394,4 @@ function registerE9SchreibenRoutes(app, options = {}) {
   });
 }
 
-module.exports = { registerE9SchreibenRoutes, AUFGABEN, naechsteNote, MAX };
+module.exports = { registerE9SchreibenRoutes, AUFGABEN, naechsteNote, MAX, gleicherText };

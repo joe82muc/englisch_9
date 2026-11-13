@@ -581,6 +581,8 @@ registerInf9HilfeRoutes(app, {
 const { registerE9SchreibenRoutes } = require("./e9-schreiben");
 registerE9SchreibenRoutes(app, {
   askKi: askKiMitErsatz,
+  // unterschreibt die Belege (gleicher Text = gleiche Note); fest, damit Belege einen Neustart überstehen
+  geheim: (process.env.VOKABELTEST_SECRET || TEACHER_PASSWORD + "|grumi") + "|englisch-schreiben",
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
@@ -735,7 +737,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-12-e7-probe1-woerter",
+    version: "2026-11-13-schreiben-gleiche-note",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
@@ -2468,6 +2470,7 @@ async function anthropicAnfrage(system, user, maxTokens, optionen) {
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
+        ...(temperaturFuer(model, optionen) === undefined ? {} : { temperature: temperaturFuer(model, optionen) }),
         system,
         messages: [{ role: "user", content: user }]
       })
@@ -2492,6 +2495,15 @@ async function anthropicAnfrage(system, user, maxTokens, optionen) {
   }
 
   throw lastError || new Error("Anthropic call failed on all model candidates.");
+}
+
+/* optionen.temperatur (z. B. 0 für gleichbleibende Bewertungen, Englisch Schreiben): Nur ältere Modelle nehmen
+   temperature an – Haiku 4.5, Sonnet 4.x, Opus bis 4.6, Claude 3. Die neueren (Sonnet 5, Opus 4.7 und später …)
+   antworten darauf mit Fehler 400; dort bleibt die Angabe weg. Ohne optionen.temperatur ändert sich nichts. */
+function temperaturFuer(model, optionen) {
+  const t = optionen && optionen.temperatur;
+  if (typeof t !== "number" || !Number.isFinite(t)) return undefined;
+  return /^claude-(haiku-4|sonnet-4|opus-4-[0-6](?!\d)|opus-4$|3)/.test(String(model)) ? t : undefined;
 }
 
 function uniqueModels(models) {
@@ -2536,7 +2548,7 @@ async function askAzureOpenAI(system, user, maxTokens, optionen) {
       "api-key": AZURE_OPENAI_API_KEY
     },
     body: JSON.stringify({
-      temperature: 0.35,
+      temperature: optionen && typeof optionen.temperatur === "number" ? optionen.temperatur : 0.35,
       max_tokens: maxTokens,
       messages: [
         { role: "system", content: system },
