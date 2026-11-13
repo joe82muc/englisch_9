@@ -23,8 +23,9 @@
  *     Zeilenumbrüche und die Form der Apostrophe und Anführungszeichen (gleicherText).
  *   - Jede Antwort trägt einen Beleg (Prüfsumme des Textes + Punkte, vom Server unterschrieben). Die Seite schickt ihn
  *     beim nächsten Prüfen mit der vorigen Fassung zurück (vorher). Ist der Text gleich, gelten die Punkte des Belegs;
- *     hat das Kind etwas geändert, bekommt die KI die vorige Fassung mit ihren Punkten: Bereiche, die die Änderung
- *     nicht betrifft, behalten ihre Punkte; mehr gibt es für echte Verbesserungen, weniger nur für Verschlechterungen.
+ *     hat das Kind etwas geändert, bewertet die KI die frühere Fassung A und die jetzige Fassung B im selben Aufruf,
+ *     und auf die Punkte des Belegs kommt nur der Unterschied B − A (punkteVerrechnen): Bereiche, in denen A und B
+ *     gleich bewertet werden, behalten ihre Punkte; mehr gibt es für echte Verbesserungen, weniger für Verschlechterungen.
  *     Die Unterschrift verhindert, dass jemand in seinem Browser bessere Punkte einträgt.
  *   - Die KI bewertet mit Temperatur 0 (nur bei Modellen, die das kennen – siehe server.js).
  * Die Seite selbst fragt bei unverändertem Text gar nicht erst nach.
@@ -127,15 +128,18 @@ function antwortLesen(raw) {
   if (!roh.trim()) return { fehler: "leer" };
   const korrigiert = marken(roh, "korrigiert")[0];
   if (korrigiert) {
-    const attribute = (/<punkte\b([^>]*)>/i.exec(roh) || [])[1] || "";
-    const punkte = {};
-    for (const k of BEREICHE) {
-      const m = new RegExp("\\b" + k + "\\s*=\\s*[\"'„“]?\\s*(-?\\d+(?:[.,]\\d+)?)", "i").exec(attribute);
-      if (m) punkte[k] = Number(m[1].replace(",", "."));
-    }
+    // <punkte …/> = der (jetzige) Text; <punkte_a …/> = die frühere Fassung A, nur im zweiten Durchgang
+    const lesen = (marke) => {
+      const attribute = (new RegExp("<" + marke + "\\b([^>]*)>", "i").exec(roh) || [])[1] || "", punkte = {};
+      for (const k of BEREICHE) {
+        const m = new RegExp("\\b" + k + "\\s*=\\s*[\"'„“]?\\s*(-?\\d+(?:[.,]\\d+)?)", "i").exec(attribute);
+        if (m) punkte[k] = Number(m[1].replace(",", "."));
+      }
+      return punkte;
+    };
     const eins = (stueck, name) => marken(stueck, name)[0] || "";
     return {
-      korrigiert, punkte, lob: marken(roh, "lob")[0] || "", tipps: marken(roh, "tipp"),
+      korrigiert, punkte: lesen("punkte"), punkteA: lesen("punkte_a"), lob: marken(roh, "lob")[0] || "", tipps: marken(roh, "tipp"),
       aenderungen: [...roh.matchAll(/<aenderung\b[^>]*>([\s\S]*?)<\/aenderung>/gi)].map((m) => ({ falsch: eins(m[1], "falsch"), richtig: eins(m[1], "richtig"), grund: eins(m[1], "grund") }))
     };
   }
@@ -190,17 +194,31 @@ function naechsteNote(summe, zug) {
   return null;
 }
 
-// Zweiter Durchgang: Die KI vergleicht mit der schon bewerteten vorigen Fassung, statt alles neu zu bewerten
-const ZWEITER_DURCHGANG = [
+/* Zweiter Durchgang: Die KI bewertet die frühere Fassung A und die jetzige Fassung B im selben Aufruf mit demselben
+   Maßstab; der Server übernimmt nur den Unterschied B − A auf die schon vergebenen Punkte (punkteVerrechnen).
+   Erste Fassung (13.11.2026, live gemessen): „die Punkte der vorigen Fassung sind der Ausgangspunkt“ – nach einer
+   bloßen Namensänderung sprang Sprachrichtigkeit trotzdem von 2 auf 5 (die KI hielt wohl ihre eigenen Korrekturen
+   für Verbesserungen des Kindes). Deshalb jetzt zwei getrennte Bewertungen statt eines Urteils über „Änderungen“. */
+const ZWEI_FASSUNGEN = [
   "",
-  "ZWEITER DURCHGANG: Das Kind hat einen Text überarbeitet, der schon bewertet wurde. Du bekommst die vorige Fassung mit ihren Punkten und die neue Fassung.",
-  "Korrigiere die NEUE Fassung (Teile 1, 2, 4 und 5 beziehen sich nur auf sie). Für die Punkte (Teil 3) sind die Punkte der vorigen Fassung der feste Ausgangspunkt:",
-  "   - Vergleiche die beiden Fassungen und finde heraus, was das Kind geändert hat.",
-  "   - Ein Bereich, den die Änderungen nicht betreffen, behält GENAU seine Punkte – auch wenn du ihn selbst anders bewerten würdest. Was gleich geblieben ist, bewertest du nicht neu.",
-  "   - Mehr Punkte gibt es, wenn eine Änderung den Bereich wirklich verbessert (zum Beispiel Fehler verbessert, Inhaltspunkt ergänzt, Begrüßung oder Schluss ergänzt, treffendere Wörter, Sätze verbunden).",
-  "   - Weniger Punkte nur, wenn eine Änderung den Bereich verschlechtert (zum Beispiel Inhalt gestrichen oder neue Fehler).",
-  "   - Eine kleine Änderung (ein Wort, ein Satzzeichen) bewegt höchstens den Bereich, zu dem sie gehört."
+  "ZWEI FASSUNGEN: Das Kind hat seinen Text überarbeitet. Du bekommst die frühere Fassung (Fassung A) und die jetzige Fassung (Fassung B).",
+  "Teile 1, 2, 4 und 5 gelten nur für Fassung B. Die Punkte (Teil 3) vergibst du für BEIDE Fassungen, jede für sich, mit genau demselben Maßstab:",
+  "   - Bewerte Fassung A so, als wäre sie der einzige Text – und Fassung B ebenso. Die jetzige Fassung bekommt keinen Bonus, nur weil sie neuer ist.",
+  "   - Deine eigenen Korrekturen aus Teil 1 und 2 zählen nicht: Bewertet wird jede Fassung so, wie das Kind sie geschrieben hat.",
+  "   - Wo sich A und B in einem Bereich nicht wirklich unterscheiden (zum Beispiel nur ein anderer Name oder ein anderes Wort mit gleichem Sinn), bekommen beide dort dieselben Punkte.",
+  "   - Im Antwortformat steht <punkte_a …/> für Fassung A und <punkte …/> für Fassung B."
 ];
+
+/* Neue Punkte eines Bereichs aus dem zweiten Durchgang: vorher = schon vergeben (Beleg), a / b = Fassung A / B in
+   diesem Aufruf. Bewertet die KI A und B gleich, bleibt es bei vorher – egal, wie streng sie diesmal insgesamt ist.
+   Ist B besser, gibt es mindestens einen Punkt mehr, aber nicht mehr als die KI für B allein gibt (so wächst die Note
+   nicht durch viele kleine Schritte über das hinaus, was der Text wirklich wert ist); ist B schlechter, entsprechend. */
+function punkteVerrechnen(vorher, a, b) {
+  const d = b - a;
+  if (d === 0) return vorher;
+  if (d > 0) return Math.min(JE_BEREICH, vorher + d, Math.max(b, vorher + 1));
+  return Math.max(0, vorher + d, Math.min(b, vorher - 1));
+}
 
 function systemPruefen(aufgabe, zug, mitVorher) {
   const [von, bis] = aufgabe.umfang[zug];
@@ -229,7 +247,7 @@ function systemPruefen(aufgabe, zug, mitVorher) {
     "   wortschatz " + aufgabe.wortschatz,
     "   sprache    " + aufgabe.sprache,
     ...aufgabe.massstab.map((zeile) => "   " + zeile),
-    ...(mitVorher ? ZWEITER_DURCHGANG : []),
+    ...(mitVorher ? ZWEI_FASSUNGEN : []),
     "",
     "4. Lob: ein Satz auf Deutsch in du-Form, der etwas Konkretes aus dem Text lobt.",
     "",
@@ -244,6 +262,7 @@ function systemPruefen(aufgabe, zug, mitVorher) {
     "</korrigiert>",
     "<aenderung><falsch>Stelle aus dem Original</falsch><richtig>so ist es richtig</richtig><grund>Erklärung</grund></aenderung>",
     "<aenderung>…</aenderung>",
+    ...(mitVorher ? ["<punkte_a inhalt=\"3\" aufbau=\"3\" wortschatz=\"3\" sprache=\"3\"/>"] : []),
     "<punkte inhalt=\"3\" aufbau=\"3\" wortschatz=\"3\" sprache=\"3\"/>",
     "<lob>…</lob>",
     "<tipp>…</tipp>",
@@ -341,8 +360,8 @@ function registerE9SchreibenRoutes(app, options = {}) {
     const vergleichen = Boolean(vorherPunkte) && !gleichWieVorher;
     try {
       const nachricht = vergleichen
-        ? "Vorige Fassung (schon bewertet: " + BEREICHE.map((k) => k + " " + vorherPunkte[k]).join(", ") + "):\n<<<\n" + vorherText + "\n>>>\n\n" +
-          "Neue Fassung des Kindes – korrigiere und bewerte diese:\n<<<\n" + a.original + "\n>>>"
+        ? "Fassung A (frühere Fassung des Kindes – nur bewerten):\n<<<\n" + vorherText + "\n>>>\n\n" +
+          "Fassung B (jetzige Fassung des Kindes – korrigieren und bewerten):\n<<<\n" + a.original + "\n>>>"
         : "Text des Kindes:\n<<<\n" + a.original + "\n>>>";
       const daten = antwortLesen(await askKi(systemPruefen(a.aufgabe, a.zug, vergleichen), nachricht, 1700, { temperatur: 0 }));
       const korrigiert = !daten.fehler && text(daten.korrigiert, 2600);
@@ -363,6 +382,18 @@ function registerE9SchreibenRoutes(app, options = {}) {
 
       // Text unverändert (aber nicht mehr im Gedächtnis, z. B. nach einem Neustart): Die Punkte des Belegs gelten
       if (gleichWieVorher) Object.assign(punkte, vorherPunkte);
+      // Text geändert: nur der Unterschied zwischen Fassung A und B zählt. Fehlen die Punkte für A (Antwort unvollständig),
+      // bleibt es bei den alten Punkten, solange die KI für B höchstens einen Punkt davon abweicht.
+      if (vergleichen) {
+        const pa = daten.punkteA || {};
+        let ohneA = false;
+        for (const k of BEREICHE) {
+          const na = Number(pa[k]);
+          if (pa[k] === undefined || pa[k] === null || !Number.isFinite(na)) { ohneA = true; punkte[k] = Math.abs(punkte[k] - vorherPunkte[k]) <= 1 ? vorherPunkte[k] : punkte[k]; continue; }
+          punkte[k] = punkteVerrechnen(vorherPunkte[k], Math.max(0, Math.min(JE_BEREICH, Math.round(na))), punkte[k]);
+        }
+        if (ohneA) console.error("Englisch Schreiben: Punkte für Fassung A fehlen – ohne Vergleich gewertet");
+      }
       const aenderungen = (Array.isArray(daten.aenderungen) ? daten.aenderungen : []).slice(0, 8)
         .map((x) => ({ falsch: text(x && x.falsch, 140), richtig: text(x && x.richtig, 180), grund: text(x && x.grund, 180) }))
         .filter((x) => x.falsch && x.richtig && x.falsch !== x.richtig);
@@ -394,4 +425,4 @@ function registerE9SchreibenRoutes(app, options = {}) {
   });
 }
 
-module.exports = { registerE9SchreibenRoutes, AUFGABEN, naechsteNote, MAX, gleicherText };
+module.exports = { registerE9SchreibenRoutes, AUFGABEN, naechsteNote, MAX, gleicherText, punkteVerrechnen };
