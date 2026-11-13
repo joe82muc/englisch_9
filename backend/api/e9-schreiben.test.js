@@ -4,14 +4,13 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const express = require("express");
-const { registerE9SchreibenRoutes, naechsteNote, MAX, AUFGABEN, punkteVerrechnen } = require("./e9-schreiben");
+const { registerE9SchreibenRoutes, naechsteNote, MAX, AUFGABEN, punkteVerrechnen, nurKleinerWortwechsel } = require("./e9-schreiben");
 
 let server, baseUrl;
 let kiModus = "ok";
 let letzte = { system: "", user: "", max: 0, optionen: null };
 let kiAufrufe = 0;
 let kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 2, sprache: 2 };
-let kiPunkteA = null;   // Punkte für Fassung A (zweiter Durchgang); null = die Ersatz-KI schickt keine
 
 const TEXT = "Hi everyone! Last week I go to Berlin with my class. We travelled by train and we stay there for three days. I was very exited when I saw the Brandenburg Gate. It was great! Bye, Sam";
 
@@ -44,7 +43,6 @@ test.before(async () => {
       const p = d.punkte;
       return "<korrigiert>\n" + d.korrigiert + "\n</korrigiert>\n" +
         d.aenderungen.map((a) => `<aenderung><falsch>${a.falsch}</falsch><richtig>${a.richtig}</richtig><grund>${a.grund}</grund></aenderung>`).join("\n") + "\n" +
-        (kiPunkteA ? `<punkte_a inhalt="${kiPunkteA.inhalt}" aufbau="${kiPunkteA.aufbau}" wortschatz="${kiPunkteA.wortschatz}" sprache="${kiPunkteA.sprache}"/>\n` : "") +
         (kiModus === "halb" ? `<punkte inhalt="3" aufbau="viel"/>` : `<punkte inhalt="${p.inhalt}" aufbau="${p.aufbau}" wortschatz="${p.wortschatz}" sprache="${p.sprache}"/>`) +
         `\n<lob>${d.lob.replace("&", "&amp;")}</lob>\n` + d.tipps.map((t) => `<tipp>${t}</tipp>`).join("\n");
     }
@@ -234,69 +232,96 @@ test("Gleicher Text = gleiche Note: ohne KI, auch wenn die KI inzwischen anders 
   assert.equal(kiAufrufe, vorher + 1); assert.equal(besser.data.summe, 16); assert.ok(!besser.data.unveraendert);
 });
 
-test("Zweiter Durchgang: Die KI bekommt die vorige Fassung mit ihren Punkten – nur mit gültigem Beleg", async () => {
-  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 2, wortschatz: 3, sprache: 2 }; kiPunkteA = null;
+test("Nach einer Überarbeitung: derselbe Auftrag an die KI, auf die alten Punkte kommt nur die Veränderung", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 2, wortschatz: 3, sprache: 2 };
   const erst = (await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: TEXT })).data;
-  assert.doesNotMatch(letzte.system, /ZWEI FASSUNGEN|punkte_a/, "beim ersten Mal nicht");
+  const systemErst = letzte.system;
   const NEU = TEXT.replace("It was great!", "It was great! On the second day we visited the Reichstag.");
 
-  // Die KI ist in diesem Aufruf insgesamt strenger (A und B je einen Punkt weniger als beim ersten Mal) und sieht B nur
-  // beim Inhalt besser: Es zählt nur der Unterschied – Inhalt +1, alles andere bleibt genau bei den alten Punkten
-  kiPunkteA = { inhalt: 2, aufbau: 1, wortschatz: 2, sprache: 1 }; kiPunkte = { inhalt: 3, aufbau: 1, wortschatz: 2, sprache: 1 };
-  const zwei = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU, vorher: { text: TEXT, beleg: erst.beleg } });
+  // Ein Satz mehr: Die KI gibt dem neuen Text Inhalt 4 und Sprache 3 – das sind +1 und +1 auf die alten Punkte
+  kiPunkte = { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 3 };
+  const zwei = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU, vorher: { text: TEXT, beleg: erst.beleg, korrigiert: erst.korrigiert } });
   assert.equal(zwei.status, 200);
-  assert.deepEqual(zwei.data.punkte, { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 2 });
-  assert.match(letzte.system, /ZWEI FASSUNGEN/);
-  assert.match(letzte.system, /keinen Bonus, nur weil sie neuer ist/);
-  assert.match(letzte.system, /Deine eigenen Korrekturen aus Teil 1 und 2 zählen nicht/);
-  assert.match(letzte.user, /^Fassung A \(frühere Fassung des Kindes – nur bewerten\):\n<<<\nHi everyone![\s\S]*Bye, Sam\n>>>/);
-  assert.match(letzte.user, /Fassung B \(jetzige Fassung des Kindes – korrigieren und bewerten\):\n<<<\n[\s\S]*Reichstag[\s\S]*\n>>>$/);
-  assert.doesNotMatch(letzte.user, /inhalt 3|schon bewertet/, "die alten Punkte sieht die KI nicht – sie bewertet A unabhängig");
-  // Das Format: zusätzlich <punkte_a …/> vor <punkte …/>
-  assert.match(letzte.system, /<korrigiert>[\s\S]*<punkte_a inhalt="3"[^\n]*\n<punkte inhalt="3"[\s\S]*<tipp>/);
+  assert.deepEqual(zwei.data.punkte, { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 3 });
+  assert.ok(!zwei.data.kleinerWortwechsel && !zwei.data.unveraendert);
+  assert.equal(letzte.system, systemErst, "derselbe Auftrag wie beim ersten Mal");
+  assert.match(letzte.user, /^Text des Kindes:\n<<<\n[\s\S]*Reichstag[\s\S]*\n>>>$/);
+  assert.doesNotMatch(letzte.user, /Fassung|schon bewertet/, "die vorige Fassung und die alten Punkte sieht die KI nicht");
 
-  // Nur ein Name anders: A und B gleich bewertet (auch wenn die KI diesmal viel milder ist) -> genau die alten Punkte
-  kiPunkteA = { inhalt: 5, aufbau: 4, wortschatz: 5, sprache: 5 }; kiPunkte = { ...kiPunkteA };
-  const name = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU.replace("Sam", "Mia"), vorher: { text: NEU, beleg: zwei.data.beleg } });
-  assert.deepEqual(name.data.punkte, zwei.data.punkte); assert.equal(name.data.note, zwei.data.note); assert.ok(!name.data.unveraendert);
+  // Nur der Name getauscht: Die KI würde jetzt überall 5 geben – die Punkte bleiben trotzdem, mit Hinweis
+  kiPunkte = { inhalt: 5, aufbau: 5, wortschatz: 5, sprache: 5 };
+  const name = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU.replace("Bye, Sam", "Bye, Mia"), vorher: { text: NEU, beleg: zwei.data.beleg, korrigiert: zwei.data.korrigiert } });
+  assert.deepEqual(name.data.punkte, zwei.data.punkte); assert.equal(name.data.note, zwei.data.note);
+  assert.equal(name.data.kleinerWortwechsel, true); assert.ok(!name.data.unveraendert);
 
-  // Fehlen die Punkte für A, bleibt es bei den alten Punkten, wo die KI für B höchstens einen Punkt abweicht
-  kiPunkteA = null; kiPunkte = { inhalt: 5, aufbau: 3, wortschatz: 3, sprache: 2 };
-  const ohneA = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU.replace("Sam", "Tom"), vorher: { text: NEU, beleg: zwei.data.beleg } });
-  assert.deepEqual(ohneA.data.punkte, { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 2 });
+  // Ein Wort getauscht, das die KI verbessert hatte (go -> went): Das ist eine Korrektur, die zählt
+  kiPunkte = { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 4 };
+  const went = await frage("pruefen", { code: "352", aufgabe: "blog-reise", text: NEU.replace("Bye, Sam", "Bye, Mia").replace("I go to", "I went to"),
+    vorher: { text: NEU.replace("Bye, Sam", "Bye, Mia"), beleg: name.data.beleg, korrigiert: name.data.korrigiert } });
+  assert.deepEqual(went.data.punkte, { inhalt: 4, aufbau: 2, wortschatz: 3, sprache: 4 }); assert.ok(!went.data.kleinerWortwechsel);
+});
 
-  // Verfälschter Beleg (bessere Punkte selbst eingetragen), Beleg zu einem anderen Text oder anderer Aufgabe: zählt nicht
-  const [daten] = erst.beleg.split(".");
-  const geschoent = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(daten, "base64url").toString()), p: [5, 5, 5, 5] })).toString("base64url") + "." + erst.beleg.split(".")[1];
-  const ANDERS = NEU + " We also saw a museum.";
+test("Kleiner Wortwechsel: die korrigierte Fassung kommt aus dem Gedächtnis oder von der Seite – nur wenn sie zum Beleg passt", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 2, sprache: 2 };
+  const erst = (await frage("pruefen", { code: "353", aufgabe: "blog-reise", text: TEXT })).data;
+  const KORR = TEXT.replace("exited", "excited");
+  kiPunkte = { inhalt: 3, aufbau: 3, wortschatz: 2, sprache: 3 };
+  // anderer Code = nichts im Gedächtnis (wie nach einem Neustart): die korrigierte Fassung von der Seite zählt
+  const echt = await frage("pruefen", { code: "370", aufgabe: "blog-reise", text: KORR, vorher: { text: TEXT, beleg: erst.beleg, korrigiert: erst.korrigiert } });
+  assert.equal(echt.data.punkte.sprache, 3); assert.ok(!echt.data.kleinerWortwechsel);
+  // eine selbst gebaute „korrigierte Fassung“ passt nicht zum Beleg und zählt nicht -> ein Wort getauscht, Punkte bleiben
+  const falsch = await frage("pruefen", { code: "371", aufgabe: "blog-reise", text: KORR, vorher: { text: TEXT, beleg: erst.beleg, korrigiert: KORR } });
+  assert.equal(falsch.data.punkte.sprache, 2); assert.equal(falsch.data.kleinerWortwechsel, true);
+});
+
+test("Verfälschter, fremder oder fehlender Beleg: ganz normal neu bewertet", async () => {
+  kiModus = "ok"; kiPunkte = { inhalt: 3, aufbau: 2, wortschatz: 3, sprache: 2 };
+  const erst = (await frage("pruefen", { code: "357", aufgabe: "blog-reise", text: TEXT })).data;
+  const [daten, unterschrift] = erst.beleg.split(".");
+  const geschoent = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(daten, "base64url").toString()), p: [5, 5, 5, 5] })).toString("base64url") + "." + unterschrift;
+  const ANDERS = TEXT.replace("It was great!", "It was great! We also saw a museum.");
+  kiPunkte = { inhalt: 4, aufbau: 3, wortschatz: 3, sprache: 2 };
   for (const [i, v] of [{ text: TEXT, beleg: geschoent }, { text: TEXT + " Extra.", beleg: erst.beleg }, { text: TEXT, beleg: "murks" }, { text: TEXT }, "Text"].entries()) {
     const r = await frage("pruefen", { code: "36" + i, aufgabe: "blog-reise", text: ANDERS, vorher: v });
     assert.equal(r.status, 200);
-    assert.doesNotMatch(letzte.system, /ZWEI FASSUNGEN/, JSON.stringify(v).slice(0, 60));
-    assert.match(letzte.user, /^Text des Kindes:/);
+    assert.deepEqual(r.data.punkte, kiPunkte, JSON.stringify(v).slice(0, 60));
   }
   // Lehrkraft: ein Beleg für 9R gilt nicht für die Bewertung nach 9M
+  kiPunkte = { inhalt: 2, aufbau: 2, wortschatz: 2, sprache: 2 };
   const lr = (await frage("pruefen", { code: "000", aufgabe: "blog-reise", text: ORT_9, zug: "R" })).data;
-  await frage("pruefen", { code: "000", aufgabe: "blog-reise", text: ORT_9 + " Bye!", zug: "M", vorher: { text: ORT_9, beleg: lr.beleg } });
-  assert.doesNotMatch(letzte.system, /ZWEI FASSUNGEN/);
-  kiPunkteA = null;
+  kiPunkte = { inhalt: 4, aufbau: 4, wortschatz: 4, sprache: 4 };
+  const lm = (await frage("pruefen", { code: "000", aufgabe: "blog-reise", text: ORT_9 + " Bye!", zug: "M", vorher: { text: ORT_9, beleg: lr.beleg, korrigiert: lr.korrigiert } })).data;
+  assert.deepEqual(lm.punkte, kiPunkte);
 });
 
-test("Punkte verrechnen: nur der Unterschied zwischen Fassung A und B zählt – ohne Aufschaukeln", () => {
-  // A und B gleich bewertet -> alte Punkte, egal wie streng oder mild die KI diesmal ist
-  assert.equal(punkteVerrechnen(2, 5, 5), 2);
+test("Punkte verrechnen: gleiche KI-Punkte -> alte Punkte; Veränderung nur bis zu dem, was die KI dem neuen Text gibt", () => {
+  // die KI gibt der neuen Fassung dasselbe wie der vorigen -> es bleibt bei den vergebenen Punkten
+  assert.equal(punkteVerrechnen(2, 3, 3), 2);
   assert.equal(punkteVerrechnen(4, 1, 1), 4);
-  // B besser: um den Unterschied mehr, mindestens 1 – aber nicht über das hinaus, was B allein bekommt
+  // besser: um denselben Betrag mehr …
   assert.equal(punkteVerrechnen(2, 2, 4), 4);
-  assert.equal(punkteVerrechnen(2, 4, 5), 3);                  // die KI ist mild (A 4) – trotzdem nur +1
-  assert.equal(punkteVerrechnen(3, 2, 3), 4, "mindestens ein Punkt mehr für eine echte Verbesserung");
-  assert.equal(punkteVerrechnen(3, 1, 3), 4, "nicht +2, wenn B allein nur 3 bekommt – aber mindestens +1");
+  assert.equal(punkteVerrechnen(2, 2, 3), 3);
+  // … aber nicht über das hinaus, was die KI dem neuen Text gibt (kein Aufschaukeln durch viele kleine Schritte)
+  assert.equal(punkteVerrechnen(4, 2, 3), 4, "hat schon mehr, als die KI dem neuen Text gibt: bleibt, steigt nicht");
+  assert.equal(punkteVerrechnen(3, 2, 4), 4);
   assert.equal(punkteVerrechnen(5, 3, 5), 5);
-  // B schlechter (Inhalt gestrichen): weniger, mindestens 1, nicht unter das, was B allein bekommt
+  // schlechter (Inhalt gestrichen): weniger – aber nicht unter das, was die KI dem neuen Text gibt
   assert.equal(punkteVerrechnen(4, 4, 1), 1);
-  assert.equal(punkteVerrechnen(4, 5, 2), 2);
-  assert.equal(punkteVerrechnen(2, 5, 4), 1);
+  assert.equal(punkteVerrechnen(2, 3, 2), 2, "hat schon weniger, als die KI dem neuen Text gibt: bleibt");
+  assert.equal(punkteVerrechnen(3, 4, 1), 1);
   assert.equal(punkteVerrechnen(0, 2, 1), 0);
+});
+
+test("Kleiner Wortwechsel erkannt: ein, zwei Wörter getauscht – aber keine übernommene Korrektur", () => {
+  const A = "Hi everyone! Last week I go to Berlin. It was nice. Bye, Sam";
+  const K = "Hi everyone! Last week I went to Berlin. It was nice. Bye, Sam";
+  assert.equal(nurKleinerWortwechsel(A, A.replace("Sam", "Mia"), K), true, "Name");
+  assert.equal(nurKleinerWortwechsel(A, A.replace("nice", "great").replace("Sam", "Mia"), K), true, "zwei Wörter");
+  assert.equal(nurKleinerWortwechsel(A, A.replace("nice", "great").replace("Sam", "Mia").replace("Berlin", "Rome"), K), false, "drei Wörter");
+  assert.equal(nurKleinerWortwechsel(A, A.replace("go", "went"), K), false, "Korrektur der KI übernommen");
+  assert.equal(nurKleinerWortwechsel(A, A.replace("It was nice.", "It was nice and sunny."), K), false, "Wörter dazu");
+  assert.equal(nurKleinerWortwechsel(A, A.replace(" It was nice.", ""), K), false, "Satz gestrichen");
+  assert.equal(nurKleinerWortwechsel(A, A.replace("go", "went"), ""), true, "ohne korrigierte Fassung: auch das zählt als kleiner Wortwechsel");
 });
 
 const ORT_9 = "Hello everyone! Last year I went to London with my family. We flew there and stayed for one week. We saw Big Ben and the London Eye. It was amazing!";
@@ -309,7 +334,7 @@ test("Gleicher Text nach einem Neustart: Der Beleg hält die Punkte fest, auch w
   const r = await frage("pruefen", { code: "355", aufgabe: "blog-reise", text: ORT_9 + "\n", vorher: { text: ORT_9, beleg: erst.beleg } });
   assert.equal(r.status, 200); assert.equal(r.data.unveraendert, true);
   assert.deepEqual(r.data.punkte, erst.punkte); assert.equal(r.data.note, erst.note);
-  assert.doesNotMatch(letzte.system, /ZWEI FASSUNGEN/, "unveränderter Text wird nicht verglichen");
+  assert.ok(!r.data.kleinerWortwechsel);
   // ohne Beleg gibt es eine neue Bewertung
   assert.equal((await frage("pruefen", { code: "356", aufgabe: "blog-reise", text: ORT_9 })).data.summe, 12);
 });
