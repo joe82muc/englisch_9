@@ -1,8 +1,11 @@
 "use strict";
 
-// Englisch 7: die große Probe zu Unit 1 über die Routen von d7-proben.js (stufe 7, fach Englisch, /api/e7/proben) –
+// Englisch 7: die großen Proben zu Unit 1 und Unit 2 über die Routen von d7-proben.js (stufe 7, fach Englisch, /api/e7/proben) –
 // wer welche Fassung schreiben darf, Hörtext zentral mit echter Aufnahme, Abgabe mit allen Aufgabenarten, und vor allem:
 // dieselbe Leistung gibt in 7M und 7R verschiedene Noten (M 50 % = Note 4, R 50 % = Note 3).
+// Probe 2 (Unit 2) hat vier Fassungen: e7-p2-<r|m>-<a|b> – eigene R-Fassung, Variante B für Nachschreiber. Ebenso Probe 3
+// (Unit 3, e7-p3-<r|m>-<a|b>) – dort geht die Sprachmittlung wie im Buch von Deutsch nach Englisch – und Probe 4 (Unit 4,
+// e7-p4-<r|m>-<a|b>), wieder Englisch → Deutsch wie im Buch.
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const fs = require("fs");
@@ -13,7 +16,7 @@ const { registerD7ProbenRoutes } = require("./d7-proben");
 const ROH = require("./e7-proben-daten");
 
 const PW = "Nur-ein-Test-4711";
-const KINDER = { 701: { klasse: "7aM" }, 702: { klasse: "7b" }, 703: { klasse: "7b", lrs: true }, 801: { klasse: "8b" } };
+const KINDER = { 701: { klasse: "7aM" }, 702: { klasse: "7b" }, 703: { klasse: "7b", lrs: true }, 704: { klasse: "7aM" }, 705: { klasse: "7b" }, 801: { klasse: "8b" } };
 const kindZumCode = async (code) => {
   const k = KINDER[Number(code)];
   return k ? { code: String(code).padStart(3, "0"), klasse: k.klasse, zug: /M$/.test(k.klasse) ? "M" : "R", lrs: Boolean(k.lrs) } : null;
@@ -22,8 +25,8 @@ const warte = (ms) => new Promise((ok) => setTimeout(ok, ms));
 // Ersatz-KI: gibt bei offenen Aufgaben keine Punkte – so sind die Noten vorhersagbar (43 von 70 = 61 %: M Note 4, R Note 3).
 // Mit ausbessern markiert sie in Antworten „three ticket“ (→ „three tickets“); bei der LRS-Prüfung der Felder gilt
 // „bougth“ als nur falsch geschrieben, „get up“ (statt gets up) als falsche Form.
-const ki = (merk = {}) => async (system, user) => {
-  merk.system = (merk.system || []).concat(system); merk.user = (merk.user || []).concat(user);
+const ki = (merk = {}) => async (system, user, _max, optionen) => {
+  merk.system = (merk.system || []).concat(system); merk.user = (merk.user || []).concat(user); merk.optionen = (merk.optionen || []).concat([optionen]);
   const a = JSON.parse(user);
   if (a.felder) { merk.lrs = (merk.lrs || []).concat([a.felder]); return JSON.stringify({ urteil: a.felder.map((f) => (/^bou/i.test(f.eingabe) ? "ja" : "nein")), grund: a.felder.map(() => "Form geprüft.") }); }
   // so antwortete Haiku live: englische Wörter in geraden Anführungszeichen – ungültiges JSON, das GRUMI trotzdem lesen muss
@@ -38,7 +41,7 @@ async function mitServer(lauf, merk) {
   const app = express();
   app.use(express.json());
   const modul = registerD7ProbenRoutes(app, { dataDir, prefix: "/api/e7/proben", datei: "e7-proben.json", stufe: 7, fach: { kurz: "e", name: "Englisch" }, sitzung: true, marken: true,
-    hoerZentral: true, hoerOrdner: path.join(__dirname, "e7-proben", "audio"), ausbessern: true, lrsFelder: true, kopierenNurVermerk: true,
+    hoerZentral: true, hoerOrdner: path.join(__dirname, "e7-proben", "audio"), ausbessern: true, lrsFelder: true, kopierenNurVermerk: true, temperatur: 0,
     teacherPassword: PW, kindZumCode, tests: JSON.parse(JSON.stringify(ROH)), askAnthropic: ki(merk), kiPauseMs: 40, nachholenMs: 0 });
   const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -128,6 +131,7 @@ test("Abgabe: alle geschlossenen Aufgaben richtig gewertet; gleiche Leistung →
     assert.ok(m.grade > r.grade, "der M-Schlüssel ist strenger: " + m.percent + " % = M " + m.grade + ", R " + r.grade);
     assert.match(merk.system.join("\n"), /Sprachmittlung ist keine Übersetzung/);
     assert.ok(merk.user.some((u) => /Herr Brunner/.test(u)), "die Sprechblase geht an die KI mit");
+    assert.ok(merk.optionen.length && merk.optionen.every((o) => o && o.temperatur === 0 && o.milde === false), "jede Bewertung mit Temperatur 0");
     assert.equal((await lehrer("bestaetigen", { submissionId: m.id })).status, 200);
     assert.equal((await lehrer("freigeben", { submissionIds: [m.id] })).status, 200);
     const k = await post("korrektur", { code: "701", testId: "e7-p1-m-a" });
@@ -212,5 +216,313 @@ test("KI-Antwort mit geraden Anführungszeichen um englische Wörter (live so ge
     assert.match(d.begruendung[0], /Kaputtdorf/);
     assert.equal(d.hinweis, 'Schreibe "people" ohne s.');
     assert.deepEqual(d.marken.map((m) => [d.given.slice(m.start, m.end), m.besser]), [["peoples", "people"]]);
+  });
+});
+
+/* ------------------------------ Probe 2 (Unit 2): vier Fassungen ------------------------------ */
+const P2 = ["e7-p2-m-a", "e7-p2-r-a", "e7-p2-m-b", "e7-p2-r-b"];
+const OFFENE = ["offen", "schreiben"];
+
+test("Probe 2: Liste und Start – Variante B erst nach dem Freischalten sichtbar, 7M nur M, 7R nur R, 8. Klasse gar nicht; keine Lösungen", async () => {
+  await mitServer(async ({ post, get, lehrer }) => {
+    const vorher = (await get("list")).tests.filter((t) => /^e7-p2-/.test(t.id));
+    assert.deepEqual(vorher.map((t) => t.id).sort(), ["e7-p2-m-a", "e7-p2-r-a"], "gesperrte Nachschreibprobe B steht nicht in der Liste");
+    assert.ok(vorher.every((t) => !t.unlocked && t.maxPoints === 70 && t.minutes === 90 && t.hoertexte === 1));
+    assert.equal((await post("start", { testId: "e7-p2-m-a", code: "701" })).status, 403, "gesperrt: kein Start");
+    for (const id of P2) assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const liste = (await get("list")).tests.filter((t) => /^e7-p2-/.test(t.id));
+    assert.deepEqual(liste.map((t) => t.id).sort(), [...P2].sort());
+    assert.ok(liste.every((t) => t.unlocked && t.title === "Test 2 (" + t.zug + "7): Fun in Wales and Scotland"));
+    for (const [id, code, falsch] of [["e7-p2-m-a", "701", "e7-p2-r-a"], ["e7-p2-r-b", "702", "e7-p2-m-b"]]) {
+      const s = await post("start", { testId: id, code });
+      assert.equal(s.status, 200, id);
+      assert.equal((await post("start", { testId: falsch, code })).data.error, "falscher_zug", falsch + " für Code " + code);
+      assert.equal((await post("start", { testId: id, code: "801" })).data.error, "falsche_stufe");
+      const roh = JSON.stringify(s.data), probe = ROH.__vorlage[id];
+      const h = s.data.texte.find((x) => x.typ === "hoertext");
+      assert.equal(h.zentral, true); assert.equal(h.sprecher, undefined);
+      assert.ok(probe.texte[0].sprecher.every((x) => !roh.includes(x.text.slice(0, 30))), id + ": kein Satz des Hörtexts geht an das Kind");
+      assert.ok(!/"(answer|loesungen|kriterien|expected|keywords|pairs|bereiche)"/.test(roh), id + ": keine Lösungsfelder in der Antwort");
+      // Lösungen der Grammatik, Beispiellösungen und Erwartungshorizont der offenen Aufgaben stehen nirgends (Notizen zum
+      // Lesetext stehen naturgemäß im Text – sie zählen hier nicht)
+      const loesungen = probe.items.flatMap((i) => (i.teil === "C Grammar and vocabulary" ? (i.felder || []).flatMap((f) => f.loesungen).filter((l) => String(l).length > 6) : [])
+        .concat(OFFENE.includes(i.type) ? [i.expected || ""].filter(Boolean).concat((i.kriterien || []).map((k) => k.erwartet).filter((e) => e && e.length > 12)) : []));
+      assert.ok(loesungen.length >= 10, id + ": genug Lösungen zum Prüfen");
+      assert.deepEqual(loesungen.filter((l) => roh.includes(JSON.stringify(l).slice(1, -1))), [], id + ": Lösungen und Erwartungshorizont bleiben auf dem Server");
+      assert.ok(!/13 Pfund|44 Pfund/.test(roh), id + ": die Rechnung der Sprachmittlung bleibt auf dem Server");
+      assert.deepEqual([...new Set(s.data.items.map((i) => i.teil))], ["A Listening", "B Reading", "C Grammar and vocabulary", "D Mediation", "E Writing"]);
+      const d = s.data.items.filter((i) => i.teil === "D Mediation");
+      assert.ok(d.every((i) => i.vorgabe) && /£/.test(d[0].vorgabe), id + ": das Programm der Sprachmittlung kommt an");
+      assert.equal(Boolean(d[0].teile), /-r-/.test(id), id + ": R beantwortet die Fragen in eigenen Feldern");
+      assert.equal(s.data.test.ohneZeit, true, "Englisch: keine Zeitbegrenzung");
+    }
+  });
+});
+
+test("Probe 2: Hörtext für die Lehrkraft – Mitschrift je Variante, 7R und 7M hören dieselbe Aufnahme", async () => {
+  await mitServer(async ({ post, lehrer, base }) => {
+    assert.equal((await post("teacher/hoertext", { testId: "e7-p2-r-a" })).status, 401);
+    const mitschrift = {};
+    for (const id of P2) {
+      const h = (await lehrer("hoertext", { testId: id })).data.hoertexte[0];
+      assert.equal(h.sprecher.length, ROH.__vorlage[id].texte[0].sprecher.length, id + ": ganze Mitschrift");
+      mitschrift[id] = h.sprecher.map((s) => s.rolle + ": " + s.text).join("\n");
+      // die Aufnahme selbst prüft der Datentest (fehlt sie, ist er rot) – hier nur: Route und Angabe passen zusammen
+      const datei = path.join(__dirname, "e7-proben", "audio", id + "-h1.mp3");
+      assert.equal(Boolean(h.aufnahme), fs.existsSync(datei), id + ": Angabe „Aufnahme vorhanden“ stimmt");
+      const r = await fetch(base + "/api/e7/proben/teacher/hoertext-datei", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: PW, testId: id, text: "h1" }) });
+      assert.equal(r.status, fs.existsSync(datei) ? 200 : 404, id + ": Aufnahme nur, wenn es die Datei gibt");
+    }
+    assert.match(mitschrift["e7-p2-r-a"], /^Carys: Hello\?/); assert.match(mitschrift["e7-p2-m-b"], /^Morven: /);
+    assert.equal(mitschrift["e7-p2-r-a"], mitschrift["e7-p2-m-a"], "Variante A: gleicher Hörtext für R und M");
+    assert.equal(mitschrift["e7-p2-r-b"], mitschrift["e7-p2-m-b"], "Variante B: gleicher Hörtext für R und M");
+    assert.notEqual(mitschrift["e7-p2-r-a"], mitschrift["e7-p2-r-b"], "Nachschreiber hören einen anderen Text");
+  });
+});
+
+test("Probe 2: alle vier Fassungen abgeben – Schlüssel richtig gewertet, Note nach Zug, LRS ohne Rechtschreibzeile, Programm und Felder gehen an die KI", async () => {
+  const merk = {};
+  await mitServer(async ({ post, lehrer, fertig }) => {
+    for (const id of P2) assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const { GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+    const note = (p, zug) => (zug === "M" ? GRADE_SCALE_M : GRADE_SCALE_R).find((s) => p >= s.min).grade;
+    // 703 hat Notenschutz (LRS): Rechtschreibzeile der Schreibaufgabe fällt heraus – 68 statt 70 Punkte
+    for (const [id, code, gesamt, schluessel] of [["e7-p2-m-a", "701", 70, 43], ["e7-p2-r-a", "702", 70, 44], ["e7-p2-m-b", "704", 70, 43], ["e7-p2-r-b", "703", 68, 44]]) {
+      assert.equal((await post("start", { testId: id, code })).status, 200, id);
+      const ab = await post("submit", { testId: id, code, answers: antworten(id) });
+      assert.equal(ab.status, 200); assert.equal(ab.data.angekommen, true);
+      const [row] = await fertig(id), zug = id[6].toUpperCase();
+      const zu = row.details.filter((d) => !OFFENE.includes(d.type)).reduce((s, d) => s + d.points, 0);
+      assert.equal(zu, schluessel, id + ": alle Ankreuz-, Feld-, Zeilen-, Ordnungs- und Zuordnungsaufgaben richtig (R hat mehr davon)");
+      assert.equal(row.total, gesamt, id + ": Höchstpunktzahl");
+      assert.equal(row.score, schluessel, id + ": die Ersatz-KI gibt bei offenen Aufgaben nichts");
+      assert.equal(row.grade, note(row.percent, zug), id + ": Note nach dem " + zug + "-Schlüssel (" + row.percent + " %)");
+      assert.equal(row.grade, zug === "M" ? 4 : 3, id + ": rund 62 % = M Note 4, R Note 3");
+    }
+    assert.ok(merk.user.some((u) => /CRAIGWEN CASTLE/.test(u)) && merk.user.some((u) => /CAIRNBRAE SNOW CENTRE/.test(u)), "das Programm geht als Vorlage an die KI");
+    assert.ok(merk.user.some((u) => /Frag bitte den Mann an der Kasse/.test(u)), "die Bitte der Oma geht an die KI");
+    assert.ok(merk.system.some((s) => /getrennte Felder geschrieben/.test(s)), "die KI weiß, dass R die Fragen in eigenen Feldern beantwortet");
+    assert.ok(merk.user.some((u) => /Highland dancing/.test(u) && /textausschnitt/.test(u)), "Lesefrage mit Textausschnitt");
+    assert.ok(merk.optionen.length && merk.optionen.every((o) => o && o.temperatur === 0), "jede Bewertung mit Temperatur 0");
+    const [m] = await fertig("e7-p2-m-a");
+    assert.equal((await lehrer("bestaetigen", { submissionId: m.id })).status, 200);
+    assert.equal((await lehrer("freigeben", { submissionIds: [m.id] })).status, 200);
+    const k = await post("korrektur", { code: "701", testId: "e7-p2-m-a" }), korr = k.data.korrektur || k.data;
+    assert.equal(korr.fach, "Englisch 7"); assert.equal(korr.ausbessern, true);
+  }, merk);
+});
+
+/* ------------------------------ Probe 3 (Unit 3): vier Fassungen, Sprachmittlung Deutsch → Englisch ------------------------------ */
+const P3 = ["e7-p3-m-a", "e7-p3-r-a", "e7-p3-m-b", "e7-p3-r-b"];
+
+test("Probe 3: Liste und Start – Variante B erst nach dem Freischalten sichtbar, 7M nur M, 7R nur R, 8. Klasse gar nicht; keine Lösungen", async () => {
+  await mitServer(async ({ post, get, lehrer }) => {
+    const vorher = (await get("list")).tests.filter((t) => /^e7-p3-/.test(t.id));
+    assert.deepEqual(vorher.map((t) => t.id).sort(), ["e7-p3-m-a", "e7-p3-r-a"], "gesperrte Nachschreibprobe B steht nicht in der Liste");
+    assert.ok(vorher.every((t) => !t.unlocked && t.maxPoints === 70 && t.minutes === 90 && t.hoertexte === 1));
+    assert.equal((await post("start", { testId: "e7-p3-r-a", code: "702" })).status, 403, "gesperrt: kein Start");
+    for (const id of P3) assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const liste = (await get("list")).tests.filter((t) => /^e7-p3-/.test(t.id));
+    assert.deepEqual(liste.map((t) => t.id).sort(), [...P3].sort());
+    assert.ok(liste.every((t) => t.unlocked && t.title === "Test 3 (" + t.zug + "7): Welcome to Ireland"));
+    for (const [id, code, falsch] of [["e7-p3-r-a", "702", "e7-p3-m-a"], ["e7-p3-m-b", "701", "e7-p3-r-b"]]) {
+      const s = await post("start", { testId: id, code });
+      assert.equal(s.status, 200, id);
+      assert.equal((await post("start", { testId: falsch, code })).data.error, "falscher_zug", falsch + " für Code " + code);
+      assert.equal((await post("start", { testId: id, code: "801" })).data.error, "falsche_stufe");
+      const roh = JSON.stringify(s.data), probe = ROH.__vorlage[id];
+      const h = s.data.texte.find((x) => x.typ === "hoertext");
+      assert.equal(h.zentral, true); assert.equal(h.sprecher, undefined);
+      assert.ok(probe.texte[0].sprecher.every((x) => !roh.includes(x.text.slice(0, 30))), id + ": kein Satz des Hörtexts geht an das Kind");
+      assert.ok(!/"(answer|loesungen|kriterien|expected|keywords|pairs|bereiche)"/.test(roh), id + ": keine Lösungsfelder in der Antwort");
+      // Lösungen der Satzstellung (Wortgruppen), Beispiellösungen und Erwartungshorizont stehen nirgends – einzelne Wörter wie
+      // anything oder something stehen naturgemäß auch im Lesetext und zählen hier nicht
+      const loesungen = probe.items.flatMap((i) => (i.teil === "C Grammar and vocabulary" ? (i.felder || []).flatMap((f) => f.loesungen).filter((l) => /\s/.test(l) && String(l).length > 6) : [])
+        .concat(OFFENE.includes(i.type) ? [i.expected || ""].filter(Boolean).concat((i.kriterien || []).map((k) => k.erwartet).filter((e) => e && e.length > 12)) : []));
+      assert.ok(loesungen.length >= 10, id + ": genug Lösungen zum Prüfen");
+      assert.deepEqual(loesungen.filter((l) => roh.includes(JSON.stringify(l).slice(1, -1))), [], id + ": Lösungen und Erwartungshorizont bleiben auf dem Server");
+      assert.ok(!/40 Euro|40 euros|forty euros|18 Euro|18 euros|eighteen euros/.test(roh), id + ": die Rechnung der Sprachmittlung bleibt auf dem Server");
+      assert.deepEqual([...new Set(s.data.items.map((i) => i.teil))], ["A Listening", "B Reading", "C Grammar and vocabulary", "D Mediation", "E Writing"]);
+      const d = s.data.items.filter((i) => i.teil === "D Mediation");
+      assert.ok(d.every((i) => i.vorgabe) && /€/.test(d[0].vorgabe) && /Uhr/.test(d[0].vorgabe) && /„Sag /.test(d[1].vorgabe), id + ": das deutsche Infoblatt und die Bitte kommen an");
+      assert.equal(Boolean(d[0].teile), /-r-/.test(id), id + ": R beantwortet die Fragen des Gasts in eigenen Feldern");
+      if (d[0].teile) assert.ok(d[0].teile.every((t) => /\?/.test(t.label) && t.hilfe), id + ": die englischen Fragen mit Satzanfang kommen an");
+      assert.equal(s.data.test.ohneZeit, true, "Englisch: keine Zeitbegrenzung");
+    }
+  });
+});
+
+test("Probe 3: Hörtext für die Lehrkraft – Mitschrift je Variante, 7R und 7M hören dieselbe Aufnahme", async () => {
+  await mitServer(async ({ post, lehrer, base }) => {
+    assert.equal((await post("teacher/hoertext", { testId: "e7-p3-m-a" })).status, 401);
+    const mitschrift = {};
+    for (const id of P3) {
+      const h = (await lehrer("hoertext", { testId: id })).data.hoertexte[0];
+      assert.equal(h.sprecher.length, ROH.__vorlage[id].texte[0].sprecher.length, id + ": ganze Mitschrift");
+      mitschrift[id] = h.sprecher.map((s) => s.rolle + ": " + s.text).join("\n");
+      // die Aufnahme selbst prüft der Datentest (fehlt sie, ist er rot) – hier nur: Route und Angabe passen zusammen
+      const datei = path.join(__dirname, "e7-proben", "audio", id + "-h1.mp3");
+      assert.equal(Boolean(h.aufnahme), fs.existsSync(datei), id + ": Angabe „Aufnahme vorhanden“ stimmt");
+      const r = await fetch(base + "/api/e7/proben/teacher/hoertext-datei", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: PW, testId: id, text: "h1" }) });
+      assert.equal(r.status, fs.existsSync(datei) ? 200 : 404, id + ": Aufnahme nur, wenn es die Datei gibt");
+    }
+    assert.match(mitschrift["e7-p3-r-a"], /^Keeva: Hi Ciaran/); assert.match(mitschrift["e7-p3-m-b"], /^Gavin: /);
+    assert.equal(mitschrift["e7-p3-r-a"], mitschrift["e7-p3-m-a"], "Variante A: gleicher Hörtext für R und M");
+    assert.equal(mitschrift["e7-p3-r-b"], mitschrift["e7-p3-m-b"], "Variante B: gleicher Hörtext für R und M");
+    assert.notEqual(mitschrift["e7-p3-r-a"], mitschrift["e7-p3-r-b"], "Nachschreiber hören einen anderen Text");
+  });
+});
+
+test("Probe 3: alle vier Fassungen abgeben – Schlüssel richtig gewertet, Note nach Zug, LRS ohne Rechtschreibzeile, Infoblatt und Felder gehen an die KI", async () => {
+  const merk = {};
+  await mitServer(async ({ post, lehrer, fertig }) => {
+    for (const id of P3) assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const { GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+    const note = (p, zug) => (zug === "M" ? GRADE_SCALE_M : GRADE_SCALE_R).find((s) => p >= s.min).grade;
+    // 703 hat Notenschutz (LRS): Rechtschreibzeile der Schreibaufgabe fällt heraus – 68 statt 70 Punkte
+    for (const [id, code, gesamt, schluessel] of [["e7-p3-m-a", "701", 70, 43], ["e7-p3-r-a", "702", 70, 44], ["e7-p3-m-b", "704", 70, 43], ["e7-p3-r-b", "703", 68, 44]]) {
+      assert.equal((await post("start", { testId: id, code })).status, 200, id);
+      const ab = await post("submit", { testId: id, code, answers: antworten(id) });
+      assert.equal(ab.status, 200); assert.equal(ab.data.angekommen, true);
+      const [row] = await fertig(id), zug = id[6].toUpperCase();
+      const zu = row.details.filter((d) => !OFFENE.includes(d.type)).reduce((s, d) => s + d.points, 0);
+      assert.equal(zu, schluessel, id + ": alle Ankreuz-, Feld-, Zeilen-, Ordnungs- und Zuordnungsaufgaben richtig (R hat mehr davon)");
+      assert.equal(row.total, gesamt, id + ": Höchstpunktzahl");
+      assert.equal(row.score, schluessel, id + ": die Ersatz-KI gibt bei offenen Aufgaben nichts");
+      assert.equal(row.grade, note(row.percent, zug), id + ": Note nach dem " + zug + "-Schlüssel (" + row.percent + " %)");
+      assert.equal(row.grade, zug === "M" ? 4 : 3, id + ": rund 62 % = M Note 4, R Note 3");
+    }
+    assert.ok(merk.user.some((u) => /SOMMERRODELBAHN AM ECKBERG/.test(u)) && merk.user.some((u) => /WILDPARK HIRSCHBERG/.test(u)), "das deutsche Infoblatt geht als Vorlage an die KI");
+    assert.ok(merk.user.some((u) => /Sag Ruairi bitte/.test(u)) && merk.user.some((u) => /Sag Eabha bitte/.test(u)), "die Bitte der Mutter bzw. des Vaters geht an die KI");
+    assert.ok(merk.user.some((u) => /verständliches Englisch für den Gast/.test(u)), "der Erwartungshorizont verlangt Englisch für den Gast");
+    assert.ok(merk.system.some((s) => /getrennte Felder geschrieben/.test(s)), "die KI weiß, dass R die Fragen in eigenen Feldern beantwortet");
+    assert.ok(merk.user.some((u) => /Deirdre/.test(u) && /textausschnitt/.test(u)) && merk.user.some((u) => /Dervla/.test(u) && /textausschnitt/.test(u)), "Lesefrage mit Textausschnitt");
+    assert.ok(merk.optionen.length && merk.optionen.every((o) => o && o.temperatur === 0), "jede Bewertung mit Temperatur 0");
+    const [r] = await fertig("e7-p3-r-a");
+    assert.equal((await lehrer("bestaetigen", { submissionId: r.id })).status, 200);
+    assert.equal((await lehrer("freigeben", { submissionIds: [r.id] })).status, 200);
+    const k = await post("korrektur", { code: "702", testId: "e7-p3-r-a" }), korr = k.data.korrektur || k.data;
+    assert.equal(korr.fach, "Englisch 7"); assert.equal(korr.ausbessern, true);
+  }, merk);
+});
+
+/* ------------------------------ Probe 4 (Unit 4): vier Fassungen, Sprachmittlung Englisch → Deutsch ------------------------------ */
+const P4 = ["e7-p4-m-a", "e7-p4-r-a", "e7-p4-m-b", "e7-p4-r-b"];
+
+test("Probe 4: Liste und Start – Variante B erst nach dem Freischalten sichtbar, 7M nur M, 7R nur R, 8. Klasse gar nicht; keine Lösungen", async () => {
+  await mitServer(async ({ post, get, lehrer }) => {
+    const vorher = (await get("list")).tests.filter((t) => /^e7-p4-/.test(t.id));
+    assert.deepEqual(vorher.map((t) => t.id).sort(), ["e7-p4-m-a", "e7-p4-r-a"], "gesperrte Nachschreibprobe B steht nicht in der Liste");
+    assert.ok(vorher.every((t) => !t.unlocked && t.maxPoints === 70 && t.minutes === 90 && t.hoertexte === 1));
+    assert.equal((await post("start", { testId: "e7-p4-m-a", code: "701" })).status, 403, "gesperrt: kein Start");
+    for (const id of P4) assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const liste = (await get("list")).tests.filter((t) => /^e7-p4-/.test(t.id));
+    assert.deepEqual(liste.map((t) => t.id).sort(), [...P4].sort());
+    assert.ok(liste.every((t) => t.unlocked && t.title === "Test 4 (" + t.zug + "7): USA – here we come!"));
+    for (const [id, code, falsch] of [["e7-p4-m-a", "704", "e7-p4-r-a"], ["e7-p4-r-a", "705", "e7-p4-m-a"], ["e7-p4-m-b", "701", "e7-p4-r-b"], ["e7-p4-r-b", "702", "e7-p4-m-b"]]) {
+      const s = await post("start", { testId: id, code });
+      assert.equal(s.status, 200, id);
+      assert.equal((await post("start", { testId: falsch, code })).data.error, "falscher_zug", falsch + " für Code " + code);
+      assert.equal((await post("start", { testId: id, code: "801" })).data.error, "falsche_stufe");
+      const roh = JSON.stringify(s.data), probe = ROH.__vorlage[id];
+      const h = s.data.texte.find((x) => x.typ === "hoertext");
+      assert.equal(h.zentral, true); assert.equal(h.sprecher, undefined);
+      assert.ok(probe.texte[0].sprecher.every((x) => !roh.includes(x.text.slice(0, 30))), id + ": kein Satz des Hörtexts geht an das Kind");
+      assert.ok(!/"(answer|loesungen|kriterien|expected|keywords|pairs|bereiche)"/.test(roh), id + ": keine Lösungsfelder in der Antwort");
+      // Lösungen der Steigerung und von too much/so many (Wortgruppen), Beispiellösungen und Erwartungshorizont stehen nirgends –
+      // auch nicht versteckt in einem Lesetext, einer Antwortauswahl oder der Schreibaufgabe (der Wortkasten in der Aufgabe selbst zählt nicht)
+      const loesungen = probe.items.flatMap((i) => (i.teil === "C Grammar and vocabulary" ? (i.felder || []).flatMap((f) => f.loesungen).filter((l) => /\s/.test(l) && String(l).length > 6 && !i.prompt.toLowerCase().includes(String(l).toLowerCase())) : [])
+        .concat(OFFENE.includes(i.type) ? [i.expected || ""].filter(Boolean).concat((i.kriterien || []).map((k) => k.erwartet).filter((e) => e && e.length > 12)) : []));
+      assert.ok(loesungen.length >= 10, id + ": genug Lösungen zum Prüfen");
+      assert.deepEqual(loesungen.filter((l) => roh.toLowerCase().includes(JSON.stringify(l).slice(1, -1).toLowerCase())), [], id + ": Lösungen und Erwartungshorizont bleiben auf dem Server");
+      assert.ok(!/12 Dollar|9 Dollar|zusammen 12|zusammen 9/.test(roh), id + ": die Rechnung der Sprachmittlung bleibt auf dem Server");
+      assert.deepEqual([...new Set(s.data.items.map((i) => i.teil))], ["A Listening", "B Reading", "C Grammar and vocabulary", "D Mediation", "E Writing"]);
+      const d = s.data.items.filter((i) => i.teil === "D Mediation");
+      assert.ok(d.length === 2 && d.every((i) => i.vorgabe) && /\$/.test(d[0].vorgabe) && /“/.test(d[1].vorgabe), id + ": das englische Infoblatt und die englische Nachricht kommen an");
+      assert.ok(d.every((i) => /in German/.test(i.prompt)), id + ": beide Aufgaben verlangen Deutsch");
+      assert.equal(Boolean(d[0].teile), /-r-/.test(id), id + ": R beantwortet die deutschen Fragen in eigenen Feldern");
+      if (d[0].teile) assert.ok(d[0].teile.every((t) => /^„.+\?.*“$/.test(t.label) && t.hilfe), id + ": die deutschen Fragen mit Satzanfang kommen an");
+      assert.equal(s.data.test.ohneZeit, true, "Englisch: keine Zeitbegrenzung");
+    }
+  });
+});
+
+test("Probe 4: Hörtext für die Lehrkraft – Mitschrift je Variante, 7R und 7M hören dieselbe Aufnahme", async () => {
+  await mitServer(async ({ post, lehrer, base }) => {
+    assert.equal((await post("teacher/hoertext", { testId: "e7-p4-r-b" })).status, 401);
+    const mitschrift = {};
+    for (const id of P4) {
+      const h = (await lehrer("hoertext", { testId: id })).data.hoertexte[0];
+      assert.equal(h.sprecher.length, ROH.__vorlage[id].texte[0].sprecher.length, id + ": ganze Mitschrift");
+      mitschrift[id] = h.sprecher.map((s) => s.rolle + ": " + s.text).join("\n");
+      // die Aufnahme selbst prüft der Datentest (fehlt sie, ist er rot) – hier nur: Route und Angabe passen zusammen
+      const datei = path.join(__dirname, "e7-proben", "audio", id + "-h1.mp3");
+      assert.equal(Boolean(h.aufnahme), fs.existsSync(datei), id + ": Angabe „Aufnahme vorhanden“ stimmt");
+      const r = await fetch(base + "/api/e7/proben/teacher/hoertext-datei", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: PW, testId: id, text: "h1" }) });
+      assert.equal(r.status, fs.existsSync(datei) ? 200 : 404, id + ": Aufnahme nur, wenn es die Datei gibt");
+    }
+    assert.match(mitschrift["e7-p4-r-a"], /^Ethan: Hi Brooke/); assert.match(mitschrift["e7-p4-m-b"], /^Marcus: Hi Paige/);
+    assert.equal(mitschrift["e7-p4-r-a"], mitschrift["e7-p4-m-a"], "Variante A: gleicher Hörtext für R und M");
+    assert.equal(mitschrift["e7-p4-r-b"], mitschrift["e7-p4-m-b"], "Variante B: gleicher Hörtext für R und M");
+    assert.notEqual(mitschrift["e7-p4-r-a"], mitschrift["e7-p4-r-b"], "Nachschreiber hören einen anderen Text");
+  });
+});
+
+test("Probe 4: alle vier Fassungen abgeben – Schlüssel richtig gewertet, Note nach Zug, LRS ohne Rechtschreibzeile, Infoblatt, Nachricht und Felder gehen an die KI (Temperatur 0)", async () => {
+  const merk = {};
+  await mitServer(async ({ post, lehrer, fertig }) => {
+    for (const id of P4) assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const { GRADE_SCALE_M, GRADE_SCALE_R } = require("./probe-kind");
+    const note = (p, zug) => (zug === "M" ? GRADE_SCALE_M : GRADE_SCALE_R).find((s) => p >= s.min).grade;
+    // 703 hat Notenschutz (LRS): Rechtschreibzeile der Schreibaufgabe fällt heraus – 68 statt 70 Punkte
+    for (const [id, code, gesamt, schluessel] of [["e7-p4-m-a", "701", 70, 43], ["e7-p4-r-a", "703", 68, 44], ["e7-p4-m-b", "704", 70, 43], ["e7-p4-r-b", "702", 70, 44]]) {
+      assert.equal((await post("start", { testId: id, code })).status, 200, id);
+      const ab = await post("submit", { testId: id, code, answers: antworten(id) });
+      assert.equal(ab.status, 200); assert.equal(ab.data.angekommen, true);
+      const [row] = await fertig(id), zug = id[6].toUpperCase();
+      const zu = row.details.filter((d) => !OFFENE.includes(d.type)).reduce((s, d) => s + d.points, 0);
+      assert.equal(zu, schluessel, id + ": alle Ankreuz-, Feld-, Zeilen-, Ordnungs- und Zuordnungsaufgaben richtig (R hat mehr davon)");
+      assert.equal(row.total, gesamt, id + ": Höchstpunktzahl");
+      assert.equal(row.score, schluessel, id + ": die Ersatz-KI gibt bei offenen Aufgaben nichts");
+      assert.equal(row.grade, note(row.percent, zug), id + ": Note nach dem " + zug + "-Schlüssel (" + row.percent + " %)");
+      assert.equal(row.grade, zug === "M" ? 4 : 3, id + ": rund 62 % = M Note 4, R Note 3");
+      assert.equal(row.zug, zug, id + ": Zug im Datensatz");
+    }
+    assert.ok(merk.user.some((u) => /FOURTH OF JULY IN MILLBROOK/.test(u)) && merk.user.some((u) => /HOLLOW CREEK FARM/.test(u)), "das englische Infoblatt geht als Vorlage an die KI");
+    assert.ok(merk.user.some((u) => /Mrs Kowalski/.test(u)) && merk.user.some((u) => /Sign at the entrance/.test(u)), "die englische Nachricht und das Schild gehen an die KI");
+    assert.ok(merk.user.some((u) => /verständliches Deutsch für die genannte Person/.test(u)), "der Erwartungshorizont verlangt Deutsch für die Familie");
+    assert.ok(merk.system.some((s) => /getrennte Felder geschrieben/.test(s)), "die KI weiß, dass R die Fragen in eigenen Feldern beantwortet");
+    assert.ok(merk.user.some((u) => /Seven days without a phone/.test(u) && /textausschnitt/.test(u)) && merk.user.some((u) => /Sports, sports, sports!/.test(u) && /textausschnitt/.test(u)), "Lesefrage mit Textausschnitt");
+    assert.ok(merk.optionen.length && merk.optionen.every((o) => o && o.temperatur === 0), "jede Bewertung mit Temperatur 0");
+    const [m] = await fertig("e7-p4-m-b");
+    assert.equal((await lehrer("bestaetigen", { submissionId: m.id })).status, 200);
+    assert.equal((await lehrer("freigeben", { submissionIds: [m.id] })).status, 200);
+    const k = await post("korrektur", { code: "704", testId: "e7-p4-m-b" }), korr = k.data.korrektur || k.data;
+    assert.equal(korr.fach, "Englisch 7"); assert.equal(korr.ausbessern, true);
+  }, merk);
+});
+
+// Grammatik G10/G11 über die echte Wertung: richtige Formen zählen, typische Fehler (Superlativ ohne the, more bei kurzen
+// Adjektiven, much statt many, too much statt too many) nicht – Groß-/Kleinschreibung und ein Satzzeichen am Ende sind egal
+test("Probe 4: Grammatik G10/G11 – the best ja, best ohne the und more deep nein; much statt many und too much statt too many falsch; Großschreibung und Punkt egal", async () => {
+  await mitServer(async ({ post, lehrer, fertig }) => {
+    const id = "e7-p4-m-a", items = ROH[id].items;
+    assert.equal((await lehrer("unlock", { testId: id, open: true })).status, 200);
+    const steig = items.findIndex((i) => i.teil === "C Grammar and vocabulary" && i.type === "felder" && /^Steigerung/.test(i.hinweis));
+    const menge = items.findIndex((i) => i.teil === "C Grammar and vocabulary" && i.type === "felder" && /^many bei/.test(i.hinweis));
+    const zuviel = items.findIndex((i) => i.teil === "C Grammar and vocabulary" && i.type === "felder" && /^too much/.test(i.hinweis));
+    assert.ok(steig >= 0 && menge >= 0 && zuviel >= 0);
+    const roh = antworten(id);
+    // Steigerung: more expensive · the best · the most useful · deeper · less dangerous · the least difficult
+    roh[steig] = ["More expensive.", "best", "the most useful", "more deep", "less dangerous", "the least difficult"];
+    roh[menge] = ["much", "much", "many", "much"];          // erstes Feld falsch (photos → many)
+    roh[zuviel] = ["too much", "So much!", "too much", "so many"];   // drittes Feld falsch (cars → too many)
+    assert.equal((await post("start", { testId: id, code: "701" })).status, 200);
+    assert.equal((await post("submit", { testId: id, code: "701", answers: roh })).status, 200);
+    const [row] = await fertig(id);
+    assert.deepEqual(row.details[steig].felder.map((x) => x.punkte), [1, 0, 1, 0, 1, 1], "Großschreibung und Punkt egal; best ohne the und more deep sind falsch");
+    assert.deepEqual(row.details[menge].felder.map((x) => x.punkte), [0, 1, 1, 1], "much photos ist falsch");
+    assert.deepEqual(row.details[zuviel].felder.map((x) => x.punkte), [1, 1, 0, 1], "too much cars ist falsch");
+    assert.equal(row.score, 43 - 4, "nur die vier falschen Felder fehlen");
   });
 });

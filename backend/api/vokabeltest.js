@@ -437,7 +437,7 @@ async function aiReview(pending, askAnthropic, classLevel, lrs) {
   ].join("\n")).join("\n\n");
 
   try {
-    const raw = await askAnthropic(system, user, 900);
+    const raw = await askAnthropic(system, user, 900, { temperatur: 0 });   // feste Temperatur in allen Proben (Wunsch 14.11.2026)
     const match = String(raw || "").match(/\{[\s\S]*\}/);
     if (!match) return {};
 

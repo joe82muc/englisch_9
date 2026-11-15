@@ -424,6 +424,8 @@ registerNt7FreigabeRoutes(app, {
 // Lehrkraft prüft und gibt die korrigierte Probe an das Kind zurück (d7-proben.js). ---
 const { registerD7ProbenRoutes } = require("./d7-proben");
 const d7Proben = registerD7ProbenRoutes(app, {
+  // feste Temperatur für jede KI-Bewertung der Probe („für alle Proben“, Lehrkraft 14.11.2026)
+  temperatur: 0,
   dataDir: DATA_DIR,
   kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
@@ -452,6 +454,8 @@ registerNt7FreigabeRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 const d8Proben = registerD7ProbenRoutes(app, {
+  // feste Temperatur für jede KI-Bewertung der Probe („für alle Proben“, Lehrkraft 14.11.2026)
+  temperatur: 0,
   dataDir: DATA_DIR,
   prefix: "/api/d8/proben",
   datei: "d8-proben.json",
@@ -487,10 +491,22 @@ registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e9/uebung/feedback", k
 // --- Englisch 7 (7M/7R): Rückmeldung zu offenen Übungsaufgaben der Module mit den Deutsch-7-Bausteinen (seit 09.11.2026:
 // Mediation in Unit 1 mit der Sprechblasen-Kette aus 9R/Englisch/e9-kit.js). Freischalten und Lernstand wie bisher über /api/e7. ---
 registerNt7UebungRoutes(app, { askAnthropic, route: "/api/e7/uebung/feedback", klasse: "Klasse 7", fach: "Englisch", sprache: "en", thema: "Englisch 7 (England, Wales und Schottland, Irland, USA; Alltagssituationen wie Einkaufen, Fahrkarten, Essen bestellen, nach dem Weg fragen; Sprachmittlung)" });
+// Englisch 7 (seit 14.11.2026, Ausbau Units 2–4): Schreibtrainer, Schreibwerkstatt und Schülertexte der Module wie bei
+// Englisch 9 – /api/e7/schreiben, /api/e7/texte, Datei e7-texte.json (gespiegelt über das Präfix /api/e7).
+registerD7TexteRoutes(app, {
+  dataDir: DATA_DIR,
+  stufe: 7,
+  fach: { kurz: "e", name: "Englisch" },
+  teacherPassword: TEACHER_PASSWORD,
+  askAnthropic: askAnthropic,
+  kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
+});
 // Englisch 9R: die großen Proben (eine je Unit, Variante A und Nachschreiber B) – dieselben Routen wie Deutsch 8
 // (KI-Vorkorrektur, Lehrkraft prüft, Rückgabe; Sitzung mit Zeit und Zwischenstand, Fehlermarkierungen), dazu Hörtexte.
 // Den Hörtext hören die Kinder nicht am eigenen Gerät: Die Lehrkraft spielt die Aufnahme in der Verwaltung für alle ab.
 const e9Proben = registerD7ProbenRoutes(app, {
+  // feste Temperatur für jede KI-Bewertung der Probe („für alle Proben“, Lehrkraft 14.11.2026)
+  temperatur: 0,
   dataDir: DATA_DIR,
   prefix: "/api/e9/proben",
   datei: "e9-proben.json",
@@ -525,6 +541,8 @@ const e7Proben = registerD7ProbenRoutes(app, {
   lrsFelder: true,
   // „reinkopieren ist verboten und wird protokolliert“: Einfügen bleibt gesperrt, jeder Versuch wird festgehalten, keine Note 6
   kopierenNurVermerk: true,
+  // „die ki soll mit einheitlicher temperatur die probe auswerten“ (14.11.2026): jede Bewertung mit Temperatur 0
+  temperatur: 0,
   kindZumCode: probeKindZumCode,
   teacherPassword: TEACHER_PASSWORD,
   askAnthropic: askAnthropic

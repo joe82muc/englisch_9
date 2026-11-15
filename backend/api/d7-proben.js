@@ -266,6 +266,9 @@ function registerD7ProbenRoutes(app, opts) {
   //   kopierenNurVermerk – „reinkopieren ist verboten und wird protokolliert“ (Englisch 7, 09.11.2026): Einfügen und Kopieren
   //                bleiben gesperrt, jeder Versuch wird mit Uhrzeit festgehalten – aber keine automatische Note 6 (kopieren: 0).
   const KOPIEREN_VERMERK = FREMD && opts.kopierenNurVermerk === true;
+  //   temperatur – „die ki soll mit einheitlicher temperatur die probe auswerten“ (Englisch 7, 14.11.2026): feste Temperatur
+  //                (0) für jede Bewertung der Probe; server.js gibt sie nur an Modelle weiter, die sie kennen (Haiku 4.5 …).
+  const KI_OPT = typeof opts.temperatur === "number" ? { milde: false, temperatur: opts.temperatur } : { milde: false };
   const KI_PAUSE_MS = opts.kiPauseMs === undefined ? 30000 : opts.kiPauseMs;
   const KI_VERSUCHE = opts.kiVersuche || 3;
   const KI_PARALLEL = opts.kiParallel || 3;
@@ -694,7 +697,7 @@ function registerD7ProbenRoutes(app, opts) {
       schuelerantwort: given
     });
     // ausbessern: Markierungen mit Verbesserung brauchen mehr Platz – sonst bricht die Antwort mitten im JSON ab
-    const p = jsonAus(await askAnthropic(system, user, lang ? (MARKEN ? (AUSBESSERN ? 2600 : 1500) : 900) : AUSBESSERN ? 1000 : 380, { milde: false }));
+    const p = jsonAus(await askAnthropic(system, user, lang ? (MARKEN ? (AUSBESSERN ? 2600 : 1500) : 900) : AUSBESSERN ? 1000 : 380, KI_OPT));
     if (!p || !Array.isArray(p.punkte) || p.punkte.length < teile.length) return null;
     const punkte = teile.map((k, i) => Math.max(0, Math.min(k.punkte, Math.round(Number(p.punkte[i]) || 0))));
     if (lang) {
@@ -726,7 +729,7 @@ function registerD7ProbenRoutes(app, opts) {
     const quelle = (f) => (item.felder || []).find((x) => x.label === f.label);
     const user = JSON.stringify({ aufgabe: item.prompt, teil: item.teil || undefined, felder: nr.map((j) => ({ satz: d.felder[j].label,
       richtig_ist: (quelle(d.felder[j]) ? quelle(d.felder[j]).loesungen : [d.felder[j].expected]).slice(0, 6), eingabe: d.felder[j].given })) });
-    const p = jsonAus(await askAnthropic(system, user, 160 + 50 * nr.length, { milde: false }));
+    const p = jsonAus(await askAnthropic(system, user, 160 + 50 * nr.length, KI_OPT));
     if (!p || !Array.isArray(p.urteil) || p.urteil.length < nr.length) return null;
     return { lrs: nr.map((j, k) => ({ j, ok: /^ja/i.test(String(p.urteil[k] || "").trim()), grund: kurz(Array.isArray(p.grund) ? p.grund[k] : "", 120) })), am: new Date().toISOString() };
   }

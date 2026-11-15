@@ -780,6 +780,578 @@ const e8ru2t2 = e8rDeutschEnglisch(e8ru2quelle);
 const e8ru3t2 = e8rDeutschEnglisch(e8ru3quelle);
 const e8ru4t2 = e8rDeutschEnglisch(e8ru4quelle);
 
+/* ==================================================================
+   Englisch 7M und 7R - Unit 2 "Fun in Wales and Scotland" - Vokabeltests (Stand 14.11.2026)
+   Nur Deutsch -> Englisch: Deutsch ist vorgegeben, die Schueler schreiben das englische Wort.
+   Stehen zwei deutsche Bedeutungen da, ist trotzdem nur EIN englisches Wort gesucht.
+
+   Test 1: Intro bis Topic 1 (dazu einige Woerter aus dem Kasten "adjectives")
+   Test 2: Topic 2 bis Presentation skills (Topic 2, adverbs, Text, Film, More about, Presentation)
+
+   7M: je 30 Woerter, M-Zug-Notenschluessel (50 % = Note 4).
+   7R: je 24 Woerter, eigene Auswahl (haeufigere, alltagsnaehere Woerter), gradeScale "7R" (50 % = Note 3).
+   Ausgelassen: Woerter, die im Deutschen gleich sind (rugby, hammer, kilt, Highland Games ...), die
+   Reihen der unregelmaessigen Verben, die Partizipien (done, seen ...: mehrdeutig) und Platzhalter
+   (to be going to do sth, not ... yet, must never/not). Eigennamen muessen grossgeschrieben sein.
+   ================================================================== */
+const e7mu2Words1 = [
+  // --- Intro ---
+  { prompt: "Walisisch; walisisch", direction: "de-en", solutions: ["Welsh"] },
+  { prompt: "Seilrutsche", direction: "de-en", solutions: ["zip line; zipline"] },
+  { prompt: "Meile", direction: "de-en", solutions: ["mile"] },
+  { prompt: "bis", direction: "de-en", solutions: ["until"], hint: "Wait ... six o'clock." },
+  { prompt: "Burg; Schloss", direction: "de-en", solutions: ["castle"] },
+  { prompt: "gegen", direction: "de-en", solutions: ["against"] },
+  { prompt: "die Engländer", direction: "de-en", solutions: ["the English"] },
+  { prompt: "Wettkampf; Wettbewerb", direction: "de-en", solutions: ["competition"] },
+  { prompt: "schottisch; aus Schottland", direction: "de-en", solutions: ["Scottish"] },
+  { prompt: "Tradition; Brauch", direction: "de-en", solutions: ["tradition"] },
+  { prompt: "Dudelsack", direction: "de-en", solutions: ["bagpipes"] },
+  { prompt: "Rock", direction: "de-en", solutions: ["skirt"], hint: "Kleidungsstück" },
+  { prompt: "Geschichte", direction: "de-en", solutions: ["history"], hint: "Schulfach" },
+  { prompt: "Schotte; Schottin", direction: "de-en", solutions: ["Scot"] },
+
+  // --- Topic 1 ---
+  { prompt: "Abenteuer; Erlebnis", direction: "de-en", solutions: ["adventure"] },
+  { prompt: "schon; bereits", direction: "de-en", solutions: ["already"] },
+  { prompt: "packen; einpacken", direction: "de-en", solutions: ["to pack; pack"] },
+  { prompt: "Internetseite", direction: "de-en", solutions: ["website; web site"] },
+  { prompt: "stark", direction: "de-en", solutions: ["strong"] },
+  { prompt: "buchen; reservieren", direction: "de-en", solutions: ["to book; book"] },
+  { prompt: "schwierig; kompliziert", direction: "de-en", solutions: ["difficult"] },
+  { prompt: "gefährlich", direction: "de-en", solutions: ["dangerous"] },
+  { prompt: "schon immer", direction: "de-en", solutions: ["always"], hint: "Megan has ... loved horses." },
+  { prompt: "ungefährlich; sicher", direction: "de-en", solutions: ["safe"], hint: "Gegenteil von dangerous" },
+  { prompt: "vorsichtig; sorgfältig", direction: "de-en", solutions: ["careful"] },
+  { prompt: "(sich) entscheiden; beschließen", direction: "de-en", solutions: ["to decide; decide"] },
+  { prompt: "nachdenken über; sich überlegen", direction: "de-en", solutions: ["to think about; think about"] },
+
+  // --- Das kenne ich schon: adjectives ---
+  { prompt: "müde", direction: "de-en", solutions: ["tired"] },
+  { prompt: "spannend; aufregend", direction: "de-en", solutions: ["exciting"] },
+  { prompt: "langweilig", direction: "de-en", solutions: ["boring"] }
+];
+
+const e7mu2Words2 = [
+  // --- Topic 2 ---
+  { prompt: "schon einmal; jemals", direction: "de-en", solutions: ["ever"], hint: "Have you ... been to Wales?" },
+  { prompt: "herausfinden", direction: "de-en", solutions: ["to find out; find out"] },
+  { prompt: "übrig", direction: "de-en", solutions: ["left"], hint: "There is one piece of cake ..." },
+  { prompt: "Bis später.", direction: "de-en", solutions: ["See you later"] },
+  { prompt: "gerade (eben); soeben", direction: "de-en", solutions: ["just"], hint: "Elif has ... finished her breakfast." },
+  { prompt: "ein anderer; noch ein", direction: "de-en", solutions: ["another"] },
+
+  // --- Das kenne ich schon: adverbs of time ---
+  { prompt: "nie; niemals", direction: "de-en", solutions: ["never"] },
+  { prompt: "noch; immer noch", direction: "de-en", solutions: ["still"] },
+  { prompt: "gelegentlich", direction: "de-en", solutions: ["occasionally"] },
+
+  // --- Text ---
+  { prompt: "Jahrhundert", direction: "de-en", solutions: ["century"] },
+  { prompt: "Schlacht; Kampf", direction: "de-en", solutions: ["battle"] },
+  { prompt: "zwischen", direction: "de-en", solutions: ["between"] },
+  { prompt: "frei; kostenlos", direction: "de-en", solutions: ["free"] },
+  { prompt: "Armee; Heer", direction: "de-en", solutions: ["army"] },
+  { prompt: "Spinne", direction: "de-en", solutions: ["spider"] },
+  { prompt: "Netz", direction: "de-en", solutions: ["web"], hint: "von einer Spinne" },
+  { prompt: "aufgeben", direction: "de-en", solutions: ["to give up; give up"] },
+  { prompt: "Frieden schaffen", direction: "de-en", solutions: ["to make peace; make peace"] },
+  { prompt: "tapfer; mutig", direction: "de-en", solutions: ["brave"] },
+
+  // --- Film ---
+  { prompt: "Aktenkoffer; Aktentasche", direction: "de-en", solutions: ["briefcase"] },
+  { prompt: "Jahreszeit", direction: "de-en", solutions: ["time of year"] },
+  { prompt: "Requisit", direction: "de-en", solutions: ["prop"] },
+  { prompt: "Grund", direction: "de-en", solutions: ["reason"], hint: "Warum? – Der ..." },
+
+  // --- More about ---
+  { prompt: "heben; hochheben", direction: "de-en", solutions: ["to lift; lift"] },
+  { prompt: "schwer", direction: "de-en", solutions: ["heavy"], hint: "von einem Gewicht" },
+  { prompt: "selten", direction: "de-en", solutions: ["rarely"] },
+  { prompt: "Kette", direction: "de-en", solutions: ["chain"] },
+  { prompt: "zum Beispiel", direction: "de-en", solutions: ["for example"] },
+
+  // --- Presentation skills ---
+  { prompt: "Universität", direction: "de-en", solutions: ["university"] },
+  { prompt: "Partnerstadt", direction: "de-en", solutions: ["twin town"] }
+];
+
+const e7ru2Words1 = [
+  // --- Intro ---
+  { prompt: "Meile", direction: "de-en", solutions: ["mile"] },
+  { prompt: "bis", direction: "de-en", solutions: ["until"], hint: "Wait ... six o'clock." },
+  { prompt: "Burg; Schloss", direction: "de-en", solutions: ["castle"] },
+  { prompt: "gegen", direction: "de-en", solutions: ["against"] },
+  { prompt: "die Engländer", direction: "de-en", solutions: ["the English"] },
+  { prompt: "Wettkampf; Wettbewerb", direction: "de-en", solutions: ["competition"] },
+  { prompt: "schottisch; aus Schottland", direction: "de-en", solutions: ["Scottish"] },
+  { prompt: "Tradition; Brauch", direction: "de-en", solutions: ["tradition"] },
+  { prompt: "Rock", direction: "de-en", solutions: ["skirt"], hint: "Kleidungsstück" },
+  { prompt: "Geschichte", direction: "de-en", solutions: ["history"], hint: "Schulfach" },
+
+  // --- Topic 1 ---
+  { prompt: "Abenteuer; Erlebnis", direction: "de-en", solutions: ["adventure"] },
+  { prompt: "schon; bereits", direction: "de-en", solutions: ["already"] },
+  { prompt: "packen; einpacken", direction: "de-en", solutions: ["to pack; pack"] },
+  { prompt: "Internetseite", direction: "de-en", solutions: ["website; web site"] },
+  { prompt: "stark", direction: "de-en", solutions: ["strong"] },
+  { prompt: "buchen; reservieren", direction: "de-en", solutions: ["to book; book"] },
+  { prompt: "schwierig; kompliziert", direction: "de-en", solutions: ["difficult"] },
+  { prompt: "gefährlich", direction: "de-en", solutions: ["dangerous"] },
+  { prompt: "schon immer", direction: "de-en", solutions: ["always"], hint: "Megan has ... loved horses." },
+  { prompt: "vorsichtig; sorgfältig", direction: "de-en", solutions: ["careful"] },
+
+  // --- Das kenne ich schon: adjectives ---
+  { prompt: "müde", direction: "de-en", solutions: ["tired"] },
+  { prompt: "einfach; leicht", direction: "de-en", solutions: ["easy"] },
+  { prompt: "spannend; aufregend", direction: "de-en", solutions: ["exciting"] },
+  { prompt: "langweilig", direction: "de-en", solutions: ["boring"] }
+];
+
+const e7ru2Words2 = [
+  // --- Topic 2 ---
+  { prompt: "herausfinden", direction: "de-en", solutions: ["to find out; find out"] },
+  { prompt: "Bis später.", direction: "de-en", solutions: ["See you later"] },
+  { prompt: "gerade (eben); soeben", direction: "de-en", solutions: ["just"], hint: "Elif has ... finished her breakfast." },
+  { prompt: "ein anderer; noch ein", direction: "de-en", solutions: ["another"] },
+
+  // --- Das kenne ich schon: adverbs of time ---
+  { prompt: "nie; niemals", direction: "de-en", solutions: ["never"] },
+  { prompt: "noch; immer noch", direction: "de-en", solutions: ["still"] },
+  { prompt: "gelegentlich", direction: "de-en", solutions: ["occasionally"] },
+
+  // --- Text ---
+  { prompt: "Jahrhundert", direction: "de-en", solutions: ["century"] },
+  { prompt: "Schlacht; Kampf", direction: "de-en", solutions: ["battle"] },
+  { prompt: "zwischen", direction: "de-en", solutions: ["between"] },
+  { prompt: "frei; kostenlos", direction: "de-en", solutions: ["free"] },
+  { prompt: "Armee; Heer", direction: "de-en", solutions: ["army"] },
+  { prompt: "Spinne", direction: "de-en", solutions: ["spider"] },
+  { prompt: "aufgeben", direction: "de-en", solutions: ["to give up; give up"] },
+  { prompt: "tapfer; mutig", direction: "de-en", solutions: ["brave"] },
+
+  // --- Film ---
+  { prompt: "Jahreszeit", direction: "de-en", solutions: ["time of year"] },
+  { prompt: "Grund", direction: "de-en", solutions: ["reason"], hint: "Warum? – Der ..." },
+
+  // --- More about ---
+  { prompt: "heben; hochheben", direction: "de-en", solutions: ["to lift; lift"] },
+  { prompt: "schwer", direction: "de-en", solutions: ["heavy"], hint: "von einem Gewicht" },
+  { prompt: "selten", direction: "de-en", solutions: ["rarely"] },
+  { prompt: "Kette", direction: "de-en", solutions: ["chain"] },
+  { prompt: "zum Beispiel", direction: "de-en", solutions: ["for example"] },
+  { prompt: "möglich", direction: "de-en", solutions: ["possible"] },
+
+  // --- Presentation skills ---
+  { prompt: "Universität", direction: "de-en", solutions: ["university"] }
+];
+
+function e7u2Test(klasse, nr, words, thema) {
+  const t = {
+    id: `e7${klasse.toLowerCase().slice(1)}-u2-test${nr}`,
+    title: `${klasse} · Vokabeltest ${nr} - ${thema}`,
+    unit: `Englisch ${klasse} / Unit 2`,
+    classLevel: klasse,
+    direction: "de-en",
+    items: words
+  };
+  // 7R: 50 % = Note 3. 7M: ohne Angabe = M-Zug-Schluessel (50 % = Note 4).
+  if (klasse === "7R") t.gradeScale = "7R";
+  return t;
+}
+const e7mu2t1 = e7u2Test("7M", 1, e7mu2Words1, "Intro bis Topic 1");
+const e7mu2t2 = e7u2Test("7M", 2, e7mu2Words2, "Topic 2 bis Presentation skills");
+const e7ru2t1 = e7u2Test("7R", 1, e7ru2Words1, "Intro bis Topic 1");
+const e7ru2t2 = e7u2Test("7R", 2, e7ru2Words2, "Topic 2 bis Presentation skills");
+
+/* ==================================================================
+   Englisch 7M und 7R - Unit 3 "Welcome to Ireland" - Vokabeltests (Stand 14.11.2026)
+   Nur Deutsch -> Englisch: Deutsch ist vorgegeben, die Schueler schreiben das englische Wort.
+   Stehen zwei deutsche Bedeutungen da, ist trotzdem nur EIN englisches Wort gesucht.
+
+   Test 1: Intro bis Topic 2 (Intro, Topic 1, travel, Topic 2, adjectives for feelings)
+   Test 2: Text bis Speaking skills (Text, prepositions of time, Film, More about, Speaking skills)
+
+   7M: je 30 Woerter, M-Zug-Notenschluessel (50 % = Note 4).
+   7R: je 24 Woerter, eigene Auswahl (haeufigere, alltagsnaehere Woerter), gradeScale "7R" (50 % = Note 3).
+   Ausgelassen: Woerter, die im Deutschen (fast) gleich sind (euro, orchestra, bus, accent, list,
+   paper, gold, religion, workshop ...), Eigennamen von Sportarten (hurling, Gaelic football),
+   Platzhalter (one(s), who, that, not ... any, can't stand + -ing), mehrdeutige Woerter ohne
+   klaren hint. Eigennamen muessen grossgeschrieben sein.
+   ================================================================== */
+const e7mu3Words1 = [
+  // --- Intro ---
+  { prompt: "irisch; aus Irland", direction: "de-en", solutions: ["Irish"] },
+  { prompt: "die Iren", direction: "de-en", solutions: ["the Irish"] },
+  { prompt: "feiern", direction: "de-en", solutions: ["to celebrate; celebrate"] },
+  { prompt: "Kleeblatt", direction: "de-en", solutions: ["shamrock"] },
+  { prompt: "Hälfte", direction: "de-en", solutions: ["half"] },
+
+  // --- Topic 1 ---
+  { prompt: "Fahrplan", direction: "de-en", solutions: ["timetable"] },
+  { prompt: "umsteigen", direction: "de-en", solutions: ["to change; change"] },
+  { prompt: "Fahrt; Reise", direction: "de-en", solutions: ["journey"] },
+  { prompt: "pro Stück; jeweils", direction: "de-en", solutions: ["each"], hint: "The apples cost 50 cent ..." },
+  { prompt: "Schlüssel", direction: "de-en", solutions: ["key"] },
+  { prompt: "Aushang; Plakat", direction: "de-en", solutions: ["notice"] },
+  { prompt: "einfache Fahrkarte", direction: "de-en", solutions: ["single ticket"] },
+  { prompt: "Hin- und Rückfahrkarte", direction: "de-en", solutions: ["return ticket"] },
+  { prompt: "öffentliche Verkehrsmittel", direction: "de-en", solutions: ["public transport"] },
+  { prompt: "kosten", direction: "de-en", solutions: ["to cost; cost"] },
+
+  // --- Das kenne ich schon: travel ---
+  { prompt: "ankommen", direction: "de-en", solutions: ["to arrive; arrive"] },
+  { prompt: "Straßenbahn", direction: "de-en", solutions: ["tram"] },
+  { prompt: "in der Nähe von; nah", direction: "de-en", solutions: ["near"] },
+  { prompt: "aussteigen", direction: "de-en", solutions: ["to get off; get off"] },
+  { prompt: "Haltestelle", direction: "de-en", solutions: ["stop"] },
+
+  // --- Topic 2 ---
+  { prompt: "Rat; Ratschlag", direction: "de-en", solutions: ["advice"] },
+  { prompt: "sollte", direction: "de-en", solutions: ["should"] },
+  { prompt: "Gast", direction: "de-en", solutions: ["guest"] },
+  { prompt: "versuchen; probieren", direction: "de-en", solutions: ["to try; try"] },
+  { prompt: "jemand", direction: "de-en", solutions: ["someone; somebody"] },
+  { prompt: "die Nase voll haben (von)", direction: "de-en", solutions: ["to be fed up; be fed up; to be fed up with; be fed up with"] },
+
+  // --- Das kenne ich schon: adjectives for feelings ---
+  { prompt: "wütend; zornig", direction: "de-en", solutions: ["angry"] },
+  { prompt: "beunruhigt; besorgt", direction: "de-en", solutions: ["worried"] },
+  { prompt: "albern", direction: "de-en", solutions: ["silly"] },
+  { prompt: "aufgeregt; begeistert", direction: "de-en", solutions: ["excited"] }
+];
+
+const e7mu3Words2 = [
+  // --- Text ---
+  { prompt: "Regenbogen", direction: "de-en", solutions: ["rainbow"] },
+  { prompt: "schließlich; zum Schluss", direction: "de-en", solutions: ["finally"] },
+  { prompt: "ganz", direction: "de-en", solutions: ["whole"], hint: "the ... pizza = die ganze Pizza" },
+  { prompt: "einander; gegenseitig", direction: "de-en", solutions: ["each other"] },
+  { prompt: "Topf", direction: "de-en", solutions: ["pot"] },
+  { prompt: "sich anfühlen; empfinden", direction: "de-en", solutions: ["to feel; feel"] },
+  { prompt: "noch; sogar", direction: "de-en", solutions: ["even"], hint: "It is ... colder today than yesterday." },
+  { prompt: "Gedicht", direction: "de-en", solutions: ["poem"] },
+  { prompt: "genug; genügend", direction: "de-en", solutions: ["enough"] },
+  { prompt: "konnte", direction: "de-en", solutions: ["could"], hint: "can in der Vergangenheit" },
+  { prompt: "Überraschung", direction: "de-en", solutions: ["surprise"] },
+  { prompt: "Überschrift; Schlagzeile", direction: "de-en", solutions: ["headline"] },
+  { prompt: "bedeuten; meinen", direction: "de-en", solutions: ["to mean; mean"] },
+  { prompt: "jmdn. jmdm. vorstellen", direction: "de-en", solutions: ["to introduce sb to sb; introduce sb to sb; to introduce; introduce"] },
+  { prompt: "Karte", direction: "de-en", solutions: ["card"], hint: "z. B. Geburtstagskarte" },
+
+  // --- Das kenne ich schon: prepositions of time ---
+  { prompt: "nach", direction: "de-en", solutions: ["after"], hint: "zeitlich: ... school" },
+  { prompt: "vor; bevor", direction: "de-en", solutions: ["before"] },
+  { prompt: "bis", direction: "de-en", solutions: ["until"], hint: "Wait ... six o'clock." },
+
+  // --- Film ---
+  { prompt: "während", direction: "de-en", solutions: ["during"], hint: "... the lesson" },
+
+  // --- More about ---
+  { prompt: "Problem; Schwierigkeiten; Ärger", direction: "de-en", solutions: ["trouble"] },
+  { prompt: "Insel", direction: "de-en", solutions: ["island"] },
+  { prompt: "Katholik; katholisch", direction: "de-en", solutions: ["Catholic"] },
+  { prompt: "sterben", direction: "de-en", solutions: ["to die; die"] },
+  { prompt: "seit; seitdem", direction: "de-en", solutions: ["since"], hint: "I have lived here ... 2020." },
+  { prompt: "Zeichen; Schild", direction: "de-en", solutions: ["sign"] },
+  { prompt: "Typ; Sorte; Art", direction: "de-en", solutions: ["type"] },
+
+  // --- Speaking skills ---
+  { prompt: "Campingplatz; Zeltplatz", direction: "de-en", solutions: ["campsite"] },
+  { prompt: "Hintergrund", direction: "de-en", solutions: ["background"] },
+  { prompt: "Mitte", direction: "de-en", solutions: ["middle"] },
+  { prompt: "Vordergrund", direction: "de-en", solutions: ["foreground"] }
+];
+
+const e7ru3Words1 = [
+  // --- Intro ---
+  { prompt: "irisch; aus Irland", direction: "de-en", solutions: ["Irish"] },
+  { prompt: "die Iren", direction: "de-en", solutions: ["the Irish"] },
+  { prompt: "feiern", direction: "de-en", solutions: ["to celebrate; celebrate"] },
+  { prompt: "Hälfte", direction: "de-en", solutions: ["half"] },
+
+  // --- Topic 1 ---
+  { prompt: "Fahrplan", direction: "de-en", solutions: ["timetable"] },
+  { prompt: "umsteigen", direction: "de-en", solutions: ["to change; change"] },
+  { prompt: "Fahrt; Reise", direction: "de-en", solutions: ["journey"] },
+  { prompt: "Schlüssel", direction: "de-en", solutions: ["key"] },
+  { prompt: "einfache Fahrkarte", direction: "de-en", solutions: ["single ticket"] },
+  { prompt: "Hin- und Rückfahrkarte", direction: "de-en", solutions: ["return ticket"] },
+  { prompt: "kosten", direction: "de-en", solutions: ["to cost; cost"] },
+
+  // --- Das kenne ich schon: travel ---
+  { prompt: "ankommen", direction: "de-en", solutions: ["to arrive; arrive"] },
+  { prompt: "Straßenbahn", direction: "de-en", solutions: ["tram"] },
+  { prompt: "in der Nähe von; nah", direction: "de-en", solutions: ["near"] },
+  { prompt: "aussteigen", direction: "de-en", solutions: ["to get off; get off"] },
+  { prompt: "Haltestelle", direction: "de-en", solutions: ["stop"] },
+
+  // --- Topic 2 ---
+  { prompt: "Rat; Ratschlag", direction: "de-en", solutions: ["advice"] },
+  { prompt: "sollte", direction: "de-en", solutions: ["should"] },
+  { prompt: "Gast", direction: "de-en", solutions: ["guest"] },
+  { prompt: "versuchen; probieren", direction: "de-en", solutions: ["to try; try"] },
+  { prompt: "jemand", direction: "de-en", solutions: ["someone; somebody"] },
+
+  // --- Das kenne ich schon: adjectives for feelings ---
+  { prompt: "wütend; zornig", direction: "de-en", solutions: ["angry"] },
+  { prompt: "beunruhigt; besorgt", direction: "de-en", solutions: ["worried"] },
+  { prompt: "albern", direction: "de-en", solutions: ["silly"] }
+];
+
+const e7ru3Words2 = [
+  // --- Text ---
+  { prompt: "Regenbogen", direction: "de-en", solutions: ["rainbow"] },
+  { prompt: "schließlich; zum Schluss", direction: "de-en", solutions: ["finally"] },
+  { prompt: "ganz", direction: "de-en", solutions: ["whole"], hint: "the ... pizza = die ganze Pizza" },
+  { prompt: "einander; gegenseitig", direction: "de-en", solutions: ["each other"] },
+  { prompt: "Topf", direction: "de-en", solutions: ["pot"] },
+  { prompt: "Gedicht", direction: "de-en", solutions: ["poem"] },
+  { prompt: "genug; genügend", direction: "de-en", solutions: ["enough"] },
+  { prompt: "konnte", direction: "de-en", solutions: ["could"], hint: "can in der Vergangenheit" },
+  { prompt: "Überraschung", direction: "de-en", solutions: ["surprise"] },
+  { prompt: "Überschrift; Schlagzeile", direction: "de-en", solutions: ["headline"] },
+  { prompt: "bedeuten; meinen", direction: "de-en", solutions: ["to mean; mean"] },
+  { prompt: "Karte", direction: "de-en", solutions: ["card"], hint: "z. B. Geburtstagskarte" },
+
+  // --- Das kenne ich schon: prepositions of time ---
+  { prompt: "nach", direction: "de-en", solutions: ["after"], hint: "zeitlich: ... school" },
+  { prompt: "vor; bevor", direction: "de-en", solutions: ["before"] },
+
+  // --- Film ---
+  { prompt: "während", direction: "de-en", solutions: ["during"], hint: "... the lesson" },
+
+  // --- More about ---
+  { prompt: "Problem; Schwierigkeiten; Ärger", direction: "de-en", solutions: ["trouble"] },
+  { prompt: "Insel", direction: "de-en", solutions: ["island"] },
+  { prompt: "sterben", direction: "de-en", solutions: ["to die; die"] },
+  { prompt: "Zeichen; Schild", direction: "de-en", solutions: ["sign"] },
+  { prompt: "Typ; Sorte; Art", direction: "de-en", solutions: ["type"] },
+
+  // --- Speaking skills ---
+  { prompt: "Campingplatz; Zeltplatz", direction: "de-en", solutions: ["campsite"] },
+  { prompt: "Hintergrund", direction: "de-en", solutions: ["background"] },
+  { prompt: "Mitte", direction: "de-en", solutions: ["middle"] },
+  { prompt: "Vordergrund", direction: "de-en", solutions: ["foreground"] }
+];
+
+function e7u3Test(klasse, nr, words, thema) {
+  const t = {
+    id: `e7${klasse.toLowerCase().slice(1)}-u3-test${nr}`,
+    title: `${klasse} · Vokabeltest ${nr} - ${thema}`,
+    unit: `Englisch ${klasse} / Unit 3`,
+    classLevel: klasse,
+    direction: "de-en",
+    items: words
+  };
+  // 7R: 50 % = Note 3. 7M: ohne Angabe = M-Zug-Schluessel (50 % = Note 4).
+  if (klasse === "7R") t.gradeScale = "7R";
+  return t;
+}
+const e7mu3t1 = e7u3Test("7M", 1, e7mu3Words1, "Intro bis Topic 2");
+const e7mu3t2 = e7u3Test("7M", 2, e7mu3Words2, "Text bis Speaking skills");
+const e7ru3t1 = e7u3Test("7R", 1, e7ru3Words1, "Intro bis Topic 2");
+const e7ru3t2 = e7u3Test("7R", 2, e7ru3Words2, "Text bis Speaking skills");
+
+/* ==================================================================
+   Englisch 7M und 7R - Unit 4 "USA - here we come!" - Vokabeltests (Stand 14.11.2026)
+   Nur Deutsch -> Englisch: Deutsch ist vorgegeben, die Schueler schreiben das englische Wort.
+   Stehen zwei deutsche Bedeutungen da, ist trotzdem nur EIN englisches Wort gesucht.
+
+   Test 1: Intro bis Topic 2 (Intro, Topic 1, comparing things, Topic 2, ordinal numbers, much/many)
+   Test 2: Text bis Writing skills (Text, Film, More about, celebrations, Writing skills, BE/AE)
+
+   7M: je 30 Woerter, M-Zug-Notenschluessel (50 % = Note 4).
+   7R: je 24 Woerter, eigene Auswahl (haeufigere, alltagsnaehere Woerter), gradeScale "7R" (50 % = Note 3).
+   Ausgelassen: Woerter, die im Deutschen (fast) gleich sind (baseball, hotel, video, tablet, cheerleader,
+   festival, cafe, party, carnival, costume, helicopter, megaphone, dollar, president ...), Platzhalter
+   (which, themselves), die Reihen der unregelmaessigen Verben und Steigerungsformen, Ausrufe (Go!).
+   Ordnungszahlen: nur zwei bis drei je Test, alle Schreibweisen (Wort, Zahl) zugelassen.
+   BE/AE: wo das Wort beides sein kann (center/centre, favorite/favourite), gelten beide Schreibweisen.
+   Eigennamen muessen grossgeschrieben sein.
+   ================================================================== */
+const e7mu4Words1 = [
+  // --- Intro ---
+  { prompt: "Tal", direction: "de-en", solutions: ["valley"] },
+  { prompt: "Bundesstaat; Staat", direction: "de-en", solutions: ["state"], hint: "z. B. Texas ist ein ... der USA" },
+  { prompt: "riesig; riesengroß", direction: "de-en", solutions: ["huge"] },
+  { prompt: "Pflanze", direction: "de-en", solutions: ["plant"] },
+  { prompt: "Welt; Erde", direction: "de-en", solutions: ["earth"] },
+  { prompt: "eingeboren; einheimisch", direction: "de-en", solutions: ["native"] },
+  { prompt: "siedeln; besiedeln; sich niederlassen", direction: "de-en", solutions: ["to settle; settle"] },
+
+  // --- Topic 1 ---
+  { prompt: "Urlaub; Ferien", direction: "de-en", solutions: ["vacation; holiday"] },
+  { prompt: "Stamm; Volksstamm", direction: "de-en", solutions: ["tribe"] },
+  { prompt: "Reservat; Reservierung", direction: "de-en", solutions: ["reservation"] },
+  { prompt: "sich erinnern (an); sich merken", direction: "de-en", solutions: ["to remember; remember"] },
+  { prompt: "teilen", direction: "de-en", solutions: ["to share; share"] },
+  { prompt: "neueste; aktuell", direction: "de-en", solutions: ["latest"] },
+  { prompt: "Zeitung", direction: "de-en", solutions: ["newspaper"] },
+  { prompt: "nützlich; hilfreich; brauchbar", direction: "de-en", solutions: ["useful"] },
+  { prompt: "interessiert sein an; sich interessieren für", direction: "de-en", solutions: ["to be interested in; be interested in; interested in"] },
+
+  // --- Das kenne ich schon: comparing things ---
+  { prompt: "günstig; billig", direction: "de-en", solutions: ["cheap"] },
+  { prompt: "langweilig", direction: "de-en", solutions: ["boring"] },
+  { prompt: "schlechter; schlimmer", direction: "de-en", solutions: ["worse"], hint: "bad, ..., the worst" },
+
+  // --- Topic 2 ---
+  { prompt: "Leiter; Leiterin", direction: "de-en", solutions: ["leader"] },
+  { prompt: "Raft; Floß", direction: "de-en", solutions: ["raft"] },
+  { prompt: "paddeln", direction: "de-en", solutions: ["to paddle; paddle"] },
+  { prompt: "Welle", direction: "de-en", solutions: ["wave"] },
+  { prompt: "Strömung", direction: "de-en", solutions: ["current"] },
+  { prompt: "umkippen; (sich) umdrehen", direction: "de-en", solutions: ["to turn over; turn over"] },
+
+  // --- Das kenne ich schon: ordinal numbers ---
+  { prompt: "vierzigste", direction: "de-en", solutions: ["fortieth; 40th"], hint: "Ordnungszahl" },
+  { prompt: "einundfünfzigste", direction: "de-en", solutions: ["fifty-first; fifty first; 51st"], hint: "Ordnungszahl" },
+  { prompt: "hundertste", direction: "de-en", solutions: ["hundredth; one hundredth; 100th"], hint: "Ordnungszahl" },
+
+  // --- Das kenne ich schon: 'much' or 'many'? ---
+  { prompt: "viel Geld", direction: "de-en", solutions: ["much money"] },
+  { prompt: "viele Leute; viele Menschen", direction: "de-en", solutions: ["many people"] }
+];
+
+const e7mu4Words2 = [
+  // --- Text ---
+  { prompt: "Spielfeld", direction: "de-en", solutions: ["playing field"] },
+  { prompt: "schlagen; treffen", direction: "de-en", solutions: ["to hit; hit"], hint: "Baseball: den Ball ..." },
+  { prompt: "Schläger", direction: "de-en", solutions: ["bat"], hint: "Baseball" },
+  { prompt: "Korb", direction: "de-en", solutions: ["basket"], hint: "Basketball" },
+  { prompt: "prellen; hüpfen", direction: "de-en", solutions: ["to bounce; bounce"] },
+
+  // --- Film ---
+  { prompt: "Trainer; Trainerin", direction: "de-en", solutions: ["coach"] },
+  { prompt: "überraschen", direction: "de-en", solutions: ["to surprise; surprise"] },
+  { prompt: "Freund (umgangssprachlich)", direction: "de-en", solutions: ["pal"] },
+  { prompt: "mitmachen bei", direction: "de-en", solutions: ["to join; join"] },
+  { prompt: "noch nie", direction: "de-en", solutions: ["never"], hint: "I have ... been to Texas." },
+
+  // --- More about ---
+  { prompt: "Bürgerrechte; Grundrechte", direction: "de-en", solutions: ["civil rights"] },
+  { prompt: "Afroamerikaner; Afroamerikanerin", direction: "de-en", solutions: ["African American"] },
+  { prompt: "friedlich", direction: "de-en", solutions: ["peaceful"] },
+  { prompt: "Unabhängigkeit", direction: "de-en", solutions: ["independence"] },
+  { prompt: "Flagge; Fahne", direction: "de-en", solutions: ["flag"] },
+  { prompt: "Feuerwerk", direction: "de-en", solutions: ["fireworks"] },
+  { prompt: "Feiertag", direction: "de-en", solutions: ["holiday"] },
+  { prompt: "entdecken", direction: "de-en", solutions: ["to discover; discover"] },
+  { prompt: "Erntedankfest", direction: "de-en", solutions: ["Thanksgiving"] },
+  { prompt: "beginnen; anfangen", direction: "de-en", solutions: ["to begin; begin; to start; start"] },
+
+  // --- Das kenne ich schon: celebrations ---
+  { prompt: "Abendessen", direction: "de-en", solutions: ["dinner"] },
+  { prompt: "Grillfest", direction: "de-en", solutions: ["barbecue"] },
+  { prompt: "einladen", direction: "de-en", solutions: ["to invite; invite"] },
+  { prompt: "Umzug; Festzug", direction: "de-en", solutions: ["procession"] },
+  { prompt: "Geschenk", direction: "de-en", solutions: ["present"] },
+
+  // --- Writing skills ---
+  { prompt: "Betreff", direction: "de-en", solutions: ["subject"], hint: "in einer E-Mail" },
+  { prompt: "dich; selbst", direction: "de-en", solutions: ["yourself"], hint: "Tell us about ..." },
+
+  // --- Das kenne ich schon: British English / American English ---
+  { prompt: "Zentrum; Mitte", direction: "de-en", solutions: ["center; centre"] },
+  { prompt: "Lieblings-", direction: "de-en", solutions: ["favorite; favourite"] },
+  { prompt: "Film (amerikanisches Englisch)", direction: "de-en", solutions: ["movie"] }
+];
+
+const e7ru4Words1 = [
+  // --- Intro ---
+  { prompt: "Tal", direction: "de-en", solutions: ["valley"] },
+  { prompt: "Bundesstaat; Staat", direction: "de-en", solutions: ["state"], hint: "z. B. Texas ist ein ... der USA" },
+  { prompt: "riesig; riesengroß", direction: "de-en", solutions: ["huge"] },
+  { prompt: "Pflanze", direction: "de-en", solutions: ["plant"] },
+  { prompt: "Welt; Erde", direction: "de-en", solutions: ["earth"] },
+  { prompt: "siedeln; besiedeln; sich niederlassen", direction: "de-en", solutions: ["to settle; settle"] },
+
+  // --- Topic 1 ---
+  { prompt: "Urlaub; Ferien", direction: "de-en", solutions: ["vacation; holiday"] },
+  { prompt: "Stamm; Volksstamm", direction: "de-en", solutions: ["tribe"] },
+  { prompt: "sich erinnern (an); sich merken", direction: "de-en", solutions: ["to remember; remember"] },
+  { prompt: "teilen", direction: "de-en", solutions: ["to share; share"] },
+  { prompt: "Zeitung", direction: "de-en", solutions: ["newspaper"] },
+  { prompt: "nützlich; hilfreich; brauchbar", direction: "de-en", solutions: ["useful"] },
+  { prompt: "interessiert sein an; sich interessieren für", direction: "de-en", solutions: ["to be interested in; be interested in; interested in"] },
+
+  // --- Das kenne ich schon: comparing things ---
+  { prompt: "günstig; billig", direction: "de-en", solutions: ["cheap"] },
+  { prompt: "langweilig", direction: "de-en", solutions: ["boring"] },
+
+  // --- Topic 2 ---
+  { prompt: "Leiter; Leiterin", direction: "de-en", solutions: ["leader"] },
+  { prompt: "Raft; Floß", direction: "de-en", solutions: ["raft"] },
+  { prompt: "paddeln", direction: "de-en", solutions: ["to paddle; paddle"] },
+  { prompt: "Welle", direction: "de-en", solutions: ["wave"] },
+  { prompt: "Strömung", direction: "de-en", solutions: ["current"] },
+
+  // --- Das kenne ich schon: ordinal numbers ---
+  { prompt: "fünfzigste", direction: "de-en", solutions: ["fiftieth; 50th"], hint: "Ordnungszahl" },
+  { prompt: "hundertste", direction: "de-en", solutions: ["hundredth; one hundredth; 100th"], hint: "Ordnungszahl" },
+
+  // --- Das kenne ich schon: 'much' or 'many'? ---
+  { prompt: "viel Zeit", direction: "de-en", solutions: ["much time"] },
+  { prompt: "viele Freunde", direction: "de-en", solutions: ["many friends"] }
+];
+
+const e7ru4Words2 = [
+  // --- Text ---
+  { prompt: "Spielfeld", direction: "de-en", solutions: ["playing field"] },
+  { prompt: "Schläger", direction: "de-en", solutions: ["bat"], hint: "Baseball" },
+  { prompt: "Korb", direction: "de-en", solutions: ["basket"], hint: "Basketball" },
+  { prompt: "prellen; hüpfen", direction: "de-en", solutions: ["to bounce; bounce"] },
+  { prompt: "springen", direction: "de-en", solutions: ["to jump; jump"] },
+
+  // --- Film ---
+  { prompt: "Trainer; Trainerin", direction: "de-en", solutions: ["coach"] },
+  { prompt: "überraschen", direction: "de-en", solutions: ["to surprise; surprise"] },
+  { prompt: "mitmachen bei", direction: "de-en", solutions: ["to join; join"] },
+  { prompt: "noch nie", direction: "de-en", solutions: ["never"], hint: "I have ... been to Texas." },
+
+  // --- More about ---
+  { prompt: "friedlich", direction: "de-en", solutions: ["peaceful"] },
+  { prompt: "Flagge; Fahne", direction: "de-en", solutions: ["flag"] },
+  { prompt: "Feuerwerk", direction: "de-en", solutions: ["fireworks"] },
+  { prompt: "Feiertag", direction: "de-en", solutions: ["holiday"] },
+  { prompt: "entdecken", direction: "de-en", solutions: ["to discover; discover"] },
+  { prompt: "Erntedankfest", direction: "de-en", solutions: ["Thanksgiving"] },
+
+  // --- Das kenne ich schon: celebrations ---
+  { prompt: "Abendessen", direction: "de-en", solutions: ["dinner"] },
+  { prompt: "Grillfest", direction: "de-en", solutions: ["barbecue"] },
+  { prompt: "einladen", direction: "de-en", solutions: ["to invite; invite"] },
+  { prompt: "Geburtstag", direction: "de-en", solutions: ["birthday"] },
+  { prompt: "Geschenk", direction: "de-en", solutions: ["present"] },
+
+  // --- Writing skills ---
+  { prompt: "Betreff", direction: "de-en", solutions: ["subject"], hint: "in einer E-Mail" },
+  { prompt: "dich; selbst", direction: "de-en", solutions: ["yourself"], hint: "Tell us about ..." },
+
+  // --- Das kenne ich schon: British English / American English ---
+  { prompt: "Zentrum; Mitte", direction: "de-en", solutions: ["center; centre"] },
+  { prompt: "Lieblings-", direction: "de-en", solutions: ["favorite; favourite"] }
+];
+
+function e7u4Test(klasse, nr, words, thema) {
+  const t = {
+    id: `e7${klasse.toLowerCase().slice(1)}-u4-test${nr}`,
+    title: `${klasse} · Vokabeltest ${nr} - ${thema}`,
+    unit: `Englisch ${klasse} / Unit 4`,
+    classLevel: klasse,
+    direction: "de-en",
+    items: words
+  };
+  // 7R: 50 % = Note 3. 7M: ohne Angabe = M-Zug-Schluessel (50 % = Note 4).
+  if (klasse === "7R") t.gradeScale = "7R";
+  return t;
+}
+const e7mu4t1 = e7u4Test("7M", 1, e7mu4Words1, "Intro bis Topic 2");
+const e7mu4t2 = e7u4Test("7M", 2, e7mu4Words2, "Text bis Writing skills");
+const e7ru4t1 = e7u4Test("7R", 1, e7ru4Words1, "Intro bis Topic 2");
+const e7ru4t2 = e7u4Test("7R", 2, e7ru4Words2, "Text bis Writing skills");
+
 const TESTS = {
   [e8ru1t2.id]: e8ru1t2,
   [e8ru2t2.id]: e8ru2t2,
@@ -798,6 +1370,18 @@ const TESTS = {
   [e7mu1t3.id]: e7mu1t3,
   [e7ru1t1.id]: e7ru1t1,
   [e7ru1t2.id]: e7ru1t2,
+  [e7mu2t1.id]: e7mu2t1,
+  [e7mu2t2.id]: e7mu2t2,
+  [e7ru2t1.id]: e7ru2t1,
+  [e7ru2t2.id]: e7ru2t2,
+  [e7mu3t1.id]: e7mu3t1,
+  [e7mu3t2.id]: e7mu3t2,
+  [e7ru3t1.id]: e7ru3t1,
+  [e7ru3t2.id]: e7ru3t2,
+  [e7mu4t1.id]: e7mu4t1,
+  [e7mu4t2.id]: e7mu4t2,
+  [e7ru4t1.id]: e7ru4t1,
+  [e7ru4t2.id]: e7ru4t2,
   // Englisch 8M: je Unit zwei Tests (e8m-u<N>-test1, -test2) – eigene Datei, weil es acht sind
   ...require("./vokabeltest-8m-daten").TESTS
 };

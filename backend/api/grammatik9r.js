@@ -198,7 +198,7 @@ async function aiReviewGaps(pending, askAnthropic, test, lrs) {
   ].join("\n")).join("\n\n");
 
   try {
-    const raw = await askAnthropic(system, user, 900);
+    const raw = await askAnthropic(system, user, 900, { temperatur: 0 });   // feste Temperatur in allen Proben (Wunsch 14.11.2026)
     const match = String(raw || "").match(/\{[\s\S]*\}/);
     if (!match) return {};
     const parsed = JSON.parse(match[0]);
@@ -244,7 +244,7 @@ async function aiScoreText(given, item, askAnthropic, test, lrs) {
   ].join("\n");
 
   try {
-    const raw = await askAnthropic(system, user, 300);
+    const raw = await askAnthropic(system, user, 300, { temperatur: 0 });
     const match = String(raw || "").match(/\{[\s\S]*\}/);
     if (!match) return keywordScore(given, item);
     const parsed = JSON.parse(match[0]);
