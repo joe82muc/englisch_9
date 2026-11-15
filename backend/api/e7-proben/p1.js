@@ -183,3 +183,169 @@ function fassung(zug) {
 
 const p1r = fassung("R"), p1m = fassung("M");
 module.exports = { p1r, p1m };
+
+/* ====================================================== Variante B ======================================================
+ * Nachschreibprobe (Auftrag vom 15.11.2026, Plan progress/englisch7/MODULE.md, „Tests Unit 1“): Variante A oben bleibt
+ * Zeichen für Zeichen, wie sie ist (es gibt Abgaben) – B steht nur dahinter. Aufbau genau wie A, damit der Nachschreiber
+ * gleichwertig ist: dieselben Teile, Aufgabenarten, Punkte und Hilfen (A Listening 12 · B Reading 12 · C Grammar and
+ * vocabulary 22 · D Mediation 10 · E Writing 14 = 70 Punkte, 90 Minuten); 7M und 7R schreiben dieselben Aufgaben, nur der
+ * Umfang beim Schreiben ist verschieden (R 50–80, M 60–100 Wörter) – gleiche Bewertung wie A (Raster 5 · 2 · 3 · 2 · 2).
+ * Eigene Texte und Situationen: Hörtext Maisie (Mädchen) und Reggie (Junge) über einen Tagesausflug nach Brinmouth
+ * (erfundener Küstenort, 219 Wörter, Zahlen ausgeschrieben) · Blog von Elodie, neu an der Hollybrook School in Wexley
+ * (erfunden, 245 Wörter; Lehrer Mr Ashworth) · Sprachmittlung an der Kasse der Larkdale-Dampfeisenbahn (erfunden) mit der
+ * Touristin Frau Keller (wie A Beitrag für Beitrag, Deutsch ↔ Englisch) · E-Mail an Elodie über den eigenen Schultag (Topic 2).
+ * Nichts aus dem Schulbuch (keine Theaterkasse mit Halbpreiskarten, kein Surfen, keine Radtour, kein Verkehrsmuseum).
+ * Wortschatz aus der Wortliste von Unit 1 (GRUMI-Vokabeltrainer): coast, east, south, north, large, noisy, quiet, the air is
+ * clean, a long way away, to catch (bus/train), to take (dauern), a.m., p.m., to design, drama, canteen, healthy, traffic,
+ * factory, city centre, capital, adult, brochure, to drive – drove.
+ * Die Aufnahme des Hörtexts fehlt noch (audio/e7-p1-<r|m>-b-h1.mp3, eine Aufnahme für beide Züge; Gemini TTS nach dem
+ * Gegenlesen, Rollen in .codex-build/englisch7-probe/plan-e7.json).
+ */
+const B_HOEREN = hoertext("h1", "A day in Brinmouth", "Listening: two friends talk", [
+  ["Reggie", "Hi Maisie! You weren't at the football club on Saturday. Where were you?"],
+  ["Maisie", "Hi Reggie! I was in Brinmouth with my mum and my little brother. It's a small town on the east coast."],
+  ["Reggie", "How did you get there?"],
+  ["Maisie", "We caught the train at a quarter past eight. The journey took two hours."],
+  ["Reggie", "What did you do first?"],
+  ["Maisie", "First we walked along the beach to the old harbour. There's a big old ship there. It's about two hundred years old, and today it's a museum."],
+  ["Reggie", "Did you go on the ship?"],
+  ["Maisie", "Yes, we did. The beds on the ship were very small! After that we bought sandwiches at the market and had a picnic on the beach."],
+  ["Reggie", "Did you swim in the sea?"],
+  ["Maisie", "No, we didn't. It was sunny, but the wind was very cold. So in the afternoon we went fishing from the harbour wall. My brother caught twelve little fish, and I only caught five. But we put them all back."],
+  ["Reggie", "Would you like to live in Brinmouth?"],
+  ["Maisie", "Yes, I would. It's quiet, the air is clean, and you can see the sea from almost every street. But there isn't a cinema, and in winter a lot of shops are closed."],
+  ["Reggie", "No cinema? I don't think I'd like that."],
+  ["Maisie", "Well, you can come with us next time!"]
+], { stimmen: { Maisie: "en-GB-SoniaNeural", Reggie: "en-GB-RyanNeural" }, mal: 2 });
+
+const B_LESEN = text("t1", "My first weeks in Wexley", "Blog post", [
+  "Hi, I'm Elodie, and I'm twelve. Last year my family lived in a large, noisy city in the north of England. Now we live in Wexley, a small town on the south coast. About twelve thousand people live here. I go to Hollybrook School. It's small – it has about four hundred students.",
+  "I get up at seven o'clock. Our house is a long way away from the school, but my mum works at the hospital next to Hollybrook, so she drives me there every morning. Lessons start at ten to nine.",
+  "My favourite subject is Art. Our teacher, Mr Ashworth, is really funny, and in his lessons we design our own posters and T-shirts. On Tuesdays I go to the science club. Last week we made a rocket out of an old bottle and some water. It flew over the school roof!",
+  "Every student at Hollybrook wears a school uniform: a dark blue jumper, a white shirt and grey trousers or a grey skirt. At my old school we didn't wear a uniform, so I didn't like it at first. But now I think it's OK – in the morning I don't have to think about my clothes!",
+  "Do I miss my old city? Sometimes. I miss my friends, and there isn't much to do in Wexley in the evenings. But the sea is only two miles from our house, and on Sundays I walk on the beach with my dad. I really like it here!"
+]);
+
+// D Mediation wie in A: Gespräch an einer Kasse, Beitrag für Beitrag, abwechselnd Deutsch → Englisch und Englisch → Deutsch
+const B_LAGE = "You are at the Larkdale Railway with your family. It is an old railway with steam trains (Dampfzüge). A tourist from Germany, Frau Keller, wants to buy tickets, but she doesn't speak much English. You help her.";
+const B_UEBER = "Talk ABOUT Frau Keller: She would like … · She asks … · Her husband …";
+// Spricht das Kind gegenüber dem Verkäufer als Frau Keller („I would like …“), zählt der Inhalt trotzdem – nur angestrichen
+const B_ICH = " – Sagt das Kind I, my, me statt she, her, gilt der Punkt trotzdem; die Stelle wird nur angestrichen (Ausdruck, Verbesserung mit she/her).";
+
+function fassungB(zug) {
+  const umfang = zug === "M" ? "60 to 100 words" : "50 to 80 words";
+  return probe7(1, zug, "B", {
+    title: "Test 1 (" + zug + "7): Out and about in England", kurz: "Unit 1",
+    scope: "Unit 1 · Listening, Reading, Grammar and vocabulary, Mediation, Writing", minutes: 90, hinweis: HINWEIS,
+    texte: [B_HOEREN, B_LESEN],
+    items: [
+      ...teil("A Listening", [
+        c("Who went to Brinmouth with Maisie?", ["her mum and her little brother", "her dad and her grandma", "her class and her teacher"], 0, { text: "h1" }),
+        c("What did they have for lunch?", ["sandwiches from the market", "fish and chips at a café", "pizza on the train"], 0, { text: "h1" }),
+        c("Why didn't they swim in the sea?", ["The wind was very cold.", "The water was dirty.", "There were too many people on the beach."], 0, { text: "h1" }),
+        c("What does Maisie say is not so good about Brinmouth?", ["There isn't a cinema.", "It is very noisy.", "The air isn't clean."], 0, { text: "h1" }),
+        f("Listen again and complete the notes. Write one word or a number.", [
+          feld("Brinmouth is on the … coast.", ["east"]),
+          feld("They caught the train at a quarter past …", ["eight", "8"]),
+          feld("The train journey took … hours.", ["two", "2"]),
+          feld("The old ship is about … years old.", ["two hundred", "200", "two-hundred"]),
+          feld("Maisie caught … fish.", ["five", "5"])
+        ], { text: "h1", tolerant: true, hinweis: "Lies vor dem Hören die Notizen: Dann weißt du, auf welche Zahl oder welches Wort du achten musst." }),
+        o("Maisie's day in Brinmouth: Put the events in the right order.", ["Maisie went on an old ship.", "Maisie had a picnic on the beach.", "Maisie went fishing."], { text: "h1" })
+      ]),
+      ...teil("B Reading", [
+        c("Who is Elodie?", ["a new student at Hollybrook School", "a teacher at Hollybrook School", "a tourist on holiday in Wexley"], 0, { text: "t1" }),
+        c("Where does Elodie's mum work?", ["at the hospital next to the school", "at Hollybrook School", "in a shop in Wexley"], 0, { text: "t1" }),
+        c("What happened at the science club last week?", ["Their bottle rocket flew over the school roof.", "They visited a science museum.", "Mr Ashworth showed them a real rocket."], 0, { text: "t1" }),
+        z("In which line(s) does Elodie say what the students do in Mr Ashworth's lessons?", "t1", [[10, 12]], { hinweis: "Suche den Namen aus der Frage (Mr Ashworth) im Text und lies den Satz bis zum Ende." }),
+        z("In which line(s) does Elodie say why the uniform is OK for her now?", "t1", [[18, 19]], { hinweis: "Suche das Schlüsselwort aus der Frage (uniform) im Text. Nach dem Wort „But“ steht, was sie heute denkt." }),
+        f("Complete the notes about Elodie. Write one word or a number.", [
+          feld("About … people live in Wexley.", ["twelve thousand", "12,000", "12000", "12.000", "12 000", "twelve-thousand"]),
+          feld("Hollybrook School has got about … students.", ["four hundred", "400", "four-hundred"]),
+          feld("Lessons start at ten to …", ["nine", "9"]),
+          feld("The sea is … miles from Elodie's house.", ["two", "2"])
+        ], { text: "t1", tolerant: true }),
+        a("What does Elodie like about her new life in Wexley, and what doesn't she like so much? Give one thing for each. Answer in English.", [
+          kr("eine Sache, die Elodie gefällt", 1, "zum Beispiel: Art / Mr Ashworth is funny / they design posters and T-shirts / the science club / the sea is near / walks on the beach (with her dad) / the uniform is OK now / she really likes it here"),
+          kr("eine Sache, die ihr nicht so gefällt oder die sie vermisst", 1, "zum Beispiel: She misses her friends (from her old city). / There isn't much to do in the evenings. / At first she didn't like the uniform. / The house is a long way from the school."),
+          kr("verständlich auf Englisch (eigene Worte oder passende Wörter aus dem Text; Fehler, die das Verstehen nicht stören, zählen nicht)", 1)
+        ], "She likes the sea and the walks on the beach with her dad. She misses her friends, and there isn't much to do in Wexley in the evenings.", ["art|ashworth|poster|science|rocket|sea|beach|uniform|club|funny", "friend|evening|miss|much to do|uniform|long way"], { text: "t1", zeilen: [10, 23] })
+      ]),
+      ...teil("C Grammar and vocabulary", [
+        f("A trip to the seaside: Complete the sentences with the simple past of the verbs in brackets.", [
+          feld("Last Sunday my family (drive) … to the coast.", ["drove"]),
+          feld("First we (walk) … along the beach.", ["walked"]),
+          feld("Then my dad (find) … a nice café near the harbour.", ["found"]),
+          feld("The sandwiches there (be) … very good.", ["were"]),
+          feld("My sister (not / want) … to go home – she loved the sea.", ["did not want", "didn't want", "didn’t want"]),
+          feld("(you / have) … a good weekend? – Yes, I did.", ["did you have"])
+        ], { hinweis: "Wiederhole die unregelmäßigen Verben (drive – drove, find – found) und die Verneinung und Frage mit did + Grundform." }),
+        f("Complete the sentences with the simple present of the verbs in brackets.", [
+          feld("My uncle (work) … in a factory near the city centre.", ["works"]),
+          feld("He (catch) … the bus at 6.15 a.m. every day.", ["catches"]),
+          feld("My cousins (not / like) … the noisy traffic in the city.", ["do not like", "don't like", "don’t like"]),
+          feld("My aunt (not / drive) … to work. She goes by train.", ["does not drive", "doesn't drive", "doesn’t drive"])
+        ], { hinweis: "he, she, it – das s muss mit (catch – catches)! Verneinung: don't / doesn't + Grundform." }),
+        f("Complete the questions and the short answers.", [
+          feld("(your brother / like) … his new school? – Yes, he does.", ["does your brother like"]),
+          feld("(you / have) … lunch in the canteen? – No, I don't. I bring sandwiches.", ["do you have"]),
+          feld("Does Mr Ashworth give a lot of homework? – No, …", ["he doesn't", "he does not", "no, he doesn't", "no he doesn't", "no, he does not"]),
+          feld("Do your parents work in the city centre? – Yes, …", ["they do", "yes, they do", "yes they do"])
+        ], { hinweis: "Fragen mit do / does + Grundform. Kurzantwort: Yes, they do. / No, he doesn't." }),
+        f("Complete the sentences with mine, yours, his, hers, ours or theirs.", [
+          feld("This isn't my pen. Is it … , Reggie?", ["yours"]),
+          feld("Reggie has got a black school bag. The black bag is … .", ["his"]),
+          feld("My grandparents have got a big garden. The big garden is … .", ["theirs"]),
+          feld("Is this your scarf? – Yes, it's … . Thanks!", ["mine"])
+        ], { hinweis: "mine (meins), yours (deins, Ihres), his (seins), hers (ihres), ours (unseres), theirs (ihres – von ihnen)." }),
+        m("What do the words mean? Match them.", [["traffic", "all the cars, buses and bikes on the road"], ["a capital", "the most important city of a country"], ["an adult", "a person who isn't a child any more"], ["a brochure", "a small book with pictures and information"]])
+      ]),
+      ...teil("D Mediation", [
+        a(B_LAGE + " Frau Keller says something to you. Tell the assistant in English.", [
+          kr("möchte zwei Karten für den Dampfzug – für sich und ihren Mann (zählt auch mit I/my statt she/her)", 1, "She would like two tickets for the (steam) train for herself and her husband. – zwei Karten genügt auch" + B_ICH),
+          kr("fragt, wann der nächste Zug fährt (zählt auch mit I/my statt she/her)", 1, "When does the next train leave? / She wants to know when the next train goes." + B_ICH)
+        ], "She would like two tickets for the steam train for herself and her husband. When does the next train leave?", ["ticket", "two|2|husband", "when|time|next"],
+        { vorgabe: "🧳 Frau Keller: „Guten Tag! Ich möchte zwei Karten für den Dampfzug – für mich und meinen Mann. Wann fährt der nächste Zug?“", hilfe: B_UEBER }),
+        a("The assistant answers. Tell Frau Keller in German what he says.", [
+          kr("der nächste Zug fährt um 11.30 Uhr", 1, "Uhrzeit richtig (11.30 Uhr / halb zwölf)"),
+          kr("Erwachsene zahlen 14 Pfund – für die Fahrt hin und zurück", 1, "Preis sinngemäß; Pfund, nicht Euro; „hin und zurück“ darf fehlen")
+        ], "Der nächste Zug fährt um halb zwölf. Erwachsene zahlen 14 Pfund für die Fahrt hin und zurück.", ["11.30|11:30|halb zwölf|halb zwoelf|elf uhr dreißig|elf uhr dreissig", "14|vierzehn"],
+        { vorgabe: "🚂 Assistant: “The next train leaves at 11.30. Adults pay £14 – that's for the trip there and back.”" }),
+        a("Frau Keller answers and asks something. Tell the assistant in English.", [
+          kr("ihr kleiner Hund ist dabei – fragt, ob er mitfahren darf (zählt auch mit I/my statt she/her)", 1, "She has got a small dog with her. Can the dog come on the train too?" + B_ICH),
+          kr("fragt, wann sie wieder zurück sind (zählt auch mit I/my statt she/her)", 1, "When are they back? / When does the train come back?" + B_ICH)
+        ], "She has got a small dog with her. Can the dog come on the train too? And when are they back here?", ["dog", "when|time", "back|return"],
+        { vorgabe: "🧳 Frau Keller: „Gut. Unser kleiner Hund ist auch dabei – darf er mitfahren? Und wann sind wir wieder zurück?“", hilfe: B_UEBER }),
+        a("The assistant answers. Tell Frau Keller in German what he says.", [
+          kr("kleine Hunde fahren kostenlos mit, und der Zug ist um 13.30 Uhr wieder zurück", 1, "beide Angaben sinngemäß (13.30 Uhr / halb zwei am Nachmittag)"),
+          kr("zusammen 28 Pfund (zwei Erwachsene)", 1, "der Betrag 28 Pfund genügt")
+        ], "Kleine Hunde dürfen kostenlos mitfahren. Der Zug ist um halb zwei wieder hier. Für zwei Erwachsene macht das zusammen 28 Pfund.", ["hund", "kostenlos|umsonst|gratis|nichts|frei", "13.30|13:30|halb zwei|1.30", "28|achtundzwanzig"],
+        { vorgabe: "🚂 Assistant: “Small dogs can come with you for free. The train is back here at 1.30 p.m. So that's two adults – £28, please.”" }),
+        a("Frau Keller says what she wants. Tell the assistant in English.", [
+          kr("nimmt die zwei Karten (zählt auch mit I/my statt she/her)", 1, "She would like / She takes the two tickets." + B_ICH),
+          kr("fragt, wo man vor der Fahrt einen Kaffee trinken kann (zählt auch mit I/my statt she/her)", 1, "Where can they have / drink / get a coffee before the trip? – coffee falsch geschrieben zählt" + B_ICH)
+        ], "She would like the two tickets. Where can they have a coffee before the trip?", ["two|2|ticket", "coffee|cofee|kaffee|kafee|café|cafe"],
+        { vorgabe: "🧳 Frau Keller: „Prima, dann nehmen wir die zwei Karten. Wo können wir vor der Fahrt noch einen Kaffee trinken?“", hilfe: B_UEBER })
+      ]),
+      ...teil("E Writing", [
+        s("My school day: Elodie's class at Hollybrook School is doing a project with your class. Their teacher, Mr Ashworth, asks: What is a school day like in Germany? Write an e-mail to Elodie (" + umfang + "). Write about: your school – its name, where it is and how big it is · your morning: when you get up, how you get to school and how long it takes · your favourite subject or club and why you like it · something you did at school last week · a question for Elodie about her school.", [
+          kr("Inhalt", 5, "alle fünf Punkte des Auftrags – je Punkt 1: die eigene Schule (Name und Lage oder Größe) · der Morgen (Aufstehen, Schulweg, wie lange er dauert) · Lieblingsfach oder AG mit Grund (because …) · etwas, das letzte Woche in der Schule war (Last week we … / There was …) · eine Frage an Elodie zu ihrer Schule (die Form der Frage bewertet die Zeile Grammatik)"),
+          kr("Textsorte und Aufbau", 2, "E-Mail an Elodie: Anrede (Hi Elodie / Dear Elodie), sinnvolle Reihenfolge, Schluss (Write soon! / Bye for now) und Name; Sätze verbunden (and, but, because)"),
+          kr("Grammatik", 3, "simple present für den Schulalltag (I get up, I catch the bus, school starts – he/she/it mit s, don't/doesn't + Grundform), simple past für letzte Woche (we went, there was, we didn't …), Frage mit do/does + Grundform; Fehler stören das Verstehen kaum"),
+          kr("Wortschatz", 2, "passende Wörter der Unit für den Schultag (to catch the bus, it takes … minutes, a.m., p.m., lessons start, subject, club, drama, to design, canteen, healthy, uniform …), nicht nur nice und good"),
+          kr("Rechtschreibung", 2, "häufige Wörter und die Wörter der Unit sind meist richtig geschrieben", { rs: true })
+        ], { minWoerter: zug === "M" ? 50 : 40, plan: [
+          { id: "start", label: "Start", hilfe: "Hi Elodie, my name is … I'm … years old." },
+          { id: "school", label: "My school – name, where, how big?", hilfe: "I go to the … school in … It's a small / big school with about … students." },
+          { id: "morning", label: "My morning", hilfe: "I get up at … I catch the bus at … a.m. / I walk. It takes about … minutes." },
+          { id: "favourite", label: "My favourite subject or club – why?", hilfe: "My favourite subject is … because … / On Mondays I go to the … club." },
+          { id: "lastweek", label: "Last week at school", hilfe: "Last week we went to … / we had a test in … / there was …" },
+          { id: "question", label: "A question for Elodie", hilfe: "Do you … ? / Does your school … ?" },
+          { id: "end", label: "End", hilfe: "Write soon! / Bye for now, …" }
+        ] })
+      ])
+    ]
+  });
+}
+
+Object.assign(module.exports, { p1rb: fassungB("R"), p1mb: fassungB("M") });

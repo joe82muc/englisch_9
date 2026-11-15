@@ -1,7 +1,9 @@
 "use strict";
 
 /**
- * Grammatiktests Englisch 7M und 7R, Unit 1 (Out and about in England)
+ * Grammatiktests Englisch 7M und 7R, Unit 1 (Out and about in England),
+ * dazu seit 15.11.2026 zwei Grammatikproben im Format von Unit 2: e7m-u1-gp1, e7r-u1-gp1 (G1 simple past),
+ * e7m-u1-gp2, e7r-u1-gp2 (G2 simple present, G3 Fragen/Kurzantworten, G4 Possessivpronomen);
  * und je zwei Grammatikproben zu Unit 2 (Fun in Wales and Scotland), Stand 14.11.2026:
  * e7m-u2-gp1, e7r-u2-gp1 (G5 going to + G6 present perfect),
  * e7m-u2-gp2, e7r-u2-gp2 (G7 Fragen/Kurzantworten + present perfect oder simple past);
@@ -209,6 +211,182 @@ for (const klasse of ["7M", "7R"]) {
       level: "7",
       kiThemen: KI_THEMEN_7,
       gradeScale: klasse === "7M" ? "M" : "R"
+    };
+  }
+}
+
+/* ==================================================================
+   Unit 1 - Out and about in England: zwei Grammatikproben je Zug im Format
+   von Unit 2 (Stand 15.11.2026, Plan progress/englisch7/MODULE.md, „Tests Unit 1“).
+   Die Grammatikprobe e7m|r-u1-probe und die Kurztests kt-g1 ... kt-g4 oben
+   bleiben unverändert (im Einsatz).
+   16 Punkte, 10 bis 15 Minuten, 7M und 7R getrennt.
+   gp1: G1 simple past (Topic 1: Aussage, Verneinung, Fragen und Kurzantworten, was/were)
+   gp2: G2 simple present + G3 Fragen mit do/does und Kurzantworten + G4 Possessivpronomen (Topic 2)
+   7R: leichter (mehr Ankreuzen, meist nur ein Verb in der Luecke, ein kurzer offener Teil).
+   7M: bildet die Formen selbst (Verneinung, Fragen mit Fragewort, Kurzantworten, zwei Saetze).
+   Namen Noor, Logan, Ivy, Jasper, Ort Skipton (Yorkshire) - weder im Schulbuch noch in einem Modul.
+   Schluessel wie Unit 2-4: 7M 50 % = Note 4, 7R 50 % = Note 3.
+   ================================================================== */
+const U1 = {
+  "u1-gp1": {
+    titel: "Grammatikprobe 1 Unit 1 – simple past",
+    M: [
+      // --- A: Aussagen ---
+      { type: "gap", section: "A · Simple past (G1): Aussagen", instruction: "Setze die Verben im simple past ein. Achte auf die unregelmäßigen Verben.",
+        prompt: "Last Saturday Noor ___ (visit) her grandma in Skipton.", solutions: [["visited"]] },
+      { type: "gap", prompt: "First they ___ (go) to the market in the town centre.", solutions: [["went"]] },
+      { type: "gap", prompt: "Noor ___ (buy) a warm scarf for her mum.", solutions: [["bought"]] },
+      { type: "gap", prompt: "The weather ___ (be) cold and windy.", solutions: [["was"]] },
+      { type: "gap", prompt: "In the afternoon Logan and Jasper ___ (ride) their bikes along the canal.", solutions: [["rode"]] },
+
+      // --- B: Verneinung ---
+      { type: "gap", section: "B · Verneinung", instruction: "Verneine im simple past: didn't + Grundform, bei be: wasn't oder weren't. Kurz- und Langform sind beide richtig.",
+        prompt: "Ivy ___ (not / come) with us because she had a cold.", solutions: [["didn't come"]] },
+      { type: "gap", prompt: "We ___ (not / have) time for an ice cream.", solutions: [["didn't have"]] },
+      { type: "gap", prompt: "The shops ___ (not / be) open on Sunday morning.", solutions: [["weren't"]] },
+
+      // --- C: Fragen und Kurzantworten ---
+      { type: "gap", section: "C · Fragen und Kurzantworten", instruction: "Ergänze die Frage mit did und der Grundform. Gib bei (+) und (–) eine Kurzantwort.",
+        prompt: "___ you ___ (enjoy) the trip to Skipton?", solutions: [["Did"], ["enjoy"]] },
+      { type: "gap", prompt: "Did Jasper take the train? (–) ___", solutions: [["No, he didn't"]] },
+      { type: "gap", prompt: "Were the streets busy? (+) ___", solutions: [["Yes, they were"]] },
+
+      // --- D: Was ist richtig? ---
+      { type: "choice", section: "D · Was ist richtig?", instruction: "Kreuze an.",
+        prompt: "Logan ___ his homework yesterday.", options: ["didn't finish", "didn't finished", "doesn't finish"], answer: 0 },
+      { type: "choice", prompt: "Where ___ you last weekend? – At my cousin's house.", options: ["were", "was", "did"], answer: 0 },
+
+      // --- E: zwei Saetze ---
+      { type: "text", section: "E · Schreibe zwei Sätze", instruction: "Schreibe zwei ganze Sätze auf Englisch. Achte auf das simple past.",
+        prompt: "1. Ich habe am Samstag meinen Cousin besucht.  2. Wir sind nicht ins Kino gegangen.", points: 2,
+        expected: "I visited my cousin on Saturday. We didn't go to the cinema.",
+        focus: "Satz 1: simple past (visited); Satz 2: Verneinung mit didn't + Grundform (didn't go, nicht didn't went). Je Satz 1 Punkt.",
+        keywords: ["visited", "didn't go|did not go"] }
+    ],
+    R: [
+      // --- A: Welche Form ist richtig? ---
+      { type: "choice", section: "A · Simple past (G1): Welche Form ist richtig?", instruction: "Achte auf die Signalwörter (last, yesterday) und kreuze an.",
+        prompt: "Last Saturday Noor ___ her grandma.", options: ["visited", "visits", "visit"], answer: 0 },
+      { type: "choice", prompt: "Yesterday we ___ to the market in Skipton.", options: ["went", "goed", "go"], answer: 0 },
+      { type: "choice", prompt: "Logan ___ a new cap last week.", options: ["bought", "buyed", "buys"], answer: 0 },
+      { type: "choice", prompt: "Ivy and Jasper ___ tired after the walk.", options: ["were", "was", "did"], answer: 0 },
+
+      // --- B: Form schreiben ---
+      { type: "gap", section: "B · Schreibe das Verb im simple past", instruction: "Setze das Verb in der Klammer im simple past ein.",
+        prompt: "Ivy ___ (play) football in the park.", solutions: [["played"]] },
+      { type: "gap", prompt: "Jasper ___ (watch) a film on Sunday.", solutions: [["watched"]] },
+      { type: "gap", prompt: "We ___ (take) the bus to Skipton.", solutions: [["took"]] },
+      { type: "gap", prompt: "Noor ___ (see) a lot of sheep on the hills.", solutions: [["saw"]] },
+
+      // --- C: Verneinung ---
+      { type: "gap", section: "C · Verneinung", instruction: "Verneine: didn't + Grundform. Bei be: wasn't oder weren't.",
+        prompt: "Noor ___ (not / like) the cold wind.", solutions: [["didn't like"]] },
+      { type: "gap", prompt: "We ___ (not / go) to the castle.", solutions: [["didn't go"]] },
+      { type: "gap", prompt: "The shops ___ (not / be) open.", solutions: [["weren't"]] },
+
+      // --- D: Fragen und Kurzantworten ---
+      { type: "choice", section: "D · Fragen und Kurzantworten", instruction: "Kreuze das richtige Wort an.",
+        prompt: "___ you enjoy the trip?", options: ["Did", "Do", "Were"], answer: 0 },
+      { type: "choice", prompt: "Did Logan take the train? – No, he ___.", options: ["didn't", "wasn't", "doesn't"], answer: 0 },
+      { type: "choice", prompt: "Was the market busy? – Yes, it ___.", options: ["was", "did", "were"], answer: 0 },
+
+      // --- E: ein Satz ---
+      { type: "text", section: "E · Schreibe einen Satz", instruction: "Schreibe einen ganzen Satz auf Englisch.",
+        prompt: "Ich habe gestern meine Hausaufgaben nicht gemacht.", points: 2,
+        expected: "I didn't do my homework yesterday.",
+        focus: "Verneinung im simple past: didn't + Grundform (didn't do, nicht didn't did)",
+        keywords: ["didn't do|did not do", "homework"] }
+    ]
+  },
+
+  "u1-gp2": {
+    titel: "Grammatikprobe 2 Unit 1 – simple present, Fragen, Possessivpronomen",
+    M: [
+      // --- A: simple present ---
+      { type: "gap", section: "A · Simple present (G2)", instruction: "Setze die Verben im simple present ein. Denk an das s bei he, she, it. Verneinung: don't oder doesn't + Grundform.",
+        prompt: "Noor ___ (catch) the bus at a quarter to eight.", solutions: [["catches"]] },
+      { type: "gap", prompt: "Our lessons ___ (start) at half past eight.", solutions: [["start"]] },
+      { type: "gap", prompt: "Ivy ___ (study) hard for her tests.", solutions: [["studies"]] },
+      { type: "gap", prompt: "Logan ___ (not / like) PE in winter.", solutions: [["doesn't like"]] },
+      { type: "gap", prompt: "We ___ (not / wear) a school uniform.", solutions: [["don't wear"]] },
+
+      // --- B: Fragen ---
+      { type: "gap", section: "B · Fragen mit do und does (G3)", instruction: "Ergänze die Fragen mit do oder does und dem Verb in der Grundform.",
+        prompt: "___ Jasper ___ (go) to the drama club?", solutions: [["Does"], ["go"]] },
+      { type: "gap", prompt: "What time ___ your lessons ___ (finish)?", solutions: [["do"], ["finish"]] },
+
+      // --- C: Kurzantworten ---
+      { type: "gap", section: "C · Kurzantworten (G3)", instruction: "Antworte mit einer Kurzantwort. (+) = Yes, (–) = No.",
+        prompt: "Does Ivy have lunch in the canteen? (+) ___", solutions: [["Yes, she does"]] },
+      { type: "gap", prompt: "Do Noor and Logan walk to school? (–) ___", solutions: [["No, they don't"]] },
+
+      // --- D: Possessivpronomen ---
+      { type: "gap", section: "D · Possessivpronomen (G4)", instruction: "Setze das Pronomen ohne Nomen ein. In Klammern steht, wem etwas gehört.",
+        prompt: "This isn't Noor's pencil case. ___ is red. (she)", solutions: [["Hers"]] },
+      { type: "gap", prompt: "Are these your books? – Yes, they're ___. (I)", solutions: [["mine"]] },
+      { type: "gap", prompt: "Logan and Jasper have got new bikes. The blue bikes are ___. (they)", solutions: [["theirs"]] },
+
+      // --- E: zwei Saetze ---
+      { type: "text", section: "E · Schreibe zwei Sätze", instruction: "Schreibe zwei ganze Sätze auf Englisch.",
+        prompt: "1. Frage Ivy: Fährt dein Bruder mit dem Bus zur Schule?  2. Sage: Die Tasche ist nicht meine. Sie ist seine.", points: 2,
+        expected: "Does your brother go to school by bus? The bag isn't mine. It's his.",
+        focus: "Satz 1: Frage mit Does + Grundform (go, nicht goes); Satz 2: Possessivpronomen ohne Nomen (mine, his - nicht my, him). Je Satz 1 Punkt.",
+        keywords: ["does your brother", "mine", "his"] }
+    ],
+    R: [
+      // --- A: simple present ---
+      { type: "choice", section: "A · Simple present (G2): Was ist richtig?", instruction: "he, she, it – das s muss mit. Kreuze an.",
+        prompt: "Noor ___ the bus to school.", options: ["catches", "catch", "catchs"], answer: 0 },
+      { type: "choice", prompt: "My friends ___ lunch in the canteen.", options: ["have", "has", "haves"], answer: 0 },
+      { type: "choice", prompt: "Logan ___ like maths.", options: ["doesn't", "don't", "isn't"], answer: 0 },
+
+      // --- B: Verb einsetzen ---
+      { type: "gap", section: "B · Setze das Verb ein", instruction: "Setze das Verb in der Klammer im simple present ein. Bei not: don't oder doesn't + Grundform.",
+        prompt: "Ivy ___ (go) to the drama club on Fridays.", solutions: [["goes"]] },
+      { type: "gap", prompt: "Lessons ___ (start) at 8.30 a.m.", solutions: [["start"]] },
+      { type: "gap", prompt: "Jasper ___ (not / play) rugby.", solutions: [["doesn't play"]] },
+
+      // --- C: Do oder Does? ---
+      { type: "choice", section: "C · Fragen (G3): Do oder Does?", instruction: "Kreuze das richtige Wort an.",
+        prompt: "___ you like your new school?", options: ["Do", "Does", "Are"], answer: 0 },
+      { type: "choice", prompt: "___ Noor walk to school?", options: ["Does", "Do", "Is"], answer: 0 },
+      { type: "choice", prompt: "Where ___ Logan and Jasper live?", options: ["do", "does", "are"], answer: 0 },
+
+      // --- D: Kurzantworten ---
+      { type: "gap", section: "D · Kurzantworten (G3)", instruction: "Ergänze die Kurzantwort. (+) = Yes, (–) = No.",
+        prompt: "Does Ivy have lunch at school? (+) Yes, she ___.", solutions: [["does"]] },
+      { type: "gap", prompt: "Do you wear a school uniform? (–) No, I ___.", solutions: [["don't"]] },
+
+      // --- E: Possessivpronomen ---
+      { type: "choice", section: "E · Possessivpronomen (G4)", instruction: "Ohne Nomen: mine, yours, his, hers, ours, theirs. Kreuze an.",
+        prompt: "This isn't my pen. Is it ___, Jasper?", options: ["yours", "your", "you"], answer: 0 },
+      { type: "choice", prompt: "Noor has got a green bag. The green bag is ___.", options: ["hers", "her", "his"], answer: 0 },
+      { type: "choice", prompt: "We have got a big classroom. The big classroom is ___.", options: ["ours", "our", "us"], answer: 0 },
+
+      // --- F: eine Frage ---
+      { type: "text", section: "F · Schreibe eine Frage", instruction: "Schreibe eine ganze Frage auf Englisch. Denk an does.",
+        prompt: "Frage: Spielt Logan Gitarre?", points: 2,
+        expected: "Does Logan play the guitar?",
+        focus: "Frage mit Does + Person + Grundform (play, nicht plays); the guitar und guitar sind beide richtig",
+        keywords: ["does logan play"] }
+    ]
+  }
+};
+
+for (const klasse of ["7M", "7R"]) {
+  for (const [key, def] of Object.entries(U1)) {
+    const id = `e7${klasse.slice(1).toLowerCase()}-${key}`;
+    TESTS[id] = {
+      id,
+      kind: "probe",
+      title: `${klasse} · ${def.titel}`,
+      unit: `Englisch ${klasse} / Unit 1`,
+      classLevel: klasse,
+      level: "7",
+      kiThemen: KI_THEMEN_7,
+      gradeScale: klasse === "7M" ? "M" : "R",
+      items: def[klasse[1]]
     };
   }
 }

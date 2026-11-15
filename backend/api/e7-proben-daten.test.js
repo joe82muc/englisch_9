@@ -6,6 +6,7 @@
 // Probe 3 (Unit 3, seit 14.11.2026): Sprachmittlung wie im Buch Deutsch → Englisch, Grammatik G8 (Ort vor Zeit) und G9 (some/any/no).
 // Probe 4 (Unit 4, seit 14.11.2026): Sprachmittlung wie im Buch Englisch → Deutsch (wie Probe 2), Grammatik G10 (Steigerung mit
 // more/most, less/least) und G11 (much/many, too much/too many, so much/so many), Ordnungszahlen, britisches/amerikanisches Englisch.
+// Probe 1 B (Nachschreiber, seit 15.11.2026): Aufbau genau wie Probe 1 A – 7R und 7M dieselben Aufgaben, eigene Texte.
 // Solange die Aufnahme noch fehlt: E7_PROBEN_OHNE_TON=1 überspringt nur die Ton-Prüfung.
 const assert = require("node:assert/strict");
 const test = require("node:test");
@@ -23,13 +24,14 @@ const LESE = (p) => (p.nr === 1 ? [180, 260] : p.zug === "R" ? [150, 220] : [220
 const saetzeVon = (liste) => new Set(liste.flatMap((p) => p.texte.flatMap((x) => (x.absaetze || (x.sprecher || []).map((s) => s.text)).join(" ").split(/(?<=[.!?])\s+/))).map((s) => s.trim()).filter((s) => woerter(s) >= 5));
 const geschlossen = (p) => p.items.filter((i) => ["choice", "match", "order"].includes(i.type)).reduce((s, i) => s + i.points, 0);
 
-test("Alle Proben-Dateien laden ohne Fehler, jede Probe für 7R und 7M (ab Probe 2 auch Variante B)", () => {
+test("Alle Proben-Dateien laden ohne Fehler, jede Probe für 7R und 7M in Variante A und B (Probe 1 B seit 15.11.2026)", () => {
   assert.deepEqual(ROH.__fehler, []);
   const P = alle();
   assert.ok(P.length >= 2, "mindestens eine Probe");
+  assert.deepEqual(P.filter((p) => p.nr === 1).map((p) => p.id).sort(), ["e7-p1-m-a", "e7-p1-m-b", "e7-p1-r-a", "e7-p1-r-b"], "Probe 1 (Unit 1) mit Nachschreibprobe B");
   for (const nr of new Set(P.map((p) => p.nr))) {
     const varianten = [...new Set(P.filter((p) => p.nr === nr).map((p) => p.variante))].sort();
-    assert.deepEqual(varianten, nr === 1 ? ["A"] : ["A", "B"], "Probe " + nr + ": Varianten");
+    assert.deepEqual(varianten, ["A", "B"], "Probe " + nr + ": Varianten");
     for (const v of varianten) assert.deepEqual(P.filter((p) => p.nr === nr && p.variante === v).map((p) => p.zug).sort(), ["M", "R"], "Probe " + nr + v + ": je eine Fassung R und M");
   }
   assert.ok(P.some((p) => p.nr === 2), "Probe 2 (Unit 2) ist da");
@@ -49,15 +51,38 @@ test("Jede Fassung: 90 Minuten, 70 Punkte, fünf Teile mit festen Punkten in fes
   }
 });
 
-test("Probe 1 – 7R und 7M: dieselben Texte und Aufgaben – verschieden ist nur der Umfang der Schreibaufgabe", () => {
+test("Probe 1 (A und B) – 7R und 7M: dieselben Texte und Aufgaben – verschieden ist nur der Umfang der Schreibaufgabe", () => {
   const P = alle();
-  for (const nr of [1]) {
-    const r = P.find((p) => p.nr === nr && p.zug === "R"), m = P.find((p) => p.nr === nr && p.zug === "M");
-    assert.deepEqual(r.texte, m.texte, "Probe " + nr + ": gleiche Texte");
+  for (const [nr, v] of [[1, "A"], [1, "B"]]) {
+    const r = P.find((p) => p.nr === nr && p.variante === v && p.zug === "R"), m = P.find((p) => p.nr === nr && p.variante === v && p.zug === "M"), wo = "Probe " + nr + v + ": ";
+    assert.deepEqual(r.texte, m.texte, wo + "gleiche Texte");
     const ohneSchreiben = (p) => p.items.map((i) => (i.type === "schreiben" ? { ...i, prompt: "", minWoerter: 0 } : i));
-    assert.deepEqual(ohneSchreiben(r), ohneSchreiben(m), "Probe " + nr + ": gleiche Aufgaben");
+    assert.deepEqual(ohneSchreiben(r), ohneSchreiben(m), wo + "gleiche Aufgaben");
     const er = r.items.find((i) => i.type === "schreiben"), em = m.items.find((i) => i.type === "schreiben");
-    assert.ok(em.minWoerter > er.minWoerter, "Probe " + nr + ": M schreibt mehr");
+    assert.ok(em.minWoerter > er.minWoerter, wo + "M schreibt mehr");
+    assert.match(er.prompt, /50 to 80 words/, wo + "R schreibt 50 bis 80 Wörter"); assert.match(em.prompt, /60 to 100 words/, wo + "M schreibt 60 bis 100 Wörter");
+  }
+});
+
+// Probe 1 B ist der Nachschreiber zu einer schon geschriebenen Probe 1 A: Er muss gleichwertig sein – dieselben Aufgabenarten in
+// derselben Reihenfolge, dieselben Hilfen an denselben Stellen, dieselbe Bewertung beim Schreiben (Mindestlänge, Raster).
+test("Probe 1 B ist gleich gebaut wie Probe 1 A: Aufgabe für Aufgabe dieselbe Art, dieselben Punkte und Hilfen, gleiche Mindestlänge", () => {
+  const P = alle();
+  for (const zug of ["R", "M"]) {
+    const a = P.find((p) => p.id === "e7-p1-" + zug.toLowerCase() + "-a"), b = P.find((p) => p.id === "e7-p1-" + zug.toLowerCase() + "-b"), wo = "Probe 1 (" + zug + "7): ";
+    const bau = (p) => p.items.map((i) => [i.teil, i.type, i.points, (i.felder || []).length, Boolean(i.hinweis), Boolean(i.hilfe), Boolean(i.tolerant), i.text || ""].join("|"));
+    assert.deepEqual(bau(b), bau(a), wo + "Aufgabe für Aufgabe gleich gebaut");
+    const sa = a.items.find((i) => i.type === "schreiben"), sb = b.items.find((i) => i.type === "schreiben");
+    assert.equal(sb.minWoerter, sa.minWoerter, wo + "gleiche Mindestlänge");
+    assert.deepEqual(sb.raster.map((r) => [r.name, r.punkte, Boolean(r.rs)]), sa.raster.map((r) => [r.name, r.punkte, Boolean(r.rs)]), wo + "gleiches Raster");
+    assert.equal(b.hinweis, a.hinweis, wo + "gleicher Hinweis");
+    const h = b.texte.find((t) => t.typ === "hoertext");
+    assert.deepEqual([...new Set(h.sprecher.map((s) => s.rolle))], ["Reggie", "Maisie"], wo + "Hörtext Reggie und Maisie");
+    assert.deepEqual(h.stimmen, { Maisie: "en-GB-SoniaNeural", Reggie: "en-GB-RyanNeural" }, wo + "Mädchen und Junge, britische Stimmen");
+    assert.match(b.texte.find((t) => t.typ === "text").absaetze.join(" "), /Elodie[\s\S]*Hollybrook School[\s\S]*Mr Ashworth/, wo + "Blog von Elodie");
+    const d = b.items.filter((i) => i.teil === "D Mediation");
+    assert.ok(d.every((i) => /Frau Keller|Assistant/.test(i.vorgabe)) && /Larkdale Railway/.test(d[0].prompt), wo + "Sprachmittlung an der Kasse der Larkdale-Bahn mit Frau Keller");
+    assert.ok(/e-mail to Elodie/.test(sb.prompt) && /school day/i.test(sb.prompt) && !/Where I live/.test(sb.prompt), wo + "Schreiben: E-Mail über den Schultag (nicht Where I live wie in A)");
   }
 });
 
@@ -108,7 +133,8 @@ test("Aufgaben: eindeutige Ankreuzaufgaben, Felder mit Lösung, Schreibraster mi
     const d = p.items.filter((i) => i.teil === "D Mediation");
     assert.ok(d.length >= 4 && d.every((i) => i.type === "offen" && i.vorgabe && i.points === 2), p.id + ": Teil D sind Gesprächsbeiträge mit Sprechblase (je 2 Punkte)");
     assert.ok(d.some((i) => /„/.test(i.vorgabe)) && d.some((i) => /“[^„]*$/.test(i.vorgabe) && /Assistant/.test(i.vorgabe)), p.id + ": beide Richtungen kommen vor");
-    assert.ok(e[0].minWoerter >= 40 && /Where I live/.test(e[0].prompt), p.id + ": Teil E ist „Where I live“");
+    if (p.variante === "A") assert.ok(e[0].minWoerter >= 40 && /Where I live/.test(e[0].prompt), p.id + ": Teil E ist „Where I live“");
+    else assert.ok(e[0].minWoerter >= 40 && /e-mail/.test(e[0].prompt), p.id + ": Teil E ist eine E-Mail (Nachschreiber)");
   }
 });
 
