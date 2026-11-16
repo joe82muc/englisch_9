@@ -561,6 +561,17 @@ registerKlasseRoutes(app, {
   kindZumCode: (code, req) => nt9Fortschritt.kindZumCode(code, req)
 });
 
+// --- SCHILF „GRUMI selbst bauen“: Umfrage fuer das Kollegium (kollegium/schilf.html), nur mit dem Schluessel aus dem
+// QR-Code des Aushangs; Probe-Codes reihum aus der Fortbildungsklasse 7zM (011 … 019, 010) ---
+const { registerSchilfRoutes } = require("./schilf");
+const { lehrerCode: schilfLehrerCode } = require("./nt9-fortschritt");
+registerSchilfRoutes(app, {
+  dataDir: DATA_DIR,
+  teacherPassword: TEACHER_PASSWORD,
+  lehrerCode: () => schilfLehrerCode(process.env),
+  probeCodes: FORTBILDUNG ? ["011", "012", "013", "014", "015", "016", "017", "018", "019", "010"] : []
+});
+
 // Gemeinsamer Probenkalender: eigene Lehrkraft-Zugaenge, Klassenansicht ueber den vorhandenen Code.
 const { registerKalenderRoutes } = require("./kalender/server/kalender");
 const { upstashZugang: kalenderUpstash } = require("./nt9-fortschritt");
