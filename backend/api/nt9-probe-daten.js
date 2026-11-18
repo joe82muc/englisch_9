@@ -584,6 +584,13 @@ function themenProbe(id, zug) {
 }
 bloecke.push(themenProbe("nt9m-rohstoffe3", "M"), themenProbe("nt9r-rohstoffe3", "R"));
 
+/* ================= Probe 2 Kunststoffe (seit 18.11.2026) =================
+ * Nach den Regelhefteinträgen und Übungen der Module P1 bis P5, mit Animationen aus den Modulen und 6 offenen Fragen,
+ * 25 Aufgaben, 58 Punkte, 45 Minuten, übliche Testregeln. Gleiche Aufgaben für 9M (M-Schlüssel) und 9R (R-Schlüssel),
+ * siehe nt9-kunststoffe2.js. */
+const { kunststoffProbe2 } = require("./nt9-kunststoffe2");
+bloecke.push(kunststoffProbe2("M"), kunststoffProbe2("R"));
+
 // Antwortreihenfolge fest mischen (die richtige Antwort steht oben immer zuerst), siehe proben-mischen.js
 const { mischeAlle } = require("./proben-mischen");
 const alle = { [probeM.id]: probeM, [probeR.id]: probeR };
