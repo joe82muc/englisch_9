@@ -46,7 +46,8 @@ Object.assign(module.exports, JSON.parse(JSON.stringify(require("./nt7-fragen-au
 Object.values(module.exports).forEach((probe) => { probe.alt = true; });
 const MODUL_TITEL = require("./nt7-module");
 // luft2 (17.10.2026): zweite Luft-Probe über die Module 1 bis 5, überwiegend wie auf den Arbeitsblättern
-["luft", "atome", "tiere", "mensch", "strom", "luft2"].forEach((bereich) => {
+// luft3 (19.11.2026): dritte Luft-Probe über L1 bis L6 und L8, gleiche Aufgaben für R und M (nur der Notenschlüssel unterscheidet sich)
+["luft", "atome", "tiere", "mensch", "strom", "luft2", "luft3"].forEach((bereich) => {
   const proben = JSON.parse(JSON.stringify(require("./nt7-block-" + bereich)));
   Object.values(proben).forEach((probe) => probe.items.forEach((item) => { item.modulTitel = MODUL_TITEL[item.modul] || ""; }));
   Object.assign(module.exports, proben);

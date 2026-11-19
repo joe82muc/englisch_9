@@ -766,7 +766,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "englisch_9",
-    version: "2026-11-19-nt9-kunststoffe3",
+    version: "2026-11-19-nt7-luft3",
     // Ohne eigenes Passwort bei Render gälte das Ersatz-Passwort aus dem Quelltext – dann wären alle Lehrerseiten offen
     lehrerPasswortGesetzt: Boolean(process.env.TEACHER_PASSWORD),
     // Probenarten, die die Verwaltung als Vorschau zeigen kann (/api/proben/vorschau)
