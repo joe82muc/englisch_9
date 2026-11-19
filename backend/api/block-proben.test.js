@@ -81,7 +81,7 @@ test("NT 7: je Themenbereich eine Probe für R und M – alle Module, 30 bis 45 
 test("NT 9: vier Themenblöcke je Zug – alle Module, 30 bis 45 Minuten; die lange Probe bleibt als frühere Fassung", () => {
   // dazu seit 20.10.2026 Probe 2 und 3 Organische Rohstoffe (nur Ankreuzen und Zuordnen) – geprüft in nt9-probe2.test.js,
   // seit 18.11.2026 Probe 2 Kunststoffe – geprüft in nt9-kunststoffe2.test.js
-  assert.deepEqual(Object.keys(NT9).sort(), ["nt9m-probe1", "nt9r-probe1", "nt9m-rohstoffe2", "nt9r-rohstoffe2", "nt9m-rohstoffe3", "nt9r-rohstoffe3", "nt9m-kunststoffe2", "nt9r-kunststoffe2", ...Object.keys(NT9_BLOECKE).flatMap((b) => ["nt9m-" + b, "nt9r-" + b])].sort());
+  assert.deepEqual(Object.keys(NT9).sort(), ["nt9m-probe1", "nt9r-probe1", "nt9m-rohstoffe2", "nt9r-rohstoffe2", "nt9m-rohstoffe3", "nt9r-rohstoffe3", "nt9m-kunststoffe2", "nt9r-kunststoffe2", "nt9m-kunststoffe3", ...Object.keys(NT9_BLOECKE).flatMap((b) => ["nt9m-" + b, "nt9r-" + b])].sort());
   for (const [block, alleModule] of Object.entries(NT9_BLOECKE)) {
     for (const zug of ["M", "R"]) {
       const module = zug === "R" && NT9_R_MODULE[block] ? NT9_R_MODULE[block] : alleModule;
